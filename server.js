@@ -63,6 +63,13 @@ async function requireLogin(req, res, next) {
   }
 
   req.userId = data.user.id;
+
+  // IMPORTANTE: creamos un "cliente" de Supabase que lleva el pase de ESTA usuaria
+  // en cada consulta, para que la regla de seguridad (RLS) la reconozca correctamente.
+  req.supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
+
   next();
 }
 
@@ -101,7 +108,7 @@ app.post('/auth/login', async (req, res) => {
 app.post('/perfil', requireLogin, async (req, res) => {
   const { nombre, fecha_nacimiento, hora_nacimiento, lugar_nacimiento, latitud, longitud } = req.body;
 
-  const { data, error } = await supabase
+  const { data, error } = await req.supabase
     .from('profiles')
     .upsert({
       id: req.userId,
@@ -126,7 +133,7 @@ app.post('/perfil', requireLogin, async (req, res) => {
 app.post('/carta-natal', requireLogin, async (req, res) => {
   try {
     // 1) Leemos el perfil de la usuaria (sus datos de nacimiento) desde Supabase
-    const { data: perfil, error: errorPerfil } = await supabase
+    const { data: perfil, error: errorPerfil } = await req.supabase
       .from('profiles')
       .select('*')
       .eq('id', req.userId)
@@ -162,7 +169,7 @@ app.post('/carta-natal', requireLogin, async (req, res) => {
     });
 
     // 3) Guardamos el resultado en la tabla natal_charts, ligado a esta usuaria
-    const { data: cartaGuardada, error: errorGuardar } = await supabase
+    const { data: cartaGuardada, error: errorGuardar } = await req.supabase
       .from('natal_charts')
       .insert({
         user_id: req.userId,
