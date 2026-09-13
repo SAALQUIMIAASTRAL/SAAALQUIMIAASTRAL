@@ -17,7 +17,15 @@ const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use((req, res, next) => {
+  if (req.originalUrl === '/webhooks/stripe') return next(); // este necesita el "cuerpo crudo", se procesa aparte
+  express.json()(req, res, next);
+});
+app.use(express.static('public'));
+
+app.get('/', (req, res) => {
+  res.json({ estado: 'Sam Alquimia Astral backend funcionando ✅', prueba: '/probar.html' });
+});
 
 // ---- Conexión a Supabase ----
 const supabase = createClient(
