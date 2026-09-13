@@ -200,6 +200,54 @@ app.post('/carta-natal', requireLogin, async (req, res) => {
 });
 
 // ============================================================
+// RUTA: Generar la carta natal VISUAL (la "rueda" en SVG)
+// POST /carta-visual   (requiere estar logueada)
+// ============================================================
+app.post('/carta-visual', requireLogin, async (req, res) => {
+  try {
+    const { data: perfil, error: errorPerfil } = await req.supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', req.userId)
+      .single();
+
+    if (errorPerfil || !perfil) {
+      return res.status(400).json({ error: 'Primero guarda tu fecha y lugar de nacimiento en tu perfil.' });
+    }
+
+    const [anio, mes, dia] = perfil.fecha_nacimiento.split('-').map(Number);
+    const [hora, minuto] = (perfil.hora_nacimiento || '12:00').split(':').map(Number);
+
+    const respuesta = await astrologyApi.post('/render/natal', {
+      subject: {
+        name: perfil.nombre || 'Usuaria',
+        birth_data: {
+          year: anio, month: mes, day: dia, hour: hora, minute: minuto, second: 0,
+          city: perfil.ciudad_nacimiento,
+          country_code: perfil.pais_codigo,
+        },
+      },
+      options: { house_system: 'P' },
+      render_options: { format: 'svg', theme: 'light' },
+    });
+
+    let svg = null;
+    if (typeof respuesta.data === 'string' && respuesta.data.trim().startsWith('<svg')) {
+      svg = respuesta.data; // la API regresó el SVG directo, sin envoltura
+    } else if (respuesta.data?.svg_content) {
+      svg = respuesta.data.svg_content;
+    } else if (respuesta.data?.svg) {
+      svg = respuesta.data.svg;
+    }
+
+    res.json({ svg, crudo: svg ? undefined : respuesta.data });
+  } catch (err) {
+    console.error(err?.response?.data || err.message);
+    res.status(500).json({ error: 'No se pudo generar la carta visual.' });
+  }
+});
+
+// ============================================================
 // RUTA: Iniciar el cobro de la suscripción mensual ($8.88 USD)
 // POST /suscripcion/iniciar   (requiere estar logueada)
 // Devuelve una URL de pago de Stripe (Checkout) para que la usuaria pague ahí.
