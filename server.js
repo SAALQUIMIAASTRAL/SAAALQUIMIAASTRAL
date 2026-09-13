@@ -63,6 +63,7 @@ async function requireLogin(req, res, next) {
   }
 
   req.userId = data.user.id;
+  req.userEmail = data.user.email;
 
   // IMPORTANTE: creamos un "cliente" de Supabase que lleva el pase de ESTA usuaria
   // en cada consulta, para que la regla de seguridad (RLS) la reconozca correctamente.
@@ -106,7 +107,7 @@ app.post('/auth/login', async (req, res) => {
 // { nombre, fecha_nacimiento, hora_nacimiento, lugar_nacimiento, latitud, longitud }
 // ============================================================
 app.post('/perfil', requireLogin, async (req, res) => {
-  const { nombre, fecha_nacimiento, hora_nacimiento, lugar_nacimiento, latitud, longitud } = req.body;
+  const { nombre, fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo } = req.body;
 
   const { data, error } = await req.supabase
     .from('profiles')
@@ -115,15 +116,26 @@ app.post('/perfil', requireLogin, async (req, res) => {
       nombre,
       fecha_nacimiento,
       hora_nacimiento,
-      lugar_nacimiento,
-      latitud,
-      longitud,
+      ciudad_nacimiento,
+      pais_codigo,
     })
     .select()
     .single();
 
   if (error) return res.status(400).json({ error: error.message });
   res.json({ mensaje: 'Perfil guardado', perfil: data });
+});
+
+// RUTA: Leer el perfil actual de la usuaria
+app.get('/perfil', requireLogin, async (req, res) => {
+  const { data, error } = await req.supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', req.userId)
+    .maybeSingle();
+
+  if (error) return res.status(400).json({ error: error.message });
+  res.json({ perfil: data });
 });
 
 // ============================================================
@@ -157,8 +169,8 @@ app.post('/carta-natal', requireLogin, async (req, res) => {
           hour: hora,
           minute: minuto,
           second: 0,
-          latitude: perfil.latitud,
-          longitude: perfil.longitud,
+          city: perfil.ciudad_nacimiento,
+          country_code: perfil.pais_codigo,
         },
       },
       options: {
@@ -183,10 +195,7 @@ app.post('/carta-natal', requireLogin, async (req, res) => {
     res.json({ mensaje: 'Carta natal calculada', carta: cartaGuardada });
   } catch (err) {
     console.error(err?.response?.data || err.message);
-    res.status(500).json({
-      error: 'No se pudo calcular la carta. Revisa los datos de nacimiento.',
-      detalle_tecnico: err?.response?.data || err.message, // TEMPORAL: para diagnosticar, quitar después
-    });
+    res.status(500).json({ error: 'No se pudo calcular la carta. Revisa los datos de nacimiento.' });
   }
 });
 
@@ -197,14 +206,10 @@ app.post('/carta-natal', requireLogin, async (req, res) => {
 // ============================================================
 app.post('/suscripcion/iniciar', requireLogin, async (req, res) => {
   try {
-    // Buscamos el correo de la usuaria para pre-llenarlo en el formulario de pago
-    const { data: userData } = await supabase.auth.admin.getUserById(req.userId);
-    const email = userData?.user?.email;
-
     const sesionPago = await stripe.checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],
-      customer_email: email,
+      customer_email: req.userEmail,
       line_items: [{ price: process.env.STRIPE_PRICE_ID, quantity: 1 }],
       // Estas dos URLs las ajustaremos cuando la app esté publicada (paso 4)
       success_url: `${req.headers.origin || 'https://tuapp.com'}/pago-exitoso`,

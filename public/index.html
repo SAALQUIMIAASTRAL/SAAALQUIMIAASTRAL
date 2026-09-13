@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sam Alquimia Astral — App móvil</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#331e37">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Alquimia Astral">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --plum:#3a1f38;
+    --ink-dim:#7d6b78;
+    --marigold:#b5652f;
+    --marigold-soft:rgba(181,101,47,0.13);
+    --lilac:#6b3f87;
+    --blush-1:#4a2f4f;
+    --blush-2:#331e37;
+    --band-text:#f2e6ec;
+    --band-text-dim:#cdb4c4;
+    --paper:#fdf8f6;
+    --page-bg:#f1e6e0;
+    --line:#ecdfe0;
+    --moon-navy:#241a38;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:#e9e2da;font-family:'Work Sans',sans-serif;color:var(--plum);}
+  h1,h2,h3,.display{font-family:'Cormorant Garamond',serif;font-weight:700;margin:0;}
+  .page{display:flex;justify-content:center;padding:36px 12px;}
+
+  /* ---------- phone frame ---------- */
+  .phone{
+    width:380px;max-width:100%;
+    background:#111;border-radius:46px;padding:12px;
+    box-shadow:0 30px 60px rgba(20,10,20,0.35);
+  }
+  .screen{
+    background:var(--page-bg);
+    border-radius:34px;overflow:hidden;
+    height:800px;display:flex;flex-direction:column;
+    position:relative;
+  }
+  .notch{
+    height:26px;display:flex;align-items:center;justify-content:center;
+    background:var(--paper);flex:none;
+  }
+  .notch .pill{width:90px;height:6px;border-radius:6px;background:#e4d9d2;}
+
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:6px 18px 12px;flex:none;
+  }
+  .topbar .menu{font-size:18px;color:var(--plum);}
+  .topbar .brand{display:flex;align-items:center;gap:6px;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:17px;color:var(--plum);}
+  .topbar .brand .g{color:var(--marigold);}
+  .topbar .right{display:flex;align-items:center;gap:8px;}
+  .assist-dot{width:22px;height:22px;border-radius:50%;background:conic-gradient(from 90deg,var(--marigold),var(--lilac),var(--marigold));}
+  .avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--lilac),var(--marigold));}
+
+  .scroll{flex:1;overflow-y:auto;padding-bottom:78px;}
+  .scroll::-webkit-scrollbar{display:none;}
+
+  .season-banner{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:var(--marigold-soft);border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+    padding:8px 18px;font-size:11.5px;color:var(--plum);flex:none;
+  }
+  .season-banner .now{font-weight:600;display:flex;align-items:center;gap:5px;}
+  .season-banner .next{color:var(--ink-dim);}
+
+  .band{position:relative;background:linear-gradient(180deg,var(--blush-1),var(--blush-2));padding:20px 18px 26px;overflow:hidden;}
+  .band-icon{
+    position:absolute;top:16px;right:16px;width:46px;height:46px;border-radius:50%;
+    background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.18);
+    display:flex;align-items:center;justify-content:center;font-size:20px;
+    backdrop-filter:blur(2px);
+  }
+  .band .date{font-size:11.5px;color:var(--band-text-dim);margin-bottom:2px;padding-right:54px;}
+  .band h1{font-size:24px;margin-bottom:10px;line-height:1.15;color:var(--band-text);padding-right:54px;}
+  .band .quote{font-style:italic;font-family:'Cormorant Garamond',serif;font-size:15px;border-left:2px solid var(--marigold);padding-left:10px;margin-bottom:16px;color:var(--band-text);}
+  .chip-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+  .chip-list .row{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--band-text-dim);}
+  .chip-list .g{width:26px;height:26px;border-radius:8px;background:var(--marigold);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;flex:none;}
+  .chip-list b{font-weight:600;color:var(--band-text);}
+  .link-arrow{font-size:12.5px;color:var(--marigold);font-weight:600;}
+
+  .section{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:16px;
+    margin:12px 16px;
+    padding:18px;
+    box-shadow:0 2px 10px rgba(58,31,56,0.06);
+  }
+  .section h2{font-size:19px;margin-bottom:6px;border-left:3px solid var(--marigold);padding-left:11px;}
+  .section .desc{font-size:12.5px;color:var(--ink-dim);margin-bottom:14px;line-height:1.5;}
+
+  /* mis cartas (multi-perfil) */
+  .charts-scroll{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px;}
+  .chart-chip{flex:none;width:70px;text-align:center;}
+  .chart-chip .circ{width:56px;height:56px;border-radius:50%;margin:0 auto 6px;background:linear-gradient(135deg,var(--blush-2),var(--lilac));display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:18px;}
+  .chart-chip .lbl{font-size:11px;color:var(--plum);}
+  .chart-chip.add .circ{background:var(--paper);border:1.5px dashed #cbb9c2;color:var(--lilac);}
+  .charts-count{font-size:11.5px;color:var(--ink-dim);margin-top:10px;}
+
+  /* horoscope profile tabs */
+  .tab-row{display:flex;gap:18px;border-bottom:1px solid var(--line);margin-bottom:14px;}
+  .tab-row .tab{font-size:13.5px;color:var(--ink-dim);padding-bottom:8px;cursor:pointer;}
+  .tab-row .tab.active{color:var(--plum);font-weight:600;border-bottom:2px solid var(--marigold);}
+  .influence{display:flex;gap:10px;margin-bottom:14px;}
+  .influence .mk{width:8px;height:8px;border-radius:50%;background:var(--marigold);margin-top:5px;flex:none;}
+  .influence h4{font-size:13.5px;margin:0 0 3px;}
+  .influence p{font-size:12px;color:var(--ink-dim);margin:0;line-height:1.5;}
+
+  /* calculadora de carta */
+  .calc-form{display:flex;flex-direction:column;gap:12px;}
+  .calc-form label{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--ink-dim);}
+  .calc-form input{
+    border:1px solid var(--line);border-radius:10px;padding:10px 12px;
+    font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;
+  }
+  .calc-row{display:flex;gap:10px;}
+  .calc-row label{flex:1;}
+  .calc-result{
+    display:none;margin-top:14px;background:var(--marigold-soft);
+    border:1px solid rgba(181,101,47,0.3);border-radius:12px;padding:14px;
+  }
+  .calc-result.show{display:block;}
+  .calc-result-title{font-size:11.5px;color:var(--marigold);font-weight:600;margin-bottom:8px;}
+
+  /* semana lunar */
+  .week-strip{display:flex;justify-content:space-between;gap:4px;}
+  .wd{text-align:center;flex:1;}
+  .wd .n{font-size:10px;color:var(--ink-dim);margin-bottom:4px;}
+  .wd .m{font-size:16px;}
+
+  /* sinastria */
+  .synastry-card{background:#faf3f5;border-radius:16px;padding:16px;}
+  .synastry-select{display:flex;align-items:center;justify-content:space-between;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:13.5px;margin-bottom:12px;}
+  .synastry-glyphs{display:flex;gap:6px;margin-bottom:10px;}
+  .synastry-glyphs span{width:26px;height:26px;border-radius:50%;background:var(--lilac);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;}
+  .compat-bar{height:8px;border-radius:6px;background:var(--line);margin-bottom:6px;overflow:hidden;}
+  .compat-bar .fill{height:100%;width:78%;background:linear-gradient(90deg,var(--marigold),var(--lilac));}
+  .compat-label{font-size:11.5px;color:var(--ink-dim);margin-bottom:14px;}
+  .btn-primary{width:100%;background:var(--lilac);color:#fff;border:none;border-radius:100px;padding:13px;font-size:13.5px;font-weight:600;cursor:pointer;}
+
+  /* tarot */
+  .tarot-row{display:flex;gap:8px;justify-content:center;margin-bottom:14px;}
+  .tarot-card{width:44px;height:66px;border-radius:8px;border:1.5px dashed #cbb9c2;background:#fff8f4;}
+  .btn-ghost-round{display:block;margin:0 auto;background:var(--plum);color:#fff;border:none;border-radius:100px;padding:10px 20px;font-size:12.5px;font-weight:600;}
+
+  /* ciclo lunar */
+  .moon-now{display:flex;align-items:center;gap:14px;background:var(--moon-navy);border-radius:16px;padding:16px;color:#fff;margin-bottom:14px;}
+  .moon-now .m{font-size:30px;}
+  .moon-now h4{font-size:15px;margin:0 0 2px;font-family:'Work Sans',sans-serif;font-weight:600;}
+  .moon-now p{font-size:11.5px;color:#c9bfe0;margin:0;}
+
+  .natal-highlight{
+    background:var(--marigold-soft);border:1px solid rgba(181,101,47,0.3);border-radius:12px;
+    padding:12px 14px;font-size:12px;line-height:1.55;color:var(--plum);margin-bottom:14px;
+  }
+  .aspects-table{margin-bottom:14px;}
+  .aspects-table .row{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:8px 0;border-bottom:1px solid var(--line);font-size:12px;
+  }
+  .aspects-table .row:last-child{border-bottom:none;}
+  .aspects-table .desc-col{color:var(--ink-dim);}
+  .aspects-table .orb-col{font-weight:600;flex:none;margin-left:10px;}
+  .aspects-table .tag{
+    display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:7px;
+  }
+  .tag.favorable{background:#6a8f5e;}
+  .tag.tenso{background:#b5652f;}
+  .how-to-use{
+    background:#fff;border:1px solid var(--line);border-radius:12px;
+    padding:12px 14px;font-size:12px;line-height:1.55;color:var(--plum);margin-bottom:16px;
+  }
+  .how-to-use b{color:var(--marigold);}
+  .phase-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  .phase-chip{background:var(--paper);border:1px solid var(--line);border-radius:12px;text-align:center;padding:10px 4px;}
+  .phase-chip .m{font-size:18px;}
+  .phase-chip .l{font-size:10px;color:var(--ink-dim);margin-top:4px;}
+  .phase-chip .k{font-size:10.5px;color:var(--marigold);font-weight:600;margin-top:2px;}
+
+  /* mejores dias */
+  .day-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);}
+  .day-item:last-child{border-bottom:none;}
+  .day-item .ic{width:36px;height:36px;border-radius:10px;background:var(--marigold-soft);display:flex;align-items:center;justify-content:center;font-size:16px;flex:none;}
+  .day-item h4{font-size:13.5px;margin:0 0 2px;}
+  .day-item .when{font-size:11.5px;color:var(--marigold);font-weight:600;margin-bottom:3px;}
+  .day-item p{font-size:11.5px;color:var(--ink-dim);margin:0;line-height:1.45;}
+  .disclaimer{font-size:10.5px;color:var(--ink-dim);margin-top:12px;line-height:1.5;border-top:1px solid var(--line);padding-top:10px;}
+
+  /* astrocartografía */
+  .acg-line{display:flex;gap:12px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;}
+  .acg-line .em{font-size:20px;flex:none;}
+  .acg-line h4{font-size:13px;margin:0 0 2px;}
+  .acg-line .cat{font-size:10.5px;color:var(--marigold);font-weight:600;margin-bottom:4px;}
+  .acg-line p{font-size:12px;color:var(--ink-dim);margin:0;line-height:1.5;}
+
+  /* mas herramientas */
+  .tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .tool-tile{
+    height:112px;border-radius:14px;padding:12px;color:#fff;
+    display:flex;flex-direction:column;justify-content:space-between;
+    font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14.5px;
+    background-size:cover;
+  }
+  .tool-tile .icon{width:30px;height:30px;}
+  .tool-tile .icon svg{width:100%;height:100%;}
+  .tool-tile .tt-text{display:flex;flex-direction:column;}
+  .tool-tile span{display:block;font-family:'Work Sans',sans-serif;font-weight:500;font-size:10px;opacity:0.9;}
+  .t1{background:linear-gradient(160deg,#c1672c,#8b5fa3);}
+  .t2{background:linear-gradient(160deg,#5a3f96,#2b2140);}
+  .t3{background:linear-gradient(160deg,#8b5fa3,#c1672c);}
+  .t4{background:linear-gradient(160deg,#2b2140,#5a3f96);}
+
+  /* bottom nav */
+  .bottomnav{
+    position:absolute;left:0;right:0;bottom:0;
+    background:var(--paper);border-top:1px solid var(--line);
+    display:flex;justify-content:space-around;padding:10px 4px 14px;
+  }
+  .bottomnav .it{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9.5px;color:var(--ink-dim);}
+  .bottomnav .it .g{font-size:16px;}
+  .bottomnav .it.active{color:var(--marigold);}
+
+  .install-btn{
+    position:absolute;left:16px;right:16px;bottom:74px;z-index:5;
+    background:var(--marigold);color:#fff;border:none;border-radius:100px;
+    padding:12px;font-size:13px;font-weight:600;cursor:pointer;
+    box-shadow:0 8px 20px rgba(181,101,47,0.35);
+  }
+
+  .ios-modal-bg{
+    display:none;position:fixed;inset:0;background:rgba(20,14,20,0.55);
+    align-items:center;justify-content:center;z-index:50;
+  }
+  .ios-modal-bg.open{display:flex;}
+  .ios-modal{background:#fff;border-radius:16px;padding:22px;max-width:300px;width:90%;}
+  .ios-modal h3{font-size:17px;margin:0 0 12px;color:var(--plum);}
+  .ios-modal ol{padding-left:18px;margin:0 0 16px;font-size:12.5px;color:var(--plum);line-height:1.7;}
+  .ios-modal button{width:100%;}
+
+  .side-note{max-width:380px;margin:22px auto 0;font-size:13px;color:#6b5f6a;line-height:1.6;}
+
+  /* ---- Pantallas de acceso (login/registro/perfil) ---- */
+  .auth-overlay{
+    position:absolute;inset:0;z-index:40;background:var(--page-bg);
+    display:none;flex-direction:column;padding:32px 22px;overflow-y:auto;
+  }
+  .auth-overlay.show{display:flex;}
+  .auth-overlay h1{font-size:26px;margin-bottom:6px;color:var(--plum);}
+  .auth-overlay .sub{font-size:13px;color:var(--ink-dim);margin-bottom:22px;}
+  .auth-field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;font-size:12px;color:var(--ink-dim);}
+  .auth-field input,.auth-field select{
+    border:1px solid var(--line);border-radius:10px;padding:11px 12px;
+    font-family:'Work Sans',sans-serif;font-size:13.5px;color:var(--plum);background:#fff;
+  }
+  .auth-error{background:#fbe6e3;color:#a5442f;border-radius:10px;padding:10px 12px;font-size:12px;margin-bottom:12px;display:none;}
+  .auth-error.show{display:block;}
+  .auth-switch{text-align:center;font-size:12.5px;color:var(--ink-dim);margin-top:16px;}
+  .auth-switch a{color:var(--marigold);font-weight:600;cursor:pointer;}
+  .auth-loading{opacity:0.6;pointer-events:none;}
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div>
+    <div class="phone">
+      <div class="screen">
+        <div class="notch"><div class="pill"></div></div>
+
+        <!-- Pantalla de LOGIN -->
+        <div class="auth-overlay" id="pantalla-login">
+          <h1>✦ Sam Alquimia Astral</h1>
+          <div class="sub">Inicia sesión para ver tu cielo</div>
+          <div class="auth-error" id="login-error"></div>
+          <div class="auth-field"><label>Correo</label><input type="email" id="login-email"></div>
+          <div class="auth-field"><label>Contraseña</label><input type="password" id="login-pass"></div>
+          <button class="btn-primary" onclick="accionLogin()">Entrar</button>
+          <div class="auth-switch">¿Aún no tienes cuenta? <a onclick="mostrarPantalla('registro')">Regístrate</a></div>
+        </div>
+
+        <!-- Pantalla de REGISTRO -->
+        <div class="auth-overlay" id="pantalla-registro">
+          <h1>✦ Crea tu cuenta</h1>
+          <div class="sub">Es gratis empezar</div>
+          <div class="auth-error" id="registro-error"></div>
+          <div class="auth-field"><label>Correo</label><input type="email" id="registro-email"></div>
+          <div class="auth-field"><label>Contraseña</label><input type="password" id="registro-pass" placeholder="Mínimo 6 caracteres"></div>
+          <button class="btn-primary" onclick="accionRegistro()">Crear cuenta</button>
+          <div class="auth-switch">¿Ya tienes cuenta? <a onclick="mostrarPantalla('login')">Inicia sesión</a></div>
+        </div>
+
+        <!-- Pantalla de PERFIL (datos de nacimiento) -->
+        <div class="auth-overlay" id="pantalla-perfil">
+          <h1>✦ Tus datos de nacimiento</h1>
+          <div class="sub">Los necesitamos para calcular tu carta natal real</div>
+          <div class="auth-error" id="perfil-error"></div>
+          <div class="auth-field"><label>Tu nombre</label><input type="text" id="perfil-nombre"></div>
+          <div class="auth-field"><label>Fecha de nacimiento</label><input type="date" id="perfil-fecha"></div>
+          <div class="auth-field"><label>Hora de nacimiento (si no la sabes, deja 12:00)</label><input type="time" id="perfil-hora" value="12:00"></div>
+          <div class="auth-field"><label>Ciudad de nacimiento</label><input type="text" id="perfil-ciudad" placeholder="Ej. Mérida"></div>
+          <div class="auth-field"><label>País (código de 2 letras)</label><input type="text" id="perfil-pais" placeholder="Ej. MX, VE, US" maxlength="2" style="text-transform:uppercase;"></div>
+          <button class="btn-primary" onclick="accionGuardarPerfil()">Guardar y continuar</button>
+        </div>
+
+        <div class="topbar">
+          <span class="menu">☰</span>
+          <div class="brand"><span class="g">✦</span>Sam Alquimia Astral</div>
+          <div class="right"><div class="assist-dot"></div><div class="avatar" onclick="cerrarSesion()" style="cursor:pointer;" title="Cerrar sesión"></div></div>
+        </div>
+
+        <div class="season-banner" id="season-banner"></div>
+
+        <div class="scroll">
+
+          <div class="band">
+            <div class="band-icon" id="band-icon">☀️</div>
+            <div class="date">Sábado, 12 de septiembre</div>
+            <h1><span id="greeting-word">Buenas tardes</span>, Mariana</h1>
+            <div class="quote">Un paso atrás, dos hacia adelante.</div>
+            <div class="chip-list">
+              <div class="row"><span class="g">☉</span>Sol en <b>Virgo</b></div>
+              <div class="row"><span class="g">↑</span>Ascendente en <b>Libra</b></div>
+              <div class="row"><span class="g">☽</span>Luna en <b>Escorpio</b></div>
+            </div>
+            <span class="link-arrow">Ver carta completa ›</span>
+          </div>
+
+          <div class="section">
+            <h2>Tus cartas</h2>
+            <div class="desc">Calcula hasta 8 cartas astrales: la tuya, tu pareja, tu familia o tus amigas.</div>
+            <div class="charts-scroll">
+              <div class="chart-chip"><div class="circ">M</div><div class="lbl">Mariana</div></div>
+              <div class="chart-chip"><div class="circ">R</div><div class="lbl">Rosa (mamá)</div></div>
+              <div class="chart-chip"><div class="circ">D</div><div class="lbl">David</div></div>
+              <div class="chart-chip"><div class="circ">L</div><div class="lbl">Lupita</div></div>
+              <div class="chart-chip add"><div class="circ">+</div><div class="lbl">Agregar</div></div>
+            </div>
+            <div class="charts-count">4 de 8 cartas creadas</div>
+          </div>
+
+          <div class="section">
+            <h2>Tu carta natal (real)</h2>
+            <div class="desc" id="carta-desc">Calculada con tus datos guardados: Swiss Ephemeris, precisión profesional.</div>
+            <div class="calc-form">
+              <button class="btn-primary" id="btn-calcular-carta" onclick="calcularCartaReal()">Calcular mi carta natal</button>
+              <div class="calc-result" id="calc-result">
+                <div class="calc-result-title">Tu resultado</div>
+                <div class="chip-list" style="margin-bottom:0;" id="carta-resultado-chips"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2>Calcular otra carta natal</h2>
+            <div class="desc">Vista previa del formulario — próximamente podrás calcular la carta de alguien más (familia, pareja, amigas).</div>
+            <div class="calc-form">
+              <label>Nombre<input type="text" placeholder="Ej. Valentina" value="Valentina"></label>
+              <div class="calc-row">
+                <label>Fecha de nacimiento<input type="date" value="1994-03-22"></label>
+                <label>Hora<input type="time" value="07:15"></label>
+              </div>
+              <label>Lugar de nacimiento<input type="text" placeholder="Ciudad, país" value="Mérida, México"></label>
+              <button class="btn-primary" onclick="calcularDemo()">Calcular carta</button>
+              <div class="calc-result" id="calc-result-demo">
+                <div class="calc-result-title">Vista previa del resultado</div>
+                <div class="chip-list" style="margin-bottom:0;">
+                  <div class="row">☉ Sol en <b>Piscis</b></div>
+                  <div class="row">↑ Ascendente en <b>Sagitario</b></div>
+                  <div class="row">☽ Luna en <b>Cáncer</b></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2>Horóscopo personalizado</h2>
+            <div class="desc">Tus influencias diarias, cruzadas con tu carta natal.</div>
+            <div class="tab-row">
+              <div class="tab active">Mariana</div>
+              <div class="tab">Rosa</div>
+              <div class="tab">David</div>
+            </div>
+            <div class="influence"><div class="mk"></div><div><h4>Presta atención a los detalles</h4><p>Antes de responder algo importante, léelo dos veces. Hay matices que se te pueden escapar hoy.</p></div></div>
+            <div class="influence"><div class="mk"></div><div><h4>Tu intuición está más despierta</h4><p>Confía en la primera impresión que tengas de una persona o situación nueva.</p></div></div>
+            <span class="link-arrow">Ver las 6 influencias restantes ›</span>
+          </div>
+
+          <div class="section">
+            <h2>Tránsitos del momento</h2>
+            <div class="desc">El clima astrológico general, más allá de tu carta personal.</div>
+            <div class="influence"><div class="mk"></div><div><h4>Júpiter en Leo (hasta julio 2027)</h4><p>Un ciclo largo de expansión, creatividad y protagonismo — buen momento para crecer un proyecto propio.</p></div></div>
+            <div class="influence"><div class="mk"></div><div><h4>Próxima temporada de eclipses: febrero 2027</h4><p>Un eclipse solar y uno lunar marcarán cierres e inicios importantes — te avisaremos con tiempo.</p></div></div>
+            <div class="influence"><div class="mk"></div><div><h4>Luna llena este mes en Piscis</h4><p>Momento de soltar lo que ya cumplió su ciclo, sobre todo en temas emocionales o creativos.</p></div></div>
+          </div>
+
+          <div class="section">
+            <h2>Sinastría</h2>
+            <div class="desc">Compara tu carta con la de cualquiera de tus cartas guardadas.</div>
+            <div class="synastry-card">
+              <div class="synastry-select"><span>Mariana + David</span><span>▾</span></div>
+              <div class="synastry-glyphs"><span>♍</span><span>♎</span><span>♏</span></div>
+              <div class="compat-bar"><div class="fill"></div></div>
+              <div class="compat-label">Afinidad general: alta en comunicación, intensa en lo emocional</div>
+              <button class="btn-primary">Ver compatibilidad completa</button>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2>Consejo diario</h2>
+            <div class="desc">Una carta de tarot, nueva cada día.</div>
+            <div class="tarot-row">
+              <div class="tarot-card"></div><div class="tarot-card"></div><div class="tarot-card"></div><div class="tarot-card"></div><div class="tarot-card"></div>
+            </div>
+            <button class="btn-ghost-round">Revelar carta</button>
+          </div>
+
+          <div class="section">
+            <h2>Ciclo lunar</h2>
+            <div class="desc" id="luna-intro">Qué significa cada fase y cómo aprovecharla.</div>
+
+            <div class="moon-now" id="moon-now">
+              <div class="m">🌑</div>
+              <div><h4 id="moon-now-title">Luna Nueva</h4><p id="moon-now-sub"></p></div>
+            </div>
+
+            <div class="natal-highlight" id="natal-highlight"></div>
+
+            <div class="aspects-table" id="aspects-table"></div>
+
+            <div class="how-to-use" id="how-to-use"></div>
+
+            <div class="phase-grid">
+              <div class="phase-chip"><div class="m">🌑</div><div class="l">Nueva</div><div class="k">Iniciar</div></div>
+              <div class="phase-chip"><div class="m">🌓</div><div class="l">Creciente</div><div class="k">Construir</div></div>
+              <div class="phase-chip"><div class="m">🌕</div><div class="l">Llena</div><div class="k">Culminar</div></div>
+              <div class="phase-chip"><div class="m">🌗</div><div class="l">Menguante</div><div class="k">Soltar</div></div>
+            </div>
+            <div class="desc" style="margin-top:16px;margin-bottom:8px;">Próximos 7 días</div>
+            <div class="week-strip">
+              <div class="wd"><div class="n">Sáb</div><div class="m">🌑</div></div>
+              <div class="wd"><div class="n">Dom</div><div class="m">🌒</div></div>
+              <div class="wd"><div class="n">Lun</div><div class="m">🌒</div></div>
+              <div class="wd"><div class="n">Mar</div><div class="m">🌓</div></div>
+              <div class="wd"><div class="n">Mié</div><div class="m">🌓</div></div>
+              <div class="wd"><div class="n">Jue</div><div class="m">🌔</div></div>
+              <div class="wd"><div class="n">Vie</div><div class="m">🌔</div></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2>Mejores días para...</h2>
+            <div class="desc">Según la tradición astrológica y la fase lunar actual.</div>
+
+            <div class="day-item">
+              <div class="ic">✂️</div>
+              <div><h4>Cortarte el cabello</h4><div class="when">Luna creciente en Tauro o Leo</div><p>Se asocia con crecimiento más rápido y con más volumen.</p></div>
+            </div>
+            <div class="day-item">
+              <div class="ic">🎨</div>
+              <div><h4>Tatuarte</h4><div class="when">Luna menguante, evitando Escorpio</div><p>Tradicionalmente se prefiere para mejor cicatrización y menos sensibilidad.</p></div>
+            </div>
+            <div class="day-item">
+              <div class="ic">🚀</div>
+              <div><h4>Lanzar tu negocio o producto</h4><div class="when">Luna nueva o creciente en tu signo</div><p>Energía de inicio: ideal para anunciar algo y que tome impulso.</p></div>
+            </div>
+            <div class="day-item">
+              <div class="ic">💳</div>
+              <div><h4>Pedir un crédito</h4><div class="when">Luna creciente en Tauro o Capricornio</div><p>Se asocia con estabilidad y compromisos que crecen de forma sólida.</p></div>
+            </div>
+            <div class="day-item">
+              <div class="ic">🩺</div>
+              <div><h4>Cirugías</h4><div class="when">Luna menguante, evitando Luna llena</div><p>La tradición sugiere menguante para recuperaciones más tranquilas.</p></div>
+            </div>
+
+            <div class="disclaimer">Estas son guías de la tradición astrológica, pensadas para acompañar tu intuición — no sustituyen la opinión de tu médico, cirujano o asesor financiero.</div>
+          </div>
+
+          <div class="section">
+            <h2>Astrocartografía</h2>
+            <div class="desc" id="acg-intro">Qué lugares del mundo activan distintas energías de tu carta — pensado para quien ha migrado o vive lejos de donde nació.</div>
+
+            <div class="calc-form" style="margin-bottom:16px;">
+              <label>¿Dónde vives ahora?<input type="text" id="acg-place" placeholder="Ciudad, país" value="Mérida, México"></label>
+              <button class="btn-primary" onclick="calcularACG()">Ver mis líneas ahí</button>
+            </div>
+
+            <div id="acg-lines"></div>
+            <div class="disclaimer">Vista previa con datos de ejemplo — el cálculo real por coordenadas se activa con la API de astrocartografía.</div>
+          </div>
+
+          <div style="background:var(--moon-navy);border-radius:16px;padding:18px;color:#fff;margin:12px 16px;box-shadow:0 2px 10px rgba(58,31,56,0.12);">
+            <h2 style="color:#fff;font-size:18px;margin-bottom:6px;border-left:3px solid var(--marigold);padding-left:11px;">Desbloquea tu cielo completo</h2>
+            <p style="font-size:12px;color:#d8c3ce;margin:0 0 14px;line-height:1.5;">Sinastrías ilimitadas, biorritmo, ciclo lunar completo y tus 8 cartas guardadas.</p>
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--blush-1);">$8.88<span style="font-size:11.5px;color:#d8c3ce;font-family:'Work Sans',sans-serif;"> /mes</span></div>
+              <button class="btn-ghost-round" style="background:var(--marigold);">Suscribirme</button>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2>Más herramientas</h2>
+            <div class="tools-grid">
+              <div class="tool-tile t1">
+                <div class="icon"><svg viewBox="0 0 32 32" fill="none"><path d="M11 8c-3 0-5.5 2.3-5.5 5.5C5.5 19 12 24 16 26.5 20 24 26.5 19 26.5 13.5 26.5 10.3 24 8 21 8c-2 0-3.8 1.1-5 2.8C14.8 9.1 13 8 11 8z" fill="#fff" opacity="0.9"/><path d="M16 12.5c1.2-1.5 2.8-2.3 4.3-2 2 .4 3.2 2.3 2.8 4.3-.5 2.6-3.5 5-7.1 7.7-3.6-2.7-6.6-5.1-7.1-7.7-.4-2 .8-3.9 2.8-4.3 1.5-.3 3.1.5 4.3 2z" fill="#c1672c"/></svg></div>
+                <div class="tt-text">Mapa del Amor<span>Análisis de pareja</span></div>
+              </div>
+              <div class="tool-tile t2">
+                <div class="icon"><svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="10" stroke="#fff" stroke-width="1.6"/><ellipse cx="16" cy="16" rx="10" ry="4.2" stroke="#fff" stroke-width="1.2" opacity="0.8"/><ellipse cx="16" cy="16" rx="4.2" ry="10" stroke="#fff" stroke-width="1.2" opacity="0.8"/><circle cx="20" cy="11" r="1.8" fill="#c9793f"/></svg></div>
+                <div class="tt-text">Astrocartografía<span>Tu mapa de reubicación</span></div>
+              </div>
+              <div class="tool-tile t3">
+                <div class="icon"><svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="7" fill="#fff" opacity="0.15"/><circle cx="16" cy="16" r="7" stroke="#fff" stroke-width="1.4"/><path d="M16 6l1 3-1 3-1-3z" fill="#fff"/><path d="M25 12l-2.5 1.5L25 15l1-1.5z" fill="#fff"/><path d="M7 12l2.5 1.5L7 15l-1-1.5z" fill="#fff"/></svg></div>
+                <div class="tt-text">Asistente IA<span>Pregúntale a tu carta</span></div>
+              </div>
+              <div class="tool-tile t4">
+                <div class="icon"><svg viewBox="0 0 32 32" fill="none"><path d="M16 10c-2.5-1.6-5.5-2-8.5-1.3V21c3-.7 6 -.3 8.5 1.3 2.5-1.6 5.5-2 8.5-1.3V8.7c-3-.7-6-.3-8.5 1.3z" stroke="#fff" stroke-width="1.4" fill="rgba(255,255,255,0.08)"/><line x1="16" y1="10" x2="16" y2="22.3" stroke="#fff" stroke-width="1.2"/></svg></div>
+                <div class="tt-text">Diario personal<span>Tu día y el cielo</span></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <button class="install-btn" id="install-btn" style="display:none;">⬇ Instalar app</button>
+
+        <div class="bottomnav">
+          <div class="it active"><div class="g">⌂</div>Inicio</div>
+          <div class="it"><div class="g">✦</div>Mis cartas</div>
+          <div class="it"><div class="g">♡</div>Sinastría</div>
+          <div class="it"><div class="g">☉</div>Horóscopo</div>
+          <div class="it"><div class="g">☾</div>Luna</div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="ios-modal-bg" id="ios-modal-bg">
+      <div class="ios-modal">
+        <h3>Instalar en iPhone</h3>
+        <ol>
+          <li>Toca el botón de compartir <b>⬆️</b> en la barra de Safari</li>
+          <li>Baja y elige <b>"Agregar a pantalla de inicio"</b></li>
+          <li>Toca <b>"Agregar"</b> — listo, ya tienes el ícono ✦</li>
+        </ol>
+        <button class="btn-primary" onclick="document.getElementById('ios-modal-bg').classList.remove('open')">Entendido</button>
+      </div>
+    </div>
+
+    <p class="side-note">Vista previa de app móvil — desliza dentro de la pantalla para ver todo el contenido.</p>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script>
+  function calcularDemo(){
+    document.getElementById('calc-result').classList.add('show');
+  }
+
+  function calcularACG(){
+    renderACG();
+  }
+
+  function renderACG(){
+    if (typeof APP_DATA === 'undefined' || !APP_DATA.astrocartography) return;
+    const acg = APP_DATA.astrocartography;
+    document.getElementById('acg-intro').textContent = acg.intro;
+    document.getElementById('acg-lines').innerHTML = acg.lines.map(l => `
+      <div class="acg-line">
+        <div class="em">${l.emoji}</div>
+        <div>
+          <div class="cat">${l.category}</div>
+          <h4>${l.planet} en tu ${l.angle}</h4>
+          <p>${l.note}</p>
+        </div>
+      </div>
+    `).join('');
+  }
+  renderACG();
+
+  // ---- Paso 3: botón de instalar ----
+  let deferredPrompt = null;
+  const installBtn = document.getElementById('install-btn');
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.style.display = 'block';
+  });
+
+  if (isIOS && installBtn) {
+    const isStandalone = window.navigator.standalone === true;
+    if (!isStandalone) installBtn.style.display = 'block';
+  }
+
+  if (installBtn) {
+    installBtn.addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        installBtn.style.display = 'none';
+      } else if (isIOS) {
+        document.getElementById('ios-modal-bg').classList.add('open');
+      }
+    });
+  }
+
+  window.addEventListener('appinstalled', () => {
+    if (installBtn) installBtn.style.display = 'none';
+  });
+
+  (function renderTimeContext(){
+    const hour = new Date().getHours();
+    const icon = document.getElementById('band-icon');
+    const greet = document.getElementById('greeting-word');
+    if (!icon || !greet) return;
+
+    let emoji, word;
+    if (hour >= 5 && hour < 11) { emoji = '☕'; word = 'Buenos días'; }
+    else if (hour >= 11 && hour < 19) { emoji = '☀️'; word = 'Buenas tardes'; }
+    else { emoji = '🌙'; word = 'Buenas noches'; }
+
+    icon.textContent = emoji;
+    greet.textContent = word;
+  })();
+
+  (function renderLunarCycle(){
+    if (typeof APP_DATA === 'undefined' || !APP_DATA.lunarCycle) return;
+    const lc = APP_DATA.lunarCycle;
+
+    document.getElementById('luna-intro').textContent = lc.intro;
+    document.getElementById('moon-now-title').textContent = `${lc.phase} en ${lc.sign}, ${lc.degree}`;
+    document.getElementById('moon-now-sub').textContent = `${lc.rangeText} · ${lc.nextText}`;
+    document.getElementById('natal-highlight').textContent = lc.natalHighlight;
+
+    document.getElementById('aspects-table').innerHTML = `
+      <div class="section-head" style="margin:0 0 8px;"><h2 style="font-size:14px;">Aspectos con tu carta natal</h2></div>
+      ${lc.aspectsToNatal.map(a => `
+        <div class="row">
+          <span class="desc-col"><span class="tag ${a.tone}"></span>${a.aspect} con ${a.target}</span>
+          <span class="orb-col">${a.orb}</span>
+        </div>`).join('')}
+    `;
+
+    document.getElementById('how-to-use').innerHTML = `<b>Cómo aprovecharla:</b> ${lc.howToUseIt}`;
+  })();
+
+  (function renderSeasonBanner(){
+    const el = document.getElementById('season-banner');
+    if (!el || typeof getCurrentSeason !== 'function') return;
+    const now = new Date();
+    const current = getCurrentSeason(now);
+    const { next, days } = getNextSeasonChange(now);
+    el.innerHTML = `
+      <span class="now">${current.emoji} Temporada de ${current.sign}</span>
+      <span class="next">${days <= 14 ? `Faltan ${days} días para el equinoccio/entrada a ${next.sign} ${next.emoji}` : `Entra ${next.sign} en ${days} días`}</span>
+    `;
+  })();
+
+  // ======================================================
+  // Conexión real con el servidor (login, perfil, carta natal)
+  // ======================================================
+  let SESION = { token: localStorage.getItem('saa_token') || null, nombre: null };
+
+  function mostrarPantalla(nombre) {
+    document.querySelectorAll('.auth-overlay').forEach(el => el.classList.remove('show'));
+    if (nombre) document.getElementById('pantalla-' + nombre).classList.add('show');
+  }
+
+  function mostrarErrorEn(id, mensaje) {
+    const el = document.getElementById(id);
+    el.textContent = mensaje;
+    el.classList.add('show');
+  }
+  function ocultarErrorEn(id) {
+    document.getElementById(id).classList.remove('show');
+  }
+
+  async function accionRegistro() {
+    ocultarErrorEn('registro-error');
+    const email = document.getElementById('registro-email').value.trim();
+    const password = document.getElementById('registro-pass').value;
+    if (!email || password.length < 6) {
+      return mostrarErrorEn('registro-error', 'Escribe un correo válido y una contraseña de al menos 6 caracteres.');
+    }
+    const r = await fetch('/auth/registro', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await r.json();
+    if (!r.ok) return mostrarErrorEn('registro-error', data.error || 'No se pudo crear la cuenta.');
+    // Después de registrarse, la mandamos directo a iniciar sesión
+    document.getElementById('login-email').value = email;
+    mostrarPantalla('login');
+  }
+
+  async function accionLogin() {
+    ocultarErrorEn('login-error');
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-pass').value;
+    const r = await fetch('/auth/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await r.json();
+    if (!r.ok || !data.sesion) return mostrarErrorEn('login-error', data.error || 'Correo o contraseña incorrectos.');
+    SESION.token = data.sesion.access_token;
+    localStorage.setItem('saa_token', SESION.token);
+    await revisarPerfilYArrancar();
+  }
+
+  async function accionGuardarPerfil() {
+    ocultarErrorEn('perfil-error');
+    const cuerpo = {
+      nombre: document.getElementById('perfil-nombre').value.trim(),
+      fecha_nacimiento: document.getElementById('perfil-fecha').value,
+      hora_nacimiento: document.getElementById('perfil-hora').value || '12:00',
+      ciudad_nacimiento: document.getElementById('perfil-ciudad').value.trim(),
+      pais_codigo: document.getElementById('perfil-pais').value.trim().toUpperCase(),
+    };
+    if (!cuerpo.nombre || !cuerpo.fecha_nacimiento || !cuerpo.ciudad_nacimiento || cuerpo.pais_codigo.length !== 2) {
+      return mostrarErrorEn('perfil-error', 'Llena tu nombre, fecha, ciudad y un código de país de 2 letras (ej. MX).');
+    }
+    const r = await fetch('/perfil', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + SESION.token },
+      body: JSON.stringify(cuerpo),
+    });
+    const data = await r.json();
+    if (!r.ok) return mostrarErrorEn('perfil-error', data.error || 'No se pudo guardar tu perfil.');
+    entrarALaApp(data.perfil);
+  }
+
+  function cerrarSesion() {
+    localStorage.removeItem('saa_token');
+    SESION = { token: null, nombre: null };
+    mostrarPantalla('login');
+  }
+
+  function entrarALaApp(perfil) {
+    mostrarPantalla(null); // oculta todas las pantallas de acceso
+    SESION.nombre = perfil?.nombre || 'Usuaria';
+    const greet = document.getElementById('greeting-word');
+    const nombreEl = document.querySelector('.band h1');
+    if (nombreEl) nombreEl.innerHTML = `<span id="greeting-word">${greet ? greet.textContent : 'Hola'}</span>, ${SESION.nombre}`;
+  }
+
+  async function revisarPerfilYArrancar() {
+    if (!SESION.token) return mostrarPantalla('login');
+    const r = await fetch('/perfil', { headers: { Authorization: 'Bearer ' + SESION.token } });
+    if (!r.ok) { cerrarSesion(); return; }
+    const data = await r.json();
+    if (!data.perfil || !data.perfil.ciudad_nacimiento) {
+      mostrarPantalla('perfil');
+    } else {
+      entrarALaApp(data.perfil);
+    }
+  }
+
+  async function calcularCartaReal() {
+    const boton = document.getElementById('btn-calcular-carta');
+    const chips = document.getElementById('carta-resultado-chips');
+    const resultBox = document.getElementById('calc-result');
+    boton.textContent = 'Calculando...';
+    boton.disabled = true;
+    try {
+      const r = await fetch('/carta-natal', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + SESION.token },
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Error al calcular');
+
+      const s = data.carta?.datos_carta?.subject_data;
+      if (s) {
+        chips.innerHTML = `
+          <div class="row">☉ Sol en <b>${s.sun?.sign || '—'}</b></div>
+          <div class="row">☽ Luna en <b>${s.moon?.sign || '—'}</b></div>
+          <div class="row">☿ Mercurio en <b>${s.mercury?.sign || '—'}</b></div>
+          <div class="row">♀ Venus en <b>${s.venus?.sign || '—'}</b></div>
+          <div class="row">♂ Marte en <b>${s.mars?.sign || '—'}</b></div>
+        `;
+      } else {
+        chips.innerHTML = '<div class="row">Cálculo recibido, pero en un formato distinto al esperado.</div>';
+      }
+      resultBox.classList.add('show');
+    } catch (err) {
+      chips.innerHTML = `<div class="row" style="color:#a5442f;">${err.message}</div>`;
+      resultBox.classList.add('show');
+    }
+    boton.textContent = 'Calcular mi carta natal';
+    boton.disabled = false;
+  }
+
+  // Al cargar la página: ¿ya hay sesión guardada?
+  revisarPerfilYArrancar();
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js').catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>
