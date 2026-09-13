@@ -140,14 +140,25 @@ app.post('/carta-natal', requireLogin, async (req, res) => {
     const [hora, minuto] = (perfil.hora_nacimiento || '12:00').split(':').map(Number);
 
     // 2) Le pedimos a Astrology API que calcule la carta real
-    const respuesta = await astrologyApi.post('/natal-chart', {
-      year: anio,
-      month: mes,
-      day: dia,
-      hour: hora,
-      minute: minuto,
-      latitude: perfil.latitud,
-      longitude: perfil.longitud,
+    const respuesta = await astrologyApi.post('/charts/natal', {
+      subject: {
+        name: perfil.nombre || 'Usuaria',
+        birth_data: {
+          year: anio,
+          month: mes,
+          day: dia,
+          hour: hora,
+          minute: minuto,
+          second: 0,
+          latitude: perfil.latitud,
+          longitude: perfil.longitud,
+        },
+      },
+      options: {
+        house_system: 'P',       // Placidus, el sistema de casas más usado
+        zodiac_type: 'Tropic',   // astrología occidental (tropical), no védica
+        language: 'es',
+      },
     });
 
     // 3) Guardamos el resultado en la tabla natal_charts, ligado a esta usuaria
@@ -165,7 +176,10 @@ app.post('/carta-natal', requireLogin, async (req, res) => {
     res.json({ mensaje: 'Carta natal calculada', carta: cartaGuardada });
   } catch (err) {
     console.error(err?.response?.data || err.message);
-    res.status(500).json({ error: 'No se pudo calcular la carta. Revisa los datos de nacimiento.' });
+    res.status(500).json({
+      error: 'No se pudo calcular la carta. Revisa los datos de nacimiento.',
+      detalle_tecnico: err?.response?.data || err.message, // TEMPORAL: para diagnosticar, quitar después
+    });
   }
 });
 
