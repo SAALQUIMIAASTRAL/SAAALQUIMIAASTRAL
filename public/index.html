@@ -250,6 +250,11 @@
 
   .side-note{max-width:380px;margin:22px auto 0;font-size:13px;color:#6b5f6a;line-height:1.6;}
 
+  .zoom-modal-bg{display:none;position:fixed;inset:0;background:rgba(20,14,20,0.92);z-index:60;align-items:center;justify-content:center;padding:20px;overflow:auto;}
+  .zoom-modal-bg.open{display:flex;}
+  .zoom-modal-bg svg{width:100%;height:auto;background:#fff;border-radius:12px;}
+  .zoom-close-btn{position:fixed;top:16px;right:16px;background:#fff;border:none;border-radius:50%;width:36px;height:36px;font-size:18px;z-index:61;cursor:pointer;}
+
   /* ---- Pantallas de acceso (login/registro/perfil) ---- */
   .auth-overlay{
     position:absolute;inset:0;z-index:40;background:var(--page-bg);
@@ -280,28 +285,38 @@
       <div class="screen">
         <div class="notch"><div class="pill"></div></div>
 
-        <!-- Pantalla de LOGIN -->
-        <div class="auth-overlay" id="pantalla-login">
+        <!-- Pantalla de BIENVENIDA -->
+        <div class="auth-overlay show" id="pantalla-bienvenida">
           <div style="text-align:center;margin-bottom:6px;">
             <div style="font-size:34px;">✦🌙✨</div>
           </div>
           <h1 style="text-align:center;">Sam Alquimia Astral</h1>
           <div class="sub" style="text-align:center;margin-bottom:20px;">Tu cielo, tu carta y tu luna — en un solo lugar</div>
-
           <div style="background:var(--marigold-soft);border:1px solid rgba(181,101,47,0.25);border-radius:14px;padding:14px 16px;margin-bottom:22px;">
             <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin-bottom:8px;">Aquí encontrarás:</div>
             <div style="display:flex;flex-direction:column;gap:7px;font-size:12.5px;color:var(--plum);">
-              <div>🔮 <b>Tu carta natal real</b>, calculada con precisión profesional</div>
-              <div>🌙 <b>Fases lunares</b> y cuándo aprovecharlas</div>
-              <div>💞 <b>Sinastría</b> — compara tu carta con quien quieras</div>
-              <div>🗺️ <b>Astrocartografía</b> — los lugares que activan tu energía</div>
-              <div>🌸 <b>Flor armónica</b> y herramientas de astrología avanzada</div>
-              <div>☀️ <b>Horóscopo diario</b> personalizado, no genérico</div>
+              <div>🔮 <b>Tu carta natal real</b></div>
+              <div>🌙 <b>Fases lunares</b></div>
+              <div>💞 <b>Sinastría</b></div>
+              <div>🗺️ <b>Astrocartografía</b></div>
+              <div>🌸 <b>Flor armónica</b></div>
+              <div>☀️ <b>Horóscopo diario</b></div>
             </div>
             <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(181,101,47,0.25);font-size:12px;color:var(--ink-dim);">
-              Todo por <b style="color:var(--marigold);">$8.88 USD/mes</b> — cancela cuando quieras.
+              Todo por <b style="color:var(--marigold);">$8.88 USD/mes</b>
             </div>
           </div>
+          <button class="btn-primary" onclick="mostrarPantalla('registro')">Registrarme gratis</button>
+          <button class="btn-primary" style="background:var(--lilac);margin-top:10px;" onclick="mostrarPantalla('login')">Ya tengo cuenta</button>
+        </div>
+
+        <!-- Pantalla de LOGIN -->
+        <div class="auth-overlay" id="pantalla-login">
+          <div style="text-align:center;margin-bottom:16px;">
+            <div style="font-size:34px;">✦🌙✨</div>
+          </div>
+          <h1 style="text-align:center;">Inicia sesión</h1>
+          <div class="sub" style="text-align:center;margin-bottom:20px;">Entra para ver tu cielo</div>
 
           <div class="auth-error" id="login-error"></div>
           <div class="auth-field"><label>Correo</label><input type="email" id="login-email"></div>
@@ -309,6 +324,7 @@
           <button class="btn-primary" onclick="accionLogin()">Entrar</button>
           <div class="auth-switch">¿Aún no tienes cuenta? <a onclick="mostrarPantalla('registro')">Regístrate gratis</a></div>
         </div>
+
 
         <!-- Pantalla de REGISTRO -->
         <div class="auth-overlay" id="pantalla-registro">
@@ -356,11 +372,11 @@
             <h1><span id="greeting-word">Buenas tardes</span>, Mariana</h1>
             <div class="quote">Un paso atrás, dos hacia adelante.</div>
             <div class="chip-list">
-              <div class="row"><span class="g">☉</span>Sol en <b>Virgo</b></div>
-              <div class="row"><span class="g">↑</span>Ascendente en <b>Libra</b></div>
-              <div class="row"><span class="g">☽</span>Luna en <b>Escorpio</b></div>
+              <div class="row"><span class="g">☉</span>Sol en <b id="banda-sol">Virgo</b></div>
+              <div class="row"><span class="g">↑</span>Ascendente en <b id="banda-asc">Libra</b></div>
+              <div class="row"><span class="g">☽</span>Luna en <b id="banda-luna">Escorpio</b></div>
             </div>
-            <span class="link-arrow">Ver carta completa ›</span>
+            <span class="link-arrow" onclick="irAPagar()" style="cursor:pointer;">Ver carta completa ›</span>
           </div>
 
           <div class="section">
@@ -382,7 +398,8 @@
             <div class="calc-form">
               <button class="btn-primary" id="btn-calcular-carta" onclick="calcularCartaReal()">Calcular mi carta natal</button>
               <button class="btn-primary" id="btn-carta-visual" style="background:var(--lilac);margin-top:10px;" onclick="verCartaVisual()">Ver mi carta en rueda 🔮</button>
-              <div id="carta-visual-contenedor" style="margin-top:14px;"></div>
+              <div id="carta-visual-contenedor" style="margin-top:14px;cursor:pointer;" onclick="verEnGrande()"></div>
+              <div class="desc" style="text-align:center;margin-top:4px;" id="zoom-hint"></div>
               <div class="calc-result" id="calc-result">
                 <div class="calc-result-title">Tu resultado</div>
                 <div class="chip-list" style="margin-bottom:0;" id="carta-resultado-chips"></div>
@@ -422,7 +439,7 @@
             </div>
             <div class="influence"><div class="mk"></div><div><h4>Presta atención a los detalles</h4><p>Antes de responder algo importante, léelo dos veces. Hay matices que se te pueden escapar hoy.</p></div></div>
             <div class="influence"><div class="mk"></div><div><h4>Tu intuición está más despierta</h4><p>Confía en la primera impresión que tengas de una persona o situación nueva.</p></div></div>
-            <span class="link-arrow">Ver las 6 influencias restantes ›</span>
+            <span class="link-arrow" onclick="irAPagar()" style="cursor:pointer;">Ver las 6 influencias restantes ›</span>
           </div>
 
           <div class="section">
@@ -441,7 +458,7 @@
               <div class="synastry-glyphs"><span>♍</span><span>♎</span><span>♏</span></div>
               <div class="compat-bar"><div class="fill"></div></div>
               <div class="compat-label">Afinidad general: alta en comunicación, intensa en lo emocional</div>
-              <button class="btn-primary">Ver compatibilidad completa</button>
+              <button class="btn-primary" onclick="irAPagar()">Ver compatibilidad completa</button>
             </div>
           </div>
 
@@ -528,12 +545,12 @@
             <div class="disclaimer">Vista previa con datos de ejemplo — el cálculo real por coordenadas se activa con la API de astrocartografía.</div>
           </div>
 
-          <div style="background:var(--moon-navy);border-radius:16px;padding:18px;color:#fff;margin:12px 16px;box-shadow:0 2px 10px rgba(58,31,56,0.12);">
+          <div style="background:var(--moon-navy);border-radius:16px;padding:18px;color:#fff;margin:12px 16px;box-shadow:0 2px 10px rgba(58,31,56,0.12);" id="tarjeta-suscripcion">
             <h2 style="color:#fff;font-size:18px;margin-bottom:6px;border-left:3px solid var(--marigold);padding-left:11px;">Desbloquea tu cielo completo</h2>
             <p style="font-size:12px;color:#d8c3ce;margin:0 0 14px;line-height:1.5;">Sinastrías ilimitadas, biorritmo, ciclo lunar completo y tus 8 cartas guardadas.</p>
             <div style="display:flex;align-items:center;justify-content:space-between;">
-              <div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--blush-1);">$8.88<span style="font-size:11.5px;color:#d8c3ce;font-family:'Work Sans',sans-serif;"> /mes</span></div>
-              <button class="btn-ghost-round" style="background:var(--marigold);">Suscribirme</button>
+              <div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:#fff;">$8.88<span style="font-size:11.5px;color:#d8c3ce;font-family:'Work Sans',sans-serif;"> /mes</span></div>
+              <button class="btn-ghost-round" style="background:var(--marigold);" onclick="accionSuscribirse()" id="btn-suscribirse">Suscribirme</button>
             </div>
           </div>
 
@@ -584,6 +601,11 @@
         </ol>
         <button class="btn-primary" onclick="document.getElementById('ios-modal-bg').classList.remove('open')">Entendido</button>
       </div>
+    </div>
+
+    <div class="zoom-modal-bg" id="zoom-modal-bg" onclick="cerrarZoom()">
+      <button class="zoom-close-btn" onclick="cerrarZoom()">✕</button>
+      <div id="zoom-modal-content" onclick="event.stopPropagation()"></div>
     </div>
 
     <p class="side-note">Vista previa de app móvil — desliza dentro de la pantalla para ver todo el contenido.</p>
@@ -811,10 +833,11 @@
     const greet = document.getElementById('greeting-word');
     const nombreEl = document.querySelector('.band h1');
     if (nombreEl) nombreEl.innerHTML = `<span id="greeting-word">${greet ? greet.textContent : 'Hola'}</span>, ${SESION.nombre}`;
+    actualizarBandaConCartaReal();
   }
 
   async function revisarPerfilYArrancar() {
-    if (!SESION.token) return mostrarPantalla('login');
+    if (!SESION.token) return mostrarPantalla('bienvenida');
     const r = await fetch('/perfil', { headers: { Authorization: 'Bearer ' + SESION.token } });
     if (!r.ok) { cerrarSesion(); return; }
     const data = await r.json();
@@ -842,11 +865,11 @@
       const s = data.carta?.datos_carta?.subject_data;
       if (s && s.sun) {
         chips.innerHTML = `
-          <div class="carta-real-row">☉ Sol en <b>${s.sun?.sign || '—'}</b></div>
-          <div class="carta-real-row">☽ Luna en <b>${s.moon?.sign || '—'}</b></div>
-          <div class="carta-real-row">☿ Mercurio en <b>${s.mercury?.sign || '—'}</b></div>
-          <div class="carta-real-row">♀ Venus en <b>${s.venus?.sign || '—'}</b></div>
-          <div class="carta-real-row">♂ Marte en <b>${s.mars?.sign || '—'}</b></div>
+          <div class="carta-real-row">☉ Sol en <b>${s.sun?.sign || '—'} ${s.sun?.position ? Math.floor(s.sun.position)+'°' : ''}</b></div>
+          <div class="carta-real-row">☽ Luna en <b>${s.moon?.sign || '—'} ${s.moon?.position ? Math.floor(s.moon.position)+'°' : ''}</b></div>
+          <div class="carta-real-row">☿ Mercurio en <b>${s.mercury?.sign || '—'} ${s.mercury?.position ? Math.floor(s.mercury.position)+'°' : ''}</b></div>
+          <div class="carta-real-row">♀ Venus en <b>${s.venus?.sign || '—'} ${s.venus?.position ? Math.floor(s.venus.position)+'°' : ''}</b></div>
+          <div class="carta-real-row">♂ Marte en <b>${s.mars?.sign || '—'} ${s.mars?.position ? Math.floor(s.mars.position)+'°' : ''}</b></div>
         `;
       } else {
         chips.innerHTML = `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);">${JSON.stringify(data.carta?.datos_carta, null, 2)}</pre>`;
@@ -874,6 +897,7 @@
       if (!r.ok) throw new Error(data.error || 'No se pudo generar.');
       if (data.svg) {
         contenedor.innerHTML = data.svg;
+        document.getElementById('zoom-hint').textContent = '👆 Toca la carta para verla en grande';
       } else {
         contenedor.innerHTML = `<pre style="white-space:pre-wrap;font-size:9px;color:var(--plum);">${JSON.stringify(data.crudo, null, 2)}</pre>`;
       }
@@ -882,6 +906,55 @@
     }
     boton.textContent = 'Ver mi carta en rueda 🔮';
     boton.disabled = false;
+  }
+
+  function irAPagar() {
+    document.getElementById('tarjeta-suscripcion').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  async function accionSuscribirse() {
+    const boton = document.getElementById('btn-suscribirse');
+    boton.textContent = 'Un momento...';
+    boton.disabled = true;
+    try {
+      const r = await fetch('/suscripcion/iniciar', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + SESION.token },
+      });
+      const data = await r.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        boton.textContent = 'Suscribirme';
+        boton.disabled = false;
+      }
+    } catch (e) {
+      boton.textContent = 'Suscribirme';
+      boton.disabled = false;
+    }
+  }
+
+  function verEnGrande() {
+    const original = document.getElementById('carta-visual-contenedor').innerHTML;
+    if (!original) return;
+    document.getElementById('zoom-modal-content').innerHTML = original;
+    document.getElementById('zoom-modal-bg').classList.add('open');
+  }
+  function cerrarZoom() {
+    document.getElementById('zoom-modal-bg').classList.remove('open');
+  }
+
+  async function actualizarBandaConCartaReal() {
+    try {
+      const r = await fetch('/carta-natal/ultima', { headers: { Authorization: 'Bearer ' + SESION.token } });
+      const data = await r.json();
+      const s = data.carta?.datos_carta?.subject_data;
+      const cd = data.carta?.datos_carta?.chart_data;
+      if (s?.sun?.sign) document.getElementById('banda-sol').textContent = s.sun.sign + (s.sun.position ? ' ' + Math.floor(s.sun.position) + '°' : '');
+      if (s?.moon?.sign) document.getElementById('banda-luna').textContent = s.moon.sign + (s.moon.position ? ' ' + Math.floor(s.moon.position) + '°' : '');
+      const asc = cd?.planetary_positions?.find(p => p.name === 'Ascendant');
+      if (asc?.sign) document.getElementById('banda-asc').textContent = asc.sign + (asc.degree ? ' ' + Math.floor(asc.degree) + '°' : '');
+    } catch (e) { /* silencioso: se queda con el texto de ejemplo si falla */ }
   }
 
   // Al cargar la página: ¿ya hay sesión guardada?
