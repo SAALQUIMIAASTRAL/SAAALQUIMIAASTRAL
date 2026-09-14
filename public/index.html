@@ -230,6 +230,8 @@
   .bottomnav .it{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9.5px;color:var(--ink-dim);}
   .bottomnav .it .g{font-size:16px;}
   .bottomnav .it.active{color:var(--marigold);}
+  [data-tab]{display:none;}
+  [data-tab].tab-activa{display:block;}
 
   .install-btn{
     position:absolute;left:16px;right:16px;bottom:74px;z-index:5;
@@ -254,6 +256,13 @@
   .zoom-modal-bg.open{display:flex;}
   .zoom-modal-bg svg{width:100%;height:auto;background:#fff;border-radius:12px;}
   .zoom-close-btn{position:fixed;top:16px;right:16px;background:#fff;border:none;border-radius:50%;width:36px;height:36px;font-size:18px;z-index:61;cursor:pointer;}
+  .lectura-modal-bg{display:none;position:fixed;inset:0;background:var(--page-bg);z-index:62;padding:0;overflow:hidden;flex-direction:column;}
+  .lectura-modal-bg.open{display:flex;}
+  .lectura-topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;background:var(--paper);border-bottom:1px solid var(--line);flex:none;}
+  .lectura-topbar h3{font-size:16px;color:var(--plum);}
+  .lectura-topbar button{background:var(--marigold-soft);border:none;border-radius:50%;width:34px;height:34px;font-size:16px;cursor:pointer;color:var(--plum);}
+  .lectura-contenido{flex:1;overflow-y:auto;padding:18px;}
+  .lectura-descargar{display:block;text-align:center;margin:14px 18px;background:var(--lilac);color:#fff;border:none;border-radius:100px;padding:12px;font-size:13px;font-weight:600;text-decoration:none;}
 
   /* ---- Pantallas de acceso (login/registro/perfil) ---- */
   .auth-overlay{
@@ -366,7 +375,7 @@
 
         <div class="scroll">
 
-          <div class="band">
+          <div class="band" data-tab="inicio">
             <div class="band-icon" id="band-icon">☀️</div>
             <div class="date">Sábado, 12 de septiembre</div>
             <h1><span id="greeting-word">Buenas tardes</span>, Mariana</h1>
@@ -379,13 +388,14 @@
             <span class="link-arrow" onclick="irAPagar()" style="cursor:pointer;">Ver carta completa ›</span>
           </div>
 
-          <div class="section">
+          <div class="section" data-tab="cartas">
             <h2>Tus cartas</h2>
             <div class="desc">Calcula hasta 8 cartas astrales: la tuya, tu pareja, tu familia o tus amigas.</div>
             <div class="charts-scroll" id="cartas-carousel">
               <div class="chart-chip add" onclick="mostrarFormularioCarta()"><div class="circ">+</div><div class="lbl">Agregar</div></div>
             </div>
             <div class="charts-count" id="cartas-count">Cargando...</div>
+            <div id="carta-otro-detalle" style="margin-top:14px;"></div>
 
             <div class="calc-form" id="form-nueva-carta" style="display:none;margin-top:14px;">
               <label>Nombre<input type="text" id="nc-nombre"></label>
@@ -394,13 +404,13 @@
                 <label>Hora<input type="time" id="nc-hora" value="12:00"></label>
               </div>
               <label>Ciudad de nacimiento<input type="text" id="nc-ciudad"></label>
-              <div class="auth-field"><label>País</label><select id="nc-pais"><option value="">Selecciona el país</option></select></div>
+              <label>País<select id="nc-pais" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;"><option value="">Selecciona el país</option></select></label>
               <button class="btn-primary" onclick="guardarNuevaCarta()">Calcular y guardar</button>
               <div id="nc-resultado"></div>
             </div>
           </div>
 
-          <div class="section">
+          <div class="section" data-tab="inicio">
             <h2>Tu carta natal</h2>
             <div class="desc" id="carta-desc">Calculada con tus datos guardados: Swiss Ephemeris, precisión profesional.</div>
             <div class="calc-form">
@@ -417,43 +427,21 @@
             </div>
           </div>
 
-          <div class="section">
-            <h2>Calcular otra carta natal</h2>
-            <div class="desc">Vista previa del formulario — próximamente podrás calcular la carta de alguien más (familia, pareja, amigas).</div>
-            <div class="calc-form">
-              <label>Nombre<input type="text" placeholder="Ej. Valentina" value="Valentina"></label>
-              <div class="calc-row">
-                <label>Fecha de nacimiento<input type="date" value="1994-03-22"></label>
-                <label>Hora<input type="time" value="07:15"></label>
-              </div>
-              <label>Lugar de nacimiento<input type="text" placeholder="Ciudad, país" value="Mérida, México"></label>
-              <button class="btn-primary" onclick="calcularDemo()">Calcular carta</button>
-              <div class="calc-result" id="calc-result-demo">
-                <div class="calc-result-title">Vista previa del resultado</div>
-                <div class="chip-list" style="margin-bottom:0;">
-                  <div class="row">☉ Sol en <b>Piscis</b></div>
-                  <div class="row">↑ Ascendente en <b>Sagitario</b></div>
-                  <div class="row">☽ Luna en <b>Cáncer</b></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="section">
+          <div class="section" data-tab="horoscopo">
             <h2>Horóscopo personalizado</h2>
             <div class="desc">Tu horóscopo real, calculado con tu carta natal.</div>
             <button class="btn-primary" onclick="verHoroscopoDiario()">Ver mi horóscopo de hoy</button>
             <div id="horoscopo-resultado" style="margin-top:14px;"></div>
           </div>
 
-          <div class="section">
+          <div class="section" data-tab="horoscopo">
             <h2>Próximos eclipses</h2>
             <div class="desc">Cómo el próximo eclipse afecta específicamente tu carta natal.</div>
             <button class="btn-primary" onclick="verEclipses()">Ver cómo me afecta</button>
             <div id="eclipses-resultado" style="margin-top:14px;"></div>
           </div>
 
-          <div class="section">
+          <div class="section" data-tab="horoscopo">
             <h2>Tránsitos del momento</h2>
             <div class="desc">El clima astrológico de hoy — dónde están los planetas ahora mismo.</div>
             <button class="btn-primary" onclick="verTransitosHoy()">Ver tránsitos de hoy</button>
@@ -464,14 +452,14 @@
             <div id="transitos-resultado" style="margin-top:14px;"></div>
           </div>
 
-          <div class="section">
+          <div class="section" data-tab="cartas">
             <h2>Flor armónica</h2>
             <div class="desc">Una herramienta de astrología avanzada que revela patrones ocultos en tu carta.</div>
             <button class="btn-primary" onclick="verFlorArmonica()">Calcular mi flor armónica</button>
             <div id="flor-resultado" style="margin-top:14px;"></div>
           </div>
 
-          <div class="section">
+          <div class="section" data-tab="sinastria">
             <h2>Sinastría</h2>
             <div class="desc">Compara tu carta con la de otra persona (pareja, amiga, familiar).</div>
             <div class="calc-form">
@@ -481,24 +469,23 @@
                 <label>Hora<input type="time" id="sin-hora" value="12:00"></label>
               </div>
               <label>Ciudad de nacimiento<input type="text" id="sin-ciudad" placeholder="Ej. Ciudad de México"></label>
-              <div class="auth-field"><label>País</label>
-                <select id="sin-pais"><option value="">Selecciona el país</option></select>
-              </div>
+              <label>País<select id="sin-pais" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;"><option value="">Selecciona el país</option></select></label>
               <button class="btn-primary" onclick="calcularSinastria()">Ver compatibilidad</button>
               <div id="sinastria-resultado" style="margin-top:14px;"></div>
             </div>
           </div>
 
-          <div class="section">
+          <div class="section" data-tab="horoscopo">
             <h2>Consejo diario</h2>
             <div class="desc">Una carta de tarot, nueva cada día.</div>
             <div class="tarot-row">
               <div class="tarot-card"></div><div class="tarot-card"></div><div class="tarot-card"></div><div class="tarot-card"></div><div class="tarot-card"></div>
             </div>
-            <button class="btn-ghost-round">Revelar carta</button>
+            <button class="btn-ghost-round" onclick="revelarCartaTarot()">Revelar carta</button>
+            <div id="tarot-resultado" style="margin-top:14px;"></div>
           </div>
 
-          <div class="section">
+          <div class="section" data-tab="luna">
             <h2>Ciclo lunar</h2>
             <div class="desc" id="luna-intro">Qué significa cada fase y cómo aprovecharla.</div>
 
@@ -534,7 +521,7 @@
             </div>
           </div>
 
-          <div class="section">
+          <div class="section" data-tab="luna">
             <h2>Mejores días para...</h2>
             <div class="desc">Según la tradición astrológica y la fase lunar actual.</div>
 
@@ -562,7 +549,7 @@
             <div class="disclaimer">Estas son guías de la tradición astrológica, pensadas para acompañar tu intuición — no sustituyen la opinión de tu médico, cirujano o asesor financiero.</div>
           </div>
 
-          <div class="section">
+          <div class="section" data-tab="cartas">
             <h2>Astrocartografía</h2>
             <div class="desc">Los lugares del mundo donde distintas energías de tu carta se activan más fuerte.</div>
 
@@ -575,7 +562,7 @@
             <div class="disclaimer">Calculado con tu fecha, hora y lugar de nacimiento reales.</div>
           </div>
 
-          <div style="background:var(--moon-navy);border-radius:16px;padding:18px;color:#fff;margin:12px 16px;box-shadow:0 2px 10px rgba(58,31,56,0.12);" id="tarjeta-suscripcion">
+          <div style="background:var(--moon-navy);border-radius:16px;padding:18px;color:#fff;margin:12px 16px;box-shadow:0 2px 10px rgba(58,31,56,0.12);" id="tarjeta-suscripcion" data-tab="inicio">
             <h2 style="color:#fff;font-size:18px;margin-bottom:6px;border-left:3px solid var(--marigold);padding-left:11px;">Desbloquea tu cielo completo</h2>
             <p style="font-size:12px;color:#d8c3ce;margin:0 0 14px;line-height:1.5;">Tu carta natal completa, astrocartografía, ciclo lunar y hasta 8 cartas guardadas.</p>
             <div style="display:flex;align-items:center;justify-content:space-between;">
@@ -584,22 +571,22 @@
             </div>
           </div>
 
-          <div class="section">
+          <div class="section" data-tab="inicio">
             <h2>Más herramientas</h2>
             <div class="tools-grid">
-              <div class="tool-tile t1">
+              <div class="tool-tile t1" onclick="cambiarPestana('sinastria')" style="cursor:pointer;">
                 <div class="icon"><svg viewBox="0 0 32 32" fill="none"><path d="M11 8c-3 0-5.5 2.3-5.5 5.5C5.5 19 12 24 16 26.5 20 24 26.5 19 26.5 13.5 26.5 10.3 24 8 21 8c-2 0-3.8 1.1-5 2.8C14.8 9.1 13 8 11 8z" fill="#fff" opacity="0.9"/><path d="M16 12.5c1.2-1.5 2.8-2.3 4.3-2 2 .4 3.2 2.3 2.8 4.3-.5 2.6-3.5 5-7.1 7.7-3.6-2.7-6.6-5.1-7.1-7.7-.4-2 .8-3.9 2.8-4.3 1.5-.3 3.1.5 4.3 2z" fill="#c1672c"/></svg></div>
                 <div class="tt-text">Mapa del Amor<span>Análisis de pareja</span></div>
               </div>
-              <div class="tool-tile t2">
+              <div class="tool-tile t2" onclick="cambiarPestana('cartas')" style="cursor:pointer;">
                 <div class="icon"><svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="10" stroke="#fff" stroke-width="1.6"/><ellipse cx="16" cy="16" rx="10" ry="4.2" stroke="#fff" stroke-width="1.2" opacity="0.8"/><ellipse cx="16" cy="16" rx="4.2" ry="10" stroke="#fff" stroke-width="1.2" opacity="0.8"/><circle cx="20" cy="11" r="1.8" fill="#c9793f"/></svg></div>
                 <div class="tt-text">Astrocartografía<span>Tu mapa de reubicación</span></div>
               </div>
-              <div class="tool-tile t3">
+              <div class="tool-tile t3" onclick="mostrarProximamente('Asistente IA')" style="cursor:pointer;">
                 <div class="icon"><svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="7" fill="#fff" opacity="0.15"/><circle cx="16" cy="16" r="7" stroke="#fff" stroke-width="1.4"/><path d="M16 6l1 3-1 3-1-3z" fill="#fff"/><path d="M25 12l-2.5 1.5L25 15l1-1.5z" fill="#fff"/><path d="M7 12l2.5 1.5L7 15l-1-1.5z" fill="#fff"/></svg></div>
                 <div class="tt-text">Asistente IA<span>Pregúntale a tu carta</span></div>
               </div>
-              <div class="tool-tile t4">
+              <div class="tool-tile t4" onclick="mostrarProximamente('Diario personal')" style="cursor:pointer;">
                 <div class="icon"><svg viewBox="0 0 32 32" fill="none"><path d="M16 10c-2.5-1.6-5.5-2-8.5-1.3V21c3-.7 6 -.3 8.5 1.3 2.5-1.6 5.5-2 8.5-1.3V8.7c-3-.7-6-.3-8.5 1.3z" stroke="#fff" stroke-width="1.4" fill="rgba(255,255,255,0.08)"/><line x1="16" y1="10" x2="16" y2="22.3" stroke="#fff" stroke-width="1.2"/></svg></div>
                 <div class="tt-text">Diario personal<span>Tu día y el cielo</span></div>
               </div>
@@ -611,11 +598,11 @@
         <button class="install-btn" id="install-btn" style="display:none;">⬇ Instalar app</button>
 
         <div class="bottomnav">
-          <div class="it active"><div class="g">⌂</div>Inicio</div>
-          <div class="it"><div class="g">✦</div>Mis cartas</div>
-          <div class="it"><div class="g">♡</div>Sinastría</div>
-          <div class="it"><div class="g">☉</div>Horóscopo</div>
-          <div class="it"><div class="g">☾</div>Luna</div>
+          <div class="it active" data-boton-tab="inicio" onclick="cambiarPestana('inicio')"><div class="g">⌂</div>Inicio</div>
+          <div class="it" data-boton-tab="cartas" onclick="cambiarPestana('cartas')"><div class="g">✦</div>Mis cartas</div>
+          <div class="it" data-boton-tab="sinastria" onclick="cambiarPestana('sinastria')"><div class="g">♡</div>Sinastría</div>
+          <div class="it" data-boton-tab="horoscopo" onclick="cambiarPestana('horoscopo')"><div class="g">☉</div>Horóscopo</div>
+          <div class="it" data-boton-tab="luna" onclick="cambiarPestana('luna')"><div class="g">☾</div>Luna</div>
         </div>
 
       </div>
@@ -636,6 +623,15 @@
     <div class="zoom-modal-bg" id="zoom-modal-bg" onclick="cerrarZoom()">
       <button class="zoom-close-btn" onclick="cerrarZoom()">✕</button>
       <div id="zoom-modal-content" onclick="event.stopPropagation()"></div>
+    </div>
+
+    <div class="lectura-modal-bg" id="lectura-modal-bg">
+      <div class="lectura-topbar">
+        <h3 id="lectura-titulo">Lectura</h3>
+        <button onclick="cerrarLectura()">✕</button>
+      </div>
+      <div class="lectura-contenido" id="lectura-contenido"></div>
+      <a class="lectura-descargar" id="lectura-descargar" href="#" download="mi-lectura.txt">⬇ Descargar como texto</a>
     </div>
 
     <p class="side-note">Vista previa de app móvil — desliza dentro de la pantalla para ver todo el contenido.</p>
@@ -659,7 +655,11 @@
         headers: { Authorization: 'Bearer ' + SESION.token },
       });
       const data = await r.json();
-      if (!r.ok) throw new Error(data.error || 'No se pudo calcular.');
+      if (!r.ok) {
+        if (detectarLimiteExcedido(data)) { contenedorLineas.innerHTML = mensajeLimiteExcedido(); return; }
+        contenedorLineas.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        return;
+      }
 
       if (contenedorMapa) contenedorMapa.innerHTML = data.svg || '';
 
@@ -801,6 +801,51 @@
   // ======================================================
   let SESION = { token: localStorage.getItem('saa_token') || null, nombre: null };
 
+  async function verDetalleOtraCarta(id, nombre) {
+    const contenedor = document.getElementById('carta-otro-detalle');
+    contenedor.innerHTML = '<div class="disclaimer">Cargando la carta de ' + nombre + '...</div>';
+    try {
+      const r = await fetch('/otras-cartas/' + id, { headers: { Authorization: 'Bearer ' + SESION.token } });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'No se pudo cargar.');
+
+      const cd = data.carta?.datos_carta?.chart_data;
+      let filasPlanetas = '';
+      if (cd?.planetary_positions?.length) {
+        filasPlanetas = cd.planetary_positions.slice(0, 8).map(p => `
+          <div class="carta-real-row">${nombrePlanetaEs(p.name)} en <b>${signoEs(p.sign)} ${p.degree ? Math.floor(p.degree)+'°' : ''}</b>${p.house ? ` <span style="color:var(--ink-dim);font-weight:400;font-size:11px;">Casa ${p.house}</span>` : ''}</div>
+        `).join('');
+      }
+
+      contenedor.innerHTML = `
+        <div style="background:var(--marigold-soft);border-radius:12px;padding:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:16px;color:var(--plum);">Carta de ${nombre}</div>
+            <button onclick="document.getElementById('carta-otro-detalle').innerHTML='';" style="background:#fff;border:none;border-radius:100px;padding:5px 12px;font-size:11px;color:var(--plum);cursor:pointer;">Cerrar ✕</button>
+          </div>
+          ${filasPlanetas}
+          <button class="btn-primary" style="background:var(--lilac);margin-top:10px;" onclick="verVisualOtraCarta('${id}')">Ver su carta en rueda 🔮</button>
+          <div id="carta-otro-visual" style="margin-top:12px;"></div>
+        </div>
+      `;
+    } catch (err) {
+      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+    }
+  }
+
+  async function verVisualOtraCarta(id) {
+    const contenedor = document.getElementById('carta-otro-visual');
+    contenedor.innerHTML = '<div class="disclaimer">Generando...</div>';
+    try {
+      const r = await fetch('/otras-cartas/' + id + '/visual', { method: 'POST', headers: { Authorization: 'Bearer ' + SESION.token } });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'No se pudo generar.');
+      contenedor.innerHTML = data.svg || '<div class="disclaimer">No se pudo generar el dibujo.</div>';
+    } catch (err) {
+      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+    }
+  }
+
   function mostrarFormularioCarta() {
     const f = document.getElementById('form-nueva-carta');
     f.style.display = f.style.display === 'none' ? 'flex' : 'none';
@@ -812,7 +857,9 @@
       const data = await r.json();
       const carousel = document.getElementById('cartas-carousel');
       const chipsHtml = (data.cartas || []).map(c => `
-        <div class="chart-chip"><div class="circ">${(c.nombre || '?')[0].toUpperCase()}</div><div class="lbl">${c.nombre}</div></div>
+        <div class="chart-chip" onclick="verDetalleOtraCarta('${c.id}', '${(c.nombre || '').replace(/'/g, '')}')" style="cursor:pointer;">
+          <div class="circ">${(c.nombre || '?')[0].toUpperCase()}</div><div class="lbl">${c.nombre}</div>
+        </div>
       `).join('');
       carousel.innerHTML = chipsHtml + '<div class="chart-chip add" onclick="mostrarFormularioCarta()"><div class="circ">+</div><div class="lbl">Agregar</div></div>';
       document.getElementById('cartas-count').textContent = `${(data.cartas || []).length} de 8 cartas creadas`;
@@ -856,6 +903,7 @@
       const r = await fetch('/eclipses-natal', { method: 'POST', headers: { Authorization: 'Bearer ' + SESION.token } });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || 'No se pudo consultar.');
+      if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
       contenedor.innerHTML = `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(data, null, 2)}</pre>`;
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
@@ -868,7 +916,10 @@
     try {
       const r = await fetch('/horoscopo-diario', { method: 'POST', headers: { Authorization: 'Bearer ' + SESION.token } });
       const data = await r.json();
-      if (!r.ok) throw new Error(data.error || 'No se pudo generar.');
+      if (!r.ok) {
+        if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
+        throw new Error(data.error || 'No se pudo generar.');
+      }
       contenedor.innerHTML = `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(data.horoscopo, null, 2)}</pre>`;
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
@@ -1096,7 +1147,11 @@
     try {
       const r = await fetch('/mensaje-del-dia', { method: 'POST', headers: { Authorization: 'Bearer ' + SESION.token } });
       const data = await r.json();
-      if (!r.ok) throw new Error(data.error || 'No se pudo obtener.');
+      if (!r.ok) {
+        if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
+        throw new Error(data.error || 'No se pudo obtener.');
+      }
+      if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
       contenedor.innerHTML = `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(data.datos_hoy, null, 2)}</pre>`;
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
@@ -1109,7 +1164,10 @@
     try {
       const r = await fetch('/transitos-personales', { method: 'POST', headers: { Authorization: 'Bearer ' + SESION.token } });
       const data = await r.json();
-      if (!r.ok) throw new Error(data.error || 'No se pudo calcular.');
+      if (!r.ok) {
+        if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
+        throw new Error(data.error || 'No se pudo calcular.');
+      }
       contenedor.innerHTML = `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(data.transitos, null, 2)}</pre>`;
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
@@ -1126,7 +1184,11 @@
         body: JSON.stringify({ numero: 5 }),
       });
       const data = await r.json();
-      if (!r.ok) throw new Error(data.error || 'No se pudo calcular.');
+      if (!r.ok) {
+        if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
+        contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        return;
+      }
       contenedor.innerHTML = `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(data.flor, null, 2)}</pre>`;
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
@@ -1154,7 +1216,10 @@
         body: JSON.stringify(cuerpo),
       });
       const data = await r.json();
-      if (!r.ok) throw new Error(data.error || 'No se pudo calcular.');
+      if (!r.ok) {
+        if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
+        throw new Error(data.error || 'No se pudo calcular.');
+      }
       contenedor.innerHTML = `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(data.reporte, null, 2)}</pre>`;
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
@@ -1170,8 +1235,27 @@
         headers: { Authorization: 'Bearer ' + SESION.token },
       });
       const data = await r.json();
-      if (!r.ok) throw new Error(data.error || 'No se pudo generar.');
-      contenedor.innerHTML = `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(data.reporte, null, 2)}</pre>`;
+      if (!r.ok) {
+        if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
+        throw new Error(data.error || 'No se pudo generar.');
+      }
+      const interpretaciones = data.reporte?.data?.interpretations;
+      if (interpretaciones?.length) {
+        const htmlLectura = interpretaciones.map(item => `
+          <div style="background:var(--marigold-soft);border-radius:12px;padding:12px 14px;margin-bottom:10px;">
+            <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14px;color:var(--plum);margin-bottom:4px;">${item.title}</div>
+            <div style="font-size:12px;color:var(--plum);line-height:1.55;">${item.text}</div>
+          </div>
+        `).join('');
+        contenedor.innerHTML = `
+          <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+            <button onclick="document.getElementById('resumen-natal-contenedor').innerHTML='';" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button>
+          </div>
+          ${htmlLectura}
+        `;
+      } else {
+        contenedor.innerHTML = `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(data.reporte, null, 2)}</pre>`;
+      }
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }
@@ -1186,6 +1270,76 @@
     } catch (err) {
       document.getElementById('luna-cruda').innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }
+  }
+
+  const TAROT_ARCANOS = [
+    { nombre: 'El Loco', emoji: '🃏', significado: 'Nuevos comienzos, espontaneidad, un salto de fe. Hoy es buen día para dar el primer paso sin necesitar tener todas las respuestas.' },
+    { nombre: 'El Mago', emoji: '🎩', significado: 'Tienes todas las herramientas que necesitas ahora mismo. Es momento de actuar con intención y confianza en tu propia capacidad.' },
+    { nombre: 'La Sacerdotisa', emoji: '🌙', significado: 'Escucha tu intuición más que la lógica hoy. Hay algo que ya sabes, aunque no lo hayas puesto en palabras.' },
+    { nombre: 'La Emperatriz', emoji: '🌸', significado: 'Abundancia, creatividad, cuidado propio. Permítete disfrutar y nutrir un proyecto o relación que te importa.' },
+    { nombre: 'El Emperador', emoji: '👑', significado: 'Estructura, disciplina, liderazgo. Hoy conviene poner orden y tomar decisiones firmes.' },
+    { nombre: 'El Sumo Sacerdote', emoji: '📜', significado: 'Tradición, guía, aprendizaje. Puede ser un buen momento para buscar consejo de alguien con más experiencia.' },
+    { nombre: 'Los Enamorados', emoji: '💞', significado: 'Una decisión importante relacionada con valores o relaciones. Elige desde el corazón, con los ojos abiertos.' },
+    { nombre: 'El Carro', emoji: '🏇', significado: 'Determinación y avance. Tienes el control, sigue adelante aunque haya fuerzas en direcciones distintas.' },
+    { nombre: 'La Fuerza', emoji: '🦁', significado: 'Coraje suave, paciencia, dominio propio. La verdadera fuerza hoy está en la calma, no en la lucha.' },
+    { nombre: 'El Ermitaño', emoji: '🏮', significado: 'Introspección. Tómate un momento a solas antes de responder o decidir algo importante.' },
+    { nombre: 'La Rueda de la Fortuna', emoji: '☸️', significado: 'Cambio de ciclo. Algo que estaba estancado empieza a moverse — deja que fluya.' },
+    { nombre: 'La Justicia', emoji: '⚖️', significado: 'Equilibrio, verdad, consecuencias claras. Hoy es buen día para resolver algo pendiente con honestidad.' },
+    { nombre: 'El Colgado', emoji: '🙃', significado: 'Pausa y nueva perspectiva. Si algo no avanza, tal vez la solución es ver la situación desde otro ángulo.' },
+    { nombre: 'La Muerte', emoji: '🦋', significado: 'Cierre de un ciclo para dar paso a algo nuevo. No es literal — es transformación necesaria.' },
+    { nombre: 'La Templanza', emoji: '🕊️', significado: 'Equilibrio y paciencia. Mezcla lo nuevo con lo conocido, sin extremos.' },
+    { nombre: 'El Diablo', emoji: '⛓️', significado: 'Apegos, patrones que ya no sirven. Pregúntate qué te está atando y si de verdad tiene que ser así.' },
+    { nombre: 'La Torre', emoji: '🗼', significado: 'Un cambio repentino que, aunque incómodo, libera algo que ya no tenía bases sólidas.' },
+    { nombre: 'La Estrella', emoji: '✨', significado: 'Esperanza y renovación. Después de un momento difícil, hoy trae una señal de que vas por buen camino.' },
+    { nombre: 'La Luna', emoji: '🌕', significado: 'Emociones, sueños, lo que no se ve a simple vista. Confía en tu proceso aunque el camino no esté del todo claro.' },
+    { nombre: 'El Sol', emoji: '☀️', significado: 'Claridad, alegría, éxito visible. Hoy las cosas se ven con más luz y optimismo.' },
+    { nombre: 'El Juicio', emoji: '📯', significado: 'Un llamado a evaluarte con honestidad y dar un paso hacia quien quieres ser.' },
+    { nombre: 'El Mundo', emoji: '🌍', significado: 'Cierre exitoso de una etapa. Reconoce lo que lograste antes de empezar lo siguiente.' },
+  ];
+
+  function mostrarProximamente(nombre) {
+    alert(nombre + ' está en construcción — muy pronto estará disponible en tu app 🔮');
+  }
+
+  function revelarCartaTarot() {
+    const carta = TAROT_ARCANOS[Math.floor(Math.random() * TAROT_ARCANOS.length)];
+    document.getElementById('tarot-resultado').innerHTML = `
+      <div style="background:var(--marigold-soft);border-radius:12px;padding:16px;text-align:center;">
+        <div style="font-size:36px;margin-bottom:6px;">${carta.emoji}</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:17px;color:var(--plum);margin-bottom:8px;">${carta.nombre}</div>
+        <div style="font-size:12.5px;color:var(--plum);line-height:1.55;">${carta.significado}</div>
+      </div>
+    `;
+  }
+
+  function cambiarPestana(nombre) {
+    document.querySelectorAll('[data-tab]').forEach(el => el.classList.remove('tab-activa'));
+    document.querySelectorAll('[data-tab="' + nombre + '"]').forEach(el => el.classList.add('tab-activa'));
+    document.querySelectorAll('[data-boton-tab]').forEach(el => el.classList.remove('active'));
+    document.querySelector('[data-boton-tab="' + nombre + '"]').classList.add('active');
+    document.querySelector('.scroll').scrollTop = 0;
+  }
+
+  function detectarLimiteExcedido(objeto) {
+    try {
+      const texto = JSON.stringify(objeto);
+      return texto.includes('RATE_LIMIT_EXCEEDED') || texto.includes('Quota exceeded');
+    } catch (e) { return false; }
+  }
+  function mensajeLimiteExcedido() {
+    return '<div class="disclaimer" style="color:#a5442f;">Se acabaron los créditos gratis de este mes con Astrology API. Vuelve el próximo mes, o pídele a Samantha que actualice el plan.</div>';
+  }
+
+  function abrirLectura(titulo, htmlContenido, textoPlano) {
+    document.getElementById('lectura-titulo').textContent = titulo;
+    document.getElementById('lectura-contenido').innerHTML = htmlContenido;
+    const blob = new Blob([textoPlano], { type: 'text/plain' });
+    document.getElementById('lectura-descargar').href = URL.createObjectURL(blob);
+    document.getElementById('lectura-descargar').download = titulo.replace(/\s+/g, '-').toLowerCase() + '.txt';
+    document.getElementById('lectura-modal-bg').classList.add('open');
+  }
+  function cerrarLectura() {
+    document.getElementById('lectura-modal-bg').classList.remove('open');
   }
 
   function verEnGrande() {
@@ -1212,6 +1366,7 @@
   }
 
   // Al cargar la página: ¿ya hay sesión guardada?
+  cambiarPestana('inicio');
   revisarPerfilYArrancar();
 
   if ('serviceWorker' in navigator) {

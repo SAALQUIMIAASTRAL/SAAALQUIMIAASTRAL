@@ -280,18 +280,16 @@ app.post('/mensaje-del-dia', requireLogin, async (req, res) => {
       return res.status(400).json({ error: 'Primero guarda tu perfil.' });
     }
 
-    const [hoy] = await Promise.all([
-      astrologyApi.get('/data/now').catch(() => null),
-    ]);
+    const respuesta = await astrologyApi.get('/data/now');
 
     res.json({
       mensaje: 'Mensaje del día',
-      datos_hoy: hoy?.data || null,
+      datos_hoy: respuesta.data,
       nombre: perfil.nombre,
     });
   } catch (err) {
     console.error(err?.response?.data || err.message);
-    res.status(500).json({ error: 'No se pudo generar el mensaje del día.' });
+    res.status(500).json({ error: 'No se pudo generar el mensaje del día.', detalle_tecnico: err?.response?.data || err.message });
   }
 });
 
@@ -362,6 +360,46 @@ app.post('/sinastria', requireLogin, async (req, res) => {
 
 // RUTA: Flor armónica (harmonic chart)
 // RUTA: Horóscopo diario personalizado (real)
+// RUTA: Ver el detalle completo de una carta guardada
+app.get('/otras-cartas/:id', requireLogin, async (req, res) => {
+  const { data, error } = await req.supabase
+    .from('otras_cartas')
+    .select('*')
+    .eq('id', req.params.id)
+    .single();
+  if (error) return res.status(400).json({ error: error.message });
+  res.json({ carta: data });
+});
+
+// RUTA: Generar la carta visual (rueda) de una persona guardada
+app.post('/otras-cartas/:id/visual', requireLogin, async (req, res) => {
+  try {
+    const { data: persona, error } = await req.supabase
+      .from('otras_cartas')
+      .select('*')
+      .eq('id', req.params.id)
+      .single();
+    if (error || !persona) return res.status(400).json({ error: 'No se encontró esa carta.' });
+
+    const respuesta = await astrologyApi.post('/render/natal', {
+      subject: birthDataDesdePerfil(persona, persona.nombre),
+      options: { house_system: 'P' },
+      render_options: { format: 'svg', theme: 'light' },
+    });
+
+    let svg = null;
+    const crudoTexto = typeof respuesta.data === 'string' ? respuesta.data : JSON.stringify(respuesta.data);
+    const inicioSvg = crudoTexto.indexOf('<svg');
+    if (inicioSvg !== -1) svg = crudoTexto.slice(inicioSvg);
+    else if (respuesta.data?.svg_content) svg = respuesta.data.svg_content;
+
+    res.json({ svg });
+  } catch (err) {
+    console.error(err?.response?.data || err.message);
+    res.status(500).json({ error: 'No se pudo generar la carta visual.' });
+  }
+});
+
 // RUTA: Guardar y calcular la carta de otra persona (familia, pareja, amigas — hasta 8)
 app.post('/otras-cartas', requireLogin, async (req, res) => {
   try {
