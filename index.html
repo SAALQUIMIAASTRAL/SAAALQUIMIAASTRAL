@@ -397,6 +397,8 @@
             <div class="desc" id="carta-desc">Calculada con tus datos guardados: Swiss Ephemeris, precisión profesional.</div>
             <div class="calc-form">
               <button class="btn-primary" id="btn-calcular-carta" onclick="calcularCartaReal()">Calcular mi carta natal</button>
+              <button class="btn-primary" style="background:var(--marigold);margin-top:10px;" onclick="verResumenNatal()">Ver resumen de mi personalidad</button>
+              <div id="resumen-natal-contenedor" style="margin-top:14px;"></div>
               <button class="btn-primary" id="btn-carta-visual" style="background:var(--lilac);margin-top:10px;" onclick="verCartaVisual()">Ver mi carta en rueda 🔮</button>
               <div id="carta-visual-contenedor" style="margin-top:14px;cursor:pointer;" onclick="verEnGrande()"></div>
               <div class="desc" style="text-align:center;margin-top:4px;" id="zoom-hint"></div>
@@ -452,13 +454,19 @@
 
           <div class="section">
             <h2>Sinastría</h2>
-            <div class="desc">Compara tu carta con la de cualquiera de tus cartas guardadas.</div>
-            <div class="synastry-card">
-              <div class="synastry-select"><span>Mariana + David</span><span>▾</span></div>
-              <div class="synastry-glyphs"><span>♍</span><span>♎</span><span>♏</span></div>
-              <div class="compat-bar"><div class="fill"></div></div>
-              <div class="compat-label">Afinidad general: alta en comunicación, intensa en lo emocional</div>
-              <button class="btn-primary" onclick="irAPagar()">Ver compatibilidad completa</button>
+            <div class="desc">Compara tu carta con la de otra persona (pareja, amiga, familiar).</div>
+            <div class="calc-form">
+              <label>Nombre de la otra persona<input type="text" id="sin-nombre" placeholder="Ej. David"></label>
+              <div class="calc-row">
+                <label>Fecha de nacimiento<input type="date" id="sin-fecha"></label>
+                <label>Hora<input type="time" id="sin-hora" value="12:00"></label>
+              </div>
+              <label>Ciudad de nacimiento<input type="text" id="sin-ciudad" placeholder="Ej. Ciudad de México"></label>
+              <div class="auth-field"><label>País</label>
+                <select id="sin-pais"><option value="">Selecciona el país</option></select>
+              </div>
+              <button class="btn-primary" onclick="calcularSinastria()">Ver compatibilidad</button>
+              <div id="sinastria-resultado" style="margin-top:14px;"></div>
             </div>
           </div>
 
@@ -474,6 +482,9 @@
           <div class="section">
             <h2>Ciclo lunar</h2>
             <div class="desc" id="luna-intro">Qué significa cada fase y cómo aprovecharla.</div>
+
+            <button class="btn-primary" style="margin-bottom:14px;" onclick="cargarLunaReal()">Ver datos lunares reales de hoy</button>
+            <div id="luna-cruda" style="margin-bottom:14px;"></div>
 
             <div class="moon-now" id="moon-now">
               <div class="m">🌑</div>
@@ -752,12 +763,16 @@
   ];
 
   function llenarMenuPaises() {
-    const select = document.getElementById('perfil-pais');
-    PAISES.sort((a, b) => a[1].localeCompare(b[1])).forEach(([codigo, nombre]) => {
-      const opt = document.createElement('option');
-      opt.value = codigo;
-      opt.textContent = nombre;
-      select.appendChild(opt);
+    PAISES.sort((a, b) => a[1].localeCompare(b[1]));
+    ['perfil-pais', 'sin-pais'].forEach(idSelect => {
+      const select = document.getElementById(idSelect);
+      if (!select) return;
+      PAISES.forEach(([codigo, nombre]) => {
+        const opt = document.createElement('option');
+        opt.value = codigo;
+        opt.textContent = nombre;
+        select.appendChild(opt);
+      });
     });
   }
   llenarMenuPaises();
@@ -952,6 +967,61 @@
     } catch (e) {
       boton.textContent = 'Suscribirme';
       boton.disabled = false;
+    }
+  }
+
+  async function calcularSinastria() {
+    const contenedor = document.getElementById('sinastria-resultado');
+    const cuerpo = {
+      nombre: document.getElementById('sin-nombre').value.trim(),
+      fecha_nacimiento: document.getElementById('sin-fecha').value,
+      hora_nacimiento: document.getElementById('sin-hora').value || '12:00',
+      ciudad_nacimiento: document.getElementById('sin-ciudad').value.trim(),
+      pais_codigo: document.getElementById('sin-pais').value,
+    };
+    if (!cuerpo.nombre || !cuerpo.fecha_nacimiento || !cuerpo.ciudad_nacimiento || !cuerpo.pais_codigo) {
+      contenedor.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Llena todos los datos de la otra persona.</div>';
+      return;
+    }
+    contenedor.innerHTML = '<div class="disclaimer">Calculando compatibilidad...</div>';
+    try {
+      const r = await fetch('/sinastria', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + SESION.token },
+        body: JSON.stringify(cuerpo),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'No se pudo calcular.');
+      contenedor.innerHTML = `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(data.reporte, null, 2)}</pre>`;
+    } catch (err) {
+      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+    }
+  }
+
+  async function verResumenNatal() {
+    const contenedor = document.getElementById('resumen-natal-contenedor');
+    contenedor.innerHTML = '<div class="disclaimer">Generando tu resumen...</div>';
+    try {
+      const r = await fetch('/resumen-natal', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + SESION.token },
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'No se pudo generar.');
+      contenedor.innerHTML = `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(data.reporte, null, 2)}</pre>`;
+    } catch (err) {
+      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+    }
+  }
+
+  async function cargarLunaReal() {
+    try {
+      const r = await fetch('/luna', { method: 'POST', headers: { Authorization: 'Bearer ' + SESION.token } });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'No se pudo cargar.');
+      document.getElementById('luna-cruda').innerHTML = `<pre style="white-space:pre-wrap;font-size:9px;color:var(--plum);">${JSON.stringify(data.luna, null, 2)}</pre>`;
+    } catch (err) {
+      document.getElementById('luna-cruda').innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }
   }
 

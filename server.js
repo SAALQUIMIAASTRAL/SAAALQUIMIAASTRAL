@@ -223,15 +223,49 @@ app.get('/carta-natal/ultima', requireLogin, async (req, res) => {
   res.json({ carta: data });
 });
 
+// RUTA: Resumen/reporte de personalidad de la carta natal (en español)
+app.post('/resumen-natal', requireLogin, async (req, res) => {
+  try {
+    const perfil = await leerPerfil(req);
+    if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
+
+    const respuesta = await astrologyApi.post('/analysis/natal-report', {
+      subject: birthDataDesdePerfil(perfil),
+      report_options: { tradition: 'psychological', language: 'es' },
+    });
+
+    res.json({ reporte: respuesta.data });
+  } catch (err) {
+    console.error(err?.response?.data || err.message);
+    res.status(500).json({ error: 'No se pudo generar el resumen.', detalle_tecnico: err?.response?.data || err.message });
+  }
+});
+
 app.post('/luna', requireLogin, async (req, res) => {
   try {
-    const respuesta = await astrologyApi.post('/data/lunar-metrics', {});
+    const perfil = await leerPerfil(req);
+    const ahora = new Date();
+
+    const respuesta = await astrologyApi.post('/analysis/lunar-analysis', {
+      datetime_location: {
+        year: ahora.getUTCFullYear(),
+        month: ahora.getUTCMonth() + 1,
+        day: ahora.getUTCDate(),
+        hour: ahora.getUTCHours(),
+        minute: ahora.getUTCMinutes(),
+        second: 0,
+        city: perfil?.ciudad_nacimiento || 'Mexico City',
+        country_code: perfil?.pais_codigo || 'MX',
+      },
+      report_options: { language: 'es' },
+    });
+
     res.json({ mensaje: 'Datos lunares de hoy', luna: respuesta.data });
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({
       error: 'No se pudo obtener la fase lunar.',
-      detalle_tecnico: err?.response?.data || err.message, // TEMPORAL: ayuda a diagnosticar si falla
+      detalle_tecnico: err?.response?.data || err.message,
     });
   }
 });
@@ -298,6 +332,34 @@ app.post('/astrocartografia', requireLogin, async (req, res) => {
 // ============================================================
 // RUTA: Iniciar el cobro de la suscripción mensual ($8.88 USD)
 // ============================================================
+// RUTA: Sinastría (compatibilidad) entre la usuaria y otra persona
+app.post('/sinastria', requireLogin, async (req, res) => {
+  try {
+    const perfil = await leerPerfil(req);
+    if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
+
+    const { nombre, fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo } = req.body;
+    if (!nombre || !fecha_nacimiento || !ciudad_nacimiento || !pais_codigo) {
+      return res.status(400).json({ error: 'Faltan datos de la otra persona.' });
+    }
+
+    const respuesta = await astrologyApi.post('/analysis/synastry-report', {
+      subject1: birthDataDesdePerfil(perfil),
+      subject2: birthDataDesdePerfil(
+        { fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo },
+        nombre
+      ),
+      options: { house_system: 'P', zodiac_type: 'Tropic' },
+      report_options: { tradition: 'psychological', language: 'es' },
+    });
+
+    res.json({ reporte: respuesta.data });
+  } catch (err) {
+    console.error(err?.response?.data || err.message);
+    res.status(500).json({ error: 'No se pudo calcular la sinastría.', detalle_tecnico: err?.response?.data || err.message });
+  }
+});
+
 app.post('/suscripcion/iniciar', requireLogin, async (req, res) => {
   try {
     const sesionPago = await stripe.checkout.sessions.create({
