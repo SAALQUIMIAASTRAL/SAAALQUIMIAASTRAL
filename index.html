@@ -534,20 +534,20 @@
 
           <div class="section">
             <h2>Astrocartografía</h2>
-            <div class="desc" id="acg-intro">Qué lugares del mundo activan distintas energías de tu carta — pensado para quien ha migrado o vive lejos de donde nació.</div>
+            <div class="desc">Los lugares del mundo donde distintas energías de tu carta se activan más fuerte.</div>
 
             <div class="calc-form" style="margin-bottom:16px;">
-              <label>¿Dónde vives ahora?<input type="text" id="acg-place" placeholder="Ciudad, país" value="Mérida, México"></label>
-              <button class="btn-primary" onclick="calcularACG()">Ver mis líneas ahí</button>
+              <button class="btn-primary" id="acg-boton" onclick="calcularACG()">Ver mis líneas reales</button>
             </div>
 
+            <div id="acg-mapa" style="margin-bottom:14px;"></div>
             <div id="acg-lines"></div>
-            <div class="disclaimer">Vista previa con datos de ejemplo — el cálculo real por coordenadas se activa con la API de astrocartografía.</div>
+            <div class="disclaimer">Calculado con tu fecha, hora y lugar de nacimiento reales.</div>
           </div>
 
           <div style="background:var(--moon-navy);border-radius:16px;padding:18px;color:#fff;margin:12px 16px;box-shadow:0 2px 10px rgba(58,31,56,0.12);" id="tarjeta-suscripcion">
             <h2 style="color:#fff;font-size:18px;margin-bottom:6px;border-left:3px solid var(--marigold);padding-left:11px;">Desbloquea tu cielo completo</h2>
-            <p style="font-size:12px;color:#d8c3ce;margin:0 0 14px;line-height:1.5;">Sinastrías ilimitadas, biorritmo, ciclo lunar completo y tus 8 cartas guardadas.</p>
+            <p style="font-size:12px;color:#d8c3ce;margin:0 0 14px;line-height:1.5;">Tu carta natal completa, astrocartografía, ciclo lunar y hasta 8 cartas guardadas.</p>
             <div style="display:flex;align-items:center;justify-content:space-between;">
               <div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:#fff;">$8.88<span style="font-size:11.5px;color:#d8c3ce;font-family:'Work Sans',sans-serif;"> /mes</span></div>
               <button class="btn-ghost-round" style="background:var(--marigold);" onclick="accionSuscribirse()" id="btn-suscribirse">Suscribirme</button>
@@ -618,26 +618,41 @@
     document.getElementById('calc-result').classList.add('show');
   }
 
-  function calcularACG(){
-    renderACG();
-  }
+  async function calcularACG(){
+    const boton = document.getElementById('acg-boton');
+    const contenedorMapa = document.getElementById('acg-mapa');
+    const contenedorLineas = document.getElementById('acg-lines');
+    if (boton) { boton.textContent = 'Calculando...'; boton.disabled = true; }
+    try {
+      const r = await fetch('/astrocartografia', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + SESION.token },
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'No se pudo calcular.');
 
-  function renderACG(){
-    if (typeof APP_DATA === 'undefined' || !APP_DATA.astrocartography) return;
-    const acg = APP_DATA.astrocartography;
-    document.getElementById('acg-intro').textContent = acg.intro;
-    document.getElementById('acg-lines').innerHTML = acg.lines.map(l => `
-      <div class="acg-line">
-        <div class="em">${l.emoji}</div>
-        <div>
-          <div class="cat">${l.category}</div>
-          <h4>${l.planet} en tu ${l.angle}</h4>
-          <p>${l.note}</p>
-        </div>
-      </div>
-    `).join('');
+      if (contenedorMapa) contenedorMapa.innerHTML = data.svg || '';
+
+      const iconos = { Sun:'☀️', Moon:'🌙', Venus:'💗', Jupiter:'🚀', Mars:'🔥' };
+      if (data.lineas && data.lineas.length) {
+        contenedorLineas.innerHTML = data.lineas.slice(0, 6).map(l => `
+          <div class="acg-line">
+            <div class="em">${iconos[l.planet] || '✨'}</div>
+            <div>
+              <div class="cat">${l.planet} · ${l.line_type}</div>
+              <h4>${l.keywords ? l.keywords.join(', ') : ''}</h4>
+              <p>${l.meaning || ''}</p>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        contenedorLineas.innerHTML = '<div class="disclaimer">No se encontraron líneas para mostrar.</div>';
+      }
+    } catch (err) {
+      contenedorLineas.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+    }
+    if (boton) { boton.textContent = 'Ver mis líneas reales'; boton.disabled = false; }
   }
-  renderACG();
 
   // ---- Paso 3: botón de instalar ----
   let deferredPrompt = null;
@@ -848,6 +863,12 @@
     }
   }
 
+  const SIGNOS_ES = {
+    Ari:'Aries', Tau:'Tauro', Gem:'Géminis', Can:'Cáncer', Leo:'Leo', Vir:'Virgo',
+    Lib:'Libra', Sco:'Escorpio', Sag:'Sagitario', Cap:'Capricornio', Aqu:'Acuario', Pis:'Piscis',
+  };
+  function signoEs(abrev) { return SIGNOS_ES[abrev] || abrev; }
+
   async function calcularCartaReal() {
     const boton = document.getElementById('btn-calcular-carta');
     const chips = document.getElementById('carta-resultado-chips');
@@ -865,11 +886,11 @@
       const s = data.carta?.datos_carta?.subject_data;
       if (s && s.sun) {
         chips.innerHTML = `
-          <div class="carta-real-row">☉ Sol en <b>${s.sun?.sign || '—'} ${s.sun?.position ? Math.floor(s.sun.position)+'°' : ''}</b></div>
-          <div class="carta-real-row">☽ Luna en <b>${s.moon?.sign || '—'} ${s.moon?.position ? Math.floor(s.moon.position)+'°' : ''}</b></div>
-          <div class="carta-real-row">☿ Mercurio en <b>${s.mercury?.sign || '—'} ${s.mercury?.position ? Math.floor(s.mercury.position)+'°' : ''}</b></div>
-          <div class="carta-real-row">♀ Venus en <b>${s.venus?.sign || '—'} ${s.venus?.position ? Math.floor(s.venus.position)+'°' : ''}</b></div>
-          <div class="carta-real-row">♂ Marte en <b>${s.mars?.sign || '—'} ${s.mars?.position ? Math.floor(s.mars.position)+'°' : ''}</b></div>
+          <div class="carta-real-row">☉ Sol en <b>${signoEs(s.sun?.sign) || '—'} ${s.sun?.position ? Math.floor(s.sun.position)+'°' : ''}</b></div>
+          <div class="carta-real-row">☽ Luna en <b>${signoEs(s.moon?.sign) || '—'} ${s.moon?.position ? Math.floor(s.moon.position)+'°' : ''}</b></div>
+          <div class="carta-real-row">☿ Mercurio en <b>${signoEs(s.mercury?.sign) || '—'} ${s.mercury?.position ? Math.floor(s.mercury.position)+'°' : ''}</b></div>
+          <div class="carta-real-row">♀ Venus en <b>${signoEs(s.venus?.sign) || '—'} ${s.venus?.position ? Math.floor(s.venus.position)+'°' : ''}</b></div>
+          <div class="carta-real-row">♂ Marte en <b>${signoEs(s.mars?.sign) || '—'} ${s.mars?.position ? Math.floor(s.mars.position)+'°' : ''}</b></div>
         `;
       } else {
         chips.innerHTML = `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);">${JSON.stringify(data.carta?.datos_carta, null, 2)}</pre>`;
@@ -950,10 +971,10 @@
       const data = await r.json();
       const s = data.carta?.datos_carta?.subject_data;
       const cd = data.carta?.datos_carta?.chart_data;
-      if (s?.sun?.sign) document.getElementById('banda-sol').textContent = s.sun.sign + (s.sun.position ? ' ' + Math.floor(s.sun.position) + '°' : '');
-      if (s?.moon?.sign) document.getElementById('banda-luna').textContent = s.moon.sign + (s.moon.position ? ' ' + Math.floor(s.moon.position) + '°' : '');
+      if (s?.sun?.sign) document.getElementById('banda-sol').textContent = signoEs(s.sun.sign) + (s.sun.position ? ' ' + Math.floor(s.sun.position) + '°' : '');
+      if (s?.moon?.sign) document.getElementById('banda-luna').textContent = signoEs(s.moon.sign) + (s.moon.position ? ' ' + Math.floor(s.moon.position) + '°' : '');
       const asc = cd?.planetary_positions?.find(p => p.name === 'Ascendant');
-      if (asc?.sign) document.getElementById('banda-asc').textContent = asc.sign + (asc.degree ? ' ' + Math.floor(asc.degree) + '°' : '');
+      if (asc?.sign) document.getElementById('banda-asc').textContent = signoEs(asc.sign) + (asc.degree ? ' ' + Math.floor(asc.degree) + '°' : '');
     } catch (e) { /* silencioso: se queda con el texto de ejemplo si falla */ }
   }
 
