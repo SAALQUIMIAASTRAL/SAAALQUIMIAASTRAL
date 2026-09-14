@@ -56,6 +56,7 @@ async function requireLogin(req, res, next) {
   req.userId = data.user.id;
   req.userEmail = data.user.email;
 
+  // Cliente de Supabase con el "pase" de ESTA usuaria, para que RLS funcione
   req.supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
     global: { headers: { Authorization: `Bearer ${token}` } },
   });
@@ -63,6 +64,7 @@ async function requireLogin(req, res, next) {
   next();
 }
 
+// Helper: arma el objeto subject.birth_data a partir del perfil guardado
 function birthDataDesdePerfil(perfil, nombre) {
   const [anio, mes, dia] = perfil.fecha_nacimiento.split('-').map(Number);
   const [hora, minuto] = (perfil.hora_nacimiento || '12:00').split(':').map(Number);
@@ -86,6 +88,9 @@ async function leerPerfil(req) {
   return perfil;
 }
 
+// ============================================================
+// RUTA: Registro de nueva usuaria
+// ============================================================
 app.post('/auth/registro', async (req, res) => {
   const { email, password } = req.body;
   const { data, error } = await supabase.auth.signUp({ email, password });
@@ -93,6 +98,9 @@ app.post('/auth/registro', async (req, res) => {
   res.json({ mensaje: 'Cuenta creada', usuario: data.user });
 });
 
+// ============================================================
+// RUTA: Inicio de sesión
+// ============================================================
 app.post('/auth/login', async (req, res) => {
   const { email, password } = req.body;
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -100,6 +108,9 @@ app.post('/auth/login', async (req, res) => {
   res.json({ sesion: data.session, usuario: data.user });
 });
 
+// ============================================================
+// RUTA: Guardar/actualizar el perfil (ciudad + país)
+// ============================================================
 app.post('/perfil', requireLogin, async (req, res) => {
   const { nombre, fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo } = req.body;
 
@@ -120,6 +131,7 @@ app.post('/perfil', requireLogin, async (req, res) => {
   res.json({ mensaje: 'Perfil guardado', perfil: data });
 });
 
+// RUTA: Leer el perfil actual de la usuaria
 app.get('/perfil', requireLogin, async (req, res) => {
   const { data, error } = await req.supabase
     .from('profiles')
@@ -131,6 +143,9 @@ app.get('/perfil', requireLogin, async (req, res) => {
   res.json({ perfil: data });
 });
 
+// ============================================================
+// RUTA: Calcular la carta natal REAL (texto: Sol, Luna, etc.)
+// ============================================================
 app.post('/carta-natal', requireLogin, async (req, res) => {
   try {
     const perfil = await leerPerfil(req);
@@ -158,6 +173,9 @@ app.post('/carta-natal', requireLogin, async (req, res) => {
   }
 });
 
+// ============================================================
+// RUTA: Generar la carta natal VISUAL (la "rueda" en SVG)
+// ============================================================
 app.post('/carta-visual', requireLogin, async (req, res) => {
   try {
     const perfil = await leerPerfil(req);
@@ -172,8 +190,10 @@ app.post('/carta-visual', requireLogin, async (req, res) => {
     });
 
     let svg = null;
-    if (typeof respuesta.data === 'string' && respuesta.data.trim().startsWith('<svg')) {
-      svg = respuesta.data;
+    const crudoTexto = typeof respuesta.data === 'string' ? respuesta.data : JSON.stringify(respuesta.data);
+    const inicioSvg = crudoTexto.indexOf('<svg');
+    if (inicioSvg !== -1) {
+      svg = crudoTexto.slice(inicioSvg);
     } else if (respuesta.data?.svg_content) {
       svg = respuesta.data.svg_content;
     } else if (respuesta.data?.svg) {
@@ -187,6 +207,22 @@ app.post('/carta-visual', requireLogin, async (req, res) => {
   }
 });
 
+// ============================================================
+// RUTA: Fase lunar de HOY (real)
+// ============================================================
+// RUTA: Leer la última carta natal ya calculada (para mostrar Sol/Asc/Luna al abrir la app)
+app.get('/carta-natal/ultima', requireLogin, async (req, res) => {
+  const { data, error } = await req.supabase
+    .from('natal_charts')
+    .select('*')
+    .eq('user_id', req.userId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) return res.status(400).json({ error: error.message });
+  res.json({ carta: data });
+});
+
 app.post('/luna', requireLogin, async (req, res) => {
   try {
     const respuesta = await astrologyApi.post('/data/lunar-metrics', {});
@@ -195,11 +231,14 @@ app.post('/luna', requireLogin, async (req, res) => {
     console.error(err?.response?.data || err.message);
     res.status(500).json({
       error: 'No se pudo obtener la fase lunar.',
-      detalle_tecnico: err?.response?.data || err.message,
+      detalle_tecnico: err?.response?.data || err.message, // TEMPORAL: ayuda a diagnosticar si falla
     });
   }
 });
 
+// ============================================================
+// RUTA: Mensaje del día (Sol/Luna de hoy + tu carta real)
+// ============================================================
 app.post('/mensaje-del-dia', requireLogin, async (req, res) => {
   try {
     const perfil = await leerPerfil(req);
@@ -222,6 +261,9 @@ app.post('/mensaje-del-dia', requireLogin, async (req, res) => {
   }
 });
 
+// ============================================================
+// RUTA: Astrocartografía (mapa mundial de líneas planetarias)
+// ============================================================
 app.post('/astrocartografia', requireLogin, async (req, res) => {
   try {
     const perfil = await leerPerfil(req);
@@ -253,6 +295,9 @@ app.post('/astrocartografia', requireLogin, async (req, res) => {
   }
 });
 
+// ============================================================
+// RUTA: Iniciar el cobro de la suscripción mensual ($8.88 USD)
+// ============================================================
 app.post('/suscripcion/iniciar', requireLogin, async (req, res) => {
   try {
     const sesionPago = await stripe.checkout.sessions.create({
@@ -272,10 +317,16 @@ app.post('/suscripcion/iniciar', requireLogin, async (req, res) => {
   }
 });
 
+// ============================================================
+// RUTA: Webhook de Stripe (esqueleto, se activa al conectar dominio real)
+// ============================================================
 app.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
   res.json({ recibido: true });
 });
 
+// ============================================================
+// Arrancar el servidor
+// ============================================================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Sam Alquimia Astral backend corriendo en http://localhost:${PORT}`);
