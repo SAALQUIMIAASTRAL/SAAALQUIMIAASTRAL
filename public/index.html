@@ -382,21 +382,31 @@
           <div class="section">
             <h2>Tus cartas</h2>
             <div class="desc">Calcula hasta 8 cartas astrales: la tuya, tu pareja, tu familia o tus amigas.</div>
-            <div class="charts-scroll">
-              <div class="chart-chip"><div class="circ">M</div><div class="lbl">Mariana</div></div>
-              <div class="chart-chip"><div class="circ">R</div><div class="lbl">Rosa (mamá)</div></div>
-              <div class="chart-chip"><div class="circ">D</div><div class="lbl">David</div></div>
-              <div class="chart-chip"><div class="circ">L</div><div class="lbl">Lupita</div></div>
-              <div class="chart-chip add"><div class="circ">+</div><div class="lbl">Agregar</div></div>
+            <div class="charts-scroll" id="cartas-carousel">
+              <div class="chart-chip add" onclick="mostrarFormularioCarta()"><div class="circ">+</div><div class="lbl">Agregar</div></div>
             </div>
-            <div class="charts-count">4 de 8 cartas creadas</div>
+            <div class="charts-count" id="cartas-count">Cargando...</div>
+
+            <div class="calc-form" id="form-nueva-carta" style="display:none;margin-top:14px;">
+              <label>Nombre<input type="text" id="nc-nombre"></label>
+              <div class="calc-row">
+                <label>Fecha de nacimiento<input type="date" id="nc-fecha"></label>
+                <label>Hora<input type="time" id="nc-hora" value="12:00"></label>
+              </div>
+              <label>Ciudad de nacimiento<input type="text" id="nc-ciudad"></label>
+              <div class="auth-field"><label>País</label><select id="nc-pais"><option value="">Selecciona el país</option></select></div>
+              <button class="btn-primary" onclick="guardarNuevaCarta()">Calcular y guardar</button>
+              <div id="nc-resultado"></div>
+            </div>
           </div>
 
           <div class="section">
-            <h2>Tu carta natal (real)</h2>
+            <h2>Tu carta natal</h2>
             <div class="desc" id="carta-desc">Calculada con tus datos guardados: Swiss Ephemeris, precisión profesional.</div>
             <div class="calc-form">
               <button class="btn-primary" id="btn-calcular-carta" onclick="calcularCartaReal()">Calcular mi carta natal</button>
+              <button class="btn-primary" style="background:var(--marigold);margin-top:10px;" onclick="verResumenNatal()">Ver resumen de mi personalidad</button>
+              <div id="resumen-natal-contenedor" style="margin-top:14px;"></div>
               <button class="btn-primary" id="btn-carta-visual" style="background:var(--lilac);margin-top:10px;" onclick="verCartaVisual()">Ver mi carta en rueda 🔮</button>
               <div id="carta-visual-contenedor" style="margin-top:14px;cursor:pointer;" onclick="verEnGrande()"></div>
               <div class="desc" style="text-align:center;margin-top:4px;" id="zoom-hint"></div>
@@ -431,34 +441,51 @@
 
           <div class="section">
             <h2>Horóscopo personalizado</h2>
-            <div class="desc">Tus influencias diarias, cruzadas con tu carta natal.</div>
-            <div class="tab-row">
-              <div class="tab active">Mariana</div>
-              <div class="tab">Rosa</div>
-              <div class="tab">David</div>
-            </div>
-            <div class="influence"><div class="mk"></div><div><h4>Presta atención a los detalles</h4><p>Antes de responder algo importante, léelo dos veces. Hay matices que se te pueden escapar hoy.</p></div></div>
-            <div class="influence"><div class="mk"></div><div><h4>Tu intuición está más despierta</h4><p>Confía en la primera impresión que tengas de una persona o situación nueva.</p></div></div>
-            <span class="link-arrow" onclick="irAPagar()" style="cursor:pointer;">Ver las 6 influencias restantes ›</span>
+            <div class="desc">Tu horóscopo real, calculado con tu carta natal.</div>
+            <button class="btn-primary" onclick="verHoroscopoDiario()">Ver mi horóscopo de hoy</button>
+            <div id="horoscopo-resultado" style="margin-top:14px;"></div>
+          </div>
+
+          <div class="section">
+            <h2>Próximos eclipses</h2>
+            <div class="desc">Cómo el próximo eclipse afecta específicamente tu carta natal.</div>
+            <button class="btn-primary" onclick="verEclipses()">Ver cómo me afecta</button>
+            <div id="eclipses-resultado" style="margin-top:14px;"></div>
           </div>
 
           <div class="section">
             <h2>Tránsitos del momento</h2>
-            <div class="desc">El clima astrológico general, más allá de tu carta personal.</div>
-            <div class="influence"><div class="mk"></div><div><h4>Júpiter en Leo (hasta julio 2027)</h4><p>Un ciclo largo de expansión, creatividad y protagonismo — buen momento para crecer un proyecto propio.</p></div></div>
-            <div class="influence"><div class="mk"></div><div><h4>Próxima temporada de eclipses: febrero 2027</h4><p>Un eclipse solar y uno lunar marcarán cierres e inicios importantes — te avisaremos con tiempo.</p></div></div>
-            <div class="influence"><div class="mk"></div><div><h4>Luna llena este mes en Piscis</h4><p>Momento de soltar lo que ya cumplió su ciclo, sobre todo en temas emocionales o creativos.</p></div></div>
+            <div class="desc">El clima astrológico de hoy — dónde están los planetas ahora mismo.</div>
+            <button class="btn-primary" onclick="verTransitosHoy()">Ver tránsitos de hoy</button>
+            <div id="transitos-hoy-resultado" style="margin-top:14px;margin-bottom:14px;"></div>
+
+            <div class="desc" style="margin-top:16px;">Tus tránsitos personales, cruzados con tu carta natal (próximos 30 días).</div>
+            <button class="btn-primary" onclick="verTransitosReales()">Ver mis tránsitos reales</button>
+            <div id="transitos-resultado" style="margin-top:14px;"></div>
+          </div>
+
+          <div class="section">
+            <h2>Flor armónica</h2>
+            <div class="desc">Una herramienta de astrología avanzada que revela patrones ocultos en tu carta.</div>
+            <button class="btn-primary" onclick="verFlorArmonica()">Calcular mi flor armónica</button>
+            <div id="flor-resultado" style="margin-top:14px;"></div>
           </div>
 
           <div class="section">
             <h2>Sinastría</h2>
-            <div class="desc">Compara tu carta con la de cualquiera de tus cartas guardadas.</div>
-            <div class="synastry-card">
-              <div class="synastry-select"><span>Mariana + David</span><span>▾</span></div>
-              <div class="synastry-glyphs"><span>♍</span><span>♎</span><span>♏</span></div>
-              <div class="compat-bar"><div class="fill"></div></div>
-              <div class="compat-label">Afinidad general: alta en comunicación, intensa en lo emocional</div>
-              <button class="btn-primary" onclick="irAPagar()">Ver compatibilidad completa</button>
+            <div class="desc">Compara tu carta con la de otra persona (pareja, amiga, familiar).</div>
+            <div class="calc-form">
+              <label>Nombre de la otra persona<input type="text" id="sin-nombre" placeholder="Ej. David"></label>
+              <div class="calc-row">
+                <label>Fecha de nacimiento<input type="date" id="sin-fecha"></label>
+                <label>Hora<input type="time" id="sin-hora" value="12:00"></label>
+              </div>
+              <label>Ciudad de nacimiento<input type="text" id="sin-ciudad" placeholder="Ej. Ciudad de México"></label>
+              <div class="auth-field"><label>País</label>
+                <select id="sin-pais"><option value="">Selecciona el país</option></select>
+              </div>
+              <button class="btn-primary" onclick="calcularSinastria()">Ver compatibilidad</button>
+              <div id="sinastria-resultado" style="margin-top:14px;"></div>
             </div>
           </div>
 
@@ -474,6 +501,9 @@
           <div class="section">
             <h2>Ciclo lunar</h2>
             <div class="desc" id="luna-intro">Qué significa cada fase y cómo aprovecharla.</div>
+
+            <button class="btn-primary" style="margin-bottom:14px;" onclick="cargarLunaReal()">Ver datos lunares reales de hoy</button>
+            <div id="luna-cruda" style="margin-bottom:14px;"></div>
 
             <div class="moon-now" id="moon-now">
               <div class="m">🌑</div>
@@ -534,20 +564,20 @@
 
           <div class="section">
             <h2>Astrocartografía</h2>
-            <div class="desc" id="acg-intro">Qué lugares del mundo activan distintas energías de tu carta — pensado para quien ha migrado o vive lejos de donde nació.</div>
+            <div class="desc">Los lugares del mundo donde distintas energías de tu carta se activan más fuerte.</div>
 
             <div class="calc-form" style="margin-bottom:16px;">
-              <label>¿Dónde vives ahora?<input type="text" id="acg-place" placeholder="Ciudad, país" value="Mérida, México"></label>
-              <button class="btn-primary" onclick="calcularACG()">Ver mis líneas ahí</button>
+              <button class="btn-primary" id="acg-boton" onclick="calcularACG()">Ver mis líneas reales</button>
             </div>
 
+            <div id="acg-mapa" style="margin-bottom:14px;"></div>
             <div id="acg-lines"></div>
-            <div class="disclaimer">Vista previa con datos de ejemplo — el cálculo real por coordenadas se activa con la API de astrocartografía.</div>
+            <div class="disclaimer">Calculado con tu fecha, hora y lugar de nacimiento reales.</div>
           </div>
 
           <div style="background:var(--moon-navy);border-radius:16px;padding:18px;color:#fff;margin:12px 16px;box-shadow:0 2px 10px rgba(58,31,56,0.12);" id="tarjeta-suscripcion">
             <h2 style="color:#fff;font-size:18px;margin-bottom:6px;border-left:3px solid var(--marigold);padding-left:11px;">Desbloquea tu cielo completo</h2>
-            <p style="font-size:12px;color:#d8c3ce;margin:0 0 14px;line-height:1.5;">Sinastrías ilimitadas, biorritmo, ciclo lunar completo y tus 8 cartas guardadas.</p>
+            <p style="font-size:12px;color:#d8c3ce;margin:0 0 14px;line-height:1.5;">Tu carta natal completa, astrocartografía, ciclo lunar y hasta 8 cartas guardadas.</p>
             <div style="display:flex;align-items:center;justify-content:space-between;">
               <div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:#fff;">$8.88<span style="font-size:11.5px;color:#d8c3ce;font-family:'Work Sans',sans-serif;"> /mes</span></div>
               <button class="btn-ghost-round" style="background:var(--marigold);" onclick="accionSuscribirse()" id="btn-suscribirse">Suscribirme</button>
@@ -618,26 +648,41 @@
     document.getElementById('calc-result').classList.add('show');
   }
 
-  function calcularACG(){
-    renderACG();
-  }
+  async function calcularACG(){
+    const boton = document.getElementById('acg-boton');
+    const contenedorMapa = document.getElementById('acg-mapa');
+    const contenedorLineas = document.getElementById('acg-lines');
+    if (boton) { boton.textContent = 'Calculando...'; boton.disabled = true; }
+    try {
+      const r = await fetch('/astrocartografia', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + SESION.token },
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'No se pudo calcular.');
 
-  function renderACG(){
-    if (typeof APP_DATA === 'undefined' || !APP_DATA.astrocartography) return;
-    const acg = APP_DATA.astrocartography;
-    document.getElementById('acg-intro').textContent = acg.intro;
-    document.getElementById('acg-lines').innerHTML = acg.lines.map(l => `
-      <div class="acg-line">
-        <div class="em">${l.emoji}</div>
-        <div>
-          <div class="cat">${l.category}</div>
-          <h4>${l.planet} en tu ${l.angle}</h4>
-          <p>${l.note}</p>
-        </div>
-      </div>
-    `).join('');
+      if (contenedorMapa) contenedorMapa.innerHTML = data.svg || '';
+
+      const iconos = { Sun:'☀️', Moon:'🌙', Venus:'💗', Jupiter:'🚀', Mars:'🔥' };
+      if (data.lineas && data.lineas.length) {
+        contenedorLineas.innerHTML = data.lineas.slice(0, 6).map(l => `
+          <div class="acg-line">
+            <div class="em">${iconos[l.planet] || '✨'}</div>
+            <div>
+              <div class="cat">${l.planet} · ${l.line_type}</div>
+              <h4>${l.keywords ? l.keywords.join(', ') : ''}</h4>
+              <p>${l.meaning || ''}</p>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        contenedorLineas.innerHTML = '<div class="disclaimer">No se encontraron líneas para mostrar.</div>';
+      }
+    } catch (err) {
+      contenedorLineas.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+    }
+    if (boton) { boton.textContent = 'Ver mis líneas reales'; boton.disabled = false; }
   }
-  renderACG();
 
   // ---- Paso 3: botón de instalar ----
   let deferredPrompt = null;
@@ -737,12 +782,16 @@
   ];
 
   function llenarMenuPaises() {
-    const select = document.getElementById('perfil-pais');
-    PAISES.sort((a, b) => a[1].localeCompare(b[1])).forEach(([codigo, nombre]) => {
-      const opt = document.createElement('option');
-      opt.value = codigo;
-      opt.textContent = nombre;
-      select.appendChild(opt);
+    PAISES.sort((a, b) => a[1].localeCompare(b[1]));
+    ['perfil-pais', 'sin-pais', 'nc-pais'].forEach(idSelect => {
+      const select = document.getElementById(idSelect);
+      if (!select) return;
+      PAISES.forEach(([codigo, nombre]) => {
+        const opt = document.createElement('option');
+        opt.value = codigo;
+        opt.textContent = nombre;
+        select.appendChild(opt);
+      });
     });
   }
   llenarMenuPaises();
@@ -751,6 +800,80 @@
   // Conexión real con el servidor (login, perfil, carta natal)
   // ======================================================
   let SESION = { token: localStorage.getItem('saa_token') || null, nombre: null };
+
+  function mostrarFormularioCarta() {
+    const f = document.getElementById('form-nueva-carta');
+    f.style.display = f.style.display === 'none' ? 'flex' : 'none';
+  }
+
+  async function cargarCartasGuardadas() {
+    try {
+      const r = await fetch('/otras-cartas', { headers: { Authorization: 'Bearer ' + SESION.token } });
+      const data = await r.json();
+      const carousel = document.getElementById('cartas-carousel');
+      const chipsHtml = (data.cartas || []).map(c => `
+        <div class="chart-chip"><div class="circ">${(c.nombre || '?')[0].toUpperCase()}</div><div class="lbl">${c.nombre}</div></div>
+      `).join('');
+      carousel.innerHTML = chipsHtml + '<div class="chart-chip add" onclick="mostrarFormularioCarta()"><div class="circ">+</div><div class="lbl">Agregar</div></div>';
+      document.getElementById('cartas-count').textContent = `${(data.cartas || []).length} de 8 cartas creadas`;
+    } catch (e) { /* silencioso */ }
+  }
+
+  async function guardarNuevaCarta() {
+    const resultado = document.getElementById('nc-resultado');
+    const cuerpo = {
+      nombre: document.getElementById('nc-nombre').value.trim(),
+      fecha_nacimiento: document.getElementById('nc-fecha').value,
+      hora_nacimiento: document.getElementById('nc-hora').value || '12:00',
+      ciudad_nacimiento: document.getElementById('nc-ciudad').value.trim(),
+      pais_codigo: document.getElementById('nc-pais').value,
+    };
+    if (!cuerpo.nombre || !cuerpo.fecha_nacimiento || !cuerpo.ciudad_nacimiento || !cuerpo.pais_codigo) {
+      resultado.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Llena todos los datos.</div>';
+      return;
+    }
+    resultado.innerHTML = '<div class="disclaimer">Calculando y guardando...</div>';
+    try {
+      const r = await fetch('/otras-cartas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + SESION.token },
+        body: JSON.stringify(cuerpo),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'No se pudo guardar.');
+      resultado.innerHTML = '<div class="disclaimer">¡Guardada! 🎉</div>';
+      document.getElementById('form-nueva-carta').style.display = 'none';
+      cargarCartasGuardadas();
+    } catch (err) {
+      resultado.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+    }
+  }
+
+  async function verEclipses() {
+    const contenedor = document.getElementById('eclipses-resultado');
+    contenedor.innerHTML = '<div class="disclaimer">Consultando eclipses...</div>';
+    try {
+      const r = await fetch('/eclipses-natal', { method: 'POST', headers: { Authorization: 'Bearer ' + SESION.token } });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'No se pudo consultar.');
+      contenedor.innerHTML = `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(data, null, 2)}</pre>`;
+    } catch (err) {
+      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+    }
+  }
+
+  async function verHoroscopoDiario() {
+    const contenedor = document.getElementById('horoscopo-resultado');
+    contenedor.innerHTML = '<div class="disclaimer">Generando tu horóscopo...</div>';
+    try {
+      const r = await fetch('/horoscopo-diario', { method: 'POST', headers: { Authorization: 'Bearer ' + SESION.token } });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'No se pudo generar.');
+      contenedor.innerHTML = `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(data.horoscopo, null, 2)}</pre>`;
+    } catch (err) {
+      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+    }
+  }
 
   function mostrarPantalla(nombre) {
     document.querySelectorAll('.auth-overlay').forEach(el => el.classList.remove('show'));
@@ -834,6 +957,7 @@
     const nombreEl = document.querySelector('.band h1');
     if (nombreEl) nombreEl.innerHTML = `<span id="greeting-word">${greet ? greet.textContent : 'Hola'}</span>, ${SESION.nombre}`;
     actualizarBandaConCartaReal();
+    cargarCartasGuardadas();
   }
 
   async function revisarPerfilYArrancar() {
@@ -847,6 +971,26 @@
       entrarALaApp(data.perfil);
     }
   }
+
+  const NOMBRES_PLANETAS_ES = {
+    Sun:'☉ Sol', Moon:'☽ Luna', Mercury:'☿ Mercurio', Venus:'♀ Venus', Mars:'♂ Marte',
+    Jupiter:'♃ Júpiter', Saturn:'♄ Saturno', Uranus:'♅ Urano', Neptune:'♆ Neptuno', Pluto:'♇ Plutón',
+    Chiron:'⚷ Quirón', 'N. Node (M)':'☊ Nodo Norte', 'S. Node (M)':'☋ Nodo Sur', Lilith:'⚸ Lilith',
+    Ascendant:'↑ Ascendente', Medium_Coeli:'⬆ Medio Cielo',
+  };
+  function nombrePlanetaEs(n) { return NOMBRES_PLANETAS_ES[n] || n; }
+
+  const ASPECTOS_ES = {
+    conjunction:'Conjunción', opposition:'Oposición', trine:'Trígono',
+    square:'Cuadratura', sextile:'Sextil', quincunx:'Quincuncio',
+  };
+  function aspectoEs(a) { return ASPECTOS_ES[a] || a; }
+
+  const SIGNOS_ES = {
+    Ari:'Aries', Tau:'Tauro', Gem:'Géminis', Can:'Cáncer', Leo:'Leo', Vir:'Virgo',
+    Lib:'Libra', Sco:'Escorpio', Sag:'Sagitario', Cap:'Capricornio', Aqu:'Acuario', Pis:'Piscis',
+  };
+  function signoEs(abrev) { return SIGNOS_ES[abrev] || abrev; }
 
   async function calcularCartaReal() {
     const boton = document.getElementById('btn-calcular-carta');
@@ -863,14 +1007,26 @@
       if (!r.ok) throw new Error(data.error || 'Error al calcular');
 
       const s = data.carta?.datos_carta?.subject_data;
+      const cd = data.carta?.datos_carta?.chart_data;
       if (s && s.sun) {
-        chips.innerHTML = `
-          <div class="carta-real-row">☉ Sol en <b>${s.sun?.sign || '—'} ${s.sun?.position ? Math.floor(s.sun.position)+'°' : ''}</b></div>
-          <div class="carta-real-row">☽ Luna en <b>${s.moon?.sign || '—'} ${s.moon?.position ? Math.floor(s.moon.position)+'°' : ''}</b></div>
-          <div class="carta-real-row">☿ Mercurio en <b>${s.mercury?.sign || '—'} ${s.mercury?.position ? Math.floor(s.mercury.position)+'°' : ''}</b></div>
-          <div class="carta-real-row">♀ Venus en <b>${s.venus?.sign || '—'} ${s.venus?.position ? Math.floor(s.venus.position)+'°' : ''}</b></div>
-          <div class="carta-real-row">♂ Marte en <b>${s.mars?.sign || '—'} ${s.mars?.position ? Math.floor(s.mars.position)+'°' : ''}</b></div>
-        `;
+        let html = '';
+        if (cd?.planetary_positions?.length) {
+          html += cd.planetary_positions.map(p => `
+            <div class="carta-real-row">${nombrePlanetaEs(p.name)} en <b>${signoEs(p.sign)} ${p.degree ? Math.floor(p.degree)+'°' : ''}</b>${p.house ? ` <span style="color:var(--ink-dim);font-weight:400;font-size:11px;">Casa ${p.house}</span>` : ''}</div>
+          `).join('');
+        } else {
+          html += `
+            <div class="carta-real-row">☉ Sol en <b>${signoEs(s.sun?.sign) || '—'} ${s.sun?.position ? Math.floor(s.sun.position)+'°' : ''}</b></div>
+            <div class="carta-real-row">☽ Luna en <b>${signoEs(s.moon?.sign) || '—'} ${s.moon?.position ? Math.floor(s.moon.position)+'°' : ''}</b></div>
+          `;
+        }
+        if (cd?.aspects?.length) {
+          html += '<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(181,101,47,0.25);font-size:11.5px;color:var(--marigold);font-weight:600;">Aspectos principales</div>';
+          html += cd.aspects.slice(0, 8).map(a => `
+            <div class="carta-real-row" style="font-size:12px;">${nombrePlanetaEs(a.point1)} ${aspectoEs(a.aspect_type)} ${nombrePlanetaEs(a.point2)} <span style="color:var(--ink-dim);font-weight:400;">(orbe ${a.orb?.toFixed ? a.orb.toFixed(1) : a.orb}°)</span></div>
+          `).join('');
+        }
+        chips.innerHTML = html;
       } else {
         chips.innerHTML = `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);">${JSON.stringify(data.carta?.datos_carta, null, 2)}</pre>`;
       }
@@ -934,6 +1090,104 @@
     }
   }
 
+  async function verTransitosHoy() {
+    const contenedor = document.getElementById('transitos-hoy-resultado');
+    contenedor.innerHTML = '<div class="disclaimer">Consultando el cielo de hoy...</div>';
+    try {
+      const r = await fetch('/mensaje-del-dia', { method: 'POST', headers: { Authorization: 'Bearer ' + SESION.token } });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'No se pudo obtener.');
+      contenedor.innerHTML = `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(data.datos_hoy, null, 2)}</pre>`;
+    } catch (err) {
+      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+    }
+  }
+
+  async function verTransitosReales() {
+    const contenedor = document.getElementById('transitos-resultado');
+    contenedor.innerHTML = '<div class="disclaimer">Calculando tus tránsitos...</div>';
+    try {
+      const r = await fetch('/transitos-personales', { method: 'POST', headers: { Authorization: 'Bearer ' + SESION.token } });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'No se pudo calcular.');
+      contenedor.innerHTML = `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(data.transitos, null, 2)}</pre>`;
+    } catch (err) {
+      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+    }
+  }
+
+  async function verFlorArmonica() {
+    const contenedor = document.getElementById('flor-resultado');
+    contenedor.innerHTML = '<div class="disclaimer">Calculando...</div>';
+    try {
+      const r = await fetch('/flor-armonica', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + SESION.token },
+        body: JSON.stringify({ numero: 5 }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'No se pudo calcular.');
+      contenedor.innerHTML = `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(data.flor, null, 2)}</pre>`;
+    } catch (err) {
+      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+    }
+  }
+
+  async function calcularSinastria() {
+    const contenedor = document.getElementById('sinastria-resultado');
+    const cuerpo = {
+      nombre: document.getElementById('sin-nombre').value.trim(),
+      fecha_nacimiento: document.getElementById('sin-fecha').value,
+      hora_nacimiento: document.getElementById('sin-hora').value || '12:00',
+      ciudad_nacimiento: document.getElementById('sin-ciudad').value.trim(),
+      pais_codigo: document.getElementById('sin-pais').value,
+    };
+    if (!cuerpo.nombre || !cuerpo.fecha_nacimiento || !cuerpo.ciudad_nacimiento || !cuerpo.pais_codigo) {
+      contenedor.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Llena todos los datos de la otra persona.</div>';
+      return;
+    }
+    contenedor.innerHTML = '<div class="disclaimer">Calculando compatibilidad...</div>';
+    try {
+      const r = await fetch('/sinastria', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + SESION.token },
+        body: JSON.stringify(cuerpo),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'No se pudo calcular.');
+      contenedor.innerHTML = `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(data.reporte, null, 2)}</pre>`;
+    } catch (err) {
+      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+    }
+  }
+
+  async function verResumenNatal() {
+    const contenedor = document.getElementById('resumen-natal-contenedor');
+    contenedor.innerHTML = '<div class="disclaimer">Generando tu resumen...</div>';
+    try {
+      const r = await fetch('/resumen-natal', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + SESION.token },
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'No se pudo generar.');
+      contenedor.innerHTML = `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(data.reporte, null, 2)}</pre>`;
+    } catch (err) {
+      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+    }
+  }
+
+  async function cargarLunaReal() {
+    try {
+      const r = await fetch('/luna', { method: 'POST', headers: { Authorization: 'Bearer ' + SESION.token } });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'No se pudo cargar.');
+      document.getElementById('luna-cruda').innerHTML = `<pre style="white-space:pre-wrap;font-size:9px;color:var(--plum);">${JSON.stringify(data.luna, null, 2)}</pre>`;
+    } catch (err) {
+      document.getElementById('luna-cruda').innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+    }
+  }
+
   function verEnGrande() {
     const original = document.getElementById('carta-visual-contenedor').innerHTML;
     if (!original) return;
@@ -950,10 +1204,10 @@
       const data = await r.json();
       const s = data.carta?.datos_carta?.subject_data;
       const cd = data.carta?.datos_carta?.chart_data;
-      if (s?.sun?.sign) document.getElementById('banda-sol').textContent = s.sun.sign + (s.sun.position ? ' ' + Math.floor(s.sun.position) + '°' : '');
-      if (s?.moon?.sign) document.getElementById('banda-luna').textContent = s.moon.sign + (s.moon.position ? ' ' + Math.floor(s.moon.position) + '°' : '');
+      if (s?.sun?.sign) document.getElementById('banda-sol').textContent = signoEs(s.sun.sign) + (s.sun.position ? ' ' + Math.floor(s.sun.position) + '°' : '');
+      if (s?.moon?.sign) document.getElementById('banda-luna').textContent = signoEs(s.moon.sign) + (s.moon.position ? ' ' + Math.floor(s.moon.position) + '°' : '');
       const asc = cd?.planetary_positions?.find(p => p.name === 'Ascendant');
-      if (asc?.sign) document.getElementById('banda-asc').textContent = asc.sign + (asc.degree ? ' ' + Math.floor(asc.degree) + '°' : '');
+      if (asc?.sign) document.getElementById('banda-asc').textContent = signoEs(asc.sign) + (asc.degree ? ' ' + Math.floor(asc.degree) + '°' : '');
     } catch (e) { /* silencioso: se queda con el texto de ejemplo si falla */ }
   }
 

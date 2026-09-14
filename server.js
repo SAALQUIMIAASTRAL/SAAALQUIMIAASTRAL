@@ -360,6 +360,138 @@ app.post('/sinastria', requireLogin, async (req, res) => {
   }
 });
 
+// RUTA: Flor armónica (harmonic chart)
+// RUTA: Horóscopo diario personalizado (real)
+// RUTA: Guardar y calcular la carta de otra persona (familia, pareja, amigas — hasta 8)
+app.post('/otras-cartas', requireLogin, async (req, res) => {
+  try {
+    const { nombre, fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo } = req.body;
+    if (!nombre || !fecha_nacimiento || !ciudad_nacimiento || !pais_codigo) {
+      return res.status(400).json({ error: 'Faltan datos de la persona.' });
+    }
+
+    const { count } = await req.supabase.from('otras_cartas').select('*', { count: 'exact', head: true });
+    if (count >= 8) return res.status(400).json({ error: 'Ya tienes 8 cartas guardadas (el máximo).' });
+
+    const respuesta = await astrologyApi.post('/charts/natal', {
+      subject: birthDataDesdePerfil({ fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo }, nombre),
+      options: { house_system: 'P', zodiac_type: 'Tropic', language: 'es' },
+    });
+
+    const { data, error } = await req.supabase
+      .from('otras_cartas')
+      .insert({
+        user_id: req.userId, nombre, fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo,
+        datos_carta: respuesta.data,
+      })
+      .select()
+      .single();
+
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ mensaje: 'Carta guardada', carta: data });
+  } catch (err) {
+    console.error(err?.response?.data || err.message);
+    res.status(500).json({ error: 'No se pudo calcular/guardar la carta.', detalle_tecnico: err?.response?.data || err.message });
+  }
+});
+
+// RUTA: Listar las cartas de otras personas ya guardadas
+app.get('/otras-cartas', requireLogin, async (req, res) => {
+  const { data, error } = await req.supabase
+    .from('otras_cartas')
+    .select('id, nombre, fecha_nacimiento, ciudad_nacimiento, created_at')
+    .order('created_at', { ascending: true });
+  if (error) return res.status(400).json({ error: error.message });
+  res.json({ cartas: data || [] });
+});
+
+// RUTA: Próximos eclipses y cómo afectan tu carta natal
+app.post('/eclipses-natal', requireLogin, async (req, res) => {
+  try {
+    const perfil = await leerPerfil(req);
+    if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
+
+    const [proximos, revision] = await Promise.all([
+      astrologyApi.get('/eclipses/upcoming').catch(err => ({ error: err?.response?.data || err.message })),
+      astrologyApi.post('/eclipses/natal-check', {
+        subject: birthDataDesdePerfil(perfil),
+      }).catch(err => ({ error: err?.response?.data || err.message })),
+    ]);
+
+    res.json({
+      proximos_eclipses: proximos.data || proximos,
+      como_te_afecta: revision.data || revision,
+    });
+  } catch (err) {
+    console.error(err?.response?.data || err.message);
+    res.status(500).json({ error: 'No se pudo consultar eclipses.', detalle_tecnico: err?.response?.data || err.message });
+  }
+});
+
+app.post('/horoscopo-diario', requireLogin, async (req, res) => {
+  try {
+    const perfil = await leerPerfil(req);
+    if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
+
+    const respuesta = await astrologyApi.post('/horoscope/personal/daily/text', {
+      subject: birthDataDesdePerfil(perfil),
+      options: { language: 'es' },
+    });
+
+    res.json({ horoscopo: respuesta.data });
+  } catch (err) {
+    console.error(err?.response?.data || err.message);
+    res.status(500).json({ error: 'No se pudo generar el horóscopo.', detalle_tecnico: err?.response?.data || err.message });
+  }
+});
+
+app.post('/flor-armonica', requireLogin, async (req, res) => {
+  try {
+    const perfil = await leerPerfil(req);
+    if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
+
+    const numeroArmonico = req.body.numero || 5;
+    const respuesta = await astrologyApi.post('/charts/harmonic', {
+      subject: birthDataDesdePerfil(perfil),
+      harmonic_number: numeroArmonico,
+      options: { house_system: 'P', zodiac_type: 'Tropic', language: 'es' },
+    });
+
+    res.json({ flor: respuesta.data });
+  } catch (err) {
+    console.error(err?.response?.data || err.message);
+    res.status(500).json({ error: 'No se pudo calcular la flor armónica.', detalle_tecnico: err?.response?.data || err.message });
+  }
+});
+
+// RUTA: Tránsitos personalizados (próximos 30 días)
+app.post('/transitos-personales', requireLogin, async (req, res) => {
+  try {
+    const perfil = await leerPerfil(req);
+    if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
+
+    const hoy = new Date();
+    const en30dias = new Date(hoy.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+    const respuesta = await astrologyApi.post('/analysis/natal-transit-report', {
+      subject: birthDataDesdePerfil(perfil),
+      transit_time: {
+        date_range: {
+          start_date: { year: hoy.getUTCFullYear(), month: hoy.getUTCMonth() + 1, day: hoy.getUTCDate() },
+          end_date: { year: en30dias.getUTCFullYear(), month: en30dias.getUTCMonth() + 1, day: en30dias.getUTCDate() },
+        },
+      },
+      orb: 1,
+      report_options: { tradition: 'psychological', language: 'es' },
+    });
+
+    res.json({ transitos: respuesta.data });
+  } catch (err) {
+    console.error(err?.response?.data || err.message);
+    res.status(500).json({ error: 'No se pudieron calcular los tránsitos.', detalle_tecnico: err?.response?.data || err.message });
+  }
+});
+
 app.post('/suscripcion/iniciar', requireLogin, async (req, res) => {
   try {
     const sesionPago = await stripe.checkout.sessions.create({
