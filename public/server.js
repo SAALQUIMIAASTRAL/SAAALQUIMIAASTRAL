@@ -1,6 +1,14 @@
 // ============================================================
 // SAM ALQUIMIA ASTRAL — Servidor (el "cerebro" de la app)
 // ============================================================
+// Este archivo conecta 3 piezas:
+//   1. Supabase   -> guarda usuarias y sus datos, de forma privada
+//   2. Astrology API (astrology-api.io) -> calcula cartas natales, sinastría, etc.
+//   3. Stripe     -> cobra la suscripción mensual (se conecta en el siguiente paso)
+//
+// No necesitas entender cada línea. Los comentarios explican qué hace cada bloque.
+// ============================================================
+
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -10,7 +18,7 @@ const { createClient } = require('@supabase/supabase-js');
 const app = express();
 app.use(cors());
 app.use((req, res, next) => {
-  if (req.originalUrl === '/webhooks/stripe') return next();
+  if (req.originalUrl === '/webhooks/stripe') return next(); // este necesita el "cuerpo crudo", se procesa aparte
   express.json()(req, res, next);
 });
 app.use(express.static('public'));
@@ -39,6 +47,7 @@ const astrologyApi = axios.create({
 
 // ============================================================
 // Middleware: verifica que la usuaria haya iniciado sesión
+// (revisa el "token" que manda la app después del login)
 // ============================================================
 async function requireLogin(req, res, next) {
   const authHeader = req.headers.authorization || '';
@@ -56,7 +65,8 @@ async function requireLogin(req, res, next) {
   req.userId = data.user.id;
   req.userEmail = data.user.email;
 
-  // Cliente de Supabase con el "pase" de ESTA usuaria, para que RLS funcione
+  // IMPORTANTE: creamos un "cliente" de Supabase que lleva el pase de ESTA usuaria
+  // en cada consulta, para que la regla de seguridad (RLS) la reconozca correctamente.
   req.supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
     global: { headers: { Authorization: `Bearer ${token}` } },
   });
@@ -64,52 +74,37 @@ async function requireLogin(req, res, next) {
   next();
 }
 
-// Helper: arma el objeto subject.birth_data a partir del perfil guardado
-function birthDataDesdePerfil(perfil, nombre) {
-  const [anio, mes, dia] = perfil.fecha_nacimiento.split('-').map(Number);
-  const [hora, minuto] = (perfil.hora_nacimiento || '12:00').split(':').map(Number);
-  return {
-    name: nombre || perfil.nombre || 'Usuaria',
-    birth_data: {
-      year: anio, month: mes, day: dia, hour: hora, minute: minuto, second: 0,
-      city: perfil.ciudad_nacimiento,
-      country_code: perfil.pais_codigo,
-    },
-  };
-}
-
-async function leerPerfil(req) {
-  const { data: perfil, error } = await req.supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', req.userId)
-    .single();
-  if (error || !perfil) return null;
-  return perfil;
-}
-
 // ============================================================
 // RUTA: Registro de nueva usuaria
+// POST /auth/registro   { email, password }
 // ============================================================
 app.post('/auth/registro', async (req, res) => {
   const { email, password } = req.body;
+
   const { data, error } = await supabase.auth.signUp({ email, password });
   if (error) return res.status(400).json({ error: error.message });
+
   res.json({ mensaje: 'Cuenta creada', usuario: data.user });
 });
 
 // ============================================================
 // RUTA: Inicio de sesión
+// POST /auth/login   { email, password }
 // ============================================================
 app.post('/auth/login', async (req, res) => {
   const { email, password } = req.body;
+
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return res.status(400).json({ error: error.message });
+
+  // "session.access_token" es el "pase" que la app usará en las siguientes peticiones
   res.json({ sesion: data.session, usuario: data.user });
 });
 
 // ============================================================
-// RUTA: Guardar/actualizar el perfil (ciudad + país)
+// RUTA: Guardar/actualizar los datos de nacimiento de la usuaria
+// POST /perfil   (requiere estar logueada)
+// { nombre, fecha_nacimiento, hora_nacimiento, lugar_nacimiento, latitud, longitud }
 // ============================================================
 app.post('/perfil', requireLogin, async (req, res) => {
   const { nombre, fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo } = req.body;
@@ -144,23 +139,54 @@ app.get('/perfil', requireLogin, async (req, res) => {
 });
 
 // ============================================================
-// RUTA: Calcular la carta natal REAL (texto: Sol, Luna, etc.)
+// RUTA: Calcular la carta natal REAL con Astrology API
+// POST /carta-natal   (requiere estar logueada)
 // ============================================================
 app.post('/carta-natal', requireLogin, async (req, res) => {
   try {
-    const perfil = await leerPerfil(req);
-    if (!perfil) {
+    // 1) Leemos el perfil de la usuaria (sus datos de nacimiento) desde Supabase
+    const { data: perfil, error: errorPerfil } = await req.supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', req.userId)
+      .single();
+
+    if (errorPerfil || !perfil) {
       return res.status(400).json({ error: 'Primero guarda tu fecha y lugar de nacimiento en tu perfil.' });
     }
 
+    const [anio, mes, dia] = perfil.fecha_nacimiento.split('-').map(Number);
+    const [hora, minuto] = (perfil.hora_nacimiento || '12:00').split(':').map(Number);
+
+    // 2) Le pedimos a Astrology API que calcule la carta real
     const respuesta = await astrologyApi.post('/charts/natal', {
-      subject: birthDataDesdePerfil(perfil),
-      options: { house_system: 'P', zodiac_type: 'Tropic', language: 'es' },
+      subject: {
+        name: perfil.nombre || 'Usuaria',
+        birth_data: {
+          year: anio,
+          month: mes,
+          day: dia,
+          hour: hora,
+          minute: minuto,
+          second: 0,
+          city: perfil.ciudad_nacimiento,
+          country_code: perfil.pais_codigo,
+        },
+      },
+      options: {
+        house_system: 'P',       // Placidus, el sistema de casas más usado
+        zodiac_type: 'Tropic',   // astrología occidental (tropical), no védica
+        language: 'es',
+      },
     });
 
+    // 3) Guardamos el resultado en la tabla natal_charts, ligado a esta usuaria
     const { data: cartaGuardada, error: errorGuardar } = await req.supabase
       .from('natal_charts')
-      .insert({ user_id: req.userId, datos_carta: respuesta.data })
+      .insert({
+        user_id: req.userId,
+        datos_carta: respuesta.data,
+      })
       .select()
       .single();
 
@@ -174,114 +200,9 @@ app.post('/carta-natal', requireLogin, async (req, res) => {
 });
 
 // ============================================================
-// RUTA: Generar la carta natal VISUAL (la "rueda" en SVG)
-// ============================================================
-app.post('/carta-visual', requireLogin, async (req, res) => {
-  try {
-    const perfil = await leerPerfil(req);
-    if (!perfil) {
-      return res.status(400).json({ error: 'Primero guarda tu fecha y lugar de nacimiento en tu perfil.' });
-    }
-
-    const respuesta = await astrologyApi.post('/render/natal', {
-      subject: birthDataDesdePerfil(perfil),
-      options: { house_system: 'P' },
-      render_options: { format: 'svg', theme: 'light' },
-    });
-
-    let svg = null;
-    if (typeof respuesta.data === 'string' && respuesta.data.trim().startsWith('<svg')) {
-      svg = respuesta.data;
-    } else if (respuesta.data?.svg_content) {
-      svg = respuesta.data.svg_content;
-    } else if (respuesta.data?.svg) {
-      svg = respuesta.data.svg;
-    }
-
-    res.json({ svg, crudo: svg ? undefined : respuesta.data });
-  } catch (err) {
-    console.error(err?.response?.data || err.message);
-    res.status(500).json({ error: 'No se pudo generar la carta visual.' });
-  }
-});
-
-// ============================================================
-// RUTA: Fase lunar de HOY (real)
-// ============================================================
-app.post('/luna', requireLogin, async (req, res) => {
-  try {
-    const respuesta = await astrologyApi.post('/data/lunar-metrics', {});
-    res.json({ mensaje: 'Datos lunares de hoy', luna: respuesta.data });
-  } catch (err) {
-    console.error(err?.response?.data || err.message);
-    res.status(500).json({
-      error: 'No se pudo obtener la fase lunar.',
-      detalle_tecnico: err?.response?.data || err.message, // TEMPORAL: ayuda a diagnosticar si falla
-    });
-  }
-});
-
-// ============================================================
-// RUTA: Mensaje del día (Sol/Luna de hoy + tu carta real)
-// ============================================================
-app.post('/mensaje-del-dia', requireLogin, async (req, res) => {
-  try {
-    const perfil = await leerPerfil(req);
-    if (!perfil) {
-      return res.status(400).json({ error: 'Primero guarda tu perfil.' });
-    }
-
-    const [hoy] = await Promise.all([
-      astrologyApi.get('/data/now').catch(() => null),
-    ]);
-
-    res.json({
-      mensaje: 'Mensaje del día',
-      datos_hoy: hoy?.data || null,
-      nombre: perfil.nombre,
-    });
-  } catch (err) {
-    console.error(err?.response?.data || err.message);
-    res.status(500).json({ error: 'No se pudo generar el mensaje del día.' });
-  }
-});
-
-// ============================================================
-// RUTA: Astrocartografía (mapa mundial de líneas planetarias)
-// ============================================================
-app.post('/astrocartografia', requireLogin, async (req, res) => {
-  try {
-    const perfil = await leerPerfil(req);
-    if (!perfil) {
-      return res.status(400).json({ error: 'Primero guarda tu fecha y lugar de nacimiento en tu perfil.' });
-    }
-
-    const respuesta = await astrologyApi.post('/astrocartography/map', {
-      subject: birthDataDesdePerfil(perfil),
-      map_options: {
-        planets: ['Sun', 'Moon', 'Venus', 'Jupiter', 'Mars'],
-        line_types: ['AC', 'MC'],
-        map_projection: 'mercator',
-      },
-      visual_options: {
-        width: 1000, height: 500, theme: 'modern', show_legend: true,
-        city_min_population: 750000, language: 'es',
-      },
-    });
-
-    res.json({
-      svg: respuesta.data?.svg_content || null,
-      zonas_poder: respuesta.data?.map_data?.power_zones || [],
-      lineas: respuesta.data?.map_data?.lines || [],
-    });
-  } catch (err) {
-    console.error(err?.response?.data || err.message);
-    res.status(500).json({ error: 'No se pudo generar la astrocartografía.' });
-  }
-});
-
-// ============================================================
 // RUTA: Iniciar el cobro de la suscripción mensual ($8.88 USD)
+// POST /suscripcion/iniciar   (requiere estar logueada)
+// Devuelve una URL de pago de Stripe (Checkout) para que la usuaria pague ahí.
 // ============================================================
 app.post('/suscripcion/iniciar', requireLogin, async (req, res) => {
   try {
@@ -290,6 +211,7 @@ app.post('/suscripcion/iniciar', requireLogin, async (req, res) => {
       payment_method_types: ['card'],
       customer_email: req.userEmail,
       line_items: [{ price: process.env.STRIPE_PRICE_ID, quantity: 1 }],
+      // Estas dos URLs las ajustaremos cuando la app esté publicada (paso 4)
       success_url: `${req.headers.origin || 'https://tuapp.com'}/pago-exitoso`,
       cancel_url: `${req.headers.origin || 'https://tuapp.com'}/pago-cancelado`,
       metadata: { user_id: req.userId },
@@ -303,9 +225,13 @@ app.post('/suscripcion/iniciar', requireLogin, async (req, res) => {
 });
 
 // ============================================================
-// RUTA: Webhook de Stripe (esqueleto, se activa al conectar dominio real)
+// RUTA: Webhook de Stripe — Stripe nos avisa aquí cuando un pago
+// se completó, para activar la suscripción de la usuaria en Supabase.
+// (Esta ruta la conectamos con Stripe hasta el paso 4, cuando
+// tengamos una dirección de internet real para recibir el aviso)
 // ============================================================
 app.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+  // Por ahora dejamos el esqueleto listo; se activa al desplegar (paso 4)
   res.json({ recibido: true });
 });
 
