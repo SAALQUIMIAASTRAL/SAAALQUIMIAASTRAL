@@ -604,21 +604,29 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
 
     const dias = Array.from({ length: diasEnMes }, (_, i) => i + 1);
 
-    const resultados = await Promise.all(dias.map(async (dia) => {
-      try {
-        const r = await astrologyApi.post('/analysis/lunar-analysis', {
-          datetime_location: {
-            year: anio, month: mes, day: dia, hour: 12, minute: 0, second: 0,
-            city: 'Mexico City', country_code: 'MX',
-          },
-          report_options: { language: 'es' },
-        });
-        const m = r.data?.data?.lunar_metrics;
-        return { dia, signo: m?.moon_sign, fase: m?.moon_phase };
-      } catch (e) {
-        return { dia, signo: null, fase: null };
-      }
-    }));
+    const [resultados, chartHoy] = await Promise.all([
+      Promise.all(dias.map(async (dia) => {
+        try {
+          const r = await astrologyApi.post('/analysis/lunar-analysis', {
+            datetime_location: {
+              year: anio, month: mes, day: dia, hour: 12, minute: 0, second: 0,
+              city: 'Mexico City', country_code: 'MX',
+            },
+            report_options: { language: 'es' },
+          });
+          const m = r.data?.data?.lunar_metrics;
+          return { dia, signo: m?.moon_sign, fase: m?.moon_phase };
+        } catch (e) {
+          return { dia, signo: null, fase: null };
+        }
+      })),
+      astrologyApi.post('/charts/natal', {
+        subject: { name: 'Hoy', birth_data: { year: anio, month: mes, day: hoy.getUTCDate(), hour: 12, minute: 0, second: 0, city: 'Mexico City', country_code: 'MX' } },
+        options: { house_system: 'P', zodiac_type: 'Tropic' },
+      }).catch(() => null),
+    ]);
+
+    const mercurioRetrogrado = chartHoy?.data?.subject_data?.mercury?.retrograde || false;
 
     const creciente = f => f && f.includes('Waxing');
     const menguante = f => f && f.includes('Waning');
@@ -630,9 +638,11 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
       lanzar_negocio: resultados.filter(d => nueva(d.fase) || (creciente(d.fase) && d.dia <= 10)).map(d => d.dia),
       pedir_credito: resultados.filter(d => creciente(d.fase) && ['Tau', 'Cap'].includes(d.signo)).map(d => d.dia),
       cirugias: resultados.filter(d => menguante(d.fase) && d.signo !== 'Sco').map(d => d.dia),
+      firmar_contrato: resultados.filter(d => creciente(d.fase) && ['Vir', 'Lib', 'Cap'].includes(d.signo)).map(d => d.dia),
+      entrevista_trabajo: resultados.filter(d => creciente(d.fase) && ['Leo', 'Cap', 'Sag'].includes(d.signo)).map(d => d.dia),
     };
 
-    res.json({ mes, anio, calendario, detalle_dias: resultados });
+    res.json({ mes, anio, calendario, detalle_dias: resultados, mercurio_retrogrado: mercurioRetrogrado });
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo calcular el calendario lunar.', detalle_tecnico: err?.response?.data || err.message });

@@ -589,7 +589,8 @@
           <div class="section" data-tab="luna">
             <h2>Mejores días para...</h2>
             <div class="desc">Según la tradición astrológica y la fase lunar actual.</div>
-            <button class="btn-primary" style="margin-bottom:14px;" onclick="calcularCalendarioLunar(this)">Ver fechas exactas de este mes</button>
+            <button class="btn-primary" style="margin-bottom:10px;" onclick="calcularCalendarioLunar(this)">Ver fechas exactas de este mes</button>
+            <div id="aviso-mercurio-retro"></div>
 
             <div class="day-item">
               <div class="ic">✂️</div>
@@ -606,6 +607,14 @@
             <div class="day-item">
               <div class="ic">💳</div>
               <div><h4>Pedir un crédito</h4><div class="when" id="fechas-credito">Luna creciente en Tauro o Capricornio</div><p>Se asocia con estabilidad y compromisos que crecen de forma sólida.</p></div>
+            </div>
+            <div class="day-item">
+              <div class="ic">✍️</div>
+              <div><h4>Firmar un contrato</h4><div class="when" id="fechas-contrato">Luna creciente en Virgo, Libra o Capricornio</div><p>Favorece los acuerdos claros y duraderos.</p></div>
+            </div>
+            <div class="day-item">
+              <div class="ic">💼</div>
+              <div><h4>Entrevista de trabajo</h4><div class="when" id="fechas-entrevista">Luna creciente en Leo, Capricornio o Sagitario</div><p>Ayuda a mostrar confianza y buena impresión.</p></div>
             </div>
             <div class="day-item">
               <div class="ic">🩺</div>
@@ -1891,7 +1900,16 @@
       document.getElementById('fechas-tatuaje').textContent = fmt(c.tatuarte);
       document.getElementById('fechas-negocio').textContent = fmt(c.lanzar_negocio);
       document.getElementById('fechas-credito').textContent = fmt(c.pedir_credito);
+      document.getElementById('fechas-contrato').textContent = fmt(c.firmar_contrato);
+      document.getElementById('fechas-entrevista').textContent = fmt(c.entrevista_trabajo);
       document.getElementById('fechas-cirugia').textContent = fmt(c.cirugias);
+
+      const avisoMercurio = document.getElementById('aviso-mercurio-retro');
+      if (data.mercurio_retrogrado) {
+        avisoMercurio.innerHTML = '<div class="disclaimer" style="background:#fbe6e3;color:#a5442f;border-radius:10px;padding:10px 12px;margin-bottom:12px;">☿ Mercurio está retrógrado este mes — mejor revisar dos veces contratos, mensajes importantes y acuerdos antes de firmar.</div>';
+      } else {
+        avisoMercurio.innerHTML = '';
+      }
     } catch (err) {
       alert(err.message);
     }
