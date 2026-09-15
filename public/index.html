@@ -1782,6 +1782,46 @@
     }
   }
 
+  function dibujarFlorArmonica(posiciones, aspectos) {
+    const centro = 110, radio = 88;
+    const puntos = {};
+    const COLOR_ASPECTO_LINEA = { conjunction:'#e8b978', trine:'#6a9955', sextile:'#6a9955', square:'#c0392b', opposition:'#c0392b' };
+    const EMOJI_PLANETA = { Sun:'☉', Moon:'☽', Mercury:'☿', Venus:'♀', Mars:'♂', Jupiter:'♃', Saturn:'♄', Uranus:'♅', Neptune:'♆', Pluto:'♇', Ascendant:'AC', Medium_Coeli:'MC' };
+
+    const puntosSvg = posiciones.slice(0, 12).map(p => {
+      const angulo = ((p.absolute_longitude || 0) - 90) * Math.PI / 180;
+      const x = centro + radio * Math.cos(angulo);
+      const y = centro + radio * Math.sin(angulo);
+      puntos[p.name] = { x, y };
+      return `
+        <circle cx="${x}" cy="${y}" r="11" fill="#fff" stroke="var(--marigold)" stroke-width="1.5"/>
+        <text x="${x}" y="${y+4}" text-anchor="middle" font-size="11" fill="var(--plum)">${EMOJI_PLANETA[p.name] || '•'}</text>
+      `;
+    }).join('');
+
+    const lineasSvg = (aspectos || []).slice(0, 20).map(a => {
+      const p1 = puntos[a.point1], p2 = puntos[a.point2];
+      if (!p1 || !p2) return '';
+      const color = COLOR_ASPECTO_LINEA[a.aspect_type] || '#c9b8d0';
+      return `<line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="${color}" stroke-width="1.2" opacity="0.65"/>`;
+    }).join('');
+
+    return `
+      <div style="display:flex;justify-content:center;background:#fff;border-radius:14px;padding:10px;margin-bottom:14px;border:1px solid var(--line);">
+        <svg width="220" height="220" viewBox="0 0 220 220">
+          <circle cx="${centro}" cy="${centro}" r="${radio}" fill="none" stroke="var(--line)" stroke-width="1"/>
+          ${lineasSvg}
+          ${puntosSvg}
+        </svg>
+      </div>
+      <div style="display:flex;gap:14px;justify-content:center;font-size:10.5px;color:var(--ink-dim);margin-bottom:14px;">
+        <span><span style="color:#6a9955;">━</span> Armonía</span>
+        <span><span style="color:#c0392b;">━</span> Tensión</span>
+        <span><span style="color:#e8b978;">━</span> Fusión</span>
+      </div>
+    `;
+  }
+
   async function verFlorArmonica() {
     const contenedor = document.getElementById('flor-resultado');
     contenedor.innerHTML = '<div class="disclaimer">Calculando...</div>';
@@ -1802,6 +1842,7 @@
       if (s && s.sun) {
         let html = '';
         if (cd?.planetary_positions?.length) {
+          html += dibujarFlorArmonica(cd.planetary_positions, cd.aspects);
           html += cd.planetary_positions.map(p => `
             <div class="carta-real-row">${nombrePlanetaEs(p.name)} en <b>${signoEs(p.sign)} ${p.degree ? Math.floor(p.degree)+'°' : ''}</b></div>
           `).join('');
