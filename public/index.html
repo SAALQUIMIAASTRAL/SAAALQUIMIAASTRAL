@@ -155,10 +155,12 @@
   .btn-ghost-round{display:block;margin:0 auto;background:var(--plum);color:#fff;border:none;border-radius:100px;padding:10px 20px;font-size:12.5px;font-weight:600;}
 
   /* ciclo lunar */
-  .moon-now{display:flex;align-items:center;gap:14px;background:var(--moon-navy);border-radius:16px;padding:16px;color:#fff;margin-bottom:14px;}
+  .moon-now{display:flex;align-items:center;gap:14px;background:linear-gradient(160deg, #2e2350, #1b1730 70%);border-radius:16px;padding:18px;color:#fff;margin-bottom:14px;box-shadow:0 8px 24px rgba(27,23,48,0.4);}
   .moon-now .m{font-size:30px;}
-  .moon-now h4{font-size:15px;margin:0 0 2px;font-family:'Work Sans',sans-serif;font-weight:600;}
+  .moon-now h4{font-size:16px;margin:0 0 3px;font-family:'Cormorant Garamond',serif;font-weight:700;}
   .moon-now p{font-size:11.5px;color:#c9bfe0;margin:0;}
+  .moon-sphere{width:56px;height:56px;border-radius:50%;flex:none;position:relative;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,0.5), inset -6px -6px 12px rgba(0,0,0,0.35);background:radial-gradient(circle at 35% 30%, #fdfaf3, #d8d3c5 55%, #9c9788 100%);}
+  .moon-sphere .sombra{position:absolute;top:0;left:0;height:100%;width:100%;background:#1b1730;}
 
   .natal-highlight{
     background:var(--marigold-soft);border:1px solid rgba(181,101,47,0.3);border-radius:12px;
@@ -183,9 +185,9 @@
   }
   .how-to-use b{color:var(--marigold);}
   .phase-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
-  .phase-chip{background:var(--paper);border:1px solid var(--line);border-radius:12px;text-align:center;padding:10px 4px;}
-  .phase-chip .m{font-size:18px;}
-  .phase-chip .l{font-size:10px;color:var(--ink-dim);margin-top:4px;}
+  .phase-chip{background:var(--paper);border:1px solid var(--line);border-radius:12px;text-align:center;padding:12px 4px;}
+  .phase-chip .esfera-mini{width:34px;height:34px;border-radius:50%;margin:0 auto;position:relative;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,0.3);}
+  .phase-chip .l{font-size:10px;color:var(--ink-dim);margin-top:6px;}
   .phase-chip .k{font-size:10.5px;color:var(--marigold);font-weight:600;margin-top:2px;}
 
   /* mejores dias */
@@ -525,7 +527,7 @@
             <div id="luna-cruda" style="margin-bottom:14px;"></div>
 
             <div class="moon-now" id="moon-now">
-              <div class="m">🌑</div>
+              <div class="moon-sphere" id="moon-now-esfera" style="background:radial-gradient(circle at 35% 30%, #4a4560, #1b1730 70%);"></div>
               <div><h4 id="moon-now-title">Luna Nueva</h4><p id="moon-now-sub"></p></div>
             </div>
 
@@ -536,10 +538,10 @@
             <div class="how-to-use" id="how-to-use"></div>
 
             <div class="phase-grid">
-              <div class="phase-chip"><div class="m">🌑</div><div class="l">Nueva</div><div class="k">Iniciar</div></div>
-              <div class="phase-chip"><div class="m">🌓</div><div class="l">Creciente</div><div class="k">Construir</div></div>
-              <div class="phase-chip"><div class="m">🌕</div><div class="l">Llena</div><div class="k">Culminar</div></div>
-              <div class="phase-chip"><div class="m">🌗</div><div class="l">Menguante</div><div class="k">Soltar</div></div>
+              <div class="phase-chip"><div class="esfera-mini" style="background:radial-gradient(circle at 35% 30%, #4a4560, #1b1730 70%);"></div><div class="l">Nueva</div><div class="k">Iniciar</div></div>
+              <div class="phase-chip"><div class="esfera-mini" style="background:linear-gradient(90deg, #1b1730 50%, #e8e4d8 50%);"></div><div class="l">Creciente</div><div class="k">Construir</div></div>
+              <div class="phase-chip"><div class="esfera-mini" style="background:radial-gradient(circle at 35% 30%, #fdfaf3, #c9c4b5 70%);"></div><div class="l">Llena</div><div class="k">Culminar</div></div>
+              <div class="phase-chip"><div class="esfera-mini" style="background:linear-gradient(90deg, #e8e4d8 50%, #1b1730 50%);"></div><div class="l">Menguante</div><div class="k">Soltar</div></div>
             </div>
             <div class="desc" style="margin-top:16px;margin-bottom:8px;">Próximos 7 días</div>
             <div class="week-strip">
@@ -1483,6 +1485,13 @@
       const m = data.luna?.data?.lunar_metrics;
       let resumenHtml = '';
       if (m) {
+        const creciendo = (m.moon_phase || '').includes('Waxing');
+        const illum = Math.max(4, Math.min(96, m.moon_illumination || 50));
+        const gradiente = creciendo
+          ? `linear-gradient(90deg, #1b1730 0%, #1b1730 ${100 - illum}%, #f5f0e0 ${100 - illum}%, #fdfaf3 100%)`
+          : `linear-gradient(90deg, #fdfaf3 0%, #f5f0e0 ${illum}%, #1b1730 ${illum}%, #1b1730 100%)`;
+        const esfera = document.getElementById('moon-now-esfera');
+        if (esfera) esfera.style.background = m.moon_illumination >= 96 ? 'radial-gradient(circle at 35% 30%, #fdfaf3, #c9c4b5 70%)' : gradiente;
         resumenHtml = `
           <div style="background:var(--moon-navy);border-radius:14px;padding:16px;color:#fff;margin-bottom:12px;">
             <div style="font-size:15px;font-weight:600;margin-bottom:2px;">${faseLunarEs(m.moon_phase)} en ${signoEs(m.moon_sign)}</div>
