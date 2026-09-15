@@ -162,7 +162,7 @@ app.post('/carta-natal', requireLogin, async (req, res) => {
       .limit(1)
       .maybeSingle();
 
-    if (yaExiste && !req.body.forzar) {
+    if (yaExiste && !req.body?.forzar) {
       return res.json({ mensaje: 'Carta natal (guardada)', carta: yaExiste, desde_cache: true });
     }
 
@@ -206,7 +206,7 @@ app.post('/carta-visual', requireLogin, async (req, res) => {
       .maybeSingle();
 
     // 2) Si ya tiene el dibujo guardado, lo regresamos sin gastar créditos
-    if (cartaExistente?.svg_visual && !req.body.forzar) {
+    if (cartaExistente?.svg_visual && !req.body?.forzar) {
       return res.json({ svg: cartaExistente.svg_visual, desde_cache: true });
     }
 
@@ -271,7 +271,7 @@ app.post('/resumen-natal', requireLogin, async (req, res) => {
       .limit(1)
       .maybeSingle();
 
-    if (cartaExistente?.resumen_cache && !req.body.forzar) {
+    if (cartaExistente?.resumen_cache && !req.body?.forzar) {
       return res.json({ reporte: cartaExistente.resumen_cache, desde_cache: true });
     }
 
@@ -363,8 +363,8 @@ app.post('/mensaje-del-dia', requireLogin, async (req, res) => {
 app.post('/astrocartografia', requireLogin, async (req, res) => {
   try {
     let datosSubject;
-    if (req.body.otra_carta_id) {
-      const { data: persona, error } = await req.supabase.from('otras_cartas').select('*').eq('id', req.body.otra_carta_id).single();
+    if (req.body?.otra_carta_id) {
+      const { data: persona, error } = await req.supabase.from('otras_cartas').select('*').eq('id', req.body?.otra_carta_id).single();
       if (error || !persona) return res.status(400).json({ error: 'No se encontró esa carta.' });
       datosSubject = birthDataDesdePerfil(persona, persona.nombre);
     } else {
@@ -410,12 +410,12 @@ app.post('/sinastria', requireLogin, async (req, res) => {
     let datosOtraPersona;
     let personaGuardada = null;
 
-    if (req.body.otra_carta_id) {
+    if (req.body?.otra_carta_id) {
       // Opción A: usar una carta ya guardada
       const { data: persona, error } = await req.supabase
         .from('otras_cartas')
         .select('*')
-        .eq('id', req.body.otra_carta_id)
+        .eq('id', req.body?.otra_carta_id)
         .single();
       if (error || !persona) return res.status(400).json({ error: 'No se encontró esa carta guardada.' });
       personaGuardada = persona;
@@ -668,8 +668,8 @@ app.post('/relocacion', requireLogin, async (req, res) => {
 app.post('/numerologia', requireLogin, async (req, res) => {
   try {
     let datosSubject;
-    if (req.body.otra_carta_id) {
-      const { data: persona, error } = await req.supabase.from('otras_cartas').select('*').eq('id', req.body.otra_carta_id).single();
+    if (req.body?.otra_carta_id) {
+      const { data: persona, error } = await req.supabase.from('otras_cartas').select('*').eq('id', req.body?.otra_carta_id).single();
       if (error || !persona) return res.status(400).json({ error: 'No se encontró esa carta.' });
       datosSubject = birthDataDesdePerfil(persona, persona.nombre);
     } else {
@@ -694,8 +694,8 @@ app.post('/numerologia', requireLogin, async (req, res) => {
 app.post('/estrellas-fijas', requireLogin, async (req, res) => {
   try {
     let datosSubject;
-    if (req.body.otra_carta_id) {
-      const { data: persona, error } = await req.supabase.from('otras_cartas').select('*').eq('id', req.body.otra_carta_id).single();
+    if (req.body?.otra_carta_id) {
+      const { data: persona, error } = await req.supabase.from('otras_cartas').select('*').eq('id', req.body?.otra_carta_id).single();
       if (error || !persona) return res.status(400).json({ error: 'No se encontró esa carta.' });
       datosSubject = birthDataDesdePerfil(persona, persona.nombre);
     } else {
@@ -736,8 +736,8 @@ app.post('/horoscopo-diario', requireLogin, async (req, res) => {
 app.post('/flor-armonica', requireLogin, async (req, res) => {
   try {
     let datosSubject;
-    if (req.body.otra_carta_id) {
-      const { data: persona, error } = await req.supabase.from('otras_cartas').select('*').eq('id', req.body.otra_carta_id).single();
+    if (req.body?.otra_carta_id) {
+      const { data: persona, error } = await req.supabase.from('otras_cartas').select('*').eq('id', req.body?.otra_carta_id).single();
       if (error || !persona) return res.status(400).json({ error: 'No se encontró esa carta.' });
       datosSubject = birthDataDesdePerfil(persona, persona.nombre);
     } else {
@@ -746,7 +746,7 @@ app.post('/flor-armonica', requireLogin, async (req, res) => {
       datosSubject = birthDataDesdePerfil(perfil);
     }
 
-    const numeroArmonico = req.body.numero || 5;
+    const numeroArmonico = req.body?.numero || 5;
     const respuesta = await astrologyApi.post('/charts/harmonic', {
       subject: datosSubject,
       n: numeroArmonico,
