@@ -418,7 +418,7 @@
 
           <div class="band" data-tab="inicio">
             <div class="band-icon" id="band-icon">☀️</div>
-            <div class="date">Sábado, 12 de septiembre</div>
+            <div class="date" id="banda-fecha">Cargando fecha...</div>
             <h1><span id="greeting-word">Buenas tardes</span>, Mariana</h1>
             <div class="quote">Un paso atrás, dos hacia adelante.</div>
             <div class="chip-list">
@@ -855,6 +855,14 @@
 
     icon.textContent = emoji;
     greet.textContent = word;
+
+    const DIAS_ES = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+    const MESES_ES_LOCAL = ['','enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    const fechaEl = document.getElementById('banda-fecha');
+    if (fechaEl) {
+      const hoy = new Date();
+      fechaEl.textContent = `${DIAS_ES[hoy.getDay()]}, ${hoy.getDate()} de ${MESES_ES_LOCAL[hoy.getMonth() + 1]}`;
+    }
   })();
 
   // Nota: se desactivó el relleno automático de datos de ejemplo de la luna.
