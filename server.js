@@ -336,17 +336,29 @@ app.post('/sinastria', requireLogin, async (req, res) => {
     const perfil = await leerPerfil(req);
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
-    const { nombre, fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo } = req.body;
-    if (!nombre || !fecha_nacimiento || !ciudad_nacimiento || !pais_codigo) {
-      return res.status(400).json({ error: 'Faltan datos de la otra persona.' });
+    let datosOtraPersona;
+
+    if (req.body.otra_carta_id) {
+      // Opción A: usar una carta ya guardada
+      const { data: persona, error } = await req.supabase
+        .from('otras_cartas')
+        .select('*')
+        .eq('id', req.body.otra_carta_id)
+        .single();
+      if (error || !persona) return res.status(400).json({ error: 'No se encontró esa carta guardada.' });
+      datosOtraPersona = birthDataDesdePerfil(persona, persona.nombre);
+    } else {
+      // Opción B: datos escritos a mano
+      const { nombre, fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo } = req.body;
+      if (!nombre || !fecha_nacimiento || !ciudad_nacimiento || !pais_codigo) {
+        return res.status(400).json({ error: 'Faltan datos de la otra persona.' });
+      }
+      datosOtraPersona = birthDataDesdePerfil({ fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo }, nombre);
     }
 
     const respuesta = await astrologyApi.post('/analysis/synastry-report', {
       subject1: birthDataDesdePerfil(perfil),
-      subject2: birthDataDesdePerfil(
-        { fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo },
-        nombre
-      ),
+      subject2: datosOtraPersona,
       options: { house_system: 'P', zodiac_type: 'Tropic' },
       report_options: { tradition: 'psychological', language: 'es' },
     });
@@ -369,6 +381,28 @@ app.get('/otras-cartas/:id', requireLogin, async (req, res) => {
     .single();
   if (error) return res.status(400).json({ error: error.message });
   res.json({ carta: data });
+});
+
+// RUTA: Resumen de personalidad de una carta guardada (otra persona)
+app.post('/otras-cartas/:id/resumen', requireLogin, async (req, res) => {
+  try {
+    const { data: persona, error } = await req.supabase
+      .from('otras_cartas')
+      .select('*')
+      .eq('id', req.params.id)
+      .single();
+    if (error || !persona) return res.status(400).json({ error: 'No se encontró esa carta.' });
+
+    const respuesta = await astrologyApi.post('/analysis/natal-report', {
+      subject: birthDataDesdePerfil(persona, persona.nombre),
+      report_options: { tradition: 'psychological', language: 'es' },
+    });
+
+    res.json({ reporte: respuesta.data });
+  } catch (err) {
+    console.error(err?.response?.data || err.message);
+    res.status(500).json({ error: 'No se pudo generar el resumen.', detalle_tecnico: err?.response?.data || err.message });
+  }
 });
 
 // RUTA: Generar la carta visual (rueda) de una persona guardada
@@ -466,6 +500,51 @@ app.post('/eclipses-natal', requireLogin, async (req, res) => {
   }
 });
 
+// RUTA: Calendario lunar del mes — mejores días específicos por actividad
+app.post('/calendario-lunar', requireLogin, async (req, res) => {
+  try {
+    const hoy = new Date();
+    const anio = hoy.getUTCFullYear();
+    const mes = hoy.getUTCMonth() + 1;
+    const diasEnMes = new Date(Date.UTC(anio, mes, 0)).getUTCDate();
+
+    const dias = Array.from({ length: diasEnMes }, (_, i) => i + 1);
+
+    const resultados = await Promise.all(dias.map(async (dia) => {
+      try {
+        const r = await astrologyApi.post('/analysis/lunar-analysis', {
+          datetime_location: {
+            year: anio, month: mes, day: dia, hour: 12, minute: 0, second: 0,
+            city: 'Mexico City', country_code: 'MX',
+          },
+          report_options: { language: 'es' },
+        });
+        const m = r.data?.data?.lunar_metrics;
+        return { dia, signo: m?.moon_sign, fase: m?.moon_phase };
+      } catch (e) {
+        return { dia, signo: null, fase: null };
+      }
+    }));
+
+    const creciente = f => f && f.includes('Waxing');
+    const menguante = f => f && f.includes('Waning');
+    const nueva = f => f === 'New Moon';
+
+    const calendario = {
+      cortarte_el_cabello: resultados.filter(d => creciente(d.fase) && ['Tau', 'Leo'].includes(d.signo)).map(d => d.dia),
+      tatuarte: resultados.filter(d => menguante(d.fase) && d.signo !== 'Sco').map(d => d.dia),
+      lanzar_negocio: resultados.filter(d => nueva(d.fase) || (creciente(d.fase) && d.dia <= 10)).map(d => d.dia),
+      pedir_credito: resultados.filter(d => creciente(d.fase) && ['Tau', 'Cap'].includes(d.signo)).map(d => d.dia),
+      cirugias: resultados.filter(d => menguante(d.fase) && d.signo !== 'Sco').map(d => d.dia),
+    };
+
+    res.json({ mes, anio, calendario, detalle_dias: resultados });
+  } catch (err) {
+    console.error(err?.response?.data || err.message);
+    res.status(500).json({ error: 'No se pudo calcular el calendario lunar.', detalle_tecnico: err?.response?.data || err.message });
+  }
+});
+
 app.post('/horoscopo-diario', requireLogin, async (req, res) => {
   try {
     const perfil = await leerPerfil(req);
@@ -491,7 +570,7 @@ app.post('/flor-armonica', requireLogin, async (req, res) => {
     const numeroArmonico = req.body.numero || 5;
     const respuesta = await astrologyApi.post('/charts/harmonic', {
       subject: birthDataDesdePerfil(perfil),
-      harmonic_number: numeroArmonico,
+      n: numeroArmonico,
       options: { house_system: 'P', zodiac_type: 'Tropic', language: 'es' },
     });
 
@@ -532,10 +611,28 @@ app.post('/transitos-personales', requireLogin, async (req, res) => {
 
 app.post('/suscripcion/iniciar', requireLogin, async (req, res) => {
   try {
+    // Buscamos si ya existe un customer_id guardado; si no, creamos uno en Stripe
+    const { data: subExistente } = await req.supabase
+      .from('subscriptions')
+      .select('stripe_customer_id')
+      .eq('user_id', req.userId)
+      .maybeSingle();
+
+    let customerId = subExistente?.stripe_customer_id;
+    if (!customerId) {
+      const customer = await stripe.customers.create({ email: req.userEmail });
+      customerId = customer.id;
+      await req.supabase.from('subscriptions').upsert({
+        user_id: req.userId,
+        stripe_customer_id: customerId,
+        estado: 'pendiente',
+      }, { onConflict: 'user_id' });
+    }
+
     const sesionPago = await stripe.checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],
-      customer_email: req.userEmail,
+      customer: customerId,
       line_items: [{ price: process.env.STRIPE_PRICE_ID, quantity: 1 }],
       success_url: `${req.headers.origin || 'https://tuapp.com'}/pago-exitoso`,
       cancel_url: `${req.headers.origin || 'https://tuapp.com'}/pago-cancelado`,
@@ -552,6 +649,31 @@ app.post('/suscripcion/iniciar', requireLogin, async (req, res) => {
 // ============================================================
 // RUTA: Webhook de Stripe (esqueleto, se activa al conectar dominio real)
 // ============================================================
+// RUTA: Abrir el portal de Stripe para gestionar/cancelar la suscripción
+app.post('/suscripcion/portal', requireLogin, async (req, res) => {
+  try {
+    const { data: sub } = await req.supabase
+      .from('subscriptions')
+      .select('stripe_customer_id')
+      .eq('user_id', req.userId)
+      .maybeSingle();
+
+    if (!sub?.stripe_customer_id) {
+      return res.status(400).json({ error: 'Aún no tienes una suscripción activa para gestionar.' });
+    }
+
+    const sesion = await stripe.billingPortal.sessions.create({
+      customer: sub.stripe_customer_id,
+      return_url: req.headers.origin || 'https://tuapp.com',
+    });
+
+    res.json({ url: sesion.url });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: 'No se pudo abrir el portal de pago.' });
+  }
+});
+
 app.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
   res.json({ recibido: true });
 });
