@@ -828,26 +828,9 @@
     greet.textContent = word;
   })();
 
-  (function renderLunarCycle(){
-    if (typeof APP_DATA === 'undefined' || !APP_DATA.lunarCycle) return;
-    const lc = APP_DATA.lunarCycle;
+  // Nota: se desactivó el relleno automático de datos de ejemplo de la luna.
+  // Ahora solo se muestran datos reales al darle clic a "Ver datos lunares reales de hoy".
 
-    document.getElementById('luna-intro').textContent = lc.intro;
-    document.getElementById('moon-now-title').textContent = `${lc.phase} en ${lc.sign}, ${lc.degree}`;
-    document.getElementById('moon-now-sub').textContent = `${lc.rangeText} · ${lc.nextText}`;
-    document.getElementById('natal-highlight').textContent = lc.natalHighlight;
-
-    document.getElementById('aspects-table').innerHTML = `
-      <div class="section-head" style="margin:0 0 8px;"><h2 style="font-size:14px;">Aspectos con tu carta natal</h2></div>
-      ${lc.aspectsToNatal.map(a => `
-        <div class="row">
-          <span class="desc-col"><span class="tag ${a.tone}"></span>${a.aspect} con ${a.target}</span>
-          <span class="orb-col">${a.orb}</span>
-        </div>`).join('')}
-    `;
-
-    document.getElementById('how-to-use').innerHTML = `<b>Cómo aprovecharla:</b> ${lc.howToUseIt}`;
-  })();
 
   (function renderSeasonBanner(){
     const el = document.getElementById('season-banner');
@@ -1069,11 +1052,12 @@
     const punto = PLANETAS_SOLO_NOMBRE_ES[a.natal_point] || a.natal_point;
     return `Hace ${aspectoEs(a.type)} con tu ${punto} natal (orbe ${a.orb?.toFixed ? a.orb.toFixed(1) : a.orb}°).`;
   }
-  function tarjetaEclipse(ecl) {
+  function tarjetaEclipse(ecl, posicion) {
     const tipo = TIPOS_ECLIPSE_ES[ecl.type] || ecl.type;
+    const posTexto = posicion ? `en ${signoEs(posicion.sign)} ${posicion.degree}°${posicion.minute}'` : '';
     return `
       <div style="background:var(--marigold-soft);border-radius:12px;padding:14px;margin-bottom:10px;">
-        <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);">${tipo}</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);">${tipo} ${posTexto}</div>
         <div style="font-size:11.5px;color:var(--marigold);font-weight:600;margin-bottom:8px;">${formatearFechaEs(ecl.date)}</div>
         ${(ecl.activations || []).map(a => `<div style="font-size:12px;color:var(--plum);margin-bottom:4px;">• ${describirActivacion(a)}</div>`).join('')}
       </div>`;
@@ -1089,9 +1073,13 @@
       if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
 
       const importantes = data.como_te_afecta?.data?.impactful_eclipses;
+      const listaConPosicion = data.proximos_eclipses?.data?.eclipses || [];
+      const posicionesPorId = {};
+      listaConPosicion.forEach(e => { posicionesPorId[e.eclipse_id] = e.zodiac_position; });
+
       if (importantes?.length) {
         const botonCerrar = `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button onclick="document.getElementById('eclipses-resultado').innerHTML='';" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
-        contenedor.innerHTML = botonCerrar + importantes.slice(0, 5).map(tarjetaEclipse).join('');
+        contenedor.innerHTML = botonCerrar + importantes.slice(0, 5).map(ecl => tarjetaEclipse(ecl, posicionesPorId[ecl.eclipse_id])).join('');
       } else {
         contenedor.innerHTML = `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(data, null, 2)}</pre>`;
       }
@@ -1174,6 +1162,37 @@
       <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
         <button onclick="document.getElementById('${idContenedor}').innerHTML='';" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button>
       </div>` : '';
+
+    // Caso especial: Numerología (pythagorean)
+    const numero = objeto?.data?.pythagorean;
+    if (numero) {
+      const NUMEROS_ES = {
+        life_path: 'Camino de Vida', destiny: 'Número del Destino', soul_urge: 'Número del Alma',
+        personality: 'Número de Personalidad', expression: 'Número de Expresión', birthday: 'Día de Nacimiento',
+        maturity: 'Número de Madurez',
+      };
+      const SIGNIFICADOS_NUM = {
+        1:'Liderazgo, independencia, iniciativa.', 2:'Cooperación, sensibilidad, diplomacia.',
+        3:'Creatividad, expresión, alegría.', 4:'Estabilidad, disciplina, trabajo constante.',
+        5:'Libertad, cambio, aventura.', 6:'Responsabilidad, hogar, amor.',
+        7:'Introspección, espiritualidad, análisis.', 8:'Poder, ambición, logros materiales.',
+        9:'Compasión, servicio, cierre de ciclos.', 11:'Número maestro — intuición e inspiración elevada.',
+        22:'Número maestro — el "constructor", grandes proyectos.', 33:'Número maestro — maestro sanador.',
+      };
+      let htmlNum = '';
+      Object.keys(numero).forEach(clave => {
+        const item = numero[clave];
+        if (item && typeof item === 'object' && item.number !== undefined) {
+          htmlNum += `
+            <div style="background:var(--marigold-soft);border-radius:12px;padding:14px;margin-bottom:10px;text-align:center;">
+              <div style="font-size:11px;color:var(--marigold);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">${NUMEROS_ES[clave] || clave}</div>
+              <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:32px;color:var(--plum);margin:4px 0;">${item.number}</div>
+              <div style="font-size:12px;color:var(--plum);">${SIGNIFICADOS_NUM[item.number] || ''}</div>
+            </div>`;
+        }
+      });
+      if (htmlNum) return botonCerrar + htmlNum;
+    }
 
     // Caso 0: viene en "secciones" (formato de sinastría)
     const secciones = objeto?.data?.sections;

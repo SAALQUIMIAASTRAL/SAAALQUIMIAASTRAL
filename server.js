@@ -376,8 +376,8 @@ app.post('/astrocartografia', requireLogin, async (req, res) => {
     const respuesta = await astrologyApi.post('/astrocartography/map', {
       subject: datosSubject,
       map_options: {
-        planets: ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn'],
-        line_types: ['AC', 'MC', 'DC', 'IC'],
+        planets: ['Sun', 'Moon', 'Venus', 'Jupiter', 'Mars'],
+        line_types: ['AC', 'MC'],
         map_projection: 'mercator',
       },
       visual_options: {
