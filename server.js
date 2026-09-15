@@ -128,6 +128,11 @@ app.post('/perfil', requireLogin, async (req, res) => {
     .single();
 
   if (error) return res.status(400).json({ error: error.message });
+
+  // Si cambió fecha/hora/lugar de nacimiento, borramos la carta guardada
+  // para que la próxima consulta calcule una fresca con los datos correctos
+  await req.supabase.from('natal_charts').delete().eq('user_id', req.userId);
+
   res.json({ mensaje: 'Perfil guardado', perfil: data });
 });
 
@@ -148,6 +153,19 @@ app.get('/perfil', requireLogin, async (req, res) => {
 // ============================================================
 app.post('/carta-natal', requireLogin, async (req, res) => {
   try {
+    // 1) ¿Ya la calculamos antes? Si sí, la regresamos sin gastar créditos
+    const { data: yaExiste } = await req.supabase
+      .from('natal_charts')
+      .select('*')
+      .eq('user_id', req.userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (yaExiste && !req.body.forzar) {
+      return res.json({ mensaje: 'Carta natal (guardada)', carta: yaExiste, desde_cache: true });
+    }
+
     const perfil = await leerPerfil(req);
     if (!perfil) {
       return res.status(400).json({ error: 'Primero guarda tu fecha y lugar de nacimiento en tu perfil.' });
@@ -166,7 +184,7 @@ app.post('/carta-natal', requireLogin, async (req, res) => {
 
     if (errorGuardar) return res.status(400).json({ error: errorGuardar.message });
 
-    res.json({ mensaje: 'Carta natal calculada', carta: cartaGuardada });
+    res.json({ mensaje: 'Carta natal calculada', carta: cartaGuardada, desde_cache: false });
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo calcular la carta. Revisa los datos de nacimiento.' });
@@ -178,6 +196,20 @@ app.post('/carta-natal', requireLogin, async (req, res) => {
 // ============================================================
 app.post('/carta-visual', requireLogin, async (req, res) => {
   try {
+    // 1) Buscamos la carta guardada de esta usuaria
+    const { data: cartaExistente } = await req.supabase
+      .from('natal_charts')
+      .select('*')
+      .eq('user_id', req.userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    // 2) Si ya tiene el dibujo guardado, lo regresamos sin gastar créditos
+    if (cartaExistente?.svg_visual && !req.body.forzar) {
+      return res.json({ svg: cartaExistente.svg_visual, desde_cache: true });
+    }
+
     const perfil = await leerPerfil(req);
     if (!perfil) {
       return res.status(400).json({ error: 'Primero guarda tu fecha y lugar de nacimiento en tu perfil.' });
@@ -200,7 +232,12 @@ app.post('/carta-visual', requireLogin, async (req, res) => {
       svg = respuesta.data.svg;
     }
 
-    res.json({ svg, crudo: svg ? undefined : respuesta.data });
+    // 3) Guardamos el dibujo para la próxima vez, si tenemos dónde guardarlo
+    if (svg && cartaExistente?.id) {
+      await req.supabase.from('natal_charts').update({ svg_visual: svg }).eq('id', cartaExistente.id);
+    }
+
+    res.json({ svg, crudo: svg ? undefined : respuesta.data, desde_cache: false });
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo generar la carta visual.' });
@@ -226,6 +263,18 @@ app.get('/carta-natal/ultima', requireLogin, async (req, res) => {
 // RUTA: Resumen/reporte de personalidad de la carta natal (en español)
 app.post('/resumen-natal', requireLogin, async (req, res) => {
   try {
+    const { data: cartaExistente } = await req.supabase
+      .from('natal_charts')
+      .select('*')
+      .eq('user_id', req.userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (cartaExistente?.resumen_cache && !req.body.forzar) {
+      return res.json({ reporte: cartaExistente.resumen_cache, desde_cache: true });
+    }
+
     const perfil = await leerPerfil(req);
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
@@ -234,7 +283,11 @@ app.post('/resumen-natal', requireLogin, async (req, res) => {
       report_options: { tradition: 'psychological', language: 'es' },
     });
 
-    res.json({ reporte: respuesta.data });
+    if (cartaExistente?.id) {
+      await req.supabase.from('natal_charts').update({ resumen_cache: respuesta.data }).eq('id', cartaExistente.id);
+    }
+
+    res.json({ reporte: respuesta.data, desde_cache: false });
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo generar el resumen.', detalle_tecnico: err?.response?.data || err.message });
@@ -280,7 +333,18 @@ app.post('/mensaje-del-dia', requireLogin, async (req, res) => {
       return res.status(400).json({ error: 'Primero guarda tu perfil.' });
     }
 
-    const respuesta = await astrologyApi.get('/data/now');
+    const ahora = new Date();
+    const respuesta = await astrologyApi.post('/charts/natal', {
+      subject: {
+        name: 'Hoy',
+        birth_data: {
+          year: ahora.getUTCFullYear(), month: ahora.getUTCMonth() + 1, day: ahora.getUTCDate(),
+          hour: ahora.getUTCHours(), minute: ahora.getUTCMinutes(), second: 0,
+          city: 'Greenwich', country_code: 'GB',
+        },
+      },
+      options: { house_system: 'P', zodiac_type: 'Tropic', language: 'es' },
+    });
 
     res.json({
       mensaje: 'Mensaje del día',
@@ -393,12 +457,18 @@ app.post('/otras-cartas/:id/resumen', requireLogin, async (req, res) => {
       .single();
     if (error || !persona) return res.status(400).json({ error: 'No se encontró esa carta.' });
 
+    if (persona.resumen_cache) {
+      return res.json({ reporte: persona.resumen_cache, desde_cache: true });
+    }
+
     const respuesta = await astrologyApi.post('/analysis/natal-report', {
       subject: birthDataDesdePerfil(persona, persona.nombre),
       report_options: { tradition: 'psychological', language: 'es' },
     });
 
-    res.json({ reporte: respuesta.data });
+    await req.supabase.from('otras_cartas').update({ resumen_cache: respuesta.data }).eq('id', persona.id);
+
+    res.json({ reporte: respuesta.data, desde_cache: false });
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo generar el resumen.', detalle_tecnico: err?.response?.data || err.message });
@@ -415,6 +485,10 @@ app.post('/otras-cartas/:id/visual', requireLogin, async (req, res) => {
       .single();
     if (error || !persona) return res.status(400).json({ error: 'No se encontró esa carta.' });
 
+    if (persona.svg_visual) {
+      return res.json({ svg: persona.svg_visual, desde_cache: true });
+    }
+
     const respuesta = await astrologyApi.post('/render/natal', {
       subject: birthDataDesdePerfil(persona, persona.nombre),
       options: { house_system: 'P' },
@@ -427,7 +501,9 @@ app.post('/otras-cartas/:id/visual', requireLogin, async (req, res) => {
     if (inicioSvg !== -1) svg = crudoTexto.slice(inicioSvg);
     else if (respuesta.data?.svg_content) svg = respuesta.data.svg_content;
 
-    res.json({ svg });
+    if (svg) await req.supabase.from('otras_cartas').update({ svg_visual: svg }).eq('id', persona.id);
+
+    res.json({ svg, desde_cache: false });
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo generar la carta visual.' });
@@ -542,6 +618,31 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo calcular el calendario lunar.', detalle_tecnico: err?.response?.data || err.message });
+  }
+});
+
+// RUTA: Relocación — cómo cambia tu carta si vives en otro lugar
+app.post('/relocacion', requireLogin, async (req, res) => {
+  try {
+    const perfil = await leerPerfil(req);
+    if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
+
+    const { ciudad, pais_codigo } = req.body;
+    if (!ciudad || !pais_codigo) return res.status(400).json({ error: 'Falta la ciudad donde vives ahora.' });
+
+    const respuesta = await astrologyApi.post('/analysis/relocation', {
+      subject: birthDataDesdePerfil(perfil),
+      options: {
+        target_location: { city: ciudad, country_code: pais_codigo },
+        show_changes: true,
+        highlight_angular_changes: true,
+      },
+    });
+
+    res.json({ relocacion: respuesta.data });
+  } catch (err) {
+    console.error(err?.response?.data || err.message);
+    res.status(500).json({ error: 'No se pudo calcular la relocación.', detalle_tecnico: err?.response?.data || err.message });
   }
 });
 
