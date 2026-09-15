@@ -286,6 +286,8 @@
   .auth-loading{opacity:0.6;pointer-events:none;}
   .carta-real-row{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--plum);padding:4px 0;}
   .carta-real-row b{color:var(--marigold);font-weight:700;}
+  .detalle-tecnico-oculto{display:none;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);}
+  .detalle-tecnico-oculto.show-tecnico{display:block;}
 </style>
 </head>
 <body>
@@ -1452,6 +1454,50 @@
   };
   function signoEs(abrev) { return SIGNOS_ES[abrev] || abrev; }
 
+  const TEMAS_PLANETA_SIMPLE = {
+    Sun: { titulo:'Mi esencia', emoji:'☀️' }, Moon: { titulo:'Mis emociones', emoji:'🌙' },
+    Mercury: { titulo:'Cómo pienso', emoji:'💭' }, Venus: { titulo:'Cómo amo', emoji:'💗' },
+    Mars: { titulo:'Cómo actúo', emoji:'🔥' },
+  };
+
+  function sintesisPlaneta(clave, p, aspectosDelPlaneta) {
+    const signo = signoEs(p.sign);
+    const casa = p.house;
+    const tema = casa ? (AREAS_CASA_ES[casa] || '') : '';
+    let frase = `Se expresa con la energía de <b>${signo}</b>`;
+    if (casa) frase += `, sobre todo en temas de <b>Casa ${casa}</b> (${tema.toLowerCase()})`;
+    frase += '.';
+    if (aspectosDelPlaneta?.length) {
+      const principal = aspectosDelPlaneta[0];
+      const otroPlaneta = principal.point1 === clave ? principal.point2 : principal.point1;
+      frase += ` Su ${aspectoEs(principal.aspect_type).toLowerCase()} con ${nombrePlanetaEs(otroPlaneta)} le agrega un matiz importante.`;
+    }
+    return frase;
+  }
+
+  function construirInterfazSimple(cd) {
+    if (!cd?.planetary_positions?.length) return '';
+    const porNombre = {};
+    cd.planetary_positions.forEach(p => { porNombre[p.name] = p; });
+
+    const tarjetas = Object.keys(TEMAS_PLANETA_SIMPLE).map(clave => {
+      const p = porNombre[clave];
+      if (!p) return '';
+      const info = TEMAS_PLANETA_SIMPLE[clave];
+      const aspectosDelPlaneta = (cd.aspects || []).filter(a => a.point1 === clave || a.point2 === clave);
+      return `
+        <div style="background:var(--marigold-soft);border-radius:12px;padding:12px 14px;margin-bottom:8px;">
+          <div style="font-size:12.5px;color:var(--marigold);font-weight:700;margin-bottom:3px;">${info.emoji} ${info.titulo}</div>
+          <div style="font-size:12.5px;color:var(--plum);line-height:1.5;">${sintesisPlaneta(clave, p, aspectosDelPlaneta)}</div>
+        </div>`;
+    }).join('');
+
+    return `
+      <div style="margin-bottom:12px;">${tarjetas}</div>
+      <button class="btn-outline" style="width:100%;" onclick="document.getElementById('carta-detalle-tecnico').classList.toggle('show-tecnico')">Ver astrología (detalle técnico) ↓</button>
+    `;
+  }
+
   async function calcularCartaReal() {
     const boton = document.getElementById('btn-calcular-carta');
     const chips = document.getElementById('carta-resultado-chips');
@@ -1469,6 +1515,7 @@
       const s = data.carta?.datos_carta?.subject_data;
       const cd = data.carta?.datos_carta?.chart_data;
       if (s && s.sun) {
+        let htmlSimple = construirInterfazSimple(cd);
         let html = '';
         if (cd?.planetary_positions?.length) {
           html += cd.planetary_positions.map(p => `
@@ -1486,7 +1533,7 @@
             <div class="carta-real-row" style="font-size:12px;">${nombrePlanetaEs(a.point1)} ${aspectoEs(a.aspect_type)} ${nombrePlanetaEs(a.point2)} <span style="color:var(--ink-dim);font-weight:400;">(orbe ${a.orb?.toFixed ? a.orb.toFixed(1) : a.orb}°)</span></div>
           `).join('');
         }
-        chips.innerHTML = html;
+        chips.innerHTML = htmlSimple + `<div id="carta-detalle-tecnico" class="detalle-tecnico-oculto">${html}</div>`;
         if (data.desde_cache) chips.innerHTML += '<div style="font-size:10.5px;color:var(--ink-dim);margin-top:8px;">♻️ Mostrando tu carta ya guardada</div>';
       } else {
         chips.innerHTML = `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);">${JSON.stringify(data.carta?.datos_carta, null, 2)}</pre>`;
