@@ -478,9 +478,9 @@
             <div id="transitos-hoy-resultado" style="margin-top:14px;"></div>
           </div>
 
-          <div class="section" data-tab="horoscopo">
+          <div class="section" data-tab="inicio">
             <h2>Tránsitos personales</h2>
-            <div class="desc">Tus tránsitos personales, cruzados con tu carta natal (próximos 30 días).</div>
+            <div class="desc">Un tránsito ocurre cuando un planeta en el cielo, en este momento, activa un punto exacto de tu carta natal — eso es lo que marca "buenos días" o "días de cuidado" para ti. Aquí están los próximos 30 días.</div>
             <button class="btn-primary" onclick="verTransitosReales()">Ver mis tránsitos reales</button>
             <div id="transitos-resultado" style="margin-top:14px;"></div>
           </div>
@@ -517,7 +517,7 @@
 
           <div class="section" data-tab="inicio">
             <h2>Consejo diario</h2>
-            <div class="desc">Una carta de tarot, nueva cada día.</div>
+            <div class="desc">Tu carta del día — la misma hasta mañana.</div>
             <div class="tarot-row">
               <div class="tarot-card"></div><div class="tarot-card"></div><div class="tarot-card"></div><div class="tarot-card"></div><div class="tarot-card"></div>
             </div>
@@ -1082,6 +1082,11 @@
       .replace(/\bhouse\b/gi, 'casa');
   }
 
+  const AREAS_CASA_ES = {
+    1:'Identidad', 2:'Dinero', 3:'Comunicación', 4:'Hogar', 5:'Creatividad', 6:'Salud/Trabajo',
+    7:'Relaciones', 8:'Transformación', 9:'Filosofía', 10:'Carrera', 11:'Amistades', 12:'Espiritualidad',
+  };
+
   function traducirFactor(f) {
     if (!f || typeof f !== 'string') return f;
     const m = f.match(/^(.+?)'s\s+([A-Za-z]+)\s+([A-Za-z]+)\s+(.+?)'s\s+([A-Za-z]+)/i);
@@ -1143,13 +1148,7 @@
       if (reloc.house_changes?.length) {
         html += '<div style="font-size:11.5px;color:var(--marigold);font-weight:600;margin-bottom:6px;">Planetas que cambian de casa aquí</div>';
         html += reloc.house_changes.map(h => `
-          <div class="carta-real-row">${nombrePlanetaEs(h.planet)}: Casa ${h.natal_house} → Casa ${h.relocated_house}</div>
-        `).join('');
-      }
-      if (reloc.key_factors?.length) {
-        html += '<div style="font-size:11.5px;color:var(--marigold);font-weight:600;margin:10px 0 6px;">Lo más importante</div>';
-        html += reloc.key_factors.slice(0, 5).map(k => `
-          <div style="background:var(--marigold-soft);border-radius:10px;padding:10px 12px;margin-bottom:6px;font-size:12px;color:var(--plum);line-height:1.5;">${limpiarTextoAPI(k.interpretation || k.factor || '')}</div>
+          <div class="carta-real-row">${nombrePlanetaEs(h.planet)}: Casa ${h.natal_house} (${AREAS_CASA_ES[h.natal_house]}) → Casa ${h.relocated_house} (${AREAS_CASA_ES[h.relocated_house]})</div>
         `).join('');
       }
       return botonCerrar + html;
@@ -1723,7 +1722,9 @@
   }
 
   function revelarCartaTarot() {
-    const carta = TAROT_ARCANOS[Math.floor(Math.random() * TAROT_ARCANOS.length)];
+    const hoy = new Date();
+    const semilla = hoy.getFullYear() * 366 + hoy.getMonth() * 31 + hoy.getDate();
+    const carta = TAROT_ARCANOS[semilla % TAROT_ARCANOS.length];
     document.getElementById('tarot-resultado').innerHTML = `
       <div style="display:flex;flex-direction:column;align-items:center;">
         <div style="
