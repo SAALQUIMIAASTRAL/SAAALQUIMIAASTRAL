@@ -1108,7 +1108,28 @@
 
       if (importantes?.length) {
         const botonCerrar = `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button onclick="document.getElementById('eclipses-resultado').innerHTML='';" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
-        contenedor.innerHTML = botonCerrar + importantes.slice(0, 5).map(ecl => tarjetaEclipse(ecl, posicionesPorId[ecl.eclipse_id])).join('');
+
+        let htmlPrincipal = '';
+        const ip = data.interpretacion_principal;
+        if (ip?.interpretation) {
+          const tv = ip.interpretation.timing_windows;
+          htmlPrincipal = `
+            <div style="background:var(--moon-navy);border-radius:14px;padding:16px;color:#fff;margin-bottom:14px;">
+              <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:16px;margin-bottom:8px;">✨ Tu eclipse más importante</div>
+              <div style="font-size:12.5px;color:#e8dcf0;line-height:1.6;margin-bottom:10px;">${limpiarTextoAPI(ip.interpretation.general || '')}</div>
+              ${tv ? `
+                <div style="font-size:11px;color:#c9bfe0;margin-bottom:4px;"><b>Antes:</b> ${tv.pre_eclipse || ''}</div>
+                <div style="font-size:11px;color:#c9bfe0;margin-bottom:4px;"><b>El día:</b> ${tv.eclipse_day || ''}</div>
+                <div style="font-size:11px;color:#c9bfe0;margin-bottom:10px;"><b>Después:</b> ${tv.post_eclipse || ''}</div>
+              ` : ''}
+              ${ip.interpretation.advice?.length ? `
+                <div style="font-size:11px;color:#e8b978;font-weight:600;margin-bottom:4px;">✨ Consejos</div>
+                ${ip.interpretation.advice.map(a => `<div style="font-size:12px;color:#f2e6ec;margin-bottom:3px;">• ${a}</div>`).join('')}
+              ` : ''}
+            </div>`;
+        }
+
+        contenedor.innerHTML = botonCerrar + htmlPrincipal + importantes.slice(0, 5).map(ecl => tarjetaEclipse(ecl, posicionesPorId[ecl.eclipse_id])).join('');
       } else {
         contenedor.innerHTML = `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(data, null, 2)}</pre>`;
       }

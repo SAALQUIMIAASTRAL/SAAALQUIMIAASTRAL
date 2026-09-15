@@ -584,9 +584,20 @@ app.post('/eclipses-natal', requireLogin, async (req, res) => {
       }).catch(err => ({ error: err?.response?.data || err.message })),
     ]);
 
+    // Interpretación completa (ventanas de tiempo + consejos) del eclipse más importante
+    let interpretacionCompleta = null;
+    const idPrincipal = revision.data?.data?.next_important_eclipse?.eclipse_id;
+    if (idPrincipal) {
+      try {
+        const r = await astrologyApi.post('/eclipses/interpretation', { eclipse_id: idPrincipal, language: 'es' });
+        interpretacionCompleta = r.data;
+      } catch (e) { /* si falla, seguimos sin ella */ }
+    }
+
     res.json({
       proximos_eclipses: proximos.data || proximos,
       como_te_afecta: revision.data || revision,
+      interpretacion_principal: interpretacionCompleta,
     });
   } catch (err) {
     console.error(err?.response?.data || err.message);
