@@ -1070,16 +1070,30 @@
       .replace(/\{[a-zA-Z_ ]+\}/g, 'tu carta'); // cualquier otro {placeholder} que se les haya olvidado llenar
   }
 
+  function traducirPlanetasEnTexto(t) {
+    if (!t || typeof t !== 'string') return t;
+    let resultado = t;
+    Object.keys(PLANETAS_SOLO_NOMBRE_ES).forEach(en => {
+      resultado = resultado.replace(new RegExp('\\b' + en + '\\b', 'g'), PLANETAS_SOLO_NOMBRE_ES[en]);
+    });
+    return resultado
+      .replace(/\bconjunction\b/gi, 'conjunción').replace(/\bopposition\b/gi, 'oposición')
+      .replace(/\bsquare\b/gi, 'cuadratura').replace(/\btrine\b/gi, 'trígono').replace(/\bsextile\b/gi, 'sextil')
+      .replace(/\bhouse\b/gi, 'casa');
+  }
+
   function traducirFactor(f) {
     if (!f || typeof f !== 'string') return f;
-    const m = f.match(/^(.+?)'s\s+([A-Za-z]+)\s+([A-Za-z]+)\s+(.+?)'s\s+([A-Za-z]+)$/i);
+    const m = f.match(/^(.+?)'s\s+([A-Za-z]+)\s+([A-Za-z]+)\s+(.+?)'s\s+([A-Za-z]+)/i);
     if (m) {
       const [, persona1, planeta1, aspecto, persona2, planeta2] = m;
       const p1 = PLANETAS_SOLO_NOMBRE_ES[planeta1] || planeta1;
       const p2 = PLANETAS_SOLO_NOMBRE_ES[planeta2] || planeta2;
-      return `${p1} de ${persona1} ${aspectoEs(aspecto.toLowerCase())} ${p2} de ${persona2}`;
+      const orbeMatch = f.match(/\(([\d.]+)°\)/);
+      const orbe = orbeMatch ? ` (orbe ${orbeMatch[1]}°)` : '';
+      return `${p1} de ${persona1} ${aspectoEs(aspecto.toLowerCase())} ${p2} de ${persona2}${orbe}`;
     }
-    return f;
+    return traducirPlanetasEnTexto(f);
   }
 
   function renderizarInforme(objeto, idContenedor) {
@@ -1102,6 +1116,43 @@
           `).join('')}
         </div>
       `).join('');
+    }
+
+    // Caso 0.5: viene como lista de "events" (tránsitos personales de 30 días)
+    const eventos = objeto?.data?.events;
+    if (eventos?.length) {
+      return botonCerrar + eventos.slice(0, 15).map(ev => {
+        const planeta1 = PLANETAS_SOLO_NOMBRE_ES[ev.transiting_planet] || ev.transiting_planet;
+        const planeta2 = PLANETAS_SOLO_NOMBRE_ES[ev.stationed_planet || ev.natal_planet] || (ev.stationed_planet || ev.natal_planet);
+        return `
+          <div class="carta-real-row" style="display:block;padding:8px 0;">
+            <div style="font-size:11.5px;color:var(--marigold);font-weight:600;">${formatearFechaEs(ev.date)}</div>
+            <div style="font-size:12.5px;color:var(--plum);">${planeta1} en tránsito ${aspectoEs(ev.aspect_type)} tu ${planeta2} natal <span style="color:var(--ink-dim);">(orbe ${ev.orb?.toFixed ? ev.orb.toFixed(1) : ev.orb}°)</span></div>
+          </div>`;
+      }).join('');
+    }
+
+    // Caso 0.7: viene como "relocación" (comparación de casas natal vs. relocada)
+    const reloc = objeto?.data;
+    if (reloc?.ascendant && reloc?.midheaven && reloc?.house_changes) {
+      let html = `
+        <div style="background:var(--marigold-soft);border-radius:12px;padding:14px;margin-bottom:10px;">
+          <div style="font-size:12.5px;color:var(--plum);margin-bottom:4px;">Tu Ascendente se mueve <b>${reloc.ascendant.shift_degrees?.toFixed ? reloc.ascendant.shift_degrees.toFixed(1) : reloc.ascendant.shift_degrees}°</b></div>
+          <div style="font-size:12.5px;color:var(--plum);">Tu Medio Cielo se mueve <b>${reloc.midheaven.shift_degrees?.toFixed ? reloc.midheaven.shift_degrees.toFixed(1) : reloc.midheaven.shift_degrees}°</b></div>
+        </div>`;
+      if (reloc.house_changes?.length) {
+        html += '<div style="font-size:11.5px;color:var(--marigold);font-weight:600;margin-bottom:6px;">Planetas que cambian de casa aquí</div>';
+        html += reloc.house_changes.map(h => `
+          <div class="carta-real-row">${nombrePlanetaEs(h.planet)}: Casa ${h.natal_house} → Casa ${h.relocated_house}</div>
+        `).join('');
+      }
+      if (reloc.key_factors?.length) {
+        html += '<div style="font-size:11.5px;color:var(--marigold);font-weight:600;margin:10px 0 6px;">Lo más importante</div>';
+        html += reloc.key_factors.slice(0, 5).map(k => `
+          <div style="background:var(--marigold-soft);border-radius:10px;padding:10px 12px;margin-bottom:6px;font-size:12px;color:var(--plum);line-height:1.5;">${limpiarTextoAPI(k.interpretation || k.factor || '')}</div>
+        `).join('');
+      }
+      return botonCerrar + html;
     }
 
     // Caso 1: viene con "interpretations" (mismo formato que el resumen de personalidad)
@@ -1424,7 +1475,7 @@
             const nombre = nombrePlanetaEs(k.charAt(0).toUpperCase() + k.slice(1));
             return `
               <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);">
-                <span style="font-size:13px;color:var(--plum);">${nombre}</span>
+                <span style="font-size:13px;color:var(--plum);">${nombre}${p.retrograde ? ' <span style="color:#a5442f;font-size:11px;" title="Retrógrado">℞</span>' : ''}</span>
                 <span style="display:flex;align-items:center;gap:6px;">
                   <span style="background:${colorSigno(p.sign)};color:#fff;border-radius:6px;padding:2px 8px;font-size:11.5px;font-weight:600;">${signoEs(p.sign)}</span>
                   <span style="font-size:12px;color:var(--ink-dim);">${p.position ? Math.floor(p.position)+'°' : ''}</span>
