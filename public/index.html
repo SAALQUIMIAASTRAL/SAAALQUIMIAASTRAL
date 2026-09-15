@@ -1167,9 +1167,11 @@
     const numero = objeto?.data?.pythagorean;
     if (numero) {
       const NUMEROS_ES = {
-        life_path: 'Camino de Vida', destiny: 'Número del Destino', soul_urge: 'Número del Alma',
-        personality: 'Número de Personalidad', expression: 'Número de Expresión', birthday: 'Día de Nacimiento',
-        maturity: 'Número de Madurez',
+        life_path: 'Camino de Vida', destiny: 'Número del Destino', expression: 'Número de Expresión',
+        soul_urge: 'Número del Alma', personality: 'Número de Personalidad', birthday: 'Día de Nacimiento',
+        maturity: 'Número de Madurez', personal_year: 'Año Personal', personal_month: 'Mes Personal',
+        personal_day: 'Día Personal', subconscious_self: 'Yo Subconsciente', hidden_passion: 'Pasión Oculta',
+        karmic_lessons: 'Lecciones Kármicas', balance: 'Número de Equilibrio', rational_thought: 'Pensamiento Racional',
       };
       const SIGNIFICADOS_NUM = {
         1:'Liderazgo, independencia, iniciativa.', 2:'Cooperación, sensibilidad, diplomacia.',
@@ -1179,19 +1181,40 @@
         9:'Compasión, servicio, cierre de ciclos.', 11:'Número maestro — intuición e inspiración elevada.',
         22:'Número maestro — el "constructor", grandes proyectos.', 33:'Número maestro — maestro sanador.',
       };
+      function prettificarClave(c) {
+        return c.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      }
       let htmlNum = '';
       Object.keys(numero).forEach(clave => {
         const item = numero[clave];
         if (item && typeof item === 'object' && item.number !== undefined) {
           htmlNum += `
             <div style="background:var(--marigold-soft);border-radius:12px;padding:14px;margin-bottom:10px;text-align:center;">
-              <div style="font-size:11px;color:var(--marigold);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">${NUMEROS_ES[clave] || clave}</div>
+              <div style="font-size:11px;color:var(--marigold);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">${NUMEROS_ES[clave] || prettificarClave(clave)}</div>
               <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:32px;color:var(--plum);margin:4px 0;">${item.number}</div>
               <div style="font-size:12px;color:var(--plum);">${SIGNIFICADOS_NUM[item.number] || ''}</div>
             </div>`;
         }
       });
       if (htmlNum) return botonCerrar + htmlNum;
+    }
+
+    // Caso especial: Estrellas fijas
+    const conjunciones = objeto?.data?.conjunctions;
+    if (conjunciones) {
+      if (!conjunciones.length) {
+        return botonCerrar + '<div class="disclaimer">No se encontraron estrellas fijas relevantes en tu carta.</div>';
+      }
+      return botonCerrar + conjunciones.slice(0, 10).map(c => {
+        const nombrePlaneta = PLANETAS_SOLO_NOMBRE_ES[c.planet] || c.planet;
+        const significado = c.star_data?.meaning || c.star_data?.interpretation || c.star_data?.nature || c.interpretation || '';
+        return `
+          <div style="background:var(--marigold-soft);border-radius:12px;padding:12px 14px;margin-bottom:10px;">
+            <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14px;color:var(--plum);">✦ ${c.star} conjunción ${nombrePlaneta}</div>
+            ${c.star_data?.traditional_name ? `<div style="font-size:11px;color:var(--marigold);margin-bottom:4px;">${c.star_data.traditional_name}</div>` : ''}
+            ${significado ? `<div style="font-size:12px;color:var(--plum);line-height:1.5;">${limpiarTextoAPI(significado)}</div>` : ''}
+          </div>`;
+      }).join('');
     }
 
     // Caso 0: viene en "secciones" (formato de sinastría)
@@ -1536,11 +1559,20 @@
     }
   }
 
-  const SIGNOS_COLOR = {
-    Ari:'#e74c3c', Tau:'#27ae60', Gem:'#f1c40f', Can:'#2980b9', Leo:'#e67e22', Vir:'#2980b9',
-    Lib:'#e91e8c', Sco:'#2c3e50', Sag:'#2980b9', Cap:'#16a085', Aqu:'#16a085', Pis:'#8e44ad',
+  const SIGNO_ELEMENTO = {
+    Ari:'fire', Tau:'earth', Gem:'air', Can:'water', Leo:'fire', Vir:'earth',
+    Lib:'air', Sco:'water', Sag:'fire', Cap:'earth', Aqu:'air', Pis:'water',
   };
-  function colorSigno(abrev) { return SIGNOS_COLOR[abrev] || 'var(--marigold)'; }
+  const ELEMENTO_GRADIENTE = {
+    fire:'linear-gradient(135deg,#ff9a56,#d63447)', earth:'linear-gradient(135deg,#8a9a5b,#5c4a35)',
+    air:'linear-gradient(135deg,#a8dadc,#4a6fa5)', water:'linear-gradient(135deg,#5c7cba,#6a4c93)',
+  };
+  const SIGNO_GLIFO = {
+    Ari:'♈', Tau:'♉', Gem:'♊', Can:'♋', Leo:'♌', Vir:'♍',
+    Lib:'♎', Sco:'♏', Sag:'♐', Cap:'♑', Aqu:'♒', Pis:'♓',
+  };
+  function colorSigno(abrev) { return ELEMENTO_GRADIENTE[SIGNO_ELEMENTO[abrev]] || 'var(--marigold)'; }
+  function glifoSigno(abrev) { return SIGNO_GLIFO[abrev] || '✦'; }
 
   async function verTransitosHoy() {
     const contenedor = document.getElementById('transitos-hoy-resultado');
@@ -1568,7 +1600,7 @@
               <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);">
                 <span style="font-size:13px;color:var(--plum);">${nombre}${p.retrograde ? ' <span style="color:#a5442f;font-size:11px;" title="Retrógrado">℞</span>' : ''}</span>
                 <span style="display:flex;align-items:center;gap:6px;">
-                  <span style="background:${colorSigno(p.sign)};color:#fff;border-radius:6px;padding:2px 8px;font-size:11.5px;font-weight:600;">${signoEs(p.sign)}</span>
+                  <span style="background:${colorSigno(p.sign)};color:#fff;border-radius:100px;padding:3px 10px 3px 6px;font-size:11.5px;font-weight:600;display:inline-flex;align-items:center;gap:4px;box-shadow:0 2px 5px rgba(0,0,0,0.15);"><span style="font-size:13px;">${glifoSigno(p.sign)}</span>${signoEs(p.sign)}</span>
                   <span style="font-size:12px;color:var(--ink-dim);">${p.position ? Math.floor(p.position)+'°' : ''}</span>
                 </span>
               </div>
@@ -1854,17 +1886,40 @@
     const carta = TAROT_ARCANOS[semilla % TAROT_ARCANOS.length];
     document.getElementById('tarot-resultado').innerHTML = `
       <div style="display:flex;flex-direction:column;align-items:center;">
-        <div style="
-          width:150px;height:240px;border-radius:4px;
-          background:linear-gradient(160deg, #f2e8d5, #e6d8ba 60%, #d9c89e);
-          border:2px solid #2b1f14;box-shadow:inset 0 0 0 3px #f2e8d5, inset 0 0 0 4px #2b1f14;
-          display:flex;flex-direction:column;align-items:center;justify-content:space-between;
-          padding:10px 6px;box-shadow:0 10px 22px rgba(43,31,20,0.35);
-          margin-bottom:14px;font-family:'Cormorant Garamond',serif;
-        ">
-          <div style="font-size:13px;font-weight:700;color:#2b1f14;letter-spacing:1px;">${carta.numero}</div>
-          <div style="font-size:56px;filter:grayscale(0.55) sepia(0.35) contrast(1.05);">${carta.emoji}</div>
-          <div style="font-size:14px;font-weight:700;color:#2b1f14;text-align:center;text-transform:uppercase;letter-spacing:0.5px;line-height:1.2;">${carta.nombre}</div>
+        <div style="position:relative;width:160px;height:256px;margin-bottom:14px;filter:drop-shadow(0 12px 20px rgba(43,20,60,0.45));">
+          <svg width="160" height="256" viewBox="0 0 160 256" style="position:absolute;top:0;left:0;">
+            <defs>
+              <linearGradient id="fondoCarta" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#4a2f6b"/>
+                <stop offset="55%" stop-color="#331e37"/>
+                <stop offset="100%" stop-color="#1f1428"/>
+              </linearGradient>
+              <radialGradient id="medallon" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#e8b978" stop-opacity="0.9"/>
+                <stop offset="100%" stop-color="#e8b978" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <rect x="3" y="3" width="154" height="250" rx="10" fill="url(#fondoCarta)" stroke="#d9ad63" stroke-width="2"/>
+            <rect x="9" y="9" width="142" height="238" rx="7" fill="none" stroke="#d9ad63" stroke-width="1" opacity="0.65"/>
+            <circle cx="80" cy="118" r="52" fill="url(#medallon)"/>
+            <circle cx="80" cy="118" r="46" fill="none" stroke="#d9ad63" stroke-width="1" opacity="0.55"/>
+            <g fill="#d9ad63" opacity="0.85">
+              <path d="M14 14 l7 0 l0 2 l-5 0 l0 5 l-2 0 Z"/>
+              <path d="M146 14 l-7 0 l0 2 l5 0 l0 5 l2 0 Z"/>
+              <path d="M14 242 l7 0 l0 -2 l-5 0 l0 -5 l-2 0 Z"/>
+              <path d="M146 242 l-7 0 l0 -2 l5 0 l0 -5 l2 0 Z"/>
+            </g>
+            <g fill="#d9ad63">
+              <circle cx="26" cy="26" r="1.6"/><circle cx="134" cy="26" r="1.6"/>
+              <circle cx="26" cy="230" r="1.6"/><circle cx="134" cy="230" r="1.6"/>
+            </g>
+            <line x1="20" y1="196" x2="140" y2="196" stroke="#d9ad63" stroke-width="0.75" opacity="0.5"/>
+          </svg>
+          <div style="position:relative;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:14px 8px 12px;font-family:'Cormorant Garamond',serif;">
+            <div style="font-size:12px;font-weight:700;color:#e8b978;letter-spacing:2px;">${carta.numero}</div>
+            <div style="font-size:58px;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.4));">${carta.emoji}</div>
+            <div style="font-size:14px;font-weight:700;color:#f2e6ec;text-align:center;text-transform:uppercase;letter-spacing:1px;line-height:1.25;">${carta.nombre}</div>
+          </div>
         </div>
         <div style="background:var(--marigold-soft);border-radius:12px;padding:14px;text-align:center;max-width:320px;">
           <div style="font-size:12.5px;color:var(--plum);line-height:1.55;">${carta.significado}</div>
