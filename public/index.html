@@ -499,6 +499,13 @@
             <div id="numerologia-resultado" style="margin-top:14px;"></div>
           </div>
 
+          <div class="section" data-tab="cartas">
+            <h2>Estrellas fijas</h2>
+            <div class="desc">Qué estrellas fijas importantes tocan tu carta natal.</div>
+            <button class="btn-primary" onclick="verEstrellasFijas()">Ver mis estrellas fijas</button>
+            <div id="estrellas-resultado" style="margin-top:14px;"></div>
+          </div>
+
           <div class="section" data-tab="sinastria">
             <h2>Sinastría</h2>
             <div class="desc">Compara tu carta con la de otra persona (pareja, amiga, familiar).</div>
@@ -915,10 +922,44 @@
           ${filasPlanetas}
           <button class="btn-primary" style="background:var(--lilac);margin-top:10px;" onclick="verVisualOtraCarta('${id}')">Ver su carta en rueda 🔮</button>
           <button class="btn-primary" style="background:var(--marigold);margin-top:10px;" onclick="verResumenOtraCarta('${id}', '${nombre}')">Ver análisis de personalidad</button>
+          <button class="btn-primary" style="background:var(--blush-1);margin-top:10px;" onclick="verFuncionOtraCarta('${id}', '${nombre}', 'numerologia')">Su numerología</button>
+          <button class="btn-primary" style="background:var(--blush-1);margin-top:10px;" onclick="verFuncionOtraCarta('${id}', '${nombre}', 'flor-armonica')">Su flor armónica</button>
+          <button class="btn-primary" style="background:var(--blush-1);margin-top:10px;" onclick="verFuncionOtraCarta('${id}', '${nombre}', 'estrellas-fijas')">Sus estrellas fijas</button>
+          <button class="btn-primary" style="background:var(--blush-1);margin-top:10px;" onclick="verFuncionOtraCarta('${id}', '${nombre}', 'astrocartografia')">Su astrocartografía</button>
           <div id="carta-otro-visual" style="margin-top:12px;"></div>
           <div id="carta-otro-resumen" style="margin-top:12px;"></div>
+          <div id="carta-otro-extra" style="margin-top:12px;"></div>
         </div>
       `;
+    } catch (err) {
+      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+    }
+  }
+
+  async function verFuncionOtraCarta(id, nombre, funcion) {
+    const contenedor = document.getElementById('carta-otro-extra');
+    const rutas = { 'numerologia':'/numerologia', 'flor-armonica':'/flor-armonica', 'estrellas-fijas':'/estrellas-fijas', 'astrocartografia':'/astrocartografia' };
+    const llaves = { 'numerologia':'numerologia', 'flor-armonica':'flor', 'estrellas-fijas':'estrellas', 'astrocartografia':null };
+    contenedor.innerHTML = '<div class="disclaimer">Calculando para ' + nombre + '...</div>';
+    try {
+      const r = await fetch(rutas[funcion], {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + SESION.token },
+        body: JSON.stringify({ otra_carta_id: id }),
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
+        contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        return;
+      }
+      if (funcion === 'astrocartografia') {
+        contenedor.innerHTML = data.svg
+          ? `<div style="background:#fff;border-radius:14px;padding:8px;border:1px solid var(--line);overflow:hidden;">${data.svg}</div>`
+          : '<div class="disclaimer">No se pudo generar el mapa.</div>';
+      } else {
+        contenedor.innerHTML = renderizarInforme(data[llaves[funcion]], 'carta-otro-extra');
+      }
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }
@@ -1534,6 +1575,23 @@
         throw new Error(data.error || 'No se pudo calcular.');
       }
       contenedor.innerHTML = renderizarInforme(data.transitos, 'transitos-resultado');
+    } catch (err) {
+      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+    }
+  }
+
+  async function verEstrellasFijas() {
+    const contenedor = document.getElementById('estrellas-resultado');
+    contenedor.innerHTML = '<div class="disclaimer">Calculando...</div>';
+    try {
+      const r = await fetch('/estrellas-fijas', { method: 'POST', headers: { Authorization: 'Bearer ' + SESION.token } });
+      const data = await r.json();
+      if (!r.ok) {
+        if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
+        contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        return;
+      }
+      contenedor.innerHTML = renderizarInforme(data.estrellas, 'estrellas-resultado');
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }

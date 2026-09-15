@@ -362,21 +362,27 @@ app.post('/mensaje-del-dia', requireLogin, async (req, res) => {
 // ============================================================
 app.post('/astrocartografia', requireLogin, async (req, res) => {
   try {
-    const perfil = await leerPerfil(req);
-    if (!perfil) {
-      return res.status(400).json({ error: 'Primero guarda tu fecha y lugar de nacimiento en tu perfil.' });
+    let datosSubject;
+    if (req.body.otra_carta_id) {
+      const { data: persona, error } = await req.supabase.from('otras_cartas').select('*').eq('id', req.body.otra_carta_id).single();
+      if (error || !persona) return res.status(400).json({ error: 'No se encontró esa carta.' });
+      datosSubject = birthDataDesdePerfil(persona, persona.nombre);
+    } else {
+      const perfil = await leerPerfil(req);
+      if (!perfil) return res.status(400).json({ error: 'Primero guarda tu fecha y lugar de nacimiento en tu perfil.' });
+      datosSubject = birthDataDesdePerfil(perfil);
     }
 
     const respuesta = await astrologyApi.post('/astrocartography/map', {
-      subject: birthDataDesdePerfil(perfil),
+      subject: datosSubject,
       map_options: {
-        planets: ['Sun', 'Moon', 'Venus', 'Jupiter', 'Mars'],
-        line_types: ['AC', 'MC'],
+        planets: ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn'],
+        line_types: ['AC', 'MC', 'DC', 'IC'],
         map_projection: 'mercator',
       },
       visual_options: {
         width: 1000, height: 500, theme: 'modern', show_legend: true,
-        city_min_population: 750000, language: 'es',
+        city_min_population: 500000, language: 'es',
       },
     });
 
@@ -388,7 +394,7 @@ app.post('/astrocartografia', requireLogin, async (req, res) => {
     });
   } catch (err) {
     console.error(err?.response?.data || err.message);
-    res.status(500).json({ error: 'No se pudo generar la astrocartografía.' });
+    res.status(500).json({ error: 'No se pudo generar la astrocartografía.', detalle_tecnico: err?.response?.data || err.message });
   }
 });
 
@@ -661,11 +667,19 @@ app.post('/relocacion', requireLogin, async (req, res) => {
 // RUTA: Numerología (números núcleo: camino de vida, destino, etc.)
 app.post('/numerologia', requireLogin, async (req, res) => {
   try {
-    const perfil = await leerPerfil(req);
-    if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
+    let datosSubject;
+    if (req.body.otra_carta_id) {
+      const { data: persona, error } = await req.supabase.from('otras_cartas').select('*').eq('id', req.body.otra_carta_id).single();
+      if (error || !persona) return res.status(400).json({ error: 'No se encontró esa carta.' });
+      datosSubject = birthDataDesdePerfil(persona, persona.nombre);
+    } else {
+      const perfil = await leerPerfil(req);
+      if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
+      datosSubject = birthDataDesdePerfil(perfil);
+    }
 
     const respuesta = await astrologyApi.post('/numerology/core-numbers', {
-      subject: birthDataDesdePerfil(perfil),
+      subject: datosSubject,
       language: 'es',
     });
 
@@ -673,6 +687,32 @@ app.post('/numerologia', requireLogin, async (req, res) => {
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo calcular la numerología.', detalle_tecnico: err?.response?.data || err.message });
+  }
+});
+
+// RUTA: Estrellas fijas — cuáles tocan tu carta (propia o guardada)
+app.post('/estrellas-fijas', requireLogin, async (req, res) => {
+  try {
+    let datosSubject;
+    if (req.body.otra_carta_id) {
+      const { data: persona, error } = await req.supabase.from('otras_cartas').select('*').eq('id', req.body.otra_carta_id).single();
+      if (error || !persona) return res.status(400).json({ error: 'No se encontró esa carta.' });
+      datosSubject = birthDataDesdePerfil(persona, persona.nombre);
+    } else {
+      const perfil = await leerPerfil(req);
+      if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
+      datosSubject = birthDataDesdePerfil(perfil);
+    }
+
+    const respuesta = await astrologyApi.post('/fixed-stars/report', {
+      subject: datosSubject,
+      language: 'es',
+    });
+
+    res.json({ estrellas: respuesta.data });
+  } catch (err) {
+    console.error(err?.response?.data || err.message);
+    res.status(500).json({ error: 'No se pudieron calcular las estrellas fijas.', detalle_tecnico: err?.response?.data || err.message });
   }
 });
 
@@ -695,12 +735,20 @@ app.post('/horoscopo-diario', requireLogin, async (req, res) => {
 
 app.post('/flor-armonica', requireLogin, async (req, res) => {
   try {
-    const perfil = await leerPerfil(req);
-    if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
+    let datosSubject;
+    if (req.body.otra_carta_id) {
+      const { data: persona, error } = await req.supabase.from('otras_cartas').select('*').eq('id', req.body.otra_carta_id).single();
+      if (error || !persona) return res.status(400).json({ error: 'No se encontró esa carta.' });
+      datosSubject = birthDataDesdePerfil(persona, persona.nombre);
+    } else {
+      const perfil = await leerPerfil(req);
+      if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
+      datosSubject = birthDataDesdePerfil(perfil);
+    }
 
     const numeroArmonico = req.body.numero || 5;
     const respuesta = await astrologyApi.post('/charts/harmonic', {
-      subject: birthDataDesdePerfil(perfil),
+      subject: datosSubject,
       n: numeroArmonico,
       options: { house_system: 'P', zodiac_type: 'Tropic', language: 'es' },
     });
