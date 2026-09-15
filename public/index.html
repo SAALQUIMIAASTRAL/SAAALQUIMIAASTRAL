@@ -1207,14 +1207,21 @@
       if (!conjunciones.length) {
         return botonCerrar + '<div class="disclaimer">No se encontraron estrellas fijas relevantes en tu carta.</div>';
       }
+      function significadoEstrella(natureStr) {
+        if (!natureStr) return 'Una influencia sutil que se combina con la energía del planeta que toca.';
+        const partes = natureStr.split(/[-\/]/).map(p => p.trim());
+        const traducidas = partes.map(p => PLANETAS_SOLO_NOMBRE_ES[p] || p);
+        if (traducidas.length === 2) return `Combina la naturaleza de ${traducidas[0]} y ${traducidas[1]} — trae esa doble energía a la vida de quien la activa.`;
+        return `Tiene naturaleza de ${traducidas.join(', ')}.`;
+      }
       return botonCerrar + conjunciones.slice(0, 10).map(c => {
         const nombrePlaneta = PLANETAS_SOLO_NOMBRE_ES[c.planet] || c.planet;
-        const significado = c.star_data?.meaning || c.star_data?.interpretation || c.star_data?.nature || c.interpretation || '';
+        const naturaleza = c.star_data?.nature;
+        const significadoPropio = significadoEstrella(naturaleza);
         return `
           <div style="background:var(--marigold-soft);border-radius:12px;padding:12px 14px;margin-bottom:10px;">
             <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14px;color:var(--plum);">✦ ${c.star} conjunción ${nombrePlaneta}</div>
-            ${c.star_data?.traditional_name ? `<div style="font-size:11px;color:var(--marigold);margin-bottom:4px;">${c.star_data.traditional_name}</div>` : ''}
-            ${significado ? `<div style="font-size:12px;color:var(--plum);line-height:1.5;">${limpiarTextoAPI(significado)}</div>` : ''}
+            <div style="font-size:12px;color:var(--plum);line-height:1.5;margin-top:4px;">${significadoPropio}</div>
           </div>`;
       }).join('');
     }
@@ -1246,7 +1253,7 @@
         return prioA - prioB;
       });
       const principales = ordenados.slice(0, 5);
-      const encabezado = `<div style="font-size:11px;color:var(--ink-dim);margin-bottom:10px;">Tus ${principales.length} tránsitos más importantes de los próximos 30 días (de ${eventos.length} en total):</div>`;
+      const encabezado = `<div style="font-size:11px;color:var(--ink-dim);margin-bottom:10px;">Estos son los tránsitos más importantes de tu próximo mes — los demás son menores y no requieren tanta atención.</div>`;
       return botonCerrar + encabezado + principales.map(ev => {
         const planeta1 = PLANETAS_SOLO_NOMBRE_ES[ev.transiting_planet] || ev.transiting_planet;
         const planeta2 = PLANETAS_SOLO_NOMBRE_ES[ev.stationed_planet || ev.natal_planet] || (ev.stationed_planet || ev.natal_planet);
@@ -1469,6 +1476,11 @@
     Mars: { titulo:'Cómo actúo', emoji:'🔥' },
   };
 
+  const MATIZ_ASPECTO = {
+    conjunction: 'se fusiona intensamente con', opposition: 'busca equilibrio constante con',
+    square: 'genera fricción creativa con', trine: 'fluye con facilidad junto a', sextile: 'encuentra oportunidades con',
+  };
+
   function sintesisPlaneta(clave, p, aspectosDelPlaneta) {
     const signo = signoEs(p.sign);
     const casa = p.house;
@@ -1479,7 +1491,8 @@
     if (aspectosDelPlaneta?.length) {
       const principal = aspectosDelPlaneta[0];
       const otroPlaneta = principal.point1 === clave ? principal.point2 : principal.point1;
-      frase += ` Su ${aspectoEs(principal.aspect_type).toLowerCase()} con ${nombrePlanetaEs(otroPlaneta)} le agrega un matiz importante.`;
+      const matiz = MATIZ_ASPECTO[principal.aspect_type] || 'se relaciona con';
+      frase += ` ${matiz.charAt(0).toUpperCase() + matiz.slice(1)} ${nombrePlanetaEs(otroPlaneta)}.`;
     }
     return frase;
   }
