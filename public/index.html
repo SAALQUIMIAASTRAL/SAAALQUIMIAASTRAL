@@ -1238,7 +1238,16 @@
     // Caso 0.5: viene como lista de "events" (tránsitos personales de 30 días)
     const eventos = objeto?.data?.events;
     if (eventos?.length) {
-      return botonCerrar + eventos.slice(0, 15).map(ev => {
+      const PRIORIDAD_PLANETA = { Pluto:1, Neptune:2, Uranus:3, Saturn:4, Jupiter:5, Mars:6, Venus:7, Mercury:8, Sun:5, Moon:9 };
+      const PRIORIDAD_ASPECTO = { conjunction:1, opposition:2, square:3, trine:4, sextile:5 };
+      const ordenados = [...eventos].sort((a, b) => {
+        const prioA = (PRIORIDAD_PLANETA[a.transiting_planet] || 10) + (PRIORIDAD_ASPECTO[a.aspect_type] || 5) * 0.1 + (a.orb || 5) * 0.01;
+        const prioB = (PRIORIDAD_PLANETA[b.transiting_planet] || 10) + (PRIORIDAD_ASPECTO[b.aspect_type] || 5) * 0.1 + (b.orb || 5) * 0.01;
+        return prioA - prioB;
+      });
+      const principales = ordenados.slice(0, 5);
+      const encabezado = `<div style="font-size:11px;color:var(--ink-dim);margin-bottom:10px;">Tus ${principales.length} tránsitos más importantes de los próximos 30 días (de ${eventos.length} en total):</div>`;
+      return botonCerrar + encabezado + principales.map(ev => {
         const planeta1 = PLANETAS_SOLO_NOMBRE_ES[ev.transiting_planet] || ev.transiting_planet;
         const planeta2 = PLANETAS_SOLO_NOMBRE_ES[ev.stationed_planet || ev.natal_planet] || (ev.stationed_planet || ev.natal_planet);
         return `
@@ -1891,6 +1900,10 @@
             <div style="font-size:15px;font-weight:600;margin-bottom:2px;">${faseLunarEs(m.moon_phase)} en ${signoEs(m.moon_sign)}</div>
             <div style="font-size:12px;color:#c9bfe0;">Iluminación: ${Math.round(m.moon_illumination)}% · Día lunar ${m.moon_day}</div>
           </div>`;
+      }
+      // Limitamos a 3 interpretaciones (las más relevantes), para no saturar
+      if (data.luna?.data?.interpretations?.length > 3) {
+        data.luna.data.interpretations = data.luna.data.interpretations.slice(0, 3);
       }
       contenedor.innerHTML = resumenHtml + renderizarInforme(data.luna, 'luna-cruda');
     } catch (err) {
