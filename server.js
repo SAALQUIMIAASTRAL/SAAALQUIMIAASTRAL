@@ -240,7 +240,7 @@ app.post('/carta-visual', requireLogin, async (req, res) => {
     res.json({ svg, crudo: svg ? undefined : respuesta.data, desde_cache: false });
   } catch (err) {
     console.error(err?.response?.data || err.message);
-    res.status(500).json({ error: 'No se pudo generar la carta visual.' });
+    res.status(500).json({ error: 'No se pudo generar la carta visual.', detalle_tecnico: err?.response?.data || err.message });
   }
 });
 
@@ -384,6 +384,7 @@ app.post('/astrocartografia', requireLogin, async (req, res) => {
       svg: respuesta.data?.svg_content || null,
       zonas_poder: respuesta.data?.map_data?.power_zones || [],
       lineas: respuesta.data?.map_data?.lines || [],
+      ciudades: respuesta.data?.map_data?.cities_shown || [],
     });
   } catch (err) {
     console.error(err?.response?.data || err.message);
@@ -401,6 +402,7 @@ app.post('/sinastria', requireLogin, async (req, res) => {
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
     let datosOtraPersona;
+    let personaGuardada = null;
 
     if (req.body.otra_carta_id) {
       // Opción A: usar una carta ya guardada
@@ -410,9 +412,15 @@ app.post('/sinastria', requireLogin, async (req, res) => {
         .eq('id', req.body.otra_carta_id)
         .single();
       if (error || !persona) return res.status(400).json({ error: 'No se encontró esa carta guardada.' });
+      personaGuardada = persona;
+
+      // ¿Ya calculamos esta sinastría antes? Si sí, la regresamos sin gastar créditos
+      if (persona.sinastria_cache) {
+        return res.json({ reporte: persona.sinastria_cache, desde_cache: true });
+      }
       datosOtraPersona = birthDataDesdePerfil(persona, persona.nombre);
     } else {
-      // Opción B: datos escritos a mano
+      // Opción B: datos escritos a mano (no se guarda en caché)
       const { nombre, fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo } = req.body;
       if (!nombre || !fecha_nacimiento || !ciudad_nacimiento || !pais_codigo) {
         return res.status(400).json({ error: 'Faltan datos de la otra persona.' });
@@ -427,7 +435,11 @@ app.post('/sinastria', requireLogin, async (req, res) => {
       report_options: { tradition: 'psychological', language: 'es' },
     });
 
-    res.json({ reporte: respuesta.data });
+    if (personaGuardada) {
+      await req.supabase.from('otras_cartas').update({ sinastria_cache: respuesta.data }).eq('id', personaGuardada.id);
+    }
+
+    res.json({ reporte: respuesta.data, desde_cache: false });
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo calcular la sinastría.', detalle_tecnico: err?.response?.data || err.message });
@@ -506,7 +518,7 @@ app.post('/otras-cartas/:id/visual', requireLogin, async (req, res) => {
     res.json({ svg, desde_cache: false });
   } catch (err) {
     console.error(err?.response?.data || err.message);
-    res.status(500).json({ error: 'No se pudo generar la carta visual.' });
+    res.status(500).json({ error: 'No se pudo generar la carta visual.', detalle_tecnico: err?.response?.data || err.message });
   }
 });
 
@@ -643,6 +655,24 @@ app.post('/relocacion', requireLogin, async (req, res) => {
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo calcular la relocación.', detalle_tecnico: err?.response?.data || err.message });
+  }
+});
+
+// RUTA: Numerología (números núcleo: camino de vida, destino, etc.)
+app.post('/numerologia', requireLogin, async (req, res) => {
+  try {
+    const perfil = await leerPerfil(req);
+    if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
+
+    const respuesta = await astrologyApi.post('/numerology/core-numbers', {
+      subject: birthDataDesdePerfil(perfil),
+      language: 'es',
+    });
+
+    res.json({ numerologia: respuesta.data });
+  } catch (err) {
+    console.error(err?.response?.data || err.message);
+    res.status(500).json({ error: 'No se pudo calcular la numerología.', detalle_tecnico: err?.response?.data || err.message });
   }
 });
 

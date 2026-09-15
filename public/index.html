@@ -492,6 +492,13 @@
             <div id="flor-resultado" style="margin-top:14px;"></div>
           </div>
 
+          <div class="section" data-tab="cartas">
+            <h2>Numerología</h2>
+            <div class="desc">Tus números núcleo: camino de vida, destino y más — calculados con tu nombre y fecha de nacimiento.</div>
+            <button class="btn-primary" onclick="verNumerologia()">Calcular mi numerología</button>
+            <div id="numerologia-resultado" style="margin-top:14px;"></div>
+          </div>
+
           <div class="section" data-tab="sinastria">
             <h2>Sinastría</h2>
             <div class="desc">Compara tu carta con la de otra persona (pareja, amiga, familiar).</div>
@@ -727,8 +734,25 @@
       const iconos = { Sun:'☀️', Moon:'🌙', Venus:'💗', Mars:'🔥', Jupiter:'🚀', Saturn:'🪐', Mercury:'☿️' };
       const planetasEs = { Sun:'Sol', Moon:'Luna', Venus:'Venus', Mars:'Marte', Jupiter:'Júpiter', Saturn:'Saturno', Mercury:'Mercurio' };
       const lineasEs = { AC:'Ascendente (identidad)', MC:'Medio Cielo (vocación)', DC:'Descendente (relaciones)', IC:'Fondo de Cielo (hogar)' };
+      const AREAS_ACG_ES = { identity:'identidad y liderazgo', career:'carrera y vocación', love:'amor y relaciones', prosperity:'prosperidad y dinero', health:'salud', home:'hogar', creativity:'creatividad', spirituality:'espiritualidad', communication:'comunicación', travel:'viajes', power:'poder personal' };
+
+      let htmlLineas = '';
+
+      // Ciudades destacadas (lo más concreto y útil)
+      const ciudadesBuenas = (data.ciudades || []).filter(c => c.in_power_zone).sort((a, b) => (b.power_zone_strength || 0) - (a.power_zone_strength || 0)).slice(0, 6);
+      if (ciudadesBuenas.length) {
+        htmlLineas += `<div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin-bottom:8px;">📍 Ciudades donde tu energía se activa más</div>`;
+        htmlLineas += ciudadesBuenas.map(c => `
+          <div style="background:var(--marigold-soft);border-radius:10px;padding:10px 12px;margin-bottom:8px;">
+            <div style="font-size:13px;font-weight:700;color:var(--plum);">${c.name}, ${c.country}</div>
+            <div style="font-size:11.5px;color:var(--ink-dim);">Cerca de tu línea de ${c.closest_line || 'energía activa'}</div>
+          </div>
+        `).join('');
+        htmlLineas += '<div style="font-family:\'Cormorant Garamond\',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin:14px 0 8px;">Qué significa cada línea</div>';
+      }
+
       if (data.lineas && data.lineas.length) {
-        contenedorLineas.innerHTML = data.lineas.slice(0, 6).map(l => `
+        htmlLineas += data.lineas.slice(0, 6).map(l => `
           <div class="acg-line">
             <div class="em">${iconos[l.planet] || '✨'}</div>
             <div>
@@ -737,6 +761,9 @@
             </div>
           </div>
         `).join('');
+        contenedorLineas.innerHTML = htmlLineas;
+      } else if (htmlLineas) {
+        contenedorLineas.innerHTML = htmlLineas;
       } else {
         contenedorLineas.innerHTML = '<div class="disclaimer">No se encontraron líneas para mostrar.</div>';
       }
@@ -1401,7 +1428,12 @@
         headers: { Authorization: 'Bearer ' + SESION.token },
       });
       const data = await r.json();
-      if (!r.ok) throw new Error(data.error || 'No se pudo generar.');
+      if (!r.ok) {
+        contenedor.innerHTML = `<div style="color:#a5442f;font-size:12px;">${data.error || 'No se pudo generar.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        boton.textContent = 'Ver mi carta en rueda 🔮';
+        boton.disabled = false;
+        return;
+      }
       if (data.svg) {
         contenedor.innerHTML = data.svg;
         document.getElementById('zoom-hint').textContent = data.desde_cache ? '♻️ Rueda guardada · toca para ampliar' : '👆 Toca la carta para verla en grande';
@@ -1507,6 +1539,23 @@
     }
   }
 
+  async function verNumerologia() {
+    const contenedor = document.getElementById('numerologia-resultado');
+    contenedor.innerHTML = '<div class="disclaimer">Calculando...</div>';
+    try {
+      const r = await fetch('/numerologia', { method: 'POST', headers: { Authorization: 'Bearer ' + SESION.token } });
+      const data = await r.json();
+      if (!r.ok) {
+        if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
+        contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        return;
+      }
+      contenedor.innerHTML = renderizarInforme(data.numerologia, 'numerologia-resultado');
+    } catch (err) {
+      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+    }
+  }
+
   async function verFlorArmonica() {
     const contenedor = document.getElementById('flor-resultado');
     contenedor.innerHTML = '<div class="disclaimer">Calculando...</div>';
@@ -1602,7 +1651,8 @@
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
-        throw new Error(data.error || 'No se pudo generar.');
+        contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo generar.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        return;
       }
       const interpretaciones = data.reporte?.data?.interpretations;
       if (interpretaciones?.length) {
