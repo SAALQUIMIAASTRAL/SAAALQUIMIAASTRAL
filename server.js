@@ -401,6 +401,7 @@ app.post('/sinastria', requireLogin, async (req, res) => {
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
     let datosOtraPersona;
+    let personaGuardada = null;
 
     if (req.body.otra_carta_id) {
       // Opción A: usar una carta ya guardada
@@ -410,9 +411,15 @@ app.post('/sinastria', requireLogin, async (req, res) => {
         .eq('id', req.body.otra_carta_id)
         .single();
       if (error || !persona) return res.status(400).json({ error: 'No se encontró esa carta guardada.' });
+      personaGuardada = persona;
+
+      // ¿Ya calculamos esta sinastría antes? Si sí, la regresamos sin gastar créditos
+      if (persona.sinastria_cache) {
+        return res.json({ reporte: persona.sinastria_cache, desde_cache: true });
+      }
       datosOtraPersona = birthDataDesdePerfil(persona, persona.nombre);
     } else {
-      // Opción B: datos escritos a mano
+      // Opción B: datos escritos a mano (no se guarda en caché)
       const { nombre, fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo } = req.body;
       if (!nombre || !fecha_nacimiento || !ciudad_nacimiento || !pais_codigo) {
         return res.status(400).json({ error: 'Faltan datos de la otra persona.' });
@@ -427,7 +434,11 @@ app.post('/sinastria', requireLogin, async (req, res) => {
       report_options: { tradition: 'psychological', language: 'es' },
     });
 
-    res.json({ reporte: respuesta.data });
+    if (personaGuardada) {
+      await req.supabase.from('otras_cartas').update({ sinastria_cache: respuesta.data }).eq('id', personaGuardada.id);
+    }
+
+    res.json({ reporte: respuesta.data, desde_cache: false });
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo calcular la sinastría.', detalle_tecnico: err?.response?.data || err.message });
