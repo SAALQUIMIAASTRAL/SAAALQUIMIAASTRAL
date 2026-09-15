@@ -225,9 +225,10 @@
 
   /* bottom nav */
   .bottomnav{
-    position:absolute;left:0;right:0;bottom:0;
+    position:absolute;left:0;right:0;bottom:0;z-index:10;
     background:var(--paper);border-top:1px solid var(--line);
-    display:flex;justify-content:space-around;padding:10px 4px 14px;
+    display:flex;justify-content:space-around;
+    padding:10px 4px calc(14px + env(safe-area-inset-bottom, 0px));
   }
   .bottomnav .it{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9.5px;color:var(--ink-dim);}
   .bottomnav .it .g{font-size:16px;}
@@ -236,10 +237,18 @@
   [data-tab].tab-activa{display:block;}
 
   .install-btn{
-    position:absolute;left:16px;right:16px;bottom:74px;z-index:5;
+    position:absolute;left:16px;right:16px;z-index:9;
+    bottom:calc(80px + env(safe-area-inset-bottom, 0px));
     background:var(--marigold);color:#fff;border:none;border-radius:100px;
     padding:12px;font-size:13px;font-weight:600;cursor:pointer;
     box-shadow:0 8px 20px rgba(181,101,47,0.35);
+    display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .install-btn .cerrar-instalar{
+    position:absolute;right:8px;top:50%;transform:translateY(-50%);
+    background:rgba(255,255,255,0.25);border:none;border-radius:50%;
+    width:20px;height:20px;color:#fff;font-size:11px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
   }
 
   .ios-modal-bg{
@@ -664,7 +673,7 @@
 
         </div>
 
-        <button class="install-btn" id="install-btn" style="display:none;">⬇ Instalar app</button>
+        <button class="install-btn" id="install-btn" style="display:none;">⬇ Instalar app<span class="cerrar-instalar" id="cerrar-instalar" onclick="event.stopPropagation(); cerrarBannerInstalar();">✕</span></button>
 
         <div class="bottomnav">
           <div class="it active" data-boton-tab="inicio" onclick="cambiarPestana('inicio')"><div class="g">⌂</div>Inicio</div>
@@ -787,15 +796,24 @@
   const installBtn = document.getElementById('install-btn');
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
 
+  function cerrarBannerInstalar() {
+    if (installBtn) installBtn.style.display = 'none';
+    localStorage.setItem('saa_instalar_cerrado_hasta', String(Date.now() + 7 * 24 * 60 * 60 * 1000));
+  }
+  function puedeMostrarBannerInstalar() {
+    const hasta = localStorage.getItem('saa_instalar_cerrado_hasta');
+    return !hasta || Date.now() > parseInt(hasta, 10);
+  }
+
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
-    installBtn.style.display = 'block';
+    if (puedeMostrarBannerInstalar()) installBtn.style.display = 'flex';
   });
 
   if (isIOS && installBtn) {
     const isStandalone = window.navigator.standalone === true;
-    if (!isStandalone) installBtn.style.display = 'block';
+    if (!isStandalone && puedeMostrarBannerInstalar()) installBtn.style.display = 'flex';
   }
 
   if (installBtn) {
