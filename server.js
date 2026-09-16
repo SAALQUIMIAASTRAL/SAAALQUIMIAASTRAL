@@ -781,6 +781,10 @@ app.post('/energia-del-dia', requireLogin, async (req, res) => {
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
     const hoy = new Date();
+    const cacheKey = cacheHash(req.userId, 'energia', hoy.toISOString().slice(0, 10));
+    const cached = cacheGet(cacheKey);
+    if (cached) return res.json(cached);
+
     const [ciclos, luna] = await Promise.all([
       astrologyApi.post('/numerology/personal-cycles', {
         subject: birthDataDesdePerfil(perfil),
