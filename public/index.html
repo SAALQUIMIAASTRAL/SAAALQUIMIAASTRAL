@@ -14,19 +14,43 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
+    /* --- Colores de marca --- */
     --plum:#3a1f38;
+    --plum-light:#5a3a58;
     --ink-dim:#7d6b78;
     --marigold:#b5652f;
-    --marigold-soft:rgba(181,101,47,0.13);
+    --marigold-dark:#8a4a20;
+    --marigold-soft:rgba(181,101,47,0.12);
+    --marigold-mid:rgba(181,101,47,0.25);
     --lilac:#6b3f87;
+    --lilac-soft:rgba(107,63,135,0.12);
     --blush-1:#4a2f4f;
     --blush-2:#331e37;
+
+    /* --- Texto sobre fondos oscuros (banda, luna) --- */
     --band-text:#f2e6ec;
     --band-text-dim:#cdb4c4;
+
+    /* --- Superficies --- */
     --paper:#fdf8f6;
     --page-bg:#f1e6e0;
     --line:#ecdfe0;
     --moon-navy:#241a38;
+
+    /* --- Sistema de tipografía --- */
+    --texto-cuerpo:13px;
+    --texto-pequeño:11.5px;
+    --texto-etiqueta:11px;
+    --texto-titulo:15px;
+    --radio-tarjeta:14px;
+    --radio-burbuja:100px;
+
+    /* --- Colores semánticos para interpretaciones --- */
+    --armonia:#4a7c4e;       /* verde para aspectos buenos */
+    --armonia-soft:rgba(74,124,78,0.1);
+    --tension:#9c3030;       /* rojo para aspectos tensos */
+    --tension-soft:rgba(156,48,48,0.1);
+    --neutral-soft:rgba(58,31,56,0.07);
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;background:#e9e2da;font-family:'Work Sans',sans-serif;color:var(--plum);}
@@ -339,10 +363,35 @@
   .auth-switch{text-align:center;font-size:12.5px;color:var(--ink-dim);margin-top:16px;}
   .auth-switch a{color:var(--marigold);font-weight:600;cursor:pointer;}
   .auth-loading{opacity:0.6;pointer-events:none;}
-  .carta-real-row{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--plum);padding:4px 0;}
-  .carta-real-row b{color:var(--marigold);font-weight:700;}
+  .carta-real-row{display:flex;align-items:center;gap:9px;font-size:var(--texto-cuerpo);color:var(--plum);padding:5px 0;border-bottom:1px solid var(--marigold-soft);}
+  .carta-real-row:last-child{border-bottom:none;}
+  .carta-real-row b{color:var(--marigold-dark);font-weight:700;}
   .detalle-tecnico-oculto{display:none;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);}
   .detalle-tecnico-oculto.show-tecnico{display:block;}
+
+  /* --- Sistema unificado de tarjetas de interpretación --- */
+  .tarjeta-lectura{
+    background:var(--paper);border:1px solid var(--line);
+    border-radius:var(--radio-tarjeta);padding:12px 14px;margin-bottom:10px;
+  }
+  .tarjeta-lectura .titulo{
+    font-family:'Cormorant Garamond',serif;font-weight:700;
+    font-size:var(--texto-titulo);color:var(--plum);margin-bottom:4px;
+  }
+  .tarjeta-lectura .cuerpo{
+    font-size:var(--texto-cuerpo);color:var(--plum-light);line-height:1.6;
+  }
+  .tarjeta-lectura.armonia{border-left:3px solid var(--armonia);background:var(--armonia-soft);}
+  .tarjeta-lectura.tension{border-left:3px solid var(--tension);background:var(--tension-soft);}
+  .tarjeta-lectura.neutral{border-left:3px solid var(--marigold);background:var(--marigold-soft);}
+
+  /* --- Etiqueta de sección dentro de lecturas --- */
+  .etiqueta-seccion{
+    font-size:var(--texto-etiqueta);color:var(--marigold);font-weight:600;
+    text-transform:uppercase;letter-spacing:0.5px;
+    margin:12px 0 6px;padding-bottom:4px;
+    border-bottom:1px solid var(--marigold-soft);
+  }
 </style>
 </head>
 <body>
@@ -1364,13 +1413,18 @@
     if (secciones?.length) {
       return botonCerrar + secciones.map(sec => `
         <div style="margin-bottom:14px;">
-          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14.5px;color:var(--marigold);margin-bottom:8px;border-bottom:1px solid var(--line);padding-bottom:4px;">${sec.title || ''}</div>
-          ${(sec.interpretations || []).map(item => `
-            <div class="card-lectura">
-              <div class="card-titulo">${traducirFactor(item.factor) || traducirTitulo(item.title) || ''}</div>
-              <div class="card-cuerpo">${limpiarTextoAPI(item.text)}</div>
-            </div>
-          `).join('')}
+          <div class="etiqueta-seccion">${sec.title || ''}</div>
+          ${(sec.interpretations || []).map(item => {
+            const factor = item.factor || item.title || '';
+            const esArmonia = /trine|sextile|trígono|sextil/i.test(factor);
+            const esTension = /square|opposition|cuadratura|oposición/i.test(factor);
+            const clase = esArmonia ? 'armonia' : esTension ? 'tension' : 'neutral';
+            return `
+              <div class="tarjeta-lectura ${clase}">
+                <div class="titulo">${traducirFactor(factor) || traducirTitulo(factor) || ''}</div>
+                <div class="cuerpo">${limpiarTextoAPI(item.text || '')}</div>
+              </div>`;
+          }).join('')}
         </div>
       `).join('');
     }
@@ -1419,9 +1473,9 @@
     const interpretaciones = objeto?.data?.interpretations || objeto?.interpretations;
     if (interpretaciones?.length) {
       return botonCerrar + interpretaciones.map(item => `
-        <div class="card-lectura">
-          <div class="card-titulo">${traducirTitulo(item.title)}</div>
-          <div class="card-cuerpo">${limpiarTextoAPI(item.text)}</div>
+        <div class="tarjeta-lectura neutral">
+          <div class="titulo">${traducirTitulo(item.title)}</div>
+          <div class="cuerpo">${limpiarTextoAPI(item.text)}</div>
         </div>
       `).join('');
     }
@@ -1942,7 +1996,7 @@
 
   async function verFlorArmonica() {
     const contenedor = document.getElementById('flor-resultado');
-    contenedor.innerHTML = '<div class="disclaimer">Calculando...</div>';
+    contenedor.innerHTML = '<div class="disclaimer">Calculando tu flor armónica...</div>';
     try {
       const r = await fetch('/flor-armonica', {
         method: 'POST',
@@ -1955,27 +2009,39 @@
         contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
-      const s = data.flor?.subject_data;
-      const cd = data.flor?.chart_data;
-      if (s && s.sun) {
-        let html = '';
-        if (cd?.planetary_positions?.length) {
-          html += dibujarFlorArmonica(cd.planetary_positions, cd.aspects);
-          html += cd.planetary_positions.map(p => `
-            <div class="carta-real-row">${nombrePlanetaEs(p.name)} en <b>${signoEs(p.sign)} ${p.degree ? Math.floor(p.degree)+'°' : ''}</b></div>
-          `).join('');
-        }
-        if (cd?.aspects?.length) {
-          html += '<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(181,101,47,0.25);font-size:11.5px;color:var(--marigold);font-weight:600;">Aspectos en tu flor armónica</div>';
-          html += cd.aspects.slice(0, 8).map(a => `
+
+      // La API puede regresar la data en distintos niveles de anidación
+      const flor = data.flor;
+      const cd = flor?.chart_data || flor?.data?.chart_data;
+      const sd = flor?.subject_data || flor?.data?.subject_data;
+
+      const botonCerrar = `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button onclick="document.getElementById('flor-resultado').innerHTML='';" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
+
+      if (cd?.planetary_positions?.length) {
+        // Dibujamos la flor real
+        const svgFlor = dibujarFlorArmonica(cd.planetary_positions, cd.aspects);
+
+        // Lista de posiciones
+        const posiciones = cd.planetary_positions.map(p => `
+          <div class="carta-real-row">${nombrePlanetaEs(p.name)} en <b>${signoEs(p.sign)} ${p.degree ? Math.floor(p.degree)+'°' : ''}</b></div>
+        `).join('');
+
+        // Aspectos armónicos
+        let aspectosHtml = '';
+        if (cd.aspects?.length) {
+          aspectosHtml = '<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(181,101,47,0.25);font-size:11.5px;color:var(--marigold);font-weight:600;">Aspectos en la flor armónica 5</div>';
+          aspectosHtml += cd.aspects.slice(0, 8).map(a => `
             <div class="carta-real-row" style="font-size:12px;">${nombrePlanetaEs(a.point1)} ${aspectoEs(a.aspect_type)} ${nombrePlanetaEs(a.point2)}</div>
           `).join('');
         }
-        contenedor.innerHTML = html
-          ? `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button onclick="document.getElementById('flor-resultado').innerHTML='';" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>${html}`
-          : '<div class="disclaimer">Sin datos para mostrar.</div>';
+
+        contenedor.innerHTML = botonCerrar + svgFlor + posiciones + aspectosHtml;
+      } else if (sd?.sun) {
+        // Tiene datos del sujeto pero no chart_data con posiciones — mostramos lo que hay
+        contenedor.innerHTML = botonCerrar + renderizarInforme(flor, 'flor-resultado');
       } else {
-        contenedor.innerHTML = renderizarInforme(data.flor, 'flor-resultado');
+        // Diagnóstico: mostrar la estructura real para saber qué trae
+        contenedor.innerHTML = botonCerrar + `<pre style="white-space:pre-wrap;font-size:9px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(data, null, 2)}</pre>`;
       }
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
