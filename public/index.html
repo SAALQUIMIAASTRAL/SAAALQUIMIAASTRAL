@@ -631,7 +631,9 @@
                 <label>País<select id="sin-pais" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;"><option value="">Selecciona el país</option></select></label>
               </div>
               <button class="btn-primary" onclick="calcularSinastria()">Ver compatibilidad</button>
+              <button class="btn-primary" style="background:var(--lilac);margin-top:8px;" onclick="calcularCartaCompuesta()">Carta compuesta — ¿qué pasa entre nosotros?</button>
               <div id="sinastria-resultado" style="margin-top:14px;"></div>
+              <div id="compuesta-resultado" style="margin-top:14px;"></div>
             </div>
           </div>
 
@@ -2209,6 +2211,68 @@
       } else {
         contenedor.innerHTML = botonCerrar + `<pre style="white-space:pre-wrap;font-size:9px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify({keys_flor:Object.keys(flor||{}), keys_cd:Object.keys(cd||{}), pos_count:cd?.planetary_positions?.length}, null, 2)}</pre>`;
       }
+    } catch (err) {
+      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+    }
+  }
+
+  async function calcularCartaCompuesta() {
+    const contenedor = document.getElementById('compuesta-resultado');
+    const idGuardada = document.getElementById('sin-carta-guardada').value;
+    let cuerpo;
+    if (idGuardada) {
+      cuerpo = { otra_carta_id: idGuardada };
+    } else {
+      cuerpo = {
+        nombre: document.getElementById('sin-nombre').value.trim(),
+        fecha_nacimiento: document.getElementById('sin-fecha').value,
+        hora_nacimiento: document.getElementById('sin-hora').value || '12:00',
+        ciudad_nacimiento: document.getElementById('sin-ciudad').value.trim(),
+        pais_codigo: document.getElementById('sin-pais').value,
+      };
+      if (!cuerpo.nombre || !cuerpo.fecha_nacimiento) {
+        contenedor.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Llena los datos de la otra persona primero.</div>';
+        return;
+      }
+    }
+    contenedor.innerHTML = '<div class="disclaimer">Calculando carta compuesta...</div>';
+    try {
+      const r = await fetch('/carta-compuesta', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + SESION.token },
+        body: JSON.stringify(cuerpo),
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
+        contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error}<br><pre style="font-size:9px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        return;
+      }
+      const botonCerrar = `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button onclick="document.getElementById('compuesta-resultado').innerHTML='';" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
+
+      let html = '';
+      // Carta compuesta — posiciones
+      const cd = data.carta_compuesta?.chart_data || data.carta_compuesta?.data?.chart_data;
+      if (cd?.planetary_positions?.length) {
+        html += `<div class="etiqueta-seccion">Carta compuesta (punto medio)</div>`;
+        html += cd.planetary_positions.map(p => `
+          <div class="carta-real-row">${nombrePlanetaEs(p.name)} en <b>${signoEs(p.sign)} ${p.degree !== undefined ? Math.floor(p.degree)+'°' : ''}</b>${p.house ? ` <span style="color:var(--ink-dim);font-size:11px;">Casa ${p.house}</span>` : ''}</div>
+        `).join('');
+      }
+
+      // Dinámica ahora — qué pasa entre ustedes HOY
+      const din = data.dinamica_ahora?.data?.events || data.dinamica_ahora?.events;
+      if (din?.length) {
+        html += `<div class="etiqueta-seccion" style="margin-top:12px;">¿Qué pasa entre ustedes ahora?</div>`;
+        html += din.slice(0, 5).map(ev => {
+          const p1 = PLANETAS_SOLO_NOMBRE_ES[ev.transiting_planet] || ev.transiting_planet;
+          const p2 = PLANETAS_SOLO_NOMBRE_ES[ev.natal_planet] || ev.natal_planet;
+          return `<div class="tarjeta-lectura neutral"><div class="cuerpo">${p1} en tránsito ${aspectoEs(ev.aspect_type)} ${p2} de la carta compuesta</div></div>`;
+        }).join('');
+      }
+
+      if (!html) html = renderizarInforme(data.carta_compuesta, 'compuesta-resultado');
+      contenedor.innerHTML = botonCerrar + (html || '<div class="disclaimer">Sin datos disponibles.</div>');
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }

@@ -436,6 +436,47 @@ app.post('/astrocartografia', requireLogin, async (req, res) => {
 // RUTA: Iniciar el cobro de la suscripción mensual ($8.88 USD)
 // ============================================================
 // RUTA: Sinastría (compatibilidad) entre la usuaria y otra persona
+// RUTA: Carta compuesta (punto medio entre dos cartas)
+app.post('/carta-compuesta', requireLogin, async (req, res) => {
+  try {
+    const perfil = await leerPerfil(req);
+    if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
+
+    let datosOtraPersona;
+    if (req.body?.otra_carta_id) {
+      const { data: persona, error } = await req.supabase
+        .from('otras_cartas').select('*').eq('id', req.body.otra_carta_id).single();
+      if (error || !persona) return res.status(400).json({ error: 'No se encontró esa carta.' });
+      datosOtraPersona = birthDataDesdePerfil(persona, persona.nombre);
+    } else {
+      const { nombre, fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo } = req.body;
+      if (!nombre || !fecha_nacimiento) return res.status(400).json({ error: 'Faltan datos.' });
+      datosOtraPersona = birthDataDesdePerfil({ fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo }, nombre);
+    }
+
+    const [compuesta, dinamica] = await Promise.all([
+      astrologyApi.post('/charts/composite', {
+        subject1: birthDataDesdePerfil(perfil),
+        subject2: datosOtraPersona,
+        options: { house_system: 'P', zodiac_type: 'Tropic', language: 'es' },
+      }).catch(e => ({ error: e?.response?.data || e.message })),
+      astrologyApi.post('/analysis/synastry-transits', {
+        subject1: birthDataDesdePerfil(perfil),
+        subject2: datosOtraPersona,
+        options: { language: 'es' },
+      }).catch(e => ({ error: e?.response?.data || e.message })),
+    ]);
+
+    res.json({
+      carta_compuesta: compuesta.data || compuesta,
+      dinamica_ahora: dinamica.data || dinamica,
+    });
+  } catch (err) {
+    console.error(err?.response?.data || err.message);
+    res.status(500).json({ error: 'No se pudo calcular la carta compuesta.', detalle_tecnico: err?.response?.data || err.message });
+  }
+});
+
 app.post('/sinastria', requireLogin, async (req, res) => {
   try {
     const perfil = await leerPerfil(req);
