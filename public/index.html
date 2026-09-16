@@ -569,6 +569,23 @@
           <button class="btn-primary" style="background:var(--lilac);margin-bottom:16px;" onclick="enviarFeedback()">Enviar sugerencia</button>
           <div id="feedback-msg" style="font-size:12px;margin-bottom:12px;"></div>
 
+          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:8px;">Privacidad y datos</div>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">
+            <button onclick="descargarMisDatos()" style="background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px 12px;text-align:left;font-size:12.5px;color:var(--plum);cursor:pointer;">📥 Descargar mis datos</button>
+            <button onclick="mostrarEliminarCuenta()" style="background:var(--paper);border:1px solid #e74c3c;border-radius:10px;padding:10px 12px;text-align:left;font-size:12.5px;color:#c0392b;cursor:pointer;">🗑️ Eliminar mi cuenta y datos</button>
+          </div>
+          <div id="eliminar-cuenta-confirm" style="display:none;background:#fbe6e3;border-radius:12px;padding:14px;margin-bottom:16px;">
+            <div style="font-size:12.5px;color:#c0392b;font-weight:600;margin-bottom:8px;">¿Estás segura? Esta acción es permanente.</div>
+            <div style="font-size:12px;color:#a5442f;margin-bottom:10px;">Se eliminarán tu perfil, carta natal, diario y todos tus datos. No se puede deshacer.</div>
+            <div style="display:flex;gap:8px;">
+              <button onclick="document.getElementById('eliminar-cuenta-confirm').style.display='none'" style="flex:1;background:var(--paper);border:1px solid var(--line);border-radius:100px;padding:8px;font-size:12px;color:var(--plum);cursor:pointer;">Cancelar</button>
+              <button onclick="eliminarMiCuenta()" style="flex:1;background:#c0392b;border:none;border-radius:100px;padding:8px;font-size:12px;color:#fff;font-weight:600;cursor:pointer;">Sí, eliminar todo</button>
+            </div>
+          </div>
+          <div style="font-size:10.5px;color:var(--ink-dim);margin-bottom:16px;line-height:1.5;">
+            <a href="#" onclick="return false;" style="color:var(--marigold-dark);">Aviso de Privacidad</a> · <a href="#" onclick="return false;" style="color:var(--marigold-dark);">Términos y Condiciones</a>
+          </div>
+
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
         </div>
 
@@ -2043,6 +2060,35 @@
     } catch (e) { msg.textContent = e.message; msg.style.color = '#a5442f'; }
   }
 
+  function mostrarEliminarCuenta() {
+    document.getElementById('eliminar-cuenta-confirm').style.display = 'block';
+  }
+
+  async function descargarMisDatos() {
+    try {
+      const r = await fetchAuth('/mis-datos', { headers: {} });
+      const data = await r.json();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'mis-datos-alquimia-astral.json';
+      a.click(); URL.revokeObjectURL(url);
+    } catch (e) { alert('No se pudieron descargar los datos: ' + e.message); }
+  }
+
+  async function eliminarMiCuenta() {
+    try {
+      const r = await fetchAuth('/mi-cuenta', { method: 'DELETE', headers: {} });
+      const data = await r.json();
+      if (r.ok) {
+        alert('Tu cuenta y todos tus datos han sido eliminados.');
+        cerrarSesion();
+      } else {
+        alert(data.error || 'No se pudo eliminar la cuenta.');
+      }
+    } catch (e) { alert('Error: ' + e.message); }
+  }
+
   async function enviarFeedback() {
     const texto = document.getElementById('feedback-texto').value.trim();
     const msg = document.getElementById('feedback-msg');
@@ -2531,11 +2577,16 @@
       const botonCerrarLocal = `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button onclick="document.getElementById('transitos-hoy-resultado').innerHTML='';" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
 
       if (bruto && bruto.sun) {
-        const filas = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto']
+        const CLAVE_A_NOMBRE = {
+          sun:'Sun', moon:'Moon', mercury:'Mercury', venus:'Venus', mars:'Mars',
+          jupiter:'Jupiter', saturn:'Saturn', uranus:'Uranus', neptune:'Neptune', pluto:'Pluto',
+          chiron:'Chiron', mean_node:'Mean_Node', lilith:'Lilith',
+        };
+        const filas = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','chiron','mean_node','lilith']
           .filter(k => bruto[k])
           .map(k => {
             const p = bruto[k];
-            const nombre = nombrePlanetaEs(k.charAt(0).toUpperCase() + k.slice(1));
+            const nombre = nombrePlanetaEs(CLAVE_A_NOMBRE[k] || (k.charAt(0).toUpperCase() + k.slice(1)));
             const grados = p.position !== undefined ? Math.floor(p.position) : null;
             const minutos = p.position !== undefined ? Math.floor((p.position % 1) * 60) : null;
             const gradoStr = grados !== null ? `${grados}°${minutos !== null ? minutos.toString().padStart(2,'0')+"'" : ''}` : '';

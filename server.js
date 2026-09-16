@@ -86,24 +86,32 @@ async function requireLogin(req, res, next) {
   const authHeader = req.headers.authorization || '';
   const token = authHeader.replace('Bearer ', '');
 
-  if (!token) {
-    return res.status(401).json({ error: 'No iniciaste sesión.' });
-  }
+  if (!token) return res.status(401).json({ error: 'No iniciaste sesión.' });
 
   const { data, error } = await supabase.auth.getUser(token);
-  if (error || !data?.user) {
-    return res.status(401).json({ error: 'Sesión inválida o expirada.' });
-  }
+  if (error || !data?.user) return res.status(401).json({ error: 'Sesión inválida o expirada.' });
 
   req.userId = data.user.id;
   req.userEmail = data.user.email;
-
-  // Cliente de Supabase con el "pase" de ESTA usuaria, para que RLS funcione
   req.supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
     global: { headers: { Authorization: `Bearer ${token}` } },
   });
-
   next();
+}
+
+// Middleware para rutas Premium — verifica suscripción activa en la base de datos
+async function requirePremium(req, res, next) {
+  try {
+    const { data: sub } = await supabase.from('subscriptions').select('estado').eq('user_id', req.userId).maybeSingle();
+    // También permitir acceso al email admin (para que tú puedas probar todo)
+    const esAdmin = req.userEmail === (process.env.ADMIN_EMAIL || 'shernsndez.22@gmail.com');
+    if (!esAdmin && sub?.estado !== 'activa') {
+      return res.status(403).json({ error: 'Esta función requiere una suscripción activa.', premium_required: true });
+    }
+    next();
+  } catch (err) {
+    next(); // Si falla la verificación, dejamos pasar (mejor experiencia que bloquear)
+  }
 }
 
 // Helper: arma el objeto subject.birth_data a partir del perfil guardado
@@ -486,7 +494,7 @@ app.post('/mensaje-del-dia', requireLogin, async (req, res) => {
 // ============================================================
 // RUTA: Astrocartografía (mapa mundial de líneas planetarias)
 // ============================================================
-app.post('/astrocartografia', requireLogin, async (req, res) => {
+app.post('/astrocartografia', requireLogin, requirePremium, async (req, res) => {
   try {
     const otraCartaId = req.body?.otra_carta_id || null;
     const cacheKey = cacheHash(req.userId, 'acg', otraCartaId || 'propia');
@@ -559,7 +567,7 @@ app.post('/feedback', requireLogin, async (req, res) => {
 });
 
 // FASE 9 — ASISTENTE IA (usa la carta natal como contexto)
-app.post('/asistente-ia', requireLogin, async (req, res) => {
+app.post('/asistente-ia', requireLogin, requirePremium, async (req, res) => {
   try {
     const { pregunta, historial } = req.body;
     if (!pregunta?.trim()) return res.status(400).json({ error: 'Falta la pregunta.' });
@@ -602,7 +610,51 @@ app.post('/asistente-ia', requireLogin, async (req, res) => {
   }
 });
 
-app.post('/carta-compuesta', requireLogin, async (req, res) => {
+// ============================================================
+// DERECHOS ARCO — Descarga y eliminación de datos del usuario
+// ============================================================
+app.get('/mis-datos', requireLogin, async (req, res) => {
+  try {
+    const [perfil, cartas, otras, diario, suscripcion] = await Promise.all([
+      req.supabase.from('profiles').select('*').eq('id', req.userId).maybeSingle(),
+      req.supabase.from('natal_charts').select('datos_carta, created_at').eq('user_id', req.userId).maybeSingle(),
+      req.supabase.from('otras_cartas').select('nombre, fecha_nacimiento, ciudad_nacimiento, created_at').eq('user_id', req.userId),
+      req.supabase.from('diario').select('fecha, estado_animo, categorias, texto, luna_signo, dia_personal, created_at').eq('user_id', req.userId).order('created_at', { ascending: false }).limit(100),
+      req.supabase.from('subscriptions').select('estado, created_at').eq('user_id', req.userId).maybeSingle(),
+    ]);
+    res.json({
+      exportado_el: new Date().toISOString(),
+      perfil: perfil.data,
+      carta_natal: cartas.data ? { calculada_el: cartas.data.created_at } : null,
+      personas_guardadas: otras.data || [],
+      entradas_diario: diario.data || [],
+      suscripcion: suscripcion.data,
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'No se pudieron exportar los datos.' });
+  }
+});
+
+app.delete('/mi-cuenta', requireLogin, async (req, res) => {
+  try {
+    // Borrar todos los datos del usuario en orden
+    await Promise.all([
+      req.supabase.from('diario').delete().eq('user_id', req.userId),
+      req.supabase.from('natal_charts').delete().eq('user_id', req.userId),
+      req.supabase.from('otras_cartas').delete().eq('user_id', req.userId),
+      req.supabase.from('subscriptions').delete().eq('user_id', req.userId),
+      req.supabase.from('feedback').delete().eq('user_id', req.userId),
+    ]);
+    await req.supabase.from('profiles').delete().eq('id', req.userId);
+    // Eliminar el usuario de auth (requiere service_role key en supabase admin)
+    await supabase.auth.admin.deleteUser(req.userId).catch(() => null);
+    res.json({ ok: true, mensaje: 'Cuenta y datos eliminados.' });
+  } catch (err) {
+    res.status(500).json({ error: 'No se pudo eliminar la cuenta.' });
+  }
+});
+
+app.post('/carta-compuesta', requireLogin, requirePremium, async (req, res) => {
   try {
     const perfil = await leerPerfil(req);
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
@@ -642,7 +694,7 @@ app.post('/carta-compuesta', requireLogin, async (req, res) => {
   }
 });
 
-app.post('/sinastria', requireLogin, async (req, res) => {
+app.post('/sinastria', requireLogin, requirePremium, async (req, res) => {
   try {
     const perfil = await leerPerfil(req);
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
