@@ -1163,7 +1163,25 @@ app.post('/transitos-personales', requireLogin, async (req, res) => {
       report_options: { tradition: 'psychological', language: 'es' },
     });
 
-    const respuestaTransitos = { transitos: respuesta.data };
+    // Deduplicar: si el mismo planeta+aspecto+punto aparece varios días seguidos,
+    // solo mostrar el de orbe más pequeño (el más exacto)
+    const eventos = respuesta.data?.data?.events || respuesta.data?.events || [];
+    const vistos = new Map();
+    eventos.forEach(ev => {
+      const clave = `${ev.transiting_planet}-${ev.aspect_type}-${ev.natal_planet || ev.stationed_planet}`;
+      const orbeAbs = Math.abs(ev.orb || 99);
+      if (!vistos.has(clave) || orbeAbs < Math.abs(vistos.get(clave).orb || 99)) {
+        vistos.set(clave, ev);
+      }
+    });
+    const eventosUnicos = Array.from(vistos.values());
+
+    // Inyectar los eventos deduplicados de vuelta en la respuesta
+    const datosLimpios = { ...respuesta.data };
+    if (datosLimpios?.data?.events) datosLimpios.data.events = eventosUnicos;
+    else if (datosLimpios?.events) datosLimpios.events = eventosUnicos;
+
+    const respuestaTransitos = { transitos: datosLimpios };
     cacheSet(cacheKey, respuestaTransitos, TTL.TRANSITOS_PERSONALES);
     res.json(respuestaTransitos);
   } catch (err) {

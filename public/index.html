@@ -602,13 +602,14 @@
           <div class="band" data-tab="hoy">
             <div class="band-icon" id="band-icon">☀️</div>
             <div class="date" id="banda-fecha">Cargando fecha...</div>
-            <h1><span id="greeting-word">Buenas tardes</span>, Mariana</h1>
+            <h1><span id="greeting-word">Buenas tardes</span>, <span id="banda-nombre">Mariana</span></h1>
             <div class="quote" id="banda-frase">Un paso atrás, dos hacia adelante.</div>
             <div class="chip-list">
               <div class="row"><span class="g">☉</span>Sol en <b id="banda-sol">Virgo</b></div>
               <div class="row"><span class="g">↑</span>Ascendente en <b id="banda-asc">Libra</b></div>
               <div class="row"><span class="g">☽</span>Luna en <b id="banda-luna">Escorpio</b></div>
             </div>
+            <div id="banda-transito-hoy" style="margin-top:10px;display:none;background:rgba(255,255,255,0.1);border-radius:10px;padding:8px 12px;font-size:11.5px;color:var(--band-text-dim);"></div>
             <span class="link-arrow" onclick="document.getElementById('seccion-carta-natal').scrollIntoView({behavior:'smooth', block:'start'})" style="cursor:pointer;">Ver carta completa ›</span>
           </div>
 
@@ -1426,7 +1427,7 @@
       listaConPosicion.forEach(e => { posicionesPorId[e.eclipse_id] = e.zodiac_position; });
 
       if (importantes?.length) {
-        const botonCerrar = `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button onclick="document.getElementById('eclipses-resultado').innerHTML='';" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
+        const botonCerrar = ''; // cerrar manejado por MutationObserver global
 
         let htmlPrincipal = '';
         const ip = data.interpretacion_principal;
@@ -1465,12 +1466,40 @@
   };
   function traducirTitulo(t) {
     if (!t || typeof t !== 'string') return t;
+
+    // Diccionario de títulos comunes del resumen
+    const TITULOS_ES = {
+      'Sun Sign': 'Signo Solar', 'Moon Sign': 'Signo Lunar', 'Rising Sign': 'Signo Ascendente',
+      'Ascendant': 'Ascendente', 'Sun': 'Sol', 'Moon': 'Luna', 'Mercury': 'Mercurio',
+      'Venus': 'Venus', 'Mars': 'Marte', 'Jupiter': 'Júpiter', 'Saturn': 'Saturno',
+      'Uranus': 'Urano', 'Neptune': 'Neptuno', 'Pluto': 'Plutón',
+      'Personality Overview': 'Visión general de tu personalidad',
+      'Core Identity': 'Identidad central', 'Emotional Nature': 'Naturaleza emocional',
+      'Communication Style': 'Cómo te comunicas', 'Love and Relationships': 'Amor y relaciones',
+      'Drive and Ambition': 'Motivación y ambición', 'Career and Vocation': 'Carrera y vocación',
+      'Spiritual Path': 'Camino espiritual', 'Life Challenges': 'Desafíos de vida',
+      'Strengths': 'Fortalezas', 'Challenges': 'Desafíos',
+      'House 1': 'Casa 1 — Identidad', 'House 2': 'Casa 2 — Dinero',
+      'House 3': 'Casa 3 — Comunicación', 'House 4': 'Casa 4 — Hogar',
+      'House 5': 'Casa 5 — Creatividad', 'House 6': 'Casa 6 — Salud y trabajo',
+      'House 7': 'Casa 7 — Relaciones', 'House 8': 'Casa 8 — Transformación',
+      'House 9': 'Casa 9 — Filosofía', 'House 10': 'Casa 10 — Carrera',
+      'House 11': 'Casa 11 — Amistades', 'House 12': 'Casa 12 — Espiritualidad',
+    };
+    if (TITULOS_ES[t]) return TITULOS_ES[t];
+
     // Patrón "Moon in Sco" o "Moon in Scorpio"
     let m = t.match(/^([A-Za-z_]+)\s+in\s+([A-Za-z]{3,})$/i);
     if (m) {
       const planeta = PLANETAS_SOLO_NOMBRE_ES[m[1]] || m[1];
       const signo = signoEs(m[2].slice(0, 3).charAt(0).toUpperCase() + m[2].slice(1, 3).toLowerCase()) || m[2];
       return `${planeta} en ${signo}`;
+    }
+    // Patrón "Sun in House 4"
+    m = t.match(/^([A-Za-z_]+)\s+in\s+House\s+(\d+)$/i);
+    if (m) {
+      const planeta = PLANETAS_SOLO_NOMBRE_ES[m[1]] || m[1];
+      return `${planeta} en Casa ${m[2]}`;
     }
     // Patrón "Moon Phase: Waxing Crescent"
     m = t.match(/^Moon Phase:\s*(.+)$/i);
@@ -1820,7 +1849,7 @@
 
       const diaPersonal = data.ciclos?.data?.personal_day?.number || data.ciclos?.data?.personal_day_number;
       const m = data.luna?.data?.lunar_metrics;
-      const botonCerrar = `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button onclick="document.getElementById('energia-resultado').innerHTML='';" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
+      const botonCerrar = ''; // cerrar manejado por MutationObserver global
 
       const MENSAJES_DIA = {
         1: { accion:'Inicia algo nuevo', evita:'Seguir esperando el momento perfecto', bueno_para:'Presentarte, mandar esa propuesta, dar el primer paso en lo que llevas tiempo postergando.' },
@@ -1961,7 +1990,7 @@
       if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
 
       const h = data.horoscopo?.data || data.horoscopo;
-      const botonCerrar = `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button onclick="document.getElementById('horoscopo-resultado').innerHTML='';" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
+      const botonCerrar = ''; // cerrar manejado por MutationObserver global
 
       const AREAS_ICONO = { identity:'👤', health:'💪', finance:'💰', career:'🚀', love:'💗', relationships:'🤝', spirituality:'✨' };
       const AREAS_NOMBRE = { identity:'Identidad', health:'Salud', finance:'Finanzas', career:'Carrera', love:'Amor', relationships:'Relaciones', spirituality:'Espiritualidad' };
@@ -2343,13 +2372,18 @@
       if (!r.ok) return;
       const data = await r.json();
 
+      // Nombre real en la banda
+      if (data.nombre) {
+        const nombreEl = document.getElementById('banda-nombre');
+        if (nombreEl) nombreEl.textContent = data.nombre.split(' ')[0];
+      }
+
       // Precarga la esfera lunar con los datos reales
       if (data.luna) {
         const moonNowTitle = document.getElementById('moon-now-title');
         const moonNowSub = document.getElementById('moon-now-sub');
         if (moonNowTitle) moonNowTitle.textContent = `${faseLunarEs(data.luna.fase)} en ${signoEs(data.luna.signo)}`;
         if (moonNowSub) moonNowSub.textContent = `Día lunar ${data.luna.dia_lunar} · ${data.luna.iluminacion}% iluminada`;
-
         const esfera = document.getElementById('moon-now-esfera');
         if (esfera && data.luna.iluminacion !== undefined) {
           const creciendo = data.luna.fase?.includes('Waxing');
@@ -2361,7 +2395,27 @@
               : `linear-gradient(90deg, #fdfaf3 0%, #f5f0e0 ${illum}%, #1b1730 ${illum}%, #1b1730 100%)`;
         }
       }
-    } catch (e) { /* silencioso — no bloquea la app */ }
+
+      // Tránsito principal del día en la banda
+      if (data.transito_principal) {
+        const tp = data.transito_principal;
+        const bandaTrans = document.getElementById('banda-transito-hoy');
+        if (bandaTrans) {
+          const signoStr = tp.signo ? `en ${signoEs(tp.signo)}` : '';
+          const gradoStr = tp.grado ? `${tp.grado}°` : '';
+          bandaTrans.textContent = `✦ ${PLANETAS_SOLO_NOMBRE_ES[tp.planeta] || tp.planeta} ${signoStr} ${gradoStr}`.trim();
+          bandaTrans.style.display = 'block';
+        }
+      }
+
+      // Día personal en la banda
+      if (data.dia_personal) {
+        const fraseEl = document.getElementById('banda-frase');
+        const TEMAS_DIA_CORTO = { 1:'Día de inicios y decisiones propias', 2:'Día de cooperación y espera', 3:'Día de expresión y creatividad', 4:'Día de trabajo y disciplina', 5:'Día de cambios y movimiento', 6:'Día de cuidado y relaciones', 7:'Día de reflexión e intuición', 8:'Día de poder y decisiones importantes', 9:'Día de cierre y soltar', 11:'Día de intuición elevada', 22:'Día de grandes proyectos' };
+        const tema = TEMAS_DIA_CORTO[data.dia_personal];
+        if (tema && fraseEl) fraseEl.textContent = `Día personal ${data.dia_personal} · ${tema}`;
+      }
+    } catch (e) { /* silencioso */ }
   }
 
   async function revisarPerfilYArrancar() {
@@ -2624,7 +2678,7 @@
 
       const hoy = data.datos_hoy;
       const bruto = hoy?.subject_data || hoy;
-      const botonCerrarLocal = `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button onclick="document.getElementById('transitos-hoy-resultado').innerHTML='';" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
+      const botonCerrarLocal = ''; // cerrar manejado por MutationObserver global
 
       if (bruto && bruto.sun) {
         const CLAVE_A_NOMBRE = {
@@ -2776,7 +2830,7 @@
       const cd = flor?.chart_data || flor?.data?.chart_data;
       const sd = flor?.subject_data || flor?.data?.subject_data;
 
-      const botonCerrar = `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button onclick="document.getElementById('flor-resultado').innerHTML='';" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
+      const botonCerrar = ''; // cerrar manejado por MutationObserver global
 
       if (cd?.planetary_positions?.length) {
         let svgFlor = '';
@@ -2835,7 +2889,7 @@
         contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error}<br><pre style="font-size:9px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
-      const botonCerrar = `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button onclick="document.getElementById('compuesta-resultado').innerHTML='';" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
+      const botonCerrar = ''; // cerrar manejado por MutationObserver global
 
       let html = '';
       // Carta compuesta — posiciones
