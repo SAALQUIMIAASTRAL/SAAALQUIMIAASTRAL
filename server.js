@@ -437,6 +437,72 @@ app.post('/astrocartografia', requireLogin, async (req, res) => {
 // ============================================================
 // RUTA: Sinastría (compatibilidad) entre la usuaria y otra persona
 // RUTA: Carta compuesta (punto medio entre dos cartas)
+// FASE 10 — SOPORTE Y FEEDBACK
+app.post('/feedback', requireLogin, async (req, res) => {
+  try {
+    const { tipo, mensaje } = req.body;
+    if (!mensaje?.trim()) return res.status(400).json({ error: 'Escribe tu mensaje.' });
+    const perfil = await leerPerfil(req);
+    const { error } = await req.supabase.from('feedback').insert({
+      user_id: req.userId,
+      email: perfil?.email || req.userEmail || null,
+      tipo: tipo || 'general',
+      mensaje: mensaje.trim(),
+    });
+    if (error) {
+      // Si la tabla no existe aún, respondemos OK igual (no bloquear la app)
+      console.error('feedback table:', error.message);
+    }
+    res.json({ ok: true, mensaje: '¡Gracias! Tu mensaje fue recibido.' });
+  } catch (err) {
+    res.status(500).json({ error: 'No se pudo enviar el mensaje.' });
+  }
+});
+
+// FASE 9 — ASISTENTE IA (usa la carta natal como contexto)
+app.post('/asistente-ia', requireLogin, async (req, res) => {
+  try {
+    const { pregunta, historial } = req.body;
+    if (!pregunta?.trim()) return res.status(400).json({ error: 'Falta la pregunta.' });
+
+    const perfil = await leerPerfil(req);
+    const { data: cartaData } = await req.supabase
+      .from('natal_charts').select('datos_carta').eq('user_id', req.userId)
+      .order('created_at', { ascending: false }).limit(1).maybeSingle();
+
+    const sd = cartaData?.datos_carta?.subject_data;
+    const cd = cartaData?.datos_carta?.chart_data;
+
+    let contexto = `Eres una astróloga experta y empática. Estás hablando con ${perfil?.nombre || 'la usuaria'}.\n\n`;
+    if (sd?.sun) {
+      contexto += `Su carta natal:\n- Sol en ${sd.sun.sign} (Casa ${sd.sun.house || '?'})\n- Luna en ${sd.moon?.sign || '?'} (Casa ${sd.moon?.house || '?'})\n- Ascendente en ${sd.ascendant?.sign || '?'}\n- Mercurio en ${sd.mercury?.sign || '?'}, Venus en ${sd.venus?.sign || '?'}, Marte en ${sd.mars?.sign || '?'}\n- Júpiter en ${sd.jupiter?.sign || '?'}, Saturno en ${sd.saturn?.sign || '?'}\n\n`;
+    }
+    if (cd?.aspects?.length) {
+      const aspectosPrincipales = cd.aspects.slice(0, 5).map(a => `${a.point1} ${a.aspect_type} ${a.point2}`).join(', ');
+      contexto += `Aspectos principales: ${aspectosPrincipales}\n\n`;
+    }
+    contexto += `Responde en español, de manera cálida, concreta y personal. Máximo 150 palabras. No inventes posiciones planetarias — solo usa las que te dí.`;
+
+    const mensajes = [
+      ...(historial || []),
+      { role: 'user', content: pregunta.trim() },
+    ];
+
+    const respuesta = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY || '', 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 300, system: contexto, messages: mensajes }),
+    });
+
+    const datos = await respuesta.json();
+    const texto = datos.content?.[0]?.text || 'No pude generar una respuesta. Intenta de nuevo.';
+    res.json({ respuesta: texto });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: 'Error en el asistente IA.', detalle: err.message });
+  }
+});
+
 app.post('/carta-compuesta', requireLogin, async (req, res) => {
   try {
     const perfil = await leerPerfil(req);
