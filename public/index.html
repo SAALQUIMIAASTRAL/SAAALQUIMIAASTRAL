@@ -515,7 +515,7 @@
             <div class="band-icon" id="band-icon">☀️</div>
             <div class="date" id="banda-fecha">Cargando fecha...</div>
             <h1><span id="greeting-word">Buenas tardes</span>, Mariana</h1>
-            <div class="quote">Un paso atrás, dos hacia adelante.</div>
+            <div class="quote" id="banda-frase">Un paso atrás, dos hacia adelante.</div>
             <div class="chip-list">
               <div class="row"><span class="g">☉</span>Sol en <b id="banda-sol">Virgo</b></div>
               <div class="row"><span class="g">↑</span>Ascendente en <b id="banda-asc">Libra</b></div>
@@ -981,6 +981,28 @@
       <span class="now">${current.emoji} Temporada de ${current.sign}</span>
       <span class="next">${days <= 14 ? `Faltan ${days} días para el equinoccio/entrada a ${next.sign} ${next.emoji}` : `Entra ${next.sign} en ${days} días`}</span>
     `;
+  })();
+
+  // Frase dinámica de la banda (rota cada día)
+  (function() {
+    const FRASES_BANDA = [
+      'Un paso atrás, dos hacia adelante.',
+      'El cielo no te exige perfección — solo presencia.',
+      'Lo que resistes, persiste. Lo que observas, se transforma.',
+      'Hoy el universo conspira a tu favor.',
+      'Confía en el ritmo de tu propia vida.',
+      'Cada planeta en tu carta es una fortaleza esperando ser activada.',
+      'No hay fechas malas — hay momentos que piden distintas acciones.',
+      'Tu carta natal es un mapa, no un destino fijo.',
+      'Solo busca fuera lo que ya has encontrado dentro de ti.',
+      'La Luna te recuerda que también está bien sentir.',
+    ];
+    const fraseEl = document.getElementById('banda-frase');
+    if (fraseEl) {
+      const hoy = new Date();
+      const idx = (hoy.getFullYear() * 366 + hoy.getMonth() * 31 + hoy.getDate()) % FRASES_BANDA.length;
+      fraseEl.textContent = FRASES_BANDA[idx];
+    }
   })();
 
   // ======================================================
@@ -1998,43 +2020,49 @@
   }
 
   function dibujarFlorArmonica(posiciones, aspectos) {
-    const centro = 110, radio = 88;
+    const centro = 115, radio = 90;
     const puntos = {};
-    const COLOR_ASPECTO_LINEA = { conjunction:'#e8b978', trine:'#6a9955', sextile:'#6a9955', square:'#c0392b', opposition:'#c0392b' };
-    const EMOJI_PLANETA = { Sun:'☉', Moon:'☽', Mercury:'☿', Venus:'♀', Mars:'♂', Jupiter:'♃', Saturn:'♄', Uranus:'♅', Neptune:'♆', Pluto:'♇', Ascendant:'AC', Medium_Coeli:'MC' };
+    const COLOR_ASPECTO = {
+      conjunction:'#e8b978', trine:'#4a7c4e', sextile:'#6aaa70',
+      square:'#c0392b', opposition:'#9c3030', quincunx:'#8e44ad',
+    };
+    const GLIFO = { Sun:'☉', Moon:'☽', Mercury:'☿', Venus:'♀', Mars:'♂',
+      Jupiter:'♃', Saturn:'♄', Uranus:'♅', Neptune:'♆', Pluto:'♇',
+      Ascendant:'Asc', Medium_Coeli:'MC', Chiron:'⚷', Mean_Node:'☊' };
 
-    const puntosSvg = posiciones.slice(0, 12).map(p => {
-      const angulo = ((p.absolute_longitude || 0) - 90) * Math.PI / 180;
-      const x = centro + radio * Math.cos(angulo);
-      const y = centro + radio * Math.sin(angulo);
+    const planetasSvg = posiciones.slice(0, 12).map(p => {
+      const ang = ((p.absolute_longitude || 0) - 90) * Math.PI / 180;
+      const x = Math.round(centro + radio * Math.cos(ang));
+      const y = Math.round(centro + radio * Math.sin(ang));
       puntos[p.name] = { x, y };
-      return `
-        <circle cx="${x}" cy="${y}" r="11" fill="#fff" stroke="var(--marigold)" stroke-width="1.5"/>
-        <text x="${x}" y="${y+4}" text-anchor="middle" font-size="11" fill="var(--plum)">${EMOJI_PLANETA[p.name] || '•'}</text>
-      `;
-    }).join('');
+      return `<circle cx="${x}" cy="${y}" r="13" fill="var(--paper)" stroke="var(--marigold)" stroke-width="1.5"/>
+        <text x="${x}" y="${y+5}" text-anchor="middle" font-size="11" fill="var(--plum)" font-family="serif">${GLIFO[p.name] || '·'}</text>`;
+    }).join('\n');
 
-    const lineasSvg = (aspectos || []).slice(0, 20).map(a => {
+    const lineasSvg = (aspectos || []).slice(0, 24).map(a => {
       const p1 = puntos[a.point1], p2 = puntos[a.point2];
       if (!p1 || !p2) return '';
-      const color = COLOR_ASPECTO_LINEA[a.aspect_type] || '#c9b8d0';
-      return `<line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="${color}" stroke-width="1.2" opacity="0.65"/>`;
-    }).join('');
+      const color = COLOR_ASPECTO[a.aspect_type] || '#c9b8d0';
+      return `<line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="${color}" stroke-width="1.3" opacity="0.7"/>`;
+    }).join('\n');
+
+    const leyenda = `
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;font-size:10.5px;color:var(--ink-dim);margin:8px 0 14px;">
+        <span style="display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:14px;height:2px;background:#4a7c4e;border-radius:2px;"></span>Trígono/Sextil</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:14px;height:2px;background:#c0392b;border-radius:2px;"></span>Cuadratura/Oposición</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:14px;height:2px;background:#e8b978;border-radius:2px;"></span>Conjunción</span>
+      </div>`;
 
     return `
-      <div style="display:flex;justify-content:center;background:#fff;border-radius:14px;padding:10px;margin-bottom:14px;border:1px solid var(--line);">
-        <svg width="220" height="220" viewBox="0 0 220 220">
+      <div style="background:var(--paper);border-radius:14px;padding:10px;border:1px solid var(--line);margin-bottom:8px;display:flex;justify-content:center;">
+        <svg width="230" height="230" viewBox="0 0 230 230" style="overflow:visible;">
           <circle cx="${centro}" cy="${centro}" r="${radio}" fill="none" stroke="var(--line)" stroke-width="1"/>
+          <circle cx="${centro}" cy="${centro}" r="4" fill="var(--marigold)" opacity="0.5"/>
           ${lineasSvg}
-          ${puntosSvg}
+          ${planetasSvg}
         </svg>
       </div>
-      <div style="display:flex;gap:14px;justify-content:center;font-size:10.5px;color:var(--ink-dim);margin-bottom:14px;">
-        <span><span style="color:#6a9955;">━</span> Armonía</span>
-        <span><span style="color:#c0392b;">━</span> Tensión</span>
-        <span><span style="color:#e8b978;">━</span> Fusión</span>
-      </div>
-    `;
+      ${leyenda}`;
   }
 
   async function verFlorArmonica() {
@@ -2148,23 +2176,7 @@
         contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo generar.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
-      const interpretaciones = data.reporte?.data?.interpretations;
-      if (interpretaciones?.length) {
-        const htmlLectura = interpretaciones.map(item => `
-          <div style="background:var(--marigold-soft);border-radius:12px;padding:12px 14px;margin-bottom:10px;">
-            <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14px;color:var(--plum);margin-bottom:4px;">${traducirTitulo(item.title)}</div>
-            <div style="font-size:12px;color:var(--plum);line-height:1.55;">${limpiarTextoAPI(item.text)}</div>
-          </div>
-        `).join('');
-        contenedor.innerHTML = `
-          <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
-            <button onclick="document.getElementById('resumen-natal-contenedor').innerHTML='';" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button>
-          </div>
-          ${htmlLectura}
-        `;
-      } else {
-        contenedor.innerHTML = `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(data.reporte, null, 2)}</pre>`;
-      }
+      contenedor.innerHTML = renderizarInforme(data.reporte, 'resumen-natal-contenedor');
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }
