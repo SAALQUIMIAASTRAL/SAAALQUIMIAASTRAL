@@ -1356,26 +1356,69 @@
         personal_day: 'Día Personal', subconscious_self: 'Yo Subconsciente', hidden_passion: 'Pasión Oculta',
         karmic_lessons: 'Lecciones Kármicas', balance: 'Número de Equilibrio', rational_thought: 'Pensamiento Racional',
       };
-      const SIGNIFICADOS_NUM = {
-        1:'Liderazgo, independencia, iniciativa.', 2:'Cooperación, sensibilidad, diplomacia.',
-        3:'Creatividad, expresión, alegría.', 4:'Estabilidad, disciplina, trabajo constante.',
-        5:'Libertad, cambio, aventura.', 6:'Responsabilidad, hogar, amor.',
-        7:'Introspección, espiritualidad, análisis.', 8:'Poder, ambición, logros materiales.',
-        9:'Compasión, servicio, cierre de ciclos.', 11:'Número maestro — intuición e inspiración elevada.',
-        22:'Número maestro — el "constructor", grandes proyectos.', 33:'Número maestro — maestro sanador.',
+
+      // Significados contextuales según TIPO de número (no todos dicen lo mismo aunque sean el mismo dígito)
+      const FRASES_POR_TIPO = {
+        life_path: {
+          1:'Tu propósito en esta vida es desarrollar independencia y liderazgo. Estás aquí para aprender a confiar en tu propio criterio.',
+          2:'Tu camino es la cooperación y la sensibilidad. Tienes un don natural para unir a las personas y crear armonía.',
+          3:'Viniste a expresarte, crear y comunicar. Tu vida tiene más sentido cuando permites que tu voz interior salga.',
+          4:'Tu camino pide constancia y estructura. Los grandes resultados que buscas vienen con trabajo consistente, no con atajos.',
+          5:'La libertad y el cambio son tu combustible. Tu camino pide adaptabilidad y apertura a lo inesperado.',
+          6:'Vienes a cuidar, a crear hogar y belleza. El servicio amoroso a otros es tu mayor fuente de satisfacción.',
+          7:'Tu camino es profundo y solitario en el buen sentido: vienes a conocerte, a estudiar, a entender lo invisible.',
+          8:'Tienes una misión con el mundo material. Tu camino involucra poder, liderazgo y construcción de algo duradero.',
+          9:'Vienes a completar, a sanar y a servir a algo más grande que tú. La generosidad es tu mayor herramienta.',
+          11:'Eres un canal entre lo visible y lo invisible. Tu sensibilidad extrema es un don, no una debilidad.',
+          22:'Viniste a construir cosas grandes que beneficien a muchos. Tu potencial es real — solo necesita dirección.',
+          33:'Tu misión es sanar y elevar a quienes te rodean. Es un número raro y exigente, pero profundamente significativo.',
+        },
+        personal_year: {
+          1:'Este año es tu punto de arranque. Lo que inicies ahora tiene el potencial de marcar la siguiente década.',
+          2:'Este año pide paciencia y colaboración. No es momento de forzar — es momento de esperar, escuchar y conectar.',
+          3:'Un año para crear, comunicar y brillar. Las puertas se abren cuando permites que tu personalidad se exprese.',
+          4:'Un año de trabajo y consolidación. Todo lo que construyas con disciplina ahora quedará sólido por años.',
+          5:'Un año de cambios y movimiento. Lo que no te servía se va — lo que viene es más afín a quien eres ahora.',
+          6:'Un año centrado en el hogar, la familia y las relaciones cercanas. El amor y la responsabilidad van juntos.',
+          7:'Este es tu año de pausa y reflexión. Es normal sentir que la vida "frena" — es una invitación a profundizar.',
+          8:'Un año de cosecha y poder personal. Las decisiones que tomes sobre dinero, carrera o poder tendrán mucho peso.',
+          9:'Un año de cierre. Suelta lo que ya no pertenece a tu nueva versión — estás preparándote para empezar de nuevo.',
+          11:'Un año de intuición elevada. Presta atención a tus sueños, corazonadas y sincronías — te están guiando.',
+          22:'Un año con potencial de logros extraordinarios si enfocas tu energía con disciplina y visión clara.',
+        },
       };
+
+      const FRASES_GENERICAS = {
+        1:'Energía de inicio, independencia y liderazgo propio.',
+        2:'Energía de cooperación, paciencia y conexión con otros.',
+        3:'Energía creativa, comunicativa y socialmente activa.',
+        4:'Energía de trabajo constante, estructura y solidez.',
+        5:'Energía de cambio, libertad y apertura a lo nuevo.',
+        6:'Energía de cuidado, responsabilidad y amor al hogar.',
+        7:'Energía introspectiva, espiritual y analítica.',
+        8:'Energía de ambición, poder personal y logros concretos.',
+        9:'Energía de compasión, cierre de ciclos y generosidad.',
+        11:'Número maestro — intuición e inspiración elevada.',
+        22:'Número maestro — construcción de proyectos grandes.',
+        33:'Número maestro — sanación y servicio profundo.',
+      };
+
       function prettificarClave(c) {
         return c.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
       }
+
       let htmlNum = '';
       Object.keys(numero).forEach(clave => {
         const item = numero[clave];
         if (item && typeof item === 'object' && item.number !== undefined) {
+          const etiqueta = NUMEROS_ES[clave] || prettificarClave(clave);
+          const n = item.number;
+          const frase = (FRASES_POR_TIPO[clave] && FRASES_POR_TIPO[clave][n]) || FRASES_GENERICAS[n] || '';
           htmlNum += `
-            <div class="card-lectura" style="text-align:center;">
-              <div class="card-etiqueta">${NUMEROS_ES[clave] || prettificarClave(clave)}</div>
-              <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:34px;color:var(--plum);margin:4px 0;">${item.number}</div>
-              <div class="card-cuerpo" style="color:var(--ink-dim);">${SIGNIFICADOS_NUM[item.number] || ''}</div>
+            <div class="tarjeta-lectura neutral" style="text-align:center;">
+              <div class="etiqueta-seccion" style="text-align:center;">${etiqueta}</div>
+              <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:38px;color:var(--plum);margin:4px 0;">${n}</div>
+              <div class="cuerpo" style="text-align:left;margin-top:6px;">${frase}</div>
             </div>`;
         }
       });
