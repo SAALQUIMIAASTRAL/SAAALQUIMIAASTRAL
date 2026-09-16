@@ -571,6 +571,25 @@
           </div>
 
           <div class="section" data-tab="horoscopo">
+            <h2>📓 Diario astrológico</h2>
+            <div class="desc">Registra cómo te sientes hoy — tu entrada se guarda junto con la Luna y tu número del día.</div>
+            <div style="margin-bottom:10px;">
+              <textarea id="diario-texto" placeholder="¿Cómo te sientes hoy? ¿Qué quieres recordar de este momento astrológico?" style="width:100%;min-height:90px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:var(--paper);resize:vertical;box-sizing:border-box;"></textarea>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;" id="diario-animo-btns">
+              <span style="font-size:11.5px;color:var(--ink-dim);align-self:center;">Estado:</span>
+              ${['🌟 Inspirada','😌 En paz','🤔 Reflexiva','😤 Tensa','🌊 Emocional','💪 Con energía'].map(e => `
+                <button onclick="seleccionarAnimo(this,'${e}')" style="background:var(--marigold-soft);border:1px solid var(--line);border-radius:100px;padding:4px 10px;font-size:11.5px;color:var(--plum);cursor:pointer;">${e}</button>
+              `).join('')}
+            </div>
+            <input type="hidden" id="diario-animo-val">
+            <button class="btn-primary" onclick="guardarDiario()">Guardar en mi diario</button>
+            <div id="diario-msg" style="margin-top:8px;font-size:12px;"></div>
+            <div id="diario-lista" style="margin-top:14px;"></div>
+            <button class="btn-outline" style="width:100%;margin-top:8px;" onclick="cargarDiario()">Ver entradas anteriores</button>
+          </div>
+
+          <div class="section" data-tab="horoscopo">
             <h2>Próximos eclipses</h2>
             <div class="desc">Cómo el próximo eclipse afecta específicamente tu carta natal.</div>
             <button class="btn-primary" onclick="verEclipses()">Ver cómo me afecta</button>
@@ -1642,6 +1661,58 @@
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }
+  }
+
+  function seleccionarAnimo(btn, valor) {
+    document.querySelectorAll('#diario-animo-btns button').forEach(b => b.style.background = 'var(--marigold-soft)');
+    btn.style.background = 'var(--marigold-mid)';
+    document.getElementById('diario-animo-val').value = valor;
+  }
+
+  async function guardarDiario() {
+    const texto = document.getElementById('diario-texto').value.trim();
+    const estado_animo = document.getElementById('diario-animo-val').value || null;
+    const msg = document.getElementById('diario-msg');
+    if (!texto) { msg.textContent = 'Escribe algo primero.'; msg.style.color = '#a5442f'; return; }
+    msg.textContent = 'Guardando...'; msg.style.color = 'var(--ink-dim)';
+    try {
+      const r = await fetch('/diario/guardar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + SESION.token },
+        body: JSON.stringify({ texto, estado_animo }),
+      });
+      const data = await r.json();
+      if (!r.ok) { msg.textContent = data.error || 'No se pudo guardar.'; msg.style.color = '#a5442f'; return; }
+      document.getElementById('diario-texto').value = '';
+      document.getElementById('diario-animo-val').value = '';
+      document.querySelectorAll('#diario-animo-btns button').forEach(b => b.style.background = 'var(--marigold-soft)');
+      msg.textContent = '✓ Guardado en tu diario.'; msg.style.color = 'var(--armonia)';
+      await cargarDiario();
+    } catch (e) { msg.textContent = e.message; msg.style.color = '#a5442f'; }
+  }
+
+  async function cargarDiario() {
+    const lista = document.getElementById('diario-lista');
+    lista.innerHTML = '<div class="disclaimer">Cargando...</div>';
+    try {
+      const r = await fetch('/diario', { headers: { Authorization: 'Bearer ' + SESION.token } });
+      const data = await r.json();
+      if (!data.entradas?.length) { lista.innerHTML = '<div class="disclaimer">Aún no tienes entradas en el diario.</div>'; return; }
+      lista.innerHTML = data.entradas.map(e => `
+        <div class="tarjeta-lectura neutral" style="margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+            <div style="font-size:11px;color:var(--ink-dim);">${e.fecha}${e.estado_animo ? ' · ' + e.estado_animo : ''}${e.luna_signo ? ' · ☽ ' + signoEs(e.luna_signo) : ''}${e.dia_personal ? ' · Día ' + e.dia_personal : ''}</div>
+            <button onclick="eliminarEntradaDiario('${e.id}')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--ink-dim);">✕</button>
+          </div>
+          <div class="cuerpo">${e.texto}</div>
+        </div>
+      `).join('');
+    } catch (e) { lista.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${e.message}</div>`; }
+  }
+
+  async function eliminarEntradaDiario(id) {
+    await fetch(`/diario/${id}`, { method: 'DELETE', headers: { Authorization: 'Bearer ' + SESION.token } });
+    await cargarDiario();
   }
 
   async function verHoroscopoDiario() {

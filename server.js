@@ -835,6 +835,7 @@ app.post('/energia-del-dia', requireLogin, async (req, res) => {
         subject: birthDataDesdePerfil(perfil),
         target_date: { year: hoy.getUTCFullYear(), month: hoy.getUTCMonth() + 1, day: hoy.getUTCDate() },
         language: 'es',
+        include: ['personal_day', 'personal_month', 'personal_year'],
       }).catch(err => ({ error: err?.response?.data || err.message })),
       astrologyApi.post('/analysis/lunar-analysis', {
         datetime_location: {
@@ -1002,6 +1003,95 @@ app.post('/suscripcion/portal', requireLogin, async (req, res) => {
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ error: 'No se pudo abrir el portal de pago.' });
+  }
+});
+
+// ============================================================
+// FASE 8 — DIARIO ASTROLÓGICO
+// SQL requerido en Supabase:
+// create table if not exists diario (
+//   id uuid primary key default gen_random_uuid(),
+//   user_id uuid references auth.users(id) on delete cascade,
+//   fecha date not null default current_date,
+//   hora_local time,
+//   texto text,
+//   estado_animo text,
+//   categorias text[],
+//   luna_signo text,
+//   luna_fase text,
+//   dia_personal integer,
+//   created_at timestamptz default now()
+// );
+// create index on diario(user_id, fecha desc);
+// ============================================================
+
+app.post('/diario/guardar', requireLogin, async (req, res) => {
+  try {
+    const { texto, estado_animo, categorias } = req.body;
+    if (!texto?.trim()) return res.status(400).json({ error: 'El texto del diario no puede estar vacío.' });
+
+    const hoy = new Date();
+    // Traer el snapshot lunar del día (si ya está en caché, no gasta créditos)
+    const cacheKey = cacheHash(req.userId, ahora => ahora, hoy.toISOString().slice(0, 10));
+    let lunaSigno = null, lunaFase = null, diaPersonal = null;
+    try {
+      const perfil = await leerPerfil(req);
+      const [ciclos, luna] = await Promise.all([
+        astrologyApi.post('/numerology/personal-cycles', {
+          subject: birthDataDesdePerfil(perfil),
+          target_date: { year: hoy.getUTCFullYear(), month: hoy.getUTCMonth()+1, day: hoy.getUTCDate() },
+        }).catch(() => null),
+        astrologyApi.post('/analysis/lunar-analysis', {
+          datetime_location: { year: hoy.getUTCFullYear(), month: hoy.getUTCMonth()+1, day: hoy.getUTCDate(), hour: hoy.getUTCHours(), minute: 0, second: 0, city: perfil?.ciudad_nacimiento || 'Mexico City', country_code: perfil?.pais_codigo || 'MX' },
+        }).catch(() => null),
+      ]);
+      lunaSigno = luna?.data?.data?.lunar_metrics?.moon_sign || null;
+      lunaFase = luna?.data?.data?.lunar_metrics?.moon_phase || null;
+      diaPersonal = ciclos?.data?.data?.personal_day?.number || null;
+    } catch (e) { /* silencioso — el diario se guarda igual */ }
+
+    const { data, error } = await req.supabase.from('diario').insert({
+      user_id: req.userId,
+      fecha: hoy.toISOString().slice(0, 10),
+      hora_local: hoy.toTimeString().slice(0, 5),
+      texto: texto.trim(),
+      estado_animo: estado_animo || null,
+      categorias: categorias || [],
+      luna_signo: lunaSigno,
+      luna_fase: lunaFase,
+      dia_personal: diaPersonal,
+    }).select().single();
+
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ entrada: data });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: 'No se pudo guardar en el diario.' });
+  }
+});
+
+app.get('/diario', requireLogin, async (req, res) => {
+  try {
+    const { data, error } = await req.supabase
+      .from('diario')
+      .select('*')
+      .eq('user_id', req.userId)
+      .order('fecha', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(30);
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ entradas: data || [] });
+  } catch (err) {
+    res.status(500).json({ error: 'No se pudo leer el diario.' });
+  }
+});
+
+app.delete('/diario/:id', requireLogin, async (req, res) => {
+  try {
+    await req.supabase.from('diario').delete().eq('id', req.params.id).eq('user_id', req.userId);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'No se pudo eliminar la entrada.' });
   }
 });
 
