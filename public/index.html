@@ -1367,7 +1367,7 @@
     }
     resultado.innerHTML = '<div class="disclaimer">Calculando y guardando...</div>';
     try {
-      const r = await fetch('/otras-cartas', {
+      const r = await fetchAuth('/otras-cartas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(cuerpo),
@@ -1938,7 +1938,7 @@
     if (!texto) { msg.textContent = 'Escribe algo primero.'; msg.style.color = '#a5442f'; return; }
     msg.textContent = 'Guardando...'; msg.style.color = 'var(--ink-dim)';
     try {
-      const r = await fetch('/diario/guardar', {
+      const r = await fetchAuth('/diario/guardar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ texto, estado_animo }),
@@ -2174,7 +2174,7 @@
     if (!texto) { msg.textContent = 'Escribe tu mensaje primero.'; msg.style.color = '#a5442f'; return; }
     msg.textContent = 'Enviando...'; msg.style.color = 'var(--ink-dim)';
     try {
-      const r = await fetch('/feedback', {
+      const r = await fetchAuth('/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tipo: 'sugerencia', mensaje: texto }),
@@ -2207,7 +2207,7 @@
     chat.scrollTop = chat.scrollHeight;
 
     try {
-      const r = await fetch('/asistente-ia', {
+      const r = await fetchAuth('/asistente-ia', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pregunta, historial: iaHistorial }),
@@ -2335,7 +2335,7 @@
     if (!cuerpo.nombre || !cuerpo.fecha_nacimiento || !cuerpo.ciudad_nacimiento || cuerpo.pais_codigo.length !== 2) {
       return mostrarErrorEn('perfil-error', 'Llena tu nombre, fecha, ciudad y un código de país de 2 letras (ej. MX).');
     }
-    const r = await fetch('/perfil', {
+    const r = await fetchAuth('/perfil', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(cuerpo),
@@ -2813,7 +2813,7 @@
     const contenedor = document.getElementById('flor-resultado');
     contenedor.innerHTML = '<div class="disclaimer">Calculando tu flor armónica...</div>';
     try {
-      const r = await fetch('/flor-armonica', {
+      const r = await fetchAuth('/flor-armonica', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ numero: 5 }),
@@ -2878,7 +2878,7 @@
     }
     contenedor.innerHTML = '<div class="disclaimer">Calculando carta compuesta...</div>';
     try {
-      const r = await fetch('/carta-compuesta', {
+      const r = await fetchAuth('/carta-compuesta', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(cuerpo),
@@ -2946,7 +2946,7 @@
     }
     contenedor.innerHTML = '<div class="disclaimer">Calculando compatibilidad...</div>';
     try {
-      const r = await fetch('/sinastria', {
+      const r = await fetchAuth('/sinastria', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(cuerpo),
@@ -3188,7 +3188,7 @@
     }
     contenedor.innerHTML = '<div class="disclaimer">Calculando cómo te afecta...</div>';
     try {
-      const r = await fetch('/relocacion', {
+      const r = await fetchAuth('/relocacion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ciudad, pais_codigo }),
