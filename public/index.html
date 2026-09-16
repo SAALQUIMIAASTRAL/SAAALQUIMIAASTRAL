@@ -1974,13 +1974,41 @@
   }
 
   function entrarALaApp(perfil) {
-    mostrarPantalla(null); // oculta todas las pantallas de acceso
+    mostrarPantalla(null);
     SESION.nombre = perfil?.nombre || 'Usuaria';
     const greet = document.getElementById('greeting-word');
     const nombreEl = document.querySelector('.band h1');
     if (nombreEl) nombreEl.innerHTML = `<span id="greeting-word">${greet ? greet.textContent : 'Hola'}</span>, ${SESION.nombre}`;
     actualizarBandaConCartaReal();
     cargarCartasGuardadas();
+    cargarHomeSummary(); // Fase 14 — carga todo en una sola llamada
+  }
+
+  async function cargarHomeSummary() {
+    try {
+      const r = await fetch('/home-summary', { method: 'POST', headers: { Authorization: 'Bearer ' + SESION.token } });
+      if (!r.ok) return;
+      const data = await r.json();
+
+      // Precarga la esfera lunar con los datos reales
+      if (data.luna) {
+        const moonNowTitle = document.getElementById('moon-now-title');
+        const moonNowSub = document.getElementById('moon-now-sub');
+        if (moonNowTitle) moonNowTitle.textContent = `${faseLunarEs(data.luna.fase)} en ${signoEs(data.luna.signo)}`;
+        if (moonNowSub) moonNowSub.textContent = `Día lunar ${data.luna.dia_lunar} · ${data.luna.iluminacion}% iluminada`;
+
+        const esfera = document.getElementById('moon-now-esfera');
+        if (esfera && data.luna.iluminacion !== undefined) {
+          const creciendo = data.luna.fase?.includes('Waxing');
+          const illum = Math.max(4, Math.min(96, data.luna.iluminacion));
+          esfera.style.background = illum >= 96
+            ? 'radial-gradient(circle at 35% 30%, #fdfaf3, #c9c4b5 70%)'
+            : creciendo
+              ? `linear-gradient(90deg, #1b1730 0%, #1b1730 ${100-illum}%, #f5f0e0 ${100-illum}%, #fdfaf3 100%)`
+              : `linear-gradient(90deg, #fdfaf3 0%, #f5f0e0 ${illum}%, #1b1730 ${illum}%, #1b1730 100%)`;
+        }
+      }
+    } catch (e) { /* silencioso — no bloquea la app */ }
   }
 
   async function revisarPerfilYArrancar() {
@@ -2755,6 +2783,16 @@
   // Al cargar la página: ¿ya hay sesión guardada?
   cambiarPestana('hoy');
   revisarPerfilYArrancar();
+
+  // Precarga de la carta natal en caché del navegador
+  async function precargarCarta() {
+    try {
+      if (!SESION.token) return;
+      await fetch('/carta-natal/ultima', { headers: { Authorization: 'Bearer ' + SESION.token } });
+    } catch(e) {}
+  }
+  // Espera 3 seg para no competir con la carga inicial
+  setTimeout(precargarCarta, 3000);
 
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {

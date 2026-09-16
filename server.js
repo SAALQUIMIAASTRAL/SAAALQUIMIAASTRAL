@@ -377,6 +377,74 @@ app.post('/luna', requireLogin, async (req, res) => {
 // ============================================================
 // RUTA: Mensaje del día (Sol/Luna de hoy + tu carta real)
 // ============================================================
+// ============================================================
+// FASE 14 (parcial) — ENDPOINT AGREGADO DEL HOME
+// Una sola llamada que devuelve: saludo, luna, tránsito principal,
+// día personal y frase del día. Ahorra 3-4 llamadas al cargar la app.
+// ============================================================
+app.post('/home-summary', requireLogin, async (req, res) => {
+  try {
+    const perfil = await leerPerfil(req);
+    if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
+
+    const hoy = new Date();
+    const cacheKey = cacheHash(req.userId, 'home', hoyStr());
+    const cached = cacheGet(cacheKey);
+    if (cached) return res.json({ ...cached, nombre: perfil.nombre });
+
+    // Lanzar todas las llamadas en paralelo
+    const [lunaData, ciclosData, transitosHoyData] = await Promise.all([
+      astrologyApi.post('/analysis/lunar-analysis', {
+        datetime_location: {
+          year: hoy.getUTCFullYear(), month: hoy.getUTCMonth()+1, day: hoy.getUTCDate(),
+          hour: hoy.getUTCHours(), minute: hoy.getUTCMinutes(), second: 0,
+          city: perfil.ciudad_nacimiento || 'Mexico City', country_code: perfil.pais_codigo || 'MX',
+        },
+        report_options: { language: 'es' },
+      }).catch(() => null),
+      astrologyApi.post('/numerology/personal-cycles', {
+        subject: birthDataDesdePerfil(perfil),
+        target_date: { year: hoy.getUTCFullYear(), month: hoy.getUTCMonth()+1, day: hoy.getUTCDate() },
+        language: 'es',
+      }).catch(() => null),
+      astrologyApi.post('/charts/natal', {
+        subject: { name: 'Hoy', birth_data: { year: hoy.getUTCFullYear(), month: hoy.getUTCMonth()+1, day: hoy.getUTCDate(), hour: hoy.getUTCHours(), minute: 0, second: 0, city: 'Greenwich', country_code: 'GB' } },
+        options: { house_system: 'P', zodiac_type: 'Tropic', language: 'es' },
+      }).catch(() => null),
+    ]);
+
+    const luna = lunaData?.data?.data?.lunar_metrics;
+    const diaPersonal = ciclosData?.data?.data?.personal_day?.number || null;
+    const anioPersonal = ciclosData?.data?.data?.personal_year?.number || null;
+    const planetasHoy = transitosHoyData?.data?.subject_data;
+
+    // Extraer el tránsito más importante del día
+    let transitoPrincipal = null;
+    if (planetasHoy) {
+      const PESO = { Pluto:1, Neptune:2, Uranus:3, Saturn:4, Jupiter:5, Mars:6, Venus:7, Mercury:8, Sun:9, Moon:10 };
+      const planetaOrdenado = Object.keys(PESO).find(p => planetasHoy[p.toLowerCase()]);
+      if (planetaOrdenado) {
+        const pos = planetasHoy[planetaOrdenado.toLowerCase()];
+        transitoPrincipal = { planeta: planetaOrdenado, signo: pos.sign, grado: pos.position ? Math.floor(pos.position) : null };
+      }
+    }
+
+    const resumen = {
+      luna: luna ? { signo: luna.moon_sign, fase: luna.moon_phase, iluminacion: Math.round(luna.moon_illumination), dia_lunar: luna.moon_day } : null,
+      dia_personal: diaPersonal,
+      anio_personal: anioPersonal,
+      transito_principal: transitoPrincipal,
+      hora_local: hoy.getUTCHours(),
+    };
+
+    cacheSet(cacheKey, resumen, TTL.ENERGIA_DIA);
+    res.json({ ...resumen, nombre: perfil.nombre });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: 'No se pudo cargar el resumen del día.' });
+  }
+});
+
 app.post('/mensaje-del-dia', requireLogin, async (req, res) => {
   try {
     const perfil = await leerPerfil(req);
@@ -1200,6 +1268,62 @@ app.delete('/diario/:id', requireLogin, async (req, res) => {
 });
 
 app.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  let evento;
+  try {
+    evento = webhookSecret
+      ? stripe.webhooks.constructEvent(req.body, sig, webhookSecret)
+      : JSON.parse(req.body.toString());
+  } catch (err) {
+    console.error('Webhook error:', err.message);
+    return res.status(400).json({ error: err.message });
+  }
+
+  const sb = supabase; // cliente admin para webhooks
+
+  try {
+    switch (evento.type) {
+      case 'checkout.session.completed': {
+        const session = evento.data.object;
+        const userId = session.metadata?.user_id;
+        if (userId && session.subscription) {
+          await sb.from('subscriptions').upsert({
+            user_id: userId,
+            stripe_customer_id: session.customer,
+            stripe_subscription_id: session.subscription,
+            estado: 'activa',
+          }, { onConflict: 'user_id' });
+        }
+        break;
+      }
+      case 'customer.subscription.updated': {
+        const sub = evento.data.object;
+        const { data: perfil } = await sb.from('subscriptions').select('user_id').eq('stripe_subscription_id', sub.id).maybeSingle();
+        if (perfil) {
+          const estado = sub.status === 'active' ? 'activa' : sub.status === 'past_due' ? 'vencida' : 'cancelada';
+          await sb.from('subscriptions').update({ estado }).eq('stripe_subscription_id', sub.id);
+        }
+        break;
+      }
+      case 'customer.subscription.deleted': {
+        const sub = evento.data.object;
+        await sb.from('subscriptions').update({ estado: 'cancelada' }).eq('stripe_subscription_id', sub.id);
+        break;
+      }
+      case 'invoice.payment_failed': {
+        const invoice = evento.data.object;
+        if (invoice.subscription) {
+          await sb.from('subscriptions').update({ estado: 'vencida' }).eq('stripe_subscription_id', invoice.subscription);
+        }
+        break;
+      }
+    }
+  } catch (err) {
+    console.error('Webhook processing error:', err.message);
+  }
+
   res.json({ recibido: true });
 });
 
