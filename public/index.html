@@ -1768,16 +1768,17 @@
 
   function sintesisPlaneta(clave, p, aspectosDelPlaneta) {
     const signo = signoEs(p.sign);
+    const glifo = glifoSigno(p.sign);
     const casa = p.house;
     const tema = casa ? (AREAS_CASA_ES[casa] || '') : '';
-    let frase = `Se expresa con la energía de <b>${signo}</b>`;
-    if (casa) frase += `, sobre todo en temas de <b>Casa ${casa}</b> (${tema.toLowerCase()})`;
+    let frase = `Se expresa con la energía de <b style="color:var(--marigold-dark);">${glifo} ${signo}</b>`;
+    if (casa) frase += `, sobre todo en temas de <b style="color:var(--marigold-dark);">Casa ${casa}</b> (${tema.toLowerCase()})`;
     frase += '.';
     if (aspectosDelPlaneta?.length) {
       const principal = aspectosDelPlaneta[0];
       const otroPlaneta = principal.point1 === clave ? principal.point2 : principal.point1;
       const matiz = MATIZ_ASPECTO[principal.aspect_type] || 'se relaciona con';
-      frase += ` ${matiz.charAt(0).toUpperCase() + matiz.slice(1)} ${nombrePlanetaEs(otroPlaneta)}.`;
+      frase += ` ${matiz.charAt(0).toUpperCase() + matiz.slice(1)} <b style="color:var(--marigold-dark);">${nombrePlanetaEs(otroPlaneta)}</b>.`;
     }
     return frase;
   }
@@ -1793,15 +1794,25 @@
       const info = TEMAS_PLANETA_SIMPLE[clave];
       const aspectosDelPlaneta = (cd.aspects || []).filter(a => a.point1 === clave || a.point2 === clave);
       return `
-        <div class="card-lectura">
-          <div class="card-etiqueta">${info.emoji} ${info.titulo}</div>
-          <div class="card-cuerpo">${sintesisPlaneta(clave, p, aspectosDelPlaneta)}</div>
+        <div class="tarjeta-lectura neutral">
+          <div class="etiqueta-seccion">${info.emoji} ${info.titulo}</div>
+          <div class="cuerpo">${sintesisPlaneta(clave, p, aspectosDelPlaneta)}</div>
         </div>`;
     }).join('');
 
     return `
-      <div style="margin-bottom:12px;">${tarjetas}</div>
-      <button class="btn-outline" style="width:100%;" onclick="document.getElementById('carta-detalle-tecnico').classList.toggle('show-tecnico')">Ver astrología (detalle técnico) ↓</button>
+      <div id="bloque-esencia">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--ink-dim);">Tu carta en palabras simples</div>
+          <button onclick="document.getElementById('bloque-esencia').remove();" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 12px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button>
+        </div>
+        ${tarjetas}
+        <button class="btn-outline" style="width:100%;margin-top:8px;" onclick="
+          const d=document.getElementById('carta-detalle-tecnico');
+          d.classList.toggle('show-tecnico');
+          this.textContent=d.classList.contains('show-tecnico')?'Ocultar detalle técnico ↑':'Ver astrología (detalle técnico) ↓';
+        ">Ver astrología (detalle técnico) ↓</button>
+      </div>
     `;
   }
 
