@@ -3181,6 +3181,43 @@
     } catch (e) { /* silencioso: se queda con el texto de ejemplo si falla */ }
   }
 
+  // ---- Función global de cerrar sección ----
+  function cerrar(id) { const el = document.getElementById(id); if (el) el.innerHTML = ''; }
+
+  // IDs de todos los contenedores de resultado que deben tener botón de cerrar automático
+  const CONTENEDORES_AUTO_CERRAR = [
+    'nc-resultado','resumen-natal-contenedor','carta-visual-contenedor',
+    'horoscopo-resultado','eclipses-resultado','energia-resultado',
+    'transitos-hoy-resultado','transitos-resultado','numerologia-resultado',
+    'estrellas-resultado','sinastria-resultado','compuesta-resultado',
+    'tarot-resultado','luna-cruda','reloc-resultado',
+    'carta-otro-visual','carta-otro-resumen','carta-otro-extra',
+    'flor-resultado','diario-lista',
+  ];
+
+  function inyectarBotonCerrar(id) {
+    const el = document.getElementById(id);
+    if (!el || !el.innerHTML.trim()) return;
+    if (el.querySelector('.btn-cerrar-auto')) return; // ya tiene botón
+    const btn = document.createElement('div');
+    btn.className = 'btn-cerrar-auto';
+    btn.style.cssText = 'display:flex;justify-content:flex-end;margin-bottom:6px;';
+    btn.innerHTML = `<button onclick="cerrar('${id}')" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button>`;
+    el.insertBefore(btn, el.firstChild);
+  }
+
+  // Observer que detecta cuando un contenedor recibe contenido nuevo
+  const observer = new MutationObserver(mutations => {
+    mutations.forEach(m => {
+      const id = m.target.id;
+      if (CONTENEDORES_AUTO_CERRAR.includes(id)) inyectarBotonCerrar(id);
+    });
+  });
+  CONTENEDORES_AUTO_CERRAR.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) observer.observe(el, { childList: true, subtree: false });
+  });
+
   // Al cargar la página: ¿ya hay sesión guardada?
   cambiarPestana('hoy');
   revisarPerfilYArrancar();
