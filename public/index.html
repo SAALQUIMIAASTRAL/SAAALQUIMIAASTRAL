@@ -119,9 +119,12 @@
     border-radius:16px;
     margin:12px 16px;
     padding:18px;
-    box-shadow:0 2px 10px rgba(58,31,56,0.06);
+    box-shadow:0 2px 10px rgba(45,27,78,0.08);
+    animation:fadeInUp 0.25s ease-out;
   }
-  .section h2{font-size:19px;margin-bottom:6px;border-left:3px solid var(--marigold);padding-left:11px;}
+  @keyframes fadeInUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+  .section h2{font-size:17px;margin-bottom:6px;border-left:3px solid var(--marigold);padding-left:11px;font-family:'Cormorant Garamond',serif;font-weight:700;letter-spacing:0.2px;}
+  .section .desc{font-size:12px;color:var(--ink-dim);margin-bottom:12px;line-height:1.5;}
   .section .desc{font-size:12.5px;color:var(--ink-dim);margin-bottom:14px;line-height:1.5;}
 
   /* mis cartas (multi-perfil) */
@@ -568,13 +571,15 @@
 
           <div class="section" data-tab="hoy" id="seccion-carta-natal">
             <h2>Tu carta natal</h2>
-            <div class="desc" id="carta-desc">Calculada con tus datos guardados: Swiss Ephemeris, precisión profesional.</div>
+            <div class="desc" id="carta-desc">Calculada con Swiss Ephemeris — precisión profesional.</div>
             <div class="calc-form">
-              <button class="btn-primary" id="btn-calcular-carta" onclick="calcularCartaReal()">Calcular mi carta natal</button>
-              <button class="btn-primary" style="background:var(--marigold);margin-top:10px;" onclick="verResumenNatal()">Ver resumen de mi personalidad</button>
-              <div id="resumen-natal-contenedor" style="margin-top:14px;"></div>
-              <button class="btn-primary" id="btn-carta-visual" style="background:var(--lilac);margin-top:10px;" onclick="verCartaVisual()">Ver mi carta en rueda 🔮</button>
-              <div id="carta-visual-contenedor" style="margin-top:14px;cursor:pointer;" onclick="verEnGrande()"></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+                <button class="btn-primary" id="btn-calcular-carta" onclick="calcularCartaReal()" style="font-size:12.5px;padding:10px 8px;">Ver mi carta</button>
+                <button class="btn-primary" onclick="verResumenNatal()" style="background:var(--marigold);font-size:12.5px;padding:10px 8px;">Mi personalidad</button>
+              </div>
+              <button class="btn-primary" id="btn-carta-visual" style="background:var(--lilac);width:100%;margin-bottom:8px;" onclick="verCartaVisual()">Ver carta en rueda 🔮</button>
+              <div id="resumen-natal-contenedor" style="margin-top:2px;"></div>
+              <div id="carta-visual-contenedor" style="margin-top:8px;cursor:pointer;" onclick="verEnGrande()"></div>
               <div class="desc" style="text-align:center;margin-top:4px;" id="zoom-hint"></div>
               <div class="calc-result" id="calc-result">
                 <div class="calc-result-title">Tu resultado</div>
@@ -2030,7 +2035,9 @@
     if (nombreEl) nombreEl.innerHTML = `<span id="greeting-word">${greet ? greet.textContent : 'Hola'}</span>, ${SESION.nombre}`;
     actualizarBandaConCartaReal();
     cargarCartasGuardadas();
-    cargarHomeSummary(); // Fase 14 — carga todo en una sola llamada
+    cargarHomeSummary();
+    // Carga silenciosa de la carta si ya está en caché — la usuaria la ve lista sin tocar nada
+    setTimeout(() => calcularCartaReal(true), 1500);
   }
 
   async function cargarHomeSummary() {
@@ -2172,12 +2179,11 @@
     `;
   }
 
-  async function calcularCartaReal() {
+  async function calcularCartaReal(silencioso = false) {
     const boton = document.getElementById('btn-calcular-carta');
     const chips = document.getElementById('carta-resultado-chips');
     const resultBox = document.getElementById('calc-result');
-    boton.textContent = 'Calculando...';
-    boton.disabled = true;
+    if (!silencioso) { boton.textContent = 'Calculando...'; boton.disabled = true; }
     try {
       const r = await fetchAuth('/carta-natal', { method: 'POST', headers: {} });
       const data = await r.json();
@@ -2199,23 +2205,27 @@
           `;
         }
         if (cd?.aspects?.length) {
-          html += '<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(181,101,47,0.25);font-size:11.5px;color:var(--marigold);font-weight:600;">Aspectos principales</div>';
+          html += '<div class="etiqueta-seccion">Aspectos principales</div>';
           html += cd.aspects.slice(0, 8).map(a => `
             <div class="carta-real-row" style="font-size:12px;">${nombrePlanetaEs(a.point1)} ${aspectoEs(a.aspect_type)} ${nombrePlanetaEs(a.point2)} <span style="color:var(--ink-dim);font-weight:400;">(orbe ${a.orb?.toFixed ? a.orb.toFixed(1) : a.orb}°)</span></div>
           `).join('');
         }
         chips.innerHTML = htmlSimple + `<div id="carta-detalle-tecnico" class="detalle-tecnico-oculto">${html}</div>`;
-        if (data.desde_cache) chips.innerHTML += '<div style="font-size:10.5px;color:var(--ink-dim);margin-top:8px;">♻️ Mostrando tu carta ya guardada</div>';
-      } else {
-        chips.innerHTML = `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);">${JSON.stringify(data.carta?.datos_carta, null, 2)}</pre>`;
+        if (data.desde_cache) chips.innerHTML += '<div style="font-size:10.5px;color:var(--ink-dim);margin-top:6px;">♻️ Carta guardada — sin consumir créditos</div>';
+        resultBox.classList.add('show');
+        // Si viene de caché, también cargamos la banda del home con los datos reales
+        if (data.desde_cache) actualizarBandaConCartaReal();
+      } else if (!silencioso) {
+        chips.innerHTML = `<pre style="white-space:pre-wrap;font-size:9px;color:var(--plum);padding:8px;">${JSON.stringify(data.carta?.datos_carta, null, 2)}</pre>`;
+        resultBox.classList.add('show');
       }
-      resultBox.classList.add('show');
     } catch (err) {
-      chips.innerHTML = `<div class="row" style="color:#a5442f;">${err.message}</div>`;
-      resultBox.classList.add('show');
+      if (!silencioso) {
+        chips.innerHTML = `<div class="row" style="color:#a5442f;">${err.message}</div>`;
+        resultBox.classList.add('show');
+      }
     }
-    boton.textContent = 'Calcular mi carta natal';
-    boton.disabled = false;
+    if (!silencioso) { boton.textContent = 'Calcular mi carta natal'; boton.disabled = false; }
   }
 
   async function verCartaVisual() {
