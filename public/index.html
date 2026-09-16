@@ -1296,7 +1296,13 @@
       const r = await fetchAuth('/otras-cartas/' + id + '/visual', { method: 'POST', headers: {} });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || 'No se pudo generar.');
-      contenedor.innerHTML = data.svg || '<div class="disclaimer">No se pudo generar el dibujo.</div>';
+      if (data.svg) {
+        contenedor.innerHTML = `<div style="border-radius:14px;overflow:hidden;background:var(--paper);border:1px solid var(--line);">${data.svg}</div>`;
+        const svgEl = contenedor.querySelector('svg');
+        if (svgEl) { svgEl.removeAttribute('width'); svgEl.removeAttribute('height'); svgEl.style.cssText = 'width:100%;height:auto;display:block;'; }
+      } else {
+        contenedor.innerHTML = '<div class="disclaimer">No se pudo generar el dibujo.</div>';
+      }
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }
@@ -2414,7 +2420,7 @@
           `).join('');
         }
         chips.innerHTML = htmlSimple + `<div id="carta-detalle-tecnico" class="detalle-tecnico-oculto">${html}</div>`;
-        if (data.desde_cache) chips.innerHTML += '<div style="font-size:10px;color:var(--ink-dim);margin-top:6px;text-align:right;">Carta cargada desde tu perfil</div>';
+        if (data.desde_cache) chips.innerHTML += '';
         resultBox.classList.add('show');
         // Si viene de caché, también cargamos la banda del home con los datos reales
         if (data.desde_cache) actualizarBandaConCartaReal();
@@ -2446,8 +2452,17 @@
         return;
       }
       if (data.svg) {
-        contenedor.innerHTML = data.svg;
-        document.getElementById('zoom-hint').textContent = data.desde_cache ? '♻️ Rueda guardada · toca para ampliar' : '👆 Toca la carta para verla en grande';
+        contenedor.innerHTML = `<div style="border-radius:14px;overflow:hidden;background:var(--paper);border:1px solid var(--line);">${data.svg}</div>`;
+        document.getElementById('zoom-hint').textContent = '👆 Toca la carta para verla en grande';
+        // Hacer que el SVG sea responsive
+        const svgEl = contenedor.querySelector('svg');
+        if (svgEl) {
+          svgEl.removeAttribute('width');
+          svgEl.removeAttribute('height');
+          svgEl.style.width = '100%';
+          svgEl.style.height = 'auto';
+          svgEl.style.display = 'block';
+        }
       } else {
         contenedor.innerHTML = `<pre style="white-space:pre-wrap;font-size:9px;color:var(--plum);">${JSON.stringify(data.crudo, null, 2)}</pre>`;
       }
