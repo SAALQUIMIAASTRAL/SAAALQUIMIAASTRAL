@@ -428,27 +428,44 @@
 
         <!-- Pantalla de BIENVENIDA -->
         <div class="auth-overlay show" id="pantalla-bienvenida">
-          <div style="text-align:center;margin-bottom:6px;">
-            <div style="font-size:34px;">✦🌙✨</div>
+          <!-- Hero visual -->
+          <div style="text-align:center;margin-bottom:20px;padding:24px 0 16px;">
+            <div style="font-size:52px;line-height:1;margin-bottom:8px;">🔮</div>
+            <h1 style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:var(--plum);margin:0 0 6px;">Sam Alquimia Astral</h1>
+            <div style="font-size:13px;color:var(--ink-dim);line-height:1.5;">Tu carta natal, tu luna y tus tránsitos<br>personalizados — siempre contigo</div>
           </div>
-          <h1 style="text-align:center;">Sam Alquimia Astral</h1>
-          <div class="sub" style="text-align:center;margin-bottom:20px;">Tu cielo, tu carta y tu luna — en un solo lugar</div>
-          <div style="background:var(--marigold-soft);border:1px solid rgba(181,101,47,0.25);border-radius:14px;padding:14px 16px;margin-bottom:22px;">
-            <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin-bottom:8px;">Aquí encontrarás:</div>
-            <div style="display:flex;flex-direction:column;gap:7px;font-size:12.5px;color:var(--plum);">
-              <div>🔮 <b>Tu carta natal real</b></div>
-              <div>🌙 <b>Fases lunares</b></div>
-              <div>💞 <b>Sinastría</b></div>
-              <div>🗺️ <b>Astrocartografía</b></div>
-              <div>🌸 <b>Flor armónica</b></div>
-              <div>☀️ <b>Horóscopo diario</b></div>
+
+          <!-- Beneficios visuales -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;">
+            <div style="background:var(--marigold-soft);border-radius:12px;padding:12px;text-align:center;">
+              <div style="font-size:22px;margin-bottom:4px;">✦</div>
+              <div style="font-size:12px;font-weight:600;color:var(--plum);">Carta natal real</div>
+              <div style="font-size:10.5px;color:var(--ink-dim);">Swiss Ephemeris</div>
             </div>
-            <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(181,101,47,0.25);font-size:12px;color:var(--ink-dim);">
-              Todo por <b style="color:var(--marigold);">$8.88 USD/mes</b>
+            <div style="background:var(--lilac-soft);border-radius:12px;padding:12px;text-align:center;">
+              <div style="font-size:22px;margin-bottom:4px;">🌙</div>
+              <div style="font-size:12px;font-weight:600;color:var(--plum);">Luna personal</div>
+              <div style="font-size:10.5px;color:var(--ink-dim);">Actualizada cada día</div>
+            </div>
+            <div style="background:var(--lilac-soft);border-radius:12px;padding:12px;text-align:center;">
+              <div style="font-size:22px;margin-bottom:4px;">🤖</div>
+              <div style="font-size:12px;font-weight:600;color:var(--plum);">Asistente IA</div>
+              <div style="font-size:10.5px;color:var(--ink-dim);">Pregúntale a tu carta</div>
+            </div>
+            <div style="background:var(--marigold-soft);border-radius:12px;padding:12px;text-align:center;">
+              <div style="font-size:22px;margin-bottom:4px;">♡</div>
+              <div style="font-size:12px;font-weight:600;color:var(--plum);">Sinastría</div>
+              <div style="font-size:10.5px;color:var(--ink-dim);">Compatibilidad real</div>
             </div>
           </div>
-          <button class="btn-primary" onclick="mostrarPantalla('registro')">Registrarme gratis</button>
-          <button class="btn-primary" style="background:var(--lilac);margin-top:10px;" onclick="mostrarPantalla('login')">Ya tengo cuenta</button>
+
+          <!-- Precio -->
+          <div style="text-align:center;font-size:12px;color:var(--ink-dim);margin-bottom:16px;">
+            Todo por <b style="color:var(--marigold-dark);">$8.88 USD/mes</b> · Cancela cuando quieras
+          </div>
+
+          <button class="btn-primary" onclick="mostrarPantalla('registro')">Empezar ahora — es gratis</button>
+          <button class="btn-outline" style="margin-top:10px;" onclick="mostrarPantalla('login')">Ya tengo cuenta</button>
         </div>
 
         <!-- Pantalla de LOGIN -->
@@ -480,21 +497,30 @@
 
         <!-- Pantalla de PERFIL (datos de nacimiento) -->
         <div class="auth-overlay" id="pantalla-perfil">
-          <h1>✦ Tus datos de nacimiento</h1>
-          <div class="sub">Los necesitamos para calcular tu carta natal real</div>
+          <div style="text-align:center;margin-bottom:16px;">
+            <div style="font-size:36px;margin-bottom:8px;">🌟</div>
+            <h1 style="margin:0 0 6px;">Un momento más...</h1>
+            <div class="sub">Necesito tu fecha y lugar de nacimiento para calcular tu carta natal real con Swiss Ephemeris — la misma precisión que usan los astrólogos profesionales.</div>
+          </div>
           <div class="auth-error" id="perfil-error"></div>
-          <div class="auth-field"><label>Tu nombre</label><input type="text" id="perfil-nombre"></div>
+          <div class="auth-field"><label>¿Cómo te llamas?</label><input type="text" id="perfil-nombre" placeholder="Tu nombre"></div>
           <div class="auth-field"><label>Fecha de nacimiento</label><input type="date" id="perfil-fecha"></div>
-          <div class="auth-field"><label>Hora de nacimiento (si no la sabes, deja 12:00)</label><input type="time" id="perfil-hora" value="12:00"></div>
-          <div class="auth-field"><label>Ciudad de nacimiento</label><input type="text" id="perfil-ciudad" placeholder="Ej. Mérida">
-            <div style="font-size:10.5px;color:var(--ink-dim);margin-top:2px;">Escribe el nombre completo, sin abreviar (ej. "Ciudad de México", no "CDMX")</div>
+          <div class="auth-field">
+            <label>Hora de nacimiento</label>
+            <input type="time" id="perfil-hora" value="12:00">
+            <div style="font-size:10.5px;color:var(--ink-dim);margin-top:3px;">💡 Si no la sabes exactamente, deja 12:00 — es mejor que nada y igual obtendrás tu Sol, Luna y planetas correctos.</div>
+          </div>
+          <div class="auth-field">
+            <label>Ciudad de nacimiento</label>
+            <input type="text" id="perfil-ciudad" placeholder="Ej. Mérida">
+            <div style="font-size:10.5px;color:var(--ink-dim);margin-top:3px;">Escribe el nombre completo (ej. "Ciudad de México", no "CDMX")</div>
           </div>
           <div class="auth-field"><label>País</label>
-            <select id="perfil-pais">
+            <select id="perfil-pais" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;width:100%;">
               <option value="">Selecciona tu país</option>
             </select>
           </div>
-          <button class="btn-primary" onclick="accionGuardarPerfil()">Guardar y continuar</button>
+          <button class="btn-primary" onclick="accionGuardarPerfil()">Calcular mi carta natal →</button>
         </div>
 
         <!-- Panel de PERFIL / AJUSTES -->
@@ -524,7 +550,8 @@
             <div id="perfil-email-mostrar" style="font-size:13.5px;color:var(--plum);font-weight:600;"></div>
           </div>
 
-          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:8px;">Suscripción</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:6px;">Suscripción</div>
+          <div id="perfil-estado-sub" style="font-size:12.5px;font-weight:600;margin-bottom:10px;"></div>
           <button class="btn-primary" style="background:var(--lilac);margin-bottom:10px;" onclick="abrirPortalPago()">Gestionar mi suscripción / método de pago</button>
           <div id="perfil-portal-error" style="font-size:12px;color:#a5442f;margin-bottom:16px;"></div>
 
@@ -808,6 +835,43 @@
               <label>País<select id="reloc-pais" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;"><option value="">Selecciona el país</option></select></label>
               <button class="btn-primary" onclick="calcularRelocacion()">Ver cómo me afecta</button>
               <div id="reloc-resultado" style="margin-top:14px;"></div>
+            </div>
+          </div>
+
+          <div class="section" data-tab="alquimia">
+            <h2>📚 Biblioteca astrológica</h2>
+            <div class="desc">Artículos, textos y referencias para profundizar en tu carta.</div>
+
+            <!-- Filtro por categoría -->
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;" id="bib-categorias">
+              <button onclick="cargarBiblioteca()" style="background:var(--marigold-soft);border:1px solid var(--marigold);border-radius:100px;padding:5px 12px;font-size:11.5px;color:var(--plum);cursor:pointer;">Todos</button>
+            </div>
+
+            <div id="bib-lista"><div class="disclaimer">Toca "Cargar" para ver los artículos disponibles.</div></div>
+            <button class="btn-outline" style="width:100%;margin-top:10px;" onclick="cargarBiblioteca()">Cargar biblioteca</button>
+
+            <!-- Lector de artículo -->
+            <div id="bib-lector" style="display:none;margin-top:14px;">
+              <button onclick="cerrarArticulo()" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;margin-bottom:12px;">← Volver a la lista</button>
+              <div id="bib-articulo-titulo" style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:18px;color:var(--plum);margin-bottom:4px;"></div>
+              <div id="bib-articulo-meta" style="font-size:11px;color:var(--ink-dim);margin-bottom:12px;"></div>
+              <div id="bib-articulo-cuerpo" style="font-size:13px;color:var(--plum);line-height:1.7;white-space:pre-wrap;"></div>
+            </div>
+
+            <!-- Panel de admin (solo visible si eres la administradora) -->
+            <div id="bib-admin" style="display:none;margin-top:16px;padding-top:14px;border-top:1px dashed var(--line);">
+              <div class="etiqueta-seccion">+ Agregar artículo</div>
+              <div class="auth-field"><label>Título</label><input type="text" id="bib-titulo" placeholder="Ej. Saturno en Casa 4"></div>
+              <div class="auth-field"><label>Categoría</label>
+                <select id="bib-categoria" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;">
+                  <option>Planetas</option><option>Casas</option><option>Aspectos</option><option>Signos</option>
+                  <option>Tránsitos</option><option>Luna</option><option>Sinastría</option><option>General</option>
+                </select>
+              </div>
+              <div class="auth-field"><label>Fuente / Autor</label><input type="text" id="bib-fuente" placeholder="Ej. Liz Greene — Saturno"></div>
+              <div class="auth-field"><label>Contenido</label><textarea id="bib-contenido" placeholder="Pega o escribe el texto aquí..." style="width:100%;min-height:120px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);resize:vertical;box-sizing:border-box;"></textarea></div>
+              <button class="btn-primary" onclick="guardarArticulo()">Guardar artículo</button>
+              <div id="bib-admin-msg" style="font-size:12px;margin-top:6px;"></div>
             </div>
           </div>
 
@@ -1878,6 +1942,101 @@
 
   let iaHistorial = [];
 
+  const ADMIN_EMAIL_APP = 'shernsndez.22@gmail.com';
+
+  async function cargarBiblioteca(categoria = null) {
+    const lista = document.getElementById('bib-lista');
+    const lector = document.getElementById('bib-lector');
+    if (lector) lector.style.display = 'none';
+    lista.innerHTML = '<div class="disclaimer">Cargando...</div>';
+
+    try {
+      const url = categoria ? `/biblioteca?categoria=${encodeURIComponent(categoria)}` : '/biblioteca';
+      const r = await fetchAuth(url, { headers: {} });
+      const data = await r.json();
+
+      if (!data.articulos?.length) {
+        lista.innerHTML = '<div class="disclaimer">La biblioteca está vacía por ahora.</div>';
+        return;
+      }
+
+      // Categorías únicas para los filtros
+      const cats = [...new Set(data.articulos.map(a => a.categoria).filter(Boolean))];
+      const catDiv = document.getElementById('bib-categorias');
+      if (catDiv) {
+        catDiv.innerHTML = `
+          <button onclick="cargarBiblioteca()" style="background:var(--marigold-soft);border:1px solid var(--marigold);border-radius:100px;padding:5px 12px;font-size:11.5px;color:var(--plum);cursor:pointer;">Todos</button>
+          ${cats.map(c => `<button onclick="cargarBiblioteca('${c}')" style="background:var(--paper);border:1px solid var(--line);border-radius:100px;padding:5px 12px;font-size:11.5px;color:var(--plum);cursor:pointer;">${c}</button>`).join('')}
+        `;
+      }
+
+      lista.innerHTML = data.articulos.map(a => `
+        <div class="tarjeta-lectura neutral" style="cursor:pointer;margin-bottom:8px;" onclick="leerArticulo('${a.id}')">
+          <div class="etiqueta-seccion" style="margin-bottom:3px;">${a.categoria || 'General'}</div>
+          <div class="titulo">${a.titulo}</div>
+          ${a.fuente ? `<div style="font-size:11px;color:var(--ink-dim);margin-top:3px;">${a.fuente}</div>` : ''}
+        </div>
+      `).join('');
+
+      // Mostrar panel de admin si es Samantha
+      if (SESION.email === ADMIN_EMAIL_APP) {
+        const adminDiv = document.getElementById('bib-admin');
+        if (adminDiv) adminDiv.style.display = 'block';
+      }
+    } catch (e) {
+      lista.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${e.message}</div>`;
+    }
+  }
+
+  async function leerArticulo(id) {
+    document.getElementById('bib-lista').style.display = 'none';
+    const lector = document.getElementById('bib-lector');
+    lector.style.display = 'block';
+    document.getElementById('bib-articulo-titulo').textContent = 'Cargando...';
+    document.getElementById('bib-articulo-cuerpo').textContent = '';
+    try {
+      const r = await fetchAuth(`/biblioteca/${id}`, { headers: {} });
+      const data = await r.json();
+      const a = data.articulo;
+      document.getElementById('bib-articulo-titulo').textContent = a.titulo;
+      document.getElementById('bib-articulo-meta').textContent = [a.categoria, a.fuente].filter(Boolean).join(' · ');
+      document.getElementById('bib-articulo-cuerpo').textContent = a.contenido;
+    } catch (e) {
+      document.getElementById('bib-articulo-cuerpo').textContent = 'No se pudo cargar el artículo.';
+    }
+  }
+
+  function cerrarArticulo() {
+    document.getElementById('bib-lector').style.display = 'none';
+    document.getElementById('bib-lista').style.display = 'block';
+  }
+
+  async function guardarArticulo() {
+    const msg = document.getElementById('bib-admin-msg');
+    const cuerpo = {
+      titulo: document.getElementById('bib-titulo').value.trim(),
+      categoria: document.getElementById('bib-categoria').value,
+      fuente: document.getElementById('bib-fuente').value.trim(),
+      contenido: document.getElementById('bib-contenido').value.trim(),
+    };
+    if (!cuerpo.titulo || !cuerpo.contenido) { msg.textContent = 'Faltan título y contenido.'; msg.style.color = '#a5442f'; return; }
+    msg.textContent = 'Guardando...'; msg.style.color = 'var(--ink-dim)';
+    try {
+      const r = await fetchAuth('/biblioteca', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cuerpo),
+      });
+      const data = await r.json();
+      if (!r.ok) { msg.textContent = data.error || 'Error.'; msg.style.color = '#a5442f'; return; }
+      msg.textContent = '✓ Artículo guardado.'; msg.style.color = 'var(--armonia)';
+      document.getElementById('bib-titulo').value = '';
+      document.getElementById('bib-contenido').value = '';
+      document.getElementById('bib-fuente').value = '';
+      await cargarBiblioteca();
+    } catch (e) { msg.textContent = e.message; msg.style.color = '#a5442f'; }
+  }
+
   async function enviarFeedback() {
     const texto = document.getElementById('feedback-texto').value.trim();
     const msg = document.getElementById('feedback-msg');
@@ -1942,6 +2101,14 @@
     if (!SESION.email && SESION.token) SESION.email = decodificarEmailDeToken(SESION.token);
     document.getElementById('perfil-email-mostrar').textContent = SESION.email || '(correo no disponible)';
     document.getElementById('perfil-portal-error').textContent = '';
+    const estadoEl = document.getElementById('perfil-estado-sub');
+    if (estadoEl) {
+      const s = SESION.suscripcion || 'ninguna';
+      const labels = { activa:'✅ Suscripción activa', ninguna:'⬜ Sin suscripción', vencida:'⚠️ Pago vencido', cancelada:'❌ Cancelada' };
+      const colors = { activa:'var(--armonia)', ninguna:'var(--ink-dim)', vencida:'#e67e22', cancelada:'#a5442f' };
+      estadoEl.textContent = labels[s] || s;
+      estadoEl.style.color = colors[s] || 'var(--ink-dim)';
+    }
     mostrarPantalla('mi-perfil');
   }
 
@@ -2119,6 +2286,7 @@
 
     if (!r.ok) { cerrarSesion(); return; }
     const data = await r.json();
+    SESION.suscripcion = data.suscripcion || 'ninguna';
     if (!data.perfil || !data.perfil.ciudad_nacimiento) {
       mostrarPantalla('perfil');
     } else {
@@ -2152,26 +2320,33 @@
     Mars: { titulo:'Cómo actúo', emoji:'🔥' },
   };
 
+  const FRASES_SIGNO_PLANETA = {
+    Sun: { Ari:'Tu identidad necesita ser primera y directa. La pasividad te agota.', Tau:'Tu esencia busca estabilidad y lo concreto. Necesitas construir algo real.', Gem:'Tu identidad se expresa a través de las ideas. Eres múltiple por naturaleza.', Can:'Tu esencia es profundamente emocional. El hogar y la familia te definen.', Leo:'Tu identidad brilla cuando creas o lideras. Necesitas reconocimiento genuino.', Vir:'Tu esencia es analítica y perfeccionista. Encuentras propósito en servir con precisión.', Lib:'Tu identidad se construye en relación con otros. Buscas armonía en todo.', Sco:'Tu esencia es intensa y transformadora. Vas siempre a la profundidad.', Sag:'Tu identidad necesita libertad y sentido. La aventura y la filosofía te alimentan.', Cap:'Tu esencia es ambiciosa y estructurada. Construyes con paciencia y necesitas logros concretos.', Aqu:'Tu identidad es innovadora e independiente. Piensas diferente y rompes moldes.', Pis:'Tu esencia es sensible y compasiva. Absorbes el mundo emocional que te rodea.' },
+    Moon: { Ari:'Tus emociones son rápidas e intensas. Reaccionas de inmediato y necesitas acción para procesar.', Tau:'Necesitas seguridad para sentirte bien. Los cambios bruscos te desestabilizan.', Gem:'Procesas las emociones con palabras. Necesitas hablar para entender lo que sientes.', Can:'Tus emociones son profundas y cíclicas. El hogar y la pertenencia son tu refugio.', Leo:'Necesitas sentirte vista y valorada. El afecto genuino te nutre emocionalmente.', Vir:'Procesas lo emocional analizándolo. La ansiedad aparece cuando pierdes control.', Lib:'Necesitas armonía a tu alrededor para sentirte estable. El conflicto sostenido te agota.', Sco:'Tus emociones son intensas y poderosas. Sientes todo muy profundo aunque no siempre lo muestres.', Sag:'Necesitas libertad emocional. Las restricciones y el drama prolongado te sofocan.', Cap:'Tiendes a contener las emociones. El logro y las responsabilidades te dan seguridad.', Aqu:'Procesas las emociones desde la mente. Necesitas espacio y perspectiva para estar bien.', Pis:'Tus emociones son difusas y empáticas. Absorbes el estado emocional de quienes te rodean.' },
+    Mercury: { Ari:'Piensas rápido y vas al punto. Te aburre lo que tarda demasiado.', Tau:'Piensas despacio pero con profundidad. Una vez que llegas a una conclusión, es sólida.', Gem:'Tu mente es ágil y curiosa. Conectas ideas de formas que otros no ven.', Can:'Piensas con las emociones. Tu memoria es poderosa y muy vinculada a lo que sentiste.', Leo:'Tu mente es creativa y dramática. Comunicas con impacto y necesitas que te escuchen.', Vir:'Analizas cada detalle. Tu mente es precisa y muy buena para resolver problemas.', Lib:'Ves todos los lados de una situación. Tomas decisiones con cuidado buscando equilibrio.', Sco:'Tu mente va directo a lo oculto. Investigas y no te conformas con respuestas superficiales.', Sag:'Piensas en grande y en términos filosóficos. Prefieres el panorama general a los detalles.', Cap:'Tu mente es práctica y estratégica. Piensas a largo plazo con orientación a resultados.', Aqu:'Tu mente es original e innovadora. Te adelantas a tu tiempo y piensas diferente.', Pis:'Piensas de forma intuitiva y asociativa. Tu mente conecta símbolos, imágenes y emociones.' },
+    Venus: { Ari:'Amas con intensidad y de forma directa. Necesitas emoción y conquista en tus vínculos.', Tau:'Amas con lealtad y sensualidad. Necesitas estabilidad y afecto físico concreto.', Gem:'Amas con la mente. Necesitas conversación e inteligencia en quien te atrae.', Can:'Amas con profundidad y protección. Necesitas seguridad emocional en tus relaciones.', Leo:'Amas con generosidad y pasión. Necesitas admiración mutua y expresión romántica real.', Vir:'Amas a través del servicio y los detalles. Muestras afecto siendo útil y atenta.', Lib:'Amas en búsqueda de armonía. Necesitas una relación equilibrada y estéticamente bella.', Sco:'Amas con intensidad total. O es profundo y transformador, o no vale la pena para ti.', Sag:'Amas con libertad. Necesitas espacio, aventura y una visión compartida del mundo.', Cap:'Amas con seriedad y constancia. Buscas una relación que construya algo concreto.', Aqu:'Amas desde la amistad y la libertad. La conexión mental es indispensable para ti.', Pis:'Amas con idealismo y compasión. Tus vínculos son profundamente espirituales y empáticos.' },
+    Mars: { Ari:'Actúas rápido e instintivamente. La energía es tu motor y el conflicto no te asusta.', Tau:'Actúas despacio pero con perseverancia total. Una vez que decides, nada te detiene.', Gem:'Tu energía se dispersa fácilmente. Actúas mejor cuando tu mente está estimulada.', Can:'Actúas desde la emoción y la protección. Tu motivación más profunda es cuidar lo que amas.', Leo:'Actúas con confianza y buscas que tus acciones sean vistas y reconocidas.', Vir:'Actúas con precisión y análisis. Prefieres hacerlo bien antes que hacerlo rápido.', Lib:'Te cuesta actuar cuando hay conflicto. Prefieres negociar antes que enfrentarte directamente.', Sco:'Actúas con intensidad y estrategia. Tu fuerza de voluntad es casi ilimitada cuando algo importa.', Sag:'Actúas con entusiasmo y visión. Necesitas que tus acciones tengan propósito real.', Cap:'Actúas con disciplina y ambición. Sabes esperar y ejecutar en el momento correcto.', Aqu:'Actúas de forma independiente. Necesitas libertad total para seguir tu propio camino.', Pis:'Actúas desde la intuición. Tu energía fluye mejor en contextos creativos o espirituales.' },
+  };
+
   const MATIZ_ASPECTO = {
     conjunction: 'se fusiona intensamente con', opposition: 'busca equilibrio constante con',
     square: 'genera fricción creativa con', trine: 'fluye con facilidad junto a', sextile: 'encuentra oportunidades con',
   };
 
   function sintesisPlaneta(clave, p, aspectosDelPlaneta) {
-    const signo = signoEs(p.sign);
-    const glifo = glifoSigno(p.sign);
+    const abrev = p.sign;
     const casa = p.house;
     const tema = casa ? (AREAS_CASA_ES[casa] || '') : '';
-    let frase = `Se expresa con la energía de <b style="color:var(--marigold-dark);">${glifo} ${signo}</b>`;
-    if (casa) frase += `, sobre todo en temas de <b style="color:var(--marigold-dark);">Casa ${casa}</b> (${tema.toLowerCase()})`;
-    frase += '.';
+    const frasePrincipal = FRASES_SIGNO_PLANETA[clave]?.[abrev] || `Se expresa con la energía de ${signoEs(abrev)}.`;
+    const fraseCasa = casa ? ` Esto se activa especialmente en tu <b style="color:var(--marigold-dark);">Casa ${casa}</b> (${tema.toLowerCase()}).` : '';
+    let fraseAspecto = '';
     if (aspectosDelPlaneta?.length) {
       const principal = aspectosDelPlaneta[0];
       const otroPlaneta = principal.point1 === clave ? principal.point2 : principal.point1;
       const matiz = MATIZ_ASPECTO[principal.aspect_type] || 'se relaciona con';
-      frase += ` ${matiz.charAt(0).toUpperCase() + matiz.slice(1)} <b style="color:var(--marigold-dark);">${nombrePlanetaEs(otroPlaneta)}</b>.`;
+      fraseAspecto = ` ${matiz.charAt(0).toUpperCase() + matiz.slice(1)} <b style="color:var(--marigold-dark);">${nombrePlanetaEs(otroPlaneta)}</b>.`;
     }
-    return frase;
+    return frasePrincipal + fraseCasa + fraseAspecto;
   }
 
   function construirInterfazSimple(cd) {
@@ -2239,7 +2414,7 @@
           `).join('');
         }
         chips.innerHTML = htmlSimple + `<div id="carta-detalle-tecnico" class="detalle-tecnico-oculto">${html}</div>`;
-        if (data.desde_cache) chips.innerHTML += '<div style="font-size:10.5px;color:var(--ink-dim);margin-top:6px;">♻️ Carta guardada — sin consumir créditos</div>';
+        if (data.desde_cache) chips.innerHTML += '<div style="font-size:10px;color:var(--ink-dim);margin-top:6px;text-align:right;">Carta cargada desde tu perfil</div>';
         resultBox.classList.add('show');
         // Si viene de caché, también cargamos la banda del home con los datos reales
         if (data.desde_cache) actualizarBandaConCartaReal();
@@ -2346,12 +2521,15 @@
           .map(k => {
             const p = bruto[k];
             const nombre = nombrePlanetaEs(k.charAt(0).toUpperCase() + k.slice(1));
+            const grados = p.position !== undefined ? Math.floor(p.position) : null;
+            const minutos = p.position !== undefined ? Math.floor((p.position % 1) * 60) : null;
+            const gradoStr = grados !== null ? `${grados}°${minutos !== null ? minutos.toString().padStart(2,'0')+"'" : ''}` : '';
             return `
               <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);">
                 <span style="font-size:13px;color:var(--plum);">${nombre}${p.retrograde ? ' <span style="color:#a5442f;font-size:11px;" title="Retrógrado">℞</span>' : ''}</span>
                 <span style="display:flex;align-items:center;gap:6px;">
                   <span style="background:${colorSigno(p.sign)};color:#fff;border-radius:100px;padding:3px 10px 3px 6px;font-size:11.5px;font-weight:600;display:inline-flex;align-items:center;gap:4px;box-shadow:0 2px 5px rgba(0,0,0,0.15);"><span style="font-size:13px;">${glifoSigno(p.sign)}</span>${signoEs(p.sign)}</span>
-                  <span style="font-size:12px;color:var(--ink-dim);">${p.position ? Math.floor(p.position)+'°' : ''}</span>
+                  <span style="font-size:12px;font-weight:600;color:var(--plum);font-family:'Cormorant Garamond',serif;">${gradoStr}</span>
                 </span>
               </div>
             `;
@@ -2798,11 +2976,24 @@
   function detectarLimiteExcedido(objeto) {
     try {
       const texto = JSON.stringify(objeto);
-      return texto.includes('RATE_LIMIT_EXCEEDED') || texto.includes('Quota exceeded');
+      return texto.includes('RATE_LIMIT_EXCEEDED') || texto.includes('Quota exceeded') || texto.includes('créditos');
     } catch (e) { return false; }
   }
+
   function mensajeLimiteExcedido() {
-    return '<div class="disclaimer" style="color:#a5442f;">Se acabaron los créditos gratis de este mes con Astrology API. Vuelve el próximo mes, o pídele a Samantha que actualice el plan.</div>';
+    return `<div class="tarjeta-lectura tension" style="text-align:center;">
+      <div style="font-size:24px;margin-bottom:8px;">⏳</div>
+      <div class="titulo">Créditos del mes agotados</div>
+      <div class="cuerpo" style="margin-top:6px;">Tu plan de Astrology API tiene 7,000 créditos/mes. Los cálculos guardados (carta natal, resumen, sinastría) ya no consumen — pero los cálculos nuevos tendrán que esperar hasta el próximo ciclo.</div>
+      <div style="font-size:11px;color:var(--ink-dim);margin-top:8px;">Se renuevan el 14 de octubre 2026</div>
+    </div>`;
+  }
+
+  function mensajeError(texto, icono = '⚠️') {
+    return `<div class="tarjeta-lectura tension" style="text-align:center;">
+      <div style="font-size:20px;margin-bottom:6px;">${icono}</div>
+      <div class="cuerpo">${texto}</div>
+    </div>`;
   }
 
   function abrirLectura(titulo, htmlContenido, textoPlano) {

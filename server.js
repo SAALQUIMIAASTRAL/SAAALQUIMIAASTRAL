@@ -192,14 +192,13 @@ app.post('/perfil', requireLogin, async (req, res) => {
 
 // RUTA: Leer el perfil actual de la usuaria
 app.get('/perfil', requireLogin, async (req, res) => {
-  const { data, error } = await req.supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', req.userId)
-    .maybeSingle();
+  const [{ data, error }, { data: sub }] = await Promise.all([
+    req.supabase.from('profiles').select('*').eq('id', req.userId).maybeSingle(),
+    req.supabase.from('subscriptions').select('estado').eq('user_id', req.userId).maybeSingle(),
+  ]);
 
   if (error) return res.status(400).json({ error: error.message });
-  res.json({ perfil: data });
+  res.json({ perfil: data, suscripcion: sub?.estado || 'ninguna' });
 });
 
 // ============================================================
@@ -1272,6 +1271,77 @@ app.delete('/diario/:id', requireLogin, async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: 'No se pudo eliminar la entrada.' });
+  }
+});
+
+// ============================================================
+// BIBLIOTECA DE CONOCIMIENTO (lectura pública, escritura solo admin)
+// SQL:
+// create table if not exists biblioteca (
+//   id uuid primary key default gen_random_uuid(),
+//   titulo text not null,
+//   categoria text,
+//   contenido text,
+//   fuente text,
+//   activo boolean default true,
+//   created_at timestamptz default now()
+// );
+// ============================================================
+
+app.get('/biblioteca', requireLogin, async (req, res) => {
+  try {
+    const categoria = req.query.categoria || null;
+    let query = supabase.from('biblioteca').select('id, titulo, categoria, fuente, created_at').eq('activo', true).order('created_at', { ascending: false });
+    if (categoria) query = query.eq('categoria', categoria);
+    const { data, error } = await query.limit(50);
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ articulos: data || [] });
+  } catch (err) {
+    res.status(500).json({ error: 'No se pudo cargar la biblioteca.' });
+  }
+});
+
+app.get('/biblioteca/:id', requireLogin, async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('biblioteca').select('*').eq('id', req.params.id).eq('activo', true).single();
+    if (error || !data) return res.status(404).json({ error: 'Artículo no encontrado.' });
+    res.json({ articulo: data });
+  } catch (err) {
+    res.status(500).json({ error: 'No se pudo cargar el artículo.' });
+  }
+});
+
+// Solo admin puede agregar (verificar email de Samantha)
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'shernsndez.22@gmail.com';
+app.post('/biblioteca', requireLogin, async (req, res) => {
+  try {
+    const perfil = await leerPerfil(req);
+    if (!perfil) return res.status(401).json({ error: 'No autorizado.' });
+    // Verificar que es admin
+    const { data: usuario } = await supabase.auth.admin.getUserById(req.userId).catch(() => ({ data: null }));
+    const esAdmin = usuario?.user?.email === ADMIN_EMAIL || req.userEmail === ADMIN_EMAIL;
+    if (!esAdmin) return res.status(403).json({ error: 'Solo la administradora puede agregar contenido.' });
+
+    const { titulo, categoria, contenido, fuente } = req.body;
+    if (!titulo?.trim() || !contenido?.trim()) return res.status(400).json({ error: 'Faltan título y contenido.' });
+
+    const { data, error } = await supabase.from('biblioteca').insert({ titulo: titulo.trim(), categoria: categoria || 'General', contenido: contenido.trim(), fuente: fuente || null }).select().single();
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ articulo: data });
+  } catch (err) {
+    res.status(500).json({ error: 'No se pudo guardar.' });
+  }
+});
+
+app.delete('/biblioteca/:id', requireLogin, async (req, res) => {
+  try {
+    const { data: usuario } = await supabase.auth.admin.getUserById(req.userId).catch(() => ({ data: null }));
+    const esAdmin = usuario?.user?.email === ADMIN_EMAIL || req.userEmail === ADMIN_EMAIL;
+    if (!esAdmin) return res.status(403).json({ error: 'Solo la administradora puede eliminar contenido.' });
+    await supabase.from('biblioteca').update({ activo: false }).eq('id', req.params.id);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'No se pudo eliminar.' });
   }
 });
 
