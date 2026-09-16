@@ -1079,7 +1079,12 @@
   // ======================================================
   // Conexión real con el servidor (login, perfil, carta natal)
   // ======================================================
-  let SESION = { token: localStorage.getItem('saa_token') || null, nombre: null };
+  let SESION = {
+    token: localStorage.getItem('saa_token') || null,
+    refresh: localStorage.getItem('saa_refresh') || null,
+    email: localStorage.getItem('saa_email') || null,
+    nombre: null,
+  };
 
   async function verDetalleOtraCarta(id, nombre) {
     const contenedor = document.getElementById('carta-otro-detalle');
@@ -1924,9 +1929,25 @@
     });
     const data = await r.json();
     if (!r.ok) return mostrarErrorEn('registro-error', data.error || 'No se pudo crear la cuenta.');
-    // Después de registrarse, la mandamos directo a iniciar sesión
-    document.getElementById('login-email').value = email;
-    mostrarPantalla('login');
+
+    // Login automático después de registrarse
+    const rLogin = await fetch('/auth/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const dataLogin = await rLogin.json();
+    if (rLogin.ok && dataLogin.sesion) {
+      SESION.token = dataLogin.sesion.access_token;
+      SESION.refresh = dataLogin.sesion.refresh_token || null;
+      SESION.email = email;
+      localStorage.setItem('saa_token', SESION.token);
+      if (SESION.refresh) localStorage.setItem('saa_refresh', SESION.refresh);
+      localStorage.setItem('saa_email', email);
+      await revisarPerfilYArrancar();
+    } else {
+      document.getElementById('login-email').value = email;
+      mostrarPantalla('login');
+    }
   }
 
   async function accionLogin() {
@@ -1941,7 +1962,10 @@
     if (!r.ok || !data.sesion) return mostrarErrorEn('login-error', data.error || 'Correo o contraseña incorrectos.');
     SESION.token = data.sesion.access_token;
     SESION.email = data.usuario?.email || email;
+    SESION.refresh = data.sesion.refresh_token || null;
     localStorage.setItem('saa_token', SESION.token);
+    if (SESION.refresh) localStorage.setItem('saa_refresh', SESION.refresh);
+    if (SESION.email) localStorage.setItem('saa_email', SESION.email);
     await revisarPerfilYArrancar();
   }
 
@@ -1969,6 +1993,8 @@
 
   function cerrarSesion() {
     localStorage.removeItem('saa_token');
+    localStorage.removeItem('saa_refresh');
+    localStorage.removeItem('saa_email');
     SESION = { token: null, nombre: null };
     mostrarPantalla('login');
   }
@@ -2013,7 +2039,26 @@
 
   async function revisarPerfilYArrancar() {
     if (!SESION.token) return mostrarPantalla('bienvenida');
-    const r = await fetch('/perfil', { headers: { Authorization: 'Bearer ' + SESION.token } });
+
+    // Intentar renovar el token si hay refresh disponible
+    let r = await fetch('/perfil', { headers: { Authorization: 'Bearer ' + SESION.token } });
+    if (r.status === 401 && SESION.refresh) {
+      try {
+        const rr = await fetch('/auth/refresh', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: SESION.refresh }),
+        });
+        if (rr.ok) {
+          const dd = await rr.json();
+          SESION.token = dd.sesion.access_token;
+          SESION.refresh = dd.sesion.refresh_token || SESION.refresh;
+          localStorage.setItem('saa_token', SESION.token);
+          if (SESION.refresh) localStorage.setItem('saa_refresh', SESION.refresh);
+          r = await fetch('/perfil', { headers: { Authorization: 'Bearer ' + SESION.token } });
+        }
+      } catch (e) { /* si falla, cae al logout */ }
+    }
+
     if (!r.ok) { cerrarSesion(); return; }
     const data = await r.json();
     if (!data.perfil || !data.perfil.ciudad_nacimiento) {

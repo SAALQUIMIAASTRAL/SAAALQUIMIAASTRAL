@@ -154,6 +154,14 @@ app.post('/auth/login', async (req, res) => {
   res.json({ sesion: data.session, usuario: data.user });
 });
 
+app.post('/auth/refresh', async (req, res) => {
+  const { refresh_token } = req.body;
+  if (!refresh_token) return res.status(400).json({ error: 'Falta el refresh_token.' });
+  const { data, error } = await supabase.auth.refreshSession({ refresh_token });
+  if (error) return res.status(401).json({ error: 'Sesión expirada. Inicia sesión de nuevo.' });
+  res.json({ sesion: data.session });
+});
+
 // ============================================================
 // RUTA: Guardar/actualizar el perfil (ciudad + país)
 // ============================================================
