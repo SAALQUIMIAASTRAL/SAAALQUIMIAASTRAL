@@ -1693,22 +1693,72 @@
       });
       const principales = ordenados.slice(0, 5);
       const encabezado = `<div style="font-size:11px;color:var(--ink-dim);margin-bottom:10px;">Estos son los tránsitos más importantes de tu próximo mes — los demás son menores y no requieren tanta atención.</div>`;
-      const EXPLICACION_TRANSITO = {
-        conjunction: (p1,p2) => `${p1} se une a tu ${p2} natal — sus energías se fusionan directamente.`,
-        opposition: (p1,p2) => `${p1} se opone a tu ${p2} natal — pide que equilibres dos fuerzas en tensión.`,
-        square: (p1,p2) => `${p1} cuadra tu ${p2} natal — un desafío que te impulsa a crecer.`,
-        trine: (p1,p2) => `${p1} hace trígono a tu ${p2} natal — fluye con facilidad, aprovecha este apoyo.`,
-        sextile: (p1,p2) => `${p1} hace sextil a tu ${p2} natal — una oportunidad suave que requiere un pequeño empuje.`,
-      };
+      // Explicaciones por planeta transitante + aspecto + punto natal
+      function explicarTransito(planetaEn, aspecto, puntoNatal) {
+        const es = aspecto;
+        const tension = ['square','opposition'].includes(es);
+        const armonia = ['trine','sextile'].includes(es);
+        const fusion = es === 'conjunction';
+
+        const TEXTOS = {
+          'Saturno': {
+            'Ascendente': tension ? 'Puede aparecer una exigencia de madurez en cómo te presentas al mundo. Algo en tu imagen o identidad está siendo probado. No es el momento de actuar impulsivamente — la constancia da mejores resultados.' : armonia ? 'Momento ideal para consolidar tu imagen, asumir una responsabilidad importante o dar pasos concretos hacia algo que llevas tiempo construyendo. El esfuerzo que hagas ahora tiene bases sólidas.' : 'Saturno toca tu punto de identidad. Puede sentirse como un freno, pero es una invitación a definir quién eres con más claridad.',
+            'Sol': tension ? 'Puede sentirse como resistencia o cansancio. Algo en tu propósito o ego está siendo probado. Evita decisiones importantes desde el agotamiento.' : armonia ? 'Buen momento para asumir más responsabilidad, hacer compromisos serios o avanzar en metas a largo plazo. Lo que construyas ahora dura.' : 'Saturno activa tu esencia. Define límites claros y avanza con disciplina.',
+            'Luna': tension ? 'Las emociones pueden sentirse pesadas o restringidas. Es posible que aparezcan responsabilidades emocionales o sientas que tienes que "aguantar". Date permiso de sentir sin juzgarte.' : armonia ? 'Momento de estabilizar tu vida emocional, poner orden en el hogar o hacer acuerdos con personas cercanas desde un lugar maduro.' : 'Saturno toca tus emociones. Puede traer seriedad o melancolía — también claridad emocional.',
+            'Mercurio': tension ? 'El pensamiento puede ir más lento o sentirse bloqueado. Revisa documentos con cuidado antes de firmar.' : armonia ? 'Excelente para estudiar, planificar, redactar algo importante o cerrar un acuerdo que requiere precisión.' : 'Saturno activa tu mente. Concentración alta, ideal para trabajo intelectual profundo.',
+            'Venus': tension ? 'Puede haber frialdad en relaciones o sensoración de distancia afectiva. No es el mejor momento para iniciar relaciones — sí para evaluar las existentes.' : armonia ? 'Momento de formalizar una relación, hacer un acuerdo económico serio o comprometerte con algo que valoras.' : 'Saturno activa tus valores. Claridad sobre lo que realmente importa en tus relaciones.',
+            'Marte': tension ? 'La energía puede sentirse bloqueada o frustrante. Evita confrontaciones directas — la paciencia da mejores resultados ahora.' : armonia ? 'Energía disciplinada y productiva. Ideal para avanzar en proyectos que requieren esfuerzo sostenido.' : 'Saturno activa tu energía. Fuerza concentrada — útil para tareas que requieren resistencia.',
+            'Medio Cielo': tension ? 'Puede haber obstáculos o presión en la carrera o vida pública. No tomes decisiones profesionales impulsivas.' : armonia ? 'Uno de los mejores tránsitos para avanzar en la carrera, asumir un cargo o ser reconocida por tu trabajo.' : 'Saturno activa tu vocación. Lo que construyas en tu carrera ahora tiene potencial de durar años.',
+          },
+          'Júpiter': {
+            'Ascendente': fusion || armonia ? 'Expansión natural de tu presencia. Buen momento para presentarte, lanzar algo público o ampliar tu influencia personal.' : 'Cuidado con el exceso de confianza o comprometerte a más de lo que puedes sostener.',
+            'Sol': fusion || armonia ? 'Período de crecimiento y confianza. Lo que inicies ahora tiene potencial de expandirse. Ideal para proyectos importantes.' : 'Exceso posible — evalúa bien antes de expandirte demasiado.',
+            'Luna': fusion || armonia ? 'Bienestar emocional y generosidad. Buen momento para el hogar, la familia y los vínculos cercanos.' : 'Las emociones pueden desbordarse — mantén perspectiva.',
+            'Medio Cielo': fusion || armonia ? 'Uno de los mejores tránsitos para la carrera. Oportunidades, reconocimiento y expansión profesional son muy posibles.' : 'Oportunidad, pero evalúa bien antes de comprometerte profesionalmente.',
+            'Venus': fusion || armonia ? 'Abundancia en relaciones y dinero. Buen momento para disfrutar, conectar y atraer lo que valoras.' : 'Cuidado con el exceso en gastos o en expectativas románticas.',
+          },
+          'Marte': {
+            'Ascendente': tension ? 'Puede haber conflictos en cómo te percibes o cómo te ven. Cuida el tono en interacciones.' : armonia ? 'Energía y determinación naturales. Buen momento para actuar con confianza y lanzarte a lo que quieres.' : 'Energía alta — canalízala hacia metas concretas.',
+            'Mercurio': tension ? 'Discusiones o malentendidos probables. Piensa antes de hablar o responder mensajes en caliente.' : armonia ? 'Mente rápida y decisiva. Buen momento para negociar, defender una idea o tomar decisiones con claridad.' : 'Pensamiento directo y rápido — ideal para resolver problemas.',
+            'Venus': tension ? 'Tensión posible en relaciones cercanas. Evita confrontaciones innecesarias.' : armonia ? 'Atracción y vitalidad en relaciones. Buen momento para conectar con alguien que te interesa.' : 'Energía en relaciones — puede ser atracción intensa o también confrontación directa.',
+          },
+          'Urano': {
+            'default': tension ? 'Urano trae cambios inesperados o disrupción. Mantén flexibilidad — lo que se rompe puede estar abriéndole paso a algo mejor.' : armonia ? 'Cambio positivo e innovación. Momento de hacer algo diferente, salir de la rutina o probar un camino nuevo.' : 'Urano activa este área de tu vida. Espera lo inesperado.',
+          },
+          'Neptuno': {
+            'default': tension ? 'Neptuno puede traer confusión, falta de claridad o ilusiones. No es el mejor momento para firmar contratos o tomar decisiones importantes sin información completa.' : armonia ? 'Intuición elevada, sensibilidad artística y espiritual. Confía en lo que sientes más allá de la lógica.' : 'Neptuno activa esta área. Sé cuidadosa con la realidad vs. las expectativas.',
+          },
+          'Plutón': {
+            'default': tension ? 'Plutón trae transformaciones profundas y a veces dolorosas. Algo está siendo eliminado para dar paso a algo nuevo. Resiste el impulso de controlar — el cambio es necesario.' : armonia ? 'Transformación profunda y positiva. Tienes poder personal elevado ahora — úsalo con intención.' : 'Plutón activa esta área. Transformación inevitable — confía en el proceso.',
+          },
+        };
+
+        const textoPlaneta = TEXTOS[planetaEn];
+        if (textoPlaneta) {
+          const textoPunto = textoPlaneta[puntoNatal] || textoPlaneta['default'];
+          if (textoPunto) return typeof textoPunto === 'string' ? textoPunto : textoPunto;
+        }
+
+        // Fallback: explicación por aspecto genérica pero más informativa
+        const FALLBACK = {
+          conjunction: `${planetaEn} se activa directamente sobre tu ${puntoNatal}. Sus energías se fusionan — el área de vida que representa se vuelve muy visible ahora.`,
+          opposition: `${planetaEn} pone en tensión tu ${puntoNatal}. Puede haber tirones entre dos áreas de tu vida que piden equilibrio.`,
+          square: `${planetaEn} genera fricción con tu ${puntoNatal}. Puede sentirse como un obstáculo, pero la presión está ahí para que crezcas en esa área.`,
+          trine: `${planetaEn} apoya tu ${puntoNatal} con facilidad. Es un momento propicio para avanzar en lo que representa esa área sin forzar.`,
+          sextile: `${planetaEn} abre una oportunidad suave en el área de tu ${puntoNatal}. Requiere que des un pequeño paso para aprovecharla.`,
+        };
+        return FALLBACK[es] || '';
+      }
+
       return botonCerrar + encabezado + principales.map(ev => {
         const planeta1 = PLANETAS_SOLO_NOMBRE_ES[ev.transiting_planet] || ev.transiting_planet;
         const planeta2 = PLANETAS_SOLO_NOMBRE_ES[ev.stationed_planet || ev.natal_planet] || (ev.stationed_planet || ev.natal_planet);
-        const explicacion = EXPLICACION_TRANSITO[ev.aspect_type] ? EXPLICACION_TRANSITO[ev.aspect_type](planeta1, planeta2) : '';
+        const explicacion = explicarTransito(planeta1, ev.aspect_type, planeta2);
         return `
           <div class="tarjeta-lectura neutral" style="padding:10px 12px;">
             <div style="font-size:11.5px;color:var(--marigold);font-weight:600;margin-bottom:3px;">${formatearFechaEs(ev.date)}</div>
             <div style="font-size:12.5px;color:var(--plum);font-weight:600;">${planeta1} ${aspectoEs(ev.aspect_type)} tu ${planeta2} natal</div>
-            ${explicacion ? `<div class="cuerpo" style="margin-top:4px;">${explicacion}</div>` : ''}
+            ${explicacion ? `<div class="cuerpo" style="margin-top:6px;">${explicacion}</div>` : ''}
           </div>`;
       }).join('');
     }
