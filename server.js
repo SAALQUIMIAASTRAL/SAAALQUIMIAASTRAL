@@ -16,7 +16,7 @@ app.use((req, res, next) => {
 });
 app.use(express.static('public'));
 
-// ---- Caché en memoria (para datos semidinámicos, TTL en ms) ----
+// ---- Caché en memoria con limpieza automática ----
 const memoriaCache = new Map();
 function cacheGet(clave) {
   const item = memoriaCache.get(clave);
@@ -30,15 +30,32 @@ function cacheSet(clave, valor, ttlMs) {
 function cacheHash(...partes) {
   return crypto.createHash('md5').update(partes.join('|')).digest('hex').slice(0, 12);
 }
+
+// Limpieza automática cada 10 min — evita fugas de memoria
+setInterval(() => {
+  const ahora = Date.now();
+  for (const [clave, item] of memoriaCache.entries()) {
+    if (ahora > item.expira) memoriaCache.delete(clave);
+  }
+}, 10 * 60 * 1000);
+
 const TTL = {
-  TRANSITOS_HOY: 30 * 60 * 1000,      // 30 min
-  LUNA: 20 * 60 * 1000,               // 20 min
-  ECLIPSES: 24 * 60 * 60 * 1000,      // 24 hrs
-  HOROSCOPO: 60 * 60 * 1000,          // 1 hr
-  ENERGIA_DIA: 60 * 60 * 1000,        // 1 hr
-  TRANSITOS_PERSONALES: 60 * 60 * 1000, // 1 hr
-  CALENDARIO_LUNAR: 6 * 60 * 60 * 1000, // 6 hrs
+  PERFIL: 5 * 60 * 1000,                 // 5 min
+  TRANSITOS_HOY: 30 * 60 * 1000,         // 30 min (compartida entre usuarios)
+  LUNA: 30 * 60 * 1000,                  // 30 min
+  HOROSCOPO: 2 * 60 * 60 * 1000,         // 2 hrs (cambia poco en el día)
+  ENERGIA_DIA: 60 * 60 * 1000,           // 1 hr
+  TRANSITOS_PERSONALES: 2 * 60 * 60 * 1000, // 2 hrs
+  ECLIPSES: 48 * 60 * 60 * 1000,         // 48 hrs (cambian muy poco)
+  CALENDARIO_LUNAR: 12 * 60 * 60 * 1000, // 12 hrs
+  ASTROCARTOGRAFIA: 24 * 60 * 60 * 1000, // 24 hrs (estática basada en nacimiento)
+  NUMEROLOGIA: 24 * 60 * 60 * 1000,      // 24 hrs (día personal cambia a medianoche)
+  ESTRELLAS: 7 * 24 * 60 * 60 * 1000,    // 7 días (prácticamente estática)
 };
+
+// Helper: obtener hoy en formato YYYY-MM-DD para claves de caché
+const hoyStr = () => new Date().toISOString().slice(0, 10);
+const horaStr = () => new Date().toISOString().slice(0, 13);
 
 app.get('/', (req, res) => {
   res.json({ estado: 'Sam Alquimia Astral backend funcionando ✅', prueba: '/probar.html' });
@@ -327,7 +344,7 @@ app.post('/luna', requireLogin, async (req, res) => {
   try {
     const perfil = await leerPerfil(req);
     const ahora = new Date();
-    const cacheKey = cacheHash(req.userId, ahora.toISOString().slice(0, 13)); // por hora
+    const cacheKey = cacheHash(req.userId, horaStr())
     const cached = cacheGet(cacheKey);
     if (cached) return res.json(cached);
 
@@ -366,7 +383,7 @@ app.post('/mensaje-del-dia', requireLogin, async (req, res) => {
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
     const ahora = new Date();
-    const cacheKey = cacheHash('transitos-hoy', ahora.toISOString().slice(0, 13));
+    const cacheKey = cacheHash('transitos-hoy', horaStr());
     const cached = cacheGet(cacheKey);
     if (cached) return res.json({ ...cached, nombre: perfil.nombre });
 
@@ -396,9 +413,14 @@ app.post('/mensaje-del-dia', requireLogin, async (req, res) => {
 // ============================================================
 app.post('/astrocartografia', requireLogin, async (req, res) => {
   try {
+    const otraCartaId = req.body?.otra_carta_id || null;
+    const cacheKey = cacheHash(req.userId, 'acg', otraCartaId || 'propia');
+    const cached = cacheGet(cacheKey);
+    if (cached) return res.json(cached);
+
     let datosSubject;
-    if (req.body?.otra_carta_id) {
-      const { data: persona, error } = await req.supabase.from('otras_cartas').select('*').eq('id', req.body?.otra_carta_id).single();
+    if (otraCartaId) {
+      const { data: persona, error } = await req.supabase.from('otras_cartas').select('*').eq('id', otraCartaId).single();
       if (error || !persona) return res.status(400).json({ error: 'No se encontró esa carta.' });
       datosSubject = birthDataDesdePerfil(persona, persona.nombre);
     } else {
@@ -420,12 +442,14 @@ app.post('/astrocartografia', requireLogin, async (req, res) => {
       },
     });
 
-    res.json({
+    const respuestaACG = {
       svg: respuesta.data?.svg_content || null,
       zonas_poder: respuesta.data?.map_data?.power_zones || [],
       lineas: respuesta.data?.map_data?.lines || [],
       ciudades: respuesta.data?.map_data?.cities_shown || [],
-    });
+    };
+    cacheSet(cacheKey, respuestaACG, TTL.ASTROCARTOGRAFIA);
+    res.json(respuestaACG);
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo generar la astrocartografía.', detalle_tecnico: err?.response?.data || err.message });
@@ -719,7 +743,7 @@ app.post('/eclipses-natal', requireLogin, async (req, res) => {
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
     const hoy = new Date().toISOString().slice(0, 10);
-    const cacheKey = cacheHash(req.userId, 'eclipses', hoy);
+    const cacheKey = cacheHash(req.userId, 'eclipses', hoyStr());
     const cached = cacheGet(cacheKey);
     if (cached) return res.json(cached);
 
@@ -836,9 +860,14 @@ app.post('/relocacion', requireLogin, async (req, res) => {
 // RUTA: Numerología (números núcleo: camino de vida, destino, etc.)
 app.post('/numerologia', requireLogin, async (req, res) => {
   try {
+    const otraCartaId = req.body?.otra_carta_id || null;
+    const cacheKey = cacheHash(req.userId, 'numerologia', otraCartaId || 'propia', hoyStr());
+    const cached = cacheGet(cacheKey);
+    if (cached) return res.json(cached);
+
     let datosSubject;
-    if (req.body?.otra_carta_id) {
-      const { data: persona, error } = await req.supabase.from('otras_cartas').select('*').eq('id', req.body?.otra_carta_id).single();
+    if (otraCartaId) {
+      const { data: persona, error } = await req.supabase.from('otras_cartas').select('*').eq('id', otraCartaId).single();
       if (error || !persona) return res.status(400).json({ error: 'No se encontró esa carta.' });
       datosSubject = birthDataDesdePerfil(persona, persona.nombre);
     } else {
@@ -852,7 +881,9 @@ app.post('/numerologia', requireLogin, async (req, res) => {
       language: 'es',
     });
 
-    res.json({ numerologia: respuesta.data });
+    const r = { numerologia: respuesta.data };
+    cacheSet(cacheKey, r, TTL.NUMEROLOGIA);
+    res.json(r);
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo calcular la numerología.', detalle_tecnico: err?.response?.data || err.message });
@@ -862,9 +893,14 @@ app.post('/numerologia', requireLogin, async (req, res) => {
 // RUTA: Estrellas fijas — cuáles tocan tu carta (propia o guardada)
 app.post('/estrellas-fijas', requireLogin, async (req, res) => {
   try {
+    const otraCartaId = req.body?.otra_carta_id || null;
+    const cacheKey = cacheHash(req.userId, 'estrellas', otraCartaId || 'propia');
+    const cached = cacheGet(cacheKey);
+    if (cached) return res.json(cached);
+
     let datosSubject;
-    if (req.body?.otra_carta_id) {
-      const { data: persona, error } = await req.supabase.from('otras_cartas').select('*').eq('id', req.body?.otra_carta_id).single();
+    if (otraCartaId) {
+      const { data: persona, error } = await req.supabase.from('otras_cartas').select('*').eq('id', otraCartaId).single();
       if (error || !persona) return res.status(400).json({ error: 'No se encontró esa carta.' });
       datosSubject = birthDataDesdePerfil(persona, persona.nombre);
     } else {
@@ -878,7 +914,9 @@ app.post('/estrellas-fijas', requireLogin, async (req, res) => {
       language: 'es',
     });
 
-    res.json({ estrellas: respuesta.data });
+    const r = { estrellas: respuesta.data };
+    cacheSet(cacheKey, r, TTL.ESTRELLAS);
+    res.json(r);
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudieron calcular las estrellas fijas.', detalle_tecnico: err?.response?.data || err.message });
@@ -892,7 +930,7 @@ app.post('/energia-del-dia', requireLogin, async (req, res) => {
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
     const hoy = new Date();
-    const cacheKey = cacheHash(req.userId, 'energia', hoy.toISOString().slice(0, 10));
+    const cacheKey = cacheHash(req.userId, 'energia', hoyStr());
     const cached = cacheGet(cacheKey);
     if (cached) return res.json(cached);
 
@@ -928,7 +966,7 @@ app.post('/horoscopo-diario', requireLogin, async (req, res) => {
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
     const hoy = new Date().toISOString().slice(0, 10);
-    const cacheKey = cacheHash(req.userId, 'horoscopo', hoy);
+    const cacheKey = cacheHash(req.userId, 'horoscopo', hoyStr());
     const cached = cacheGet(cacheKey);
     if (cached) return res.json(cached);
 
@@ -980,7 +1018,7 @@ app.post('/transitos-personales', requireLogin, async (req, res) => {
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
     const hoy = new Date();
-    const cacheKey = cacheHash(req.userId, 'transitos', hoy.toISOString().slice(0, 13));
+    const cacheKey = cacheHash(req.userId, 'transitos', horaStr());
     const cached = cacheGet(cacheKey);
     if (cached) return res.json(cached);
 
