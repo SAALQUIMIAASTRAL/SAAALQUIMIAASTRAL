@@ -5,6 +5,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
+const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
@@ -14,6 +15,30 @@ app.use((req, res, next) => {
   express.json()(req, res, next);
 });
 app.use(express.static('public'));
+
+// ---- Caché en memoria (para datos semidinámicos, TTL en ms) ----
+const memoriaCache = new Map();
+function cacheGet(clave) {
+  const item = memoriaCache.get(clave);
+  if (!item) return null;
+  if (Date.now() > item.expira) { memoriaCache.delete(clave); return null; }
+  return item.valor;
+}
+function cacheSet(clave, valor, ttlMs) {
+  memoriaCache.set(clave, { valor, expira: Date.now() + ttlMs });
+}
+function cacheHash(...partes) {
+  return crypto.createHash('md5').update(partes.join('|')).digest('hex').slice(0, 12);
+}
+const TTL = {
+  TRANSITOS_HOY: 30 * 60 * 1000,      // 30 min
+  LUNA: 20 * 60 * 1000,               // 20 min
+  ECLIPSES: 24 * 60 * 60 * 1000,      // 24 hrs
+  HOROSCOPO: 60 * 60 * 1000,          // 1 hr
+  ENERGIA_DIA: 60 * 60 * 1000,        // 1 hr
+  TRANSITOS_PERSONALES: 60 * 60 * 1000, // 1 hr
+  CALENDARIO_LUNAR: 6 * 60 * 60 * 1000, // 6 hrs
+};
 
 app.get('/', (req, res) => {
   res.json({ estado: 'Sam Alquimia Astral backend funcionando ✅', prueba: '/probar.html' });
@@ -298,6 +323,9 @@ app.post('/luna', requireLogin, async (req, res) => {
   try {
     const perfil = await leerPerfil(req);
     const ahora = new Date();
+    const cacheKey = cacheHash(req.userId, ahora.toISOString().slice(0, 13)); // por hora
+    const cached = cacheGet(cacheKey);
+    if (cached) return res.json(cached);
 
     const respuesta = await astrologyApi.post('/analysis/lunar-analysis', {
       datetime_location: {
@@ -313,7 +341,9 @@ app.post('/luna', requireLogin, async (req, res) => {
       report_options: { language: 'es' },
     });
 
-    res.json({ mensaje: 'Datos lunares de hoy', luna: respuesta.data });
+    const respuestaLuna = { mensaje: 'Datos lunares de hoy', luna: respuesta.data };
+    cacheSet(cacheKey, respuestaLuna, TTL.LUNA);
+    res.json(respuestaLuna);
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({
@@ -329,11 +359,13 @@ app.post('/luna', requireLogin, async (req, res) => {
 app.post('/mensaje-del-dia', requireLogin, async (req, res) => {
   try {
     const perfil = await leerPerfil(req);
-    if (!perfil) {
-      return res.status(400).json({ error: 'Primero guarda tu perfil.' });
-    }
+    if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
     const ahora = new Date();
+    const cacheKey = cacheHash('transitos-hoy', ahora.toISOString().slice(0, 13));
+    const cached = cacheGet(cacheKey);
+    if (cached) return res.json({ ...cached, nombre: perfil.nombre });
+
     const respuesta = await astrologyApi.post('/charts/natal', {
       subject: {
         name: 'Hoy',
@@ -346,11 +378,9 @@ app.post('/mensaje-del-dia', requireLogin, async (req, res) => {
       options: { house_system: 'P', zodiac_type: 'Tropic', language: 'es' },
     });
 
-    res.json({
-      mensaje: 'Mensaje del día',
-      datos_hoy: respuesta.data,
-      nombre: perfil.nombre,
-    });
+    const base = { mensaje: 'Mensaje del día', datos_hoy: respuesta.data };
+    cacheSet(cacheKey, base, TTL.TRANSITOS_HOY);
+    res.json({ ...base, nombre: perfil.nombre });
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo generar el mensaje del día.', detalle_tecnico: err?.response?.data || err.message });
@@ -577,6 +607,11 @@ app.post('/eclipses-natal', requireLogin, async (req, res) => {
     const perfil = await leerPerfil(req);
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
+    const hoy = new Date().toISOString().slice(0, 10);
+    const cacheKey = cacheHash(req.userId, 'eclipses', hoy);
+    const cached = cacheGet(cacheKey);
+    if (cached) return res.json(cached);
+
     const [proximos, revision] = await Promise.all([
       astrologyApi.get('/eclipses/upcoming').catch(err => ({ error: err?.response?.data || err.message })),
       astrologyApi.post('/eclipses/natal-check', {
@@ -594,11 +629,13 @@ app.post('/eclipses-natal', requireLogin, async (req, res) => {
       } catch (e) { /* si falla, seguimos sin ella */ }
     }
 
-    res.json({
+    const respuestaEclipses = {
       proximos_eclipses: proximos.data || proximos,
       como_te_afecta: revision.data || revision,
       interpretacion_principal: interpretacionCompleta,
-    });
+    };
+    cacheSet(cacheKey, respuestaEclipses, TTL.ECLIPSES);
+    res.json(respuestaEclipses);
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo consultar eclipses.', detalle_tecnico: err?.response?.data || err.message });
@@ -760,7 +797,9 @@ app.post('/energia-del-dia', requireLogin, async (req, res) => {
       }).catch(err => ({ error: err?.response?.data || err.message })),
     ]);
 
-    res.json({ ciclos: ciclos.data || ciclos, luna: luna.data || luna });
+    const respuestaEnergia = { ciclos: ciclos.data || ciclos, luna: luna.data || luna };
+    cacheSet(cacheKey, respuestaEnergia, TTL.ENERGIA_DIA);
+    res.json(respuestaEnergia);
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo calcular tu energía del día.', detalle_tecnico: err?.response?.data || err.message });
@@ -772,12 +811,19 @@ app.post('/horoscopo-diario', requireLogin, async (req, res) => {
     const perfil = await leerPerfil(req);
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
+    const hoy = new Date().toISOString().slice(0, 10);
+    const cacheKey = cacheHash(req.userId, 'horoscopo', hoy);
+    const cached = cacheGet(cacheKey);
+    if (cached) return res.json(cached);
+
     const respuesta = await astrologyApi.post('/horoscope/personal/daily/text', {
       subject: birthDataDesdePerfil(perfil),
       options: { language: 'es' },
     });
 
-    res.json({ horoscopo: respuesta.data });
+    const respuestaHoroscopo = { horoscopo: respuesta.data };
+    cacheSet(cacheKey, respuestaHoroscopo, TTL.HOROSCOPO);
+    res.json(respuestaHoroscopo);
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo generar el horóscopo.', detalle_tecnico: err?.response?.data || err.message });
@@ -818,6 +864,10 @@ app.post('/transitos-personales', requireLogin, async (req, res) => {
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
     const hoy = new Date();
+    const cacheKey = cacheHash(req.userId, 'transitos', hoy.toISOString().slice(0, 13));
+    const cached = cacheGet(cacheKey);
+    if (cached) return res.json(cached);
+
     const en30dias = new Date(hoy.getTime() + 30 * 24 * 60 * 60 * 1000);
 
     const respuesta = await astrologyApi.post('/analysis/natal-transit-report', {
@@ -832,7 +882,9 @@ app.post('/transitos-personales', requireLogin, async (req, res) => {
       report_options: { tradition: 'psychological', language: 'es' },
     });
 
-    res.json({ transitos: respuesta.data });
+    const respuestaTransitos = { transitos: respuesta.data };
+    cacheSet(cacheKey, respuestaTransitos, TTL.TRANSITOS_PERSONALES);
+    res.json(respuestaTransitos);
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudieron calcular los tránsitos.', detalle_tecnico: err?.response?.data || err.message });
