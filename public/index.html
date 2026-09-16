@@ -1571,22 +1571,79 @@
         contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
+
       const diaPersonal = data.ciclos?.data?.personal_day?.number || data.ciclos?.data?.personal_day_number;
       const m = data.luna?.data?.lunar_metrics;
       const botonCerrar = `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button onclick="document.getElementById('energia-resultado').innerHTML='';" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
 
+      const MENSAJES_DIA = {
+        1: { accion:'Inicia algo nuevo', evita:'Seguir esperando el momento perfecto', bueno_para:'Presentarte, mandar esa propuesta, dar el primer paso en lo que llevas tiempo postergando.' },
+        2: { accion:'Conecta y espera', evita:'Forzar decisiones unilaterales', bueno_para:'Reuniones, conversaciones importantes, acuerdos de colaboración. Hoy escuchar vale más que hablar.' },
+        3: { accion:'Exprésate', evita:'Guardarte lo que sientes o piensas', bueno_para:'Publicar contenido, hacer networking, hablar en público. Tu energía social está en su mejor punto.' },
+        4: { accion:'Trabaja con disciplina', evita:'Distracciones y atajos', bueno_para:'Tareas que requieren concentración, organizar finanzas, avanzar en proyectos de largo plazo.' },
+        5: { accion:'Muévete y adapta', evita:'Planes rígidos o compromisos forzados', bueno_para:'Cambios de planes, llamadas inesperadas, decisiones rápidas. La flexibilidad es tu ventaja hoy.' },
+        6: { accion:'Cuida lo tuyo', evita:'Descuidar relaciones por trabajo', bueno_para:'Resolver conflictos familiares, atender clientes, cuidarte. Las relaciones piden tu atención hoy.' },
+        7: { accion:'Reflexiona antes de actuar', evita:'Comprometerte a algo sin pensar bien', bueno_para:'Investigar, planificar, meditar, leer. Hoy la intuición es más confiable que los hechos.' },
+        8: { accion:'Toma decisiones de peso', evita:'Dejar que otros decidan por ti', bueno_para:'Firmar contratos, negociar, pedir aumento, cobrar lo que te deben. El poder está de tu lado.' },
+        9: { accion:'Cierra y suelta', evita:'Aferrarte a lo que ya terminó', bueno_para:'Finalizar proyectos, despedirte de algo, limpiar y ordenar. Es momento de completar, no de iniciar.' },
+        11: { accion:'Confía en tu intuición', evita:'Ignorar las señales que aparecen', bueno_para:'Decisiones creativas, proyectos con propósito, conectar con personas que te inspiran.' },
+        22: { accion:'Piensa en grande', evita:'Quedarte en los detalles pequeños', bueno_para:'Presentar proyectos grandes, liderar, planificar a largo plazo. Tu visión tiene alcance hoy.' },
+      };
+
+      const LUNA_SIGN_CONSEJO = {
+        Ari:'La luna en Aries impulsa la acción directa — buen momento para dar pasos concretos.',
+        Tau:'La luna en Tauro favorece decisiones sobre dinero, propiedades y acuerdos de largo plazo.',
+        Gem:'La luna en Géminis activa la comunicación — ideal para conversaciones importantes.',
+        Can:'La luna en Cáncer intensifica las emociones — cuida tu energía y la de quienes te rodean.',
+        Leo:'La luna en Leo potencia tu presencia — bueno para presentarte, publicar o liderar.',
+        Vir:'La luna en Virgo favorece el orden, los detalles y los contratos con letra pequeña.',
+        Lib:'La luna en Libra ayuda a los acuerdos y la diplomacia — buen día para negociar.',
+        Sco:'La luna en Escorpio profundiza todo — evita decisiones superficiales, confía en lo que sientes.',
+        Sag:'La luna en Sagitario abre la mente — buen día para aprender, viajar o ampliar horizontes.',
+        Cap:'La luna en Capricornio favorece el trabajo, la disciplina y los compromisos serios.',
+        Aqu:'La luna en Acuario activa ideas innovadoras — bueno para proyectos grupales y tecnología.',
+        Pis:'La luna en Piscis heighten la intuición y la creatividad — confía en lo que imaginas.',
+      };
+
+      const LUNA_FASE_CONSEJO = {
+        'New Moon':'Luna Nueva — siembra intenciones, no fuerces resultados todavía.',
+        'Waxing Crescent':'Luna Creciente — momento de construir y dar pasos hacia lo que quieres.',
+        'First Quarter':'Cuarto Creciente — enfrenta obstáculos con decisión, es el momento de empujar.',
+        'Waxing Gibbous':'Gibosa Creciente — refina y ajusta lo que ya iniciaste.',
+        'Full Moon':'Luna Llena — momento de máxima energía y claridad. Lo que sembraste se hace visible.',
+        'Waning Gibbous':'Gibosa Menguante — comparte lo que aprendiste, es tiempo de gratitud.',
+        'Last Quarter':'Cuarto Menguante — suelta lo que no funciona, haz espacio.',
+        'Waning Crescent':'Luna Menguante — descansa, cierra ciclos, prepárate para empezar de nuevo.',
+      };
+
       if (diaPersonal || m) {
-        let html = `<div style="background:linear-gradient(135deg, var(--lilac), var(--marigold));border-radius:14px;padding:16px;color:#fff;">`;
-        if (diaPersonal) {
-          html += `<div style="font-size:11px;opacity:0.85;">Tu día personal</div><div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:36px;margin-bottom:8px;">${diaPersonal}</div>`;
+        const info = MENSAJES_DIA[diaPersonal];
+        const lunaSigno = m ? LUNA_SIGN_CONSEJO[m.moon_sign] : '';
+        const lunaFase = m ? LUNA_FASE_CONSEJO[m.moon_phase] : '';
+
+        let html = `<div style="background:linear-gradient(135deg,var(--blush-2),var(--blush-1));border-radius:14px;padding:16px 18px;color:#fff;margin-bottom:10px;">
+          <div style="font-size:11px;opacity:0.75;margin-bottom:2px;">Tu día personal</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:42px;line-height:1;">${diaPersonal || '—'}</div>
+          ${m ? `<div style="font-size:12px;opacity:0.85;margin-top:6px;">${glifoSigno(m.moon_sign)} Luna en ${signoEs(m.moon_sign)} · ${faseLunarEs(m.moon_phase)}</div>` : ''}
+        </div>`;
+
+        if (info) {
+          html += `
+            <div class="tarjeta-lectura neutral">
+              <div class="etiqueta-seccion">✅ Hoy es buen día para</div>
+              <div class="cuerpo">${info.bueno_para}</div>
+            </div>
+            <div class="tarjeta-lectura tension">
+              <div class="etiqueta-seccion">⚠️ Evita hoy</div>
+              <div class="cuerpo">${info.evita}</div>
+            </div>`;
         }
-        if (m) {
-          html += `<div style="font-size:12.5px;">Luna en ${signoEs(m.moon_sign)} · ${faseLunarEs(m.moon_phase)}</div>`;
-        }
-        html += `</div>`;
+        if (lunaSigno) html += `<div class="tarjeta-lectura armonia"><div class="cuerpo">🌙 ${lunaSigno}</div></div>`;
+        if (lunaFase) html += `<div class="tarjeta-lectura neutral"><div class="cuerpo">☽ ${lunaFase}</div></div>`;
+
         contenedor.innerHTML = botonCerrar + html;
       } else {
-        contenedor.innerHTML = botonCerrar + renderizarInforme(data.ciclos, null);
+        contenedor.innerHTML = botonCerrar + renderizarInforme(data.ciclos, 'energia-resultado');
       }
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
