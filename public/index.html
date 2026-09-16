@@ -879,10 +879,7 @@
     const contenedorLineas = document.getElementById('acg-lines');
     if (boton) { boton.textContent = 'Calculando...'; boton.disabled = true; }
     try {
-      const r = await fetch('/astrocartografia', {
-        method: 'POST',
-        headers: { Authorization: 'Bearer ' + SESION.token },
-      });
+      const r = await fetchAuth('/astrocartografia', { method: 'POST', headers: {} });
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedorLineas.innerHTML = mensajeLimiteExcedido(); return; }
@@ -1086,11 +1083,37 @@
     nombre: null,
   };
 
+  // fetchAuth: igual que fetch() pero con renovación automática de token
+  async function fetchAuth(url, opciones = {}) {
+    const headers = { ...(opciones.headers || {}), Authorization: 'Bearer ' + SESION.token };
+    let r = await fetch(url, { ...opciones, headers });
+
+    if (r.status === 401 && SESION.refresh) {
+      try {
+        const rr = await fetch('/auth/refresh', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: SESION.refresh }),
+        });
+        if (rr.ok) {
+          const dd = await rr.json();
+          SESION.token = dd.sesion.access_token;
+          SESION.refresh = dd.sesion.refresh_token || SESION.refresh;
+          localStorage.setItem('saa_token', SESION.token);
+          if (SESION.refresh) localStorage.setItem('saa_refresh', SESION.refresh);
+          // Reintenta con el token nuevo
+          const headers2 = { ...(opciones.headers || {}), Authorization: 'Bearer ' + SESION.token };
+          r = await fetch(url, { ...opciones, headers: headers2 });
+        }
+      } catch (e) { /* si falla, devuelve el 401 original */ }
+    }
+    return r;
+  }
+
   async function verDetalleOtraCarta(id, nombre) {
     const contenedor = document.getElementById('carta-otro-detalle');
     contenedor.innerHTML = '<div class="disclaimer">Cargando la carta de ' + nombre + '...</div>';
     try {
-      const r = await fetch('/otras-cartas/' + id, { headers: { Authorization: 'Bearer ' + SESION.token } });
+      const r = await fetchAuth('/otras-cartas/' + id, { headers: {} });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || 'No se pudo cargar.');
 
@@ -1132,7 +1155,7 @@
     try {
       const r = await fetch(rutas[funcion], {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + SESION.token },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ otra_carta_id: id }),
       });
       const data = await r.json();
@@ -1157,7 +1180,7 @@
     const contenedor = document.getElementById('carta-otro-resumen');
     contenedor.innerHTML = '<div class="disclaimer">Generando el análisis de ' + nombre + '...</div>';
     try {
-      const r = await fetch('/otras-cartas/' + id + '/resumen', { method: 'POST', headers: { Authorization: 'Bearer ' + SESION.token } });
+      const r = await fetchAuth('/otras-cartas/' + id + '/resumen', { method: 'POST', headers: {} });
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
@@ -1173,7 +1196,7 @@
     const contenedor = document.getElementById('carta-otro-visual');
     contenedor.innerHTML = '<div class="disclaimer">Generando...</div>';
     try {
-      const r = await fetch('/otras-cartas/' + id + '/visual', { method: 'POST', headers: { Authorization: 'Bearer ' + SESION.token } });
+      const r = await fetchAuth('/otras-cartas/' + id + '/visual', { method: 'POST', headers: {} });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || 'No se pudo generar.');
       contenedor.innerHTML = data.svg || '<div class="disclaimer">No se pudo generar el dibujo.</div>';
@@ -1189,7 +1212,7 @@
 
   async function cargarCartasGuardadas() {
     try {
-      const r = await fetch('/otras-cartas', { headers: { Authorization: 'Bearer ' + SESION.token } });
+      const r = await fetchAuth('/otras-cartas', { headers: {} });
       const data = await r.json();
       const carousel = document.getElementById('cartas-carousel');
       const chipsHtml = (data.cartas || []).map(c => `
@@ -1225,7 +1248,7 @@
     try {
       const r = await fetch('/otras-cartas', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + SESION.token },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(cuerpo),
       });
       const data = await r.json();
@@ -1272,7 +1295,7 @@
     const contenedor = document.getElementById('eclipses-resultado');
     contenedor.innerHTML = '<div class="disclaimer">Consultando eclipses...</div>';
     try {
-      const r = await fetch('/eclipses-natal', { method: 'POST', headers: { Authorization: 'Bearer ' + SESION.token } });
+      const r = await fetchAuth('/eclipses-natal', { method: 'POST', headers: {} });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || 'No se pudo consultar.');
       if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
@@ -1617,7 +1640,7 @@
     const contenedor = document.getElementById('energia-resultado');
     contenedor.innerHTML = '<div class="disclaimer">Calculando tu energía de hoy...</div>';
     try {
-      const r = await fetch('/energia-del-dia', { method: 'POST', headers: { Authorization: 'Bearer ' + SESION.token } });
+      const r = await fetchAuth('/energia-del-dia', { method: 'POST', headers: {} });
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
@@ -1718,7 +1741,7 @@
     try {
       const r = await fetch('/diario/guardar', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + SESION.token },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ texto, estado_animo }),
       });
       const data = await r.json();
@@ -1735,7 +1758,7 @@
     const lista = document.getElementById('diario-lista');
     lista.innerHTML = '<div class="disclaimer">Cargando...</div>';
     try {
-      const r = await fetch('/diario', { headers: { Authorization: 'Bearer ' + SESION.token } });
+      const r = await fetchAuth('/diario', { headers: {} });
       const data = await r.json();
       if (!data.entradas?.length) { lista.innerHTML = '<div class="disclaimer">Aún no tienes entradas en el diario.</div>'; return; }
       lista.innerHTML = data.entradas.map(e => `
@@ -1751,7 +1774,7 @@
   }
 
   async function eliminarEntradaDiario(id) {
-    await fetch(`/diario/${id}`, { method: 'DELETE', headers: { Authorization: 'Bearer ' + SESION.token } });
+    await fetchAuth(`/diario/${id}`, { method: 'DELETE', headers: {} });
     await cargarDiario();
   }
 
@@ -1759,7 +1782,7 @@
     const contenedor = document.getElementById('horoscopo-resultado');
     contenedor.innerHTML = '<div class="disclaimer">Generando tu horóscopo...</div>';
     try {
-      const r = await fetch('/horoscopo-diario', { method: 'POST', headers: { Authorization: 'Bearer ' + SESION.token } });
+      const r = await fetchAuth('/horoscopo-diario', { method: 'POST', headers: {} });
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
@@ -1830,7 +1853,7 @@
     try {
       const r = await fetch('/feedback', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + SESION.token },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tipo: 'sugerencia', mensaje: texto }),
       });
       const data = await r.json();
@@ -1863,7 +1886,7 @@
     try {
       const r = await fetch('/asistente-ia', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + SESION.token },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pregunta, historial: iaHistorial }),
       });
       const data = await r.json();
@@ -1893,7 +1916,7 @@
     const errorEl = document.getElementById('perfil-portal-error');
     errorEl.textContent = '';
     try {
-      const r = await fetch('/suscripcion/portal', { method: 'POST', headers: { Authorization: 'Bearer ' + SESION.token } });
+      const r = await fetchAuth('/suscripcion/portal', { method: 'POST', headers: {} });
       const data = await r.json();
       if (!r.ok || !data.url) { errorEl.textContent = data.error || 'No se pudo abrir el portal.'; return; }
       window.location.href = data.url;
@@ -1983,7 +2006,7 @@
     }
     const r = await fetch('/perfil', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + SESION.token },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(cuerpo),
     });
     const data = await r.json();
@@ -2012,7 +2035,7 @@
 
   async function cargarHomeSummary() {
     try {
-      const r = await fetch('/home-summary', { method: 'POST', headers: { Authorization: 'Bearer ' + SESION.token } });
+      const r = await fetchAuth('/home-summary', { method: 'POST', headers: {} });
       if (!r.ok) return;
       const data = await r.json();
 
@@ -2041,7 +2064,7 @@
     if (!SESION.token) return mostrarPantalla('bienvenida');
 
     // Intentar renovar el token si hay refresh disponible
-    let r = await fetch('/perfil', { headers: { Authorization: 'Bearer ' + SESION.token } });
+    let r = await fetchAuth('/perfil', { headers: {} });
     if (r.status === 401 && SESION.refresh) {
       try {
         const rr = await fetch('/auth/refresh', {
@@ -2054,7 +2077,7 @@
           SESION.refresh = dd.sesion.refresh_token || SESION.refresh;
           localStorage.setItem('saa_token', SESION.token);
           if (SESION.refresh) localStorage.setItem('saa_refresh', SESION.refresh);
-          r = await fetch('/perfil', { headers: { Authorization: 'Bearer ' + SESION.token } });
+          r = await fetchAuth('/perfil', { headers: {} });
         }
       } catch (e) { /* si falla, cae al logout */ }
     }
@@ -2156,10 +2179,7 @@
     boton.textContent = 'Calculando...';
     boton.disabled = true;
     try {
-      const r = await fetch('/carta-natal', {
-        method: 'POST',
-        headers: { Authorization: 'Bearer ' + SESION.token },
-      });
+      const r = await fetchAuth('/carta-natal', { method: 'POST', headers: {} });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || 'Error al calcular');
 
@@ -2204,10 +2224,7 @@
     boton.textContent = 'Generando tu rueda...';
     boton.disabled = true;
     try {
-      const r = await fetch('/carta-visual', {
-        method: 'POST',
-        headers: { Authorization: 'Bearer ' + SESION.token },
-      });
+      const r = await fetchAuth('/carta-visual', { method: 'POST', headers: {} });
       const data = await r.json();
       if (!r.ok) {
         contenedor.innerHTML = `<div style="color:#a5442f;font-size:12px;">${data.error || 'No se pudo generar.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
@@ -2240,10 +2257,7 @@
     boton.textContent = 'Un momento...';
     boton.disabled = true;
     try {
-      const r = await fetch('/suscripcion/iniciar', {
-        method: 'POST',
-        headers: { Authorization: 'Bearer ' + SESION.token },
-      });
+      const r = await fetchAuth('/suscripcion/iniciar', { method: 'POST', headers: {} });
       const data = await r.json();
       if (data.url) {
         window.location.href = data.url;
@@ -2276,7 +2290,7 @@
     const contenedor = document.getElementById('transitos-hoy-resultado');
     contenedor.innerHTML = '<div class="disclaimer">Consultando el cielo de hoy...</div>';
     try {
-      const r = await fetch('/mensaje-del-dia', { method: 'POST', headers: { Authorization: 'Bearer ' + SESION.token } });
+      const r = await fetchAuth('/mensaje-del-dia', { method: 'POST', headers: {} });
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
@@ -2317,7 +2331,7 @@
     const contenedor = document.getElementById('transitos-resultado');
     contenedor.innerHTML = '<div class="disclaimer">Calculando tus tránsitos...</div>';
     try {
-      const r = await fetch('/transitos-personales', { method: 'POST', headers: { Authorization: 'Bearer ' + SESION.token } });
+      const r = await fetchAuth('/transitos-personales', { method: 'POST', headers: {} });
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
@@ -2333,7 +2347,7 @@
     const contenedor = document.getElementById('estrellas-resultado');
     contenedor.innerHTML = '<div class="disclaimer">Calculando...</div>';
     try {
-      const r = await fetch('/estrellas-fijas', { method: 'POST', headers: { Authorization: 'Bearer ' + SESION.token } });
+      const r = await fetchAuth('/estrellas-fijas', { method: 'POST', headers: {} });
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
@@ -2350,7 +2364,7 @@
     const contenedor = document.getElementById('numerologia-resultado');
     contenedor.innerHTML = '<div class="disclaimer">Calculando...</div>';
     try {
-      const r = await fetch('/numerologia', { method: 'POST', headers: { Authorization: 'Bearer ' + SESION.token } });
+      const r = await fetchAuth('/numerologia', { method: 'POST', headers: {} });
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
@@ -2415,7 +2429,7 @@
     try {
       const r = await fetch('/flor-armonica', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + SESION.token },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ numero: 5 }),
       });
       const data = await r.json();
@@ -2480,7 +2494,7 @@
     try {
       const r = await fetch('/carta-compuesta', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + SESION.token },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(cuerpo),
       });
       const data = await r.json();
@@ -2548,7 +2562,7 @@
     try {
       const r = await fetch('/sinastria', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + SESION.token },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(cuerpo),
       });
       const data = await r.json();
@@ -2566,10 +2580,7 @@
     const contenedor = document.getElementById('resumen-natal-contenedor');
     contenedor.innerHTML = '<div class="disclaimer">Generando tu resumen...</div>';
     try {
-      const r = await fetch('/resumen-natal', {
-        method: 'POST',
-        headers: { Authorization: 'Bearer ' + SESION.token },
-      });
+      const r = await fetchAuth('/resumen-natal', { method: 'POST', headers: {} });
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
@@ -2588,7 +2599,7 @@
     boton.textContent = 'Calculando el mes completo...';
     boton.disabled = true;
     try {
-      const r = await fetch('/calendario-lunar', { method: 'POST', headers: { Authorization: 'Bearer ' + SESION.token } });
+      const r = await fetchAuth('/calendario-lunar', { method: 'POST', headers: {} });
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { alert('Se acabaron los créditos gratis de este mes.'); return; }
@@ -2629,7 +2640,7 @@
     const contenedor = document.getElementById('luna-cruda');
     contenedor.innerHTML = '<div class="disclaimer">Consultando la luna de hoy...</div>';
     try {
-      const r = await fetch('/luna', { method: 'POST', headers: { Authorization: 'Bearer ' + SESION.token } });
+      const r = await fetchAuth('/luna', { method: 'POST', headers: {} });
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
@@ -2780,7 +2791,7 @@
     try {
       const r = await fetch('/relocacion', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + SESION.token },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ciudad, pais_codigo }),
       });
       const data = await r.json();
@@ -2814,7 +2825,7 @@
 
   async function actualizarBandaConCartaReal() {
     try {
-      const r = await fetch('/carta-natal/ultima', { headers: { Authorization: 'Bearer ' + SESION.token } });
+      const r = await fetchAuth('/carta-natal/ultima', { headers: {} });
       const data = await r.json();
       const s = data.carta?.datos_carta?.subject_data;
       const cd = data.carta?.datos_carta?.chart_data;
@@ -2833,7 +2844,7 @@
   async function precargarCarta() {
     try {
       if (!SESION.token) return;
-      await fetch('/carta-natal/ultima', { headers: { Authorization: 'Bearer ' + SESION.token } });
+      await fetchAuth('/carta-natal/ultima', { headers: {} });
     } catch(e) {}
   }
   // Espera 3 seg para no competir con la carga inicial
