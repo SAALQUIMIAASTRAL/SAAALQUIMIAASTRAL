@@ -1653,7 +1653,48 @@
         throw new Error(data.error || 'No se pudo generar.');
       }
       if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
-      contenedor.innerHTML = renderizarInforme(data.horoscopo, 'horoscopo-resultado');
+
+      const h = data.horoscopo?.data || data.horoscopo;
+      const botonCerrar = `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button onclick="document.getElementById('horoscopo-resultado').innerHTML='';" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
+
+      const AREAS_ICONO = { identity:'👤', health:'💪', finance:'💰', career:'🚀', love:'💗', relationships:'🤝', spirituality:'✨' };
+      const AREAS_NOMBRE = { identity:'Identidad', health:'Salud', finance:'Finanzas', career:'Carrera', love:'Amor', relationships:'Relaciones', spirituality:'Espiritualidad' };
+
+      let html = '';
+
+      // Texto principal
+      const texto = h?.text;
+      if (texto) {
+        const limpio = limpiarTextoAPI(texto);
+        html += `<div class="tarjeta-lectura neutral" style="margin-bottom:12px;"><div class="cuerpo">${limpio.split('\n\n').filter(p=>p.trim()).map(p=>`<p style="margin:0 0 8px;">${p}</p>`).join('')}</div></div>`;
+      }
+
+      // Áreas de vida con barras
+      const areas = h?.life_area_focus;
+      if (areas?.length) {
+        html += `<div class="etiqueta-seccion">Energía por área de vida</div>`;
+        html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">`;
+        areas.forEach(a => {
+          const pct = Math.round((a.rating / 5) * 100);
+          const color = pct >= 80 ? 'var(--armonia)' : pct >= 60 ? 'var(--marigold)' : 'var(--tension)';
+          html += `<div style="background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:8px 10px;">
+            <div style="font-size:11px;color:var(--ink-dim);margin-bottom:4px;">${AREAS_ICONO[a.area]||'✦'} ${AREAS_NOMBRE[a.area]||a.area}</div>
+            <div style="height:4px;background:var(--line);border-radius:100px;overflow:hidden;">
+              <div style="height:100%;width:${pct}%;background:${color};border-radius:100px;"></div>
+            </div>
+          </div>`;
+        });
+        html += `</div>`;
+      }
+
+      // Tips
+      const tips = h?.tips;
+      if (tips?.length) {
+        html += `<div class="etiqueta-seccion">Consejos de hoy</div>`;
+        html += tips.map(t => `<div class="tarjeta-lectura neutral"><div class="cuerpo">• ${limpiarTextoAPI(t)}</div></div>`).join('');
+      }
+
+      contenedor.innerHTML = html ? botonCerrar + html : renderizarInforme(data.horoscopo, 'horoscopo-resultado');
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }

@@ -104,12 +104,16 @@ function birthDataDesdePerfil(perfil, nombre) {
 }
 
 async function leerPerfil(req) {
+  const clave = cacheHash('perfil', req.userId);
+  const cached = cacheGet(clave);
+  if (cached) return cached;
   const { data: perfil, error } = await req.supabase
     .from('profiles')
     .select('*')
     .eq('id', req.userId)
     .single();
   if (error || !perfil) return null;
+  cacheSet(clave, perfil, 5 * 60 * 1000); // 5 min
   return perfil;
 }
 
@@ -154,8 +158,8 @@ app.post('/perfil', requireLogin, async (req, res) => {
 
   if (error) return res.status(400).json({ error: error.message });
 
-  // Si cambió fecha/hora/lugar de nacimiento, borramos la carta guardada
-  // para que la próxima consulta calcule una fresca con los datos correctos
+  // Invalidar caché del perfil y la carta guardada al cambiar datos de nacimiento
+  memoriaCache.delete(cacheHash('perfil', req.userId));
   await req.supabase.from('natal_charts').delete().eq('user_id', req.userId);
 
   res.json({ mensaje: 'Perfil guardado', perfil: data });
