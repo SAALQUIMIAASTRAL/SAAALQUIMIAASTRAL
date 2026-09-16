@@ -147,7 +147,53 @@
   .compat-bar{height:8px;border-radius:6px;background:var(--line);margin-bottom:6px;overflow:hidden;}
   .compat-bar .fill{height:100%;width:78%;background:linear-gradient(90deg,var(--marigold),var(--lilac));}
   .compat-label{font-size:11.5px;color:var(--ink-dim);margin-bottom:14px;}
-  .btn-primary{width:100%;background:var(--lilac);color:#fff;border:none;border-radius:100px;padding:13px;font-size:13.5px;font-weight:600;cursor:pointer;}
+  /* ====== SISTEMA DE BOTONES UNIFICADO ====== */
+  .btn-primary{
+    width:100%;background:var(--marigold);color:#fff;border:none;
+    border-radius:100px;padding:13px;font-size:13.5px;font-weight:600;
+    cursor:pointer;font-family:'Work Sans',sans-serif;
+  }
+  .btn-primary:active{opacity:0.88;}
+  .btn-outline{
+    width:100%;background:transparent;color:var(--plum);
+    border:1.5px solid var(--plum);border-radius:100px;padding:11px;
+    font-size:13px;font-weight:500;cursor:pointer;font-family:'Work Sans',sans-serif;
+  }
+  .btn-outline:active{background:var(--marigold-soft);}
+
+  /* ====== TARJETAS DE CONTENIDO UNIFICADAS ====== */
+  /* Tarjeta de lectura: para informes, interpretaciones, resúmenes */
+  .card-lectura{
+    background:#fff;border:1px solid var(--line);border-radius:12px;
+    padding:14px;margin-bottom:10px;
+  }
+  .card-lectura .card-titulo{
+    font-family:'Cormorant Garamond',serif;font-weight:700;
+    font-size:14px;color:var(--plum);margin-bottom:4px;
+  }
+  .card-lectura .card-cuerpo{
+    font-size:12.5px;color:var(--plum);line-height:1.6;
+  }
+  .card-lectura .card-etiqueta{
+    font-size:10.5px;color:var(--marigold);font-weight:600;
+    text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px;
+  }
+
+  /* Fila de dato: planetas, aspectos — solo separador */
+  .dato-fila{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:8px 0;border-bottom:1px solid var(--line);font-size:12.5px;
+    color:var(--plum);
+  }
+  .dato-fila:last-child{border-bottom:none;}
+  .dato-fila b{color:var(--marigold);}
+  .dato-fila .badge-signo{
+    border-radius:100px;padding:3px 10px 3px 6px;font-size:11.5px;
+    font-weight:600;color:#fff;display:inline-flex;align-items:center;
+    gap:4px;box-shadow:0 2px 5px rgba(0,0,0,0.15);
+  }
+
+  /* ====== FIN SISTEMA UNIFICADO ====== */
 
   /* tarot */
   .tarot-row{display:flex;gap:8px;justify-content:center;margin-bottom:14px;}
@@ -483,6 +529,13 @@
           </div>
 
           <div class="section" data-tab="inicio">
+            <h2>✨ Mi energía del día</h2>
+            <div class="desc">Tu día personal numerológico combinado con la luna de hoy.</div>
+            <button class="btn-primary" onclick="verEnergiaDelDia()">Ver mi energía de hoy</button>
+            <div id="energia-resultado" style="margin-top:14px;"></div>
+          </div>
+
+          <div class="section" data-tab="inicio">
             <h2>Tránsitos de hoy</h2>
             <div class="desc">El clima astrológico de hoy — dónde están los planetas ahora mismo.</div>
             <button class="btn-primary" onclick="verTransitosHoy()">Ver tránsitos de hoy</button>
@@ -770,9 +823,9 @@
       if (ciudadesBuenas.length) {
         htmlLineas += `<div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin-bottom:8px;">📍 Ciudades donde tu energía se activa más</div>`;
         htmlLineas += ciudadesBuenas.map(c => `
-          <div style="background:var(--marigold-soft);border-radius:10px;padding:10px 12px;margin-bottom:8px;">
-            <div style="font-size:13px;font-weight:700;color:var(--plum);">${c.name}, ${c.country}</div>
-            <div style="font-size:11.5px;color:var(--ink-dim);">Cerca de tu línea de ${c.closest_line || 'energía activa'}</div>
+          <div class="card-lectura">
+            <div class="card-titulo">${c.name}, ${c.country}</div>
+            <div class="card-cuerpo" style="color:var(--ink-dim);">Cerca de tu línea de ${c.closest_line || 'energía activa'}</div>
           </div>
         `).join('');
         htmlLineas += '<div style="font-family:\'Cormorant Garamond\',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin:14px 0 8px;">Qué significa cada línea</div>';
@@ -1093,10 +1146,10 @@
     const tipo = TIPOS_ECLIPSE_ES[ecl.type] || ecl.type;
     const posTexto = posicion ? `en ${signoEs(posicion.sign)} ${posicion.degree}°${posicion.minute}'` : '';
     return `
-      <div style="background:var(--marigold-soft);border-radius:12px;padding:14px;margin-bottom:10px;">
-        <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);">${tipo} ${posTexto}</div>
-        <div style="font-size:11.5px;color:var(--marigold);font-weight:600;margin-bottom:8px;">${formatearFechaEs(ecl.date)}</div>
-        ${(ecl.activations || []).map(a => `<div style="font-size:12px;color:var(--plum);margin-bottom:4px;">• ${describirActivacion(a)}</div>`).join('')}
+      <div class="card-lectura">
+        <div class="card-titulo">${tipo} ${posTexto}</div>
+        <div class="card-etiqueta">${formatearFechaEs(ecl.date)}</div>
+        ${(ecl.activations || []).map(a => `<div class="card-cuerpo" style="margin-top:4px;">• ${describirActivacion(a)}</div>`).join('')}
       </div>`;
   }
 
@@ -1181,7 +1234,30 @@
       .replace(/\{personal chart\}/gi, 'tu carta natal')
       .replace(/\{natal chart\}/gi, 'tu carta natal')
       .replace(/\{body\}/gi, 'tu cuerpo')
-      .replace(/\{[a-zA-Z_ ]+\}/g, 'tu carta'); // cualquier otro {placeholder} que se les haya olvidado llenar
+      .replace(/\{[a-zA-Z_ ]+\}/g, 'tu carta')
+      // Términos en inglés que se cuelan en los informes de sinastría
+      .replace(/\bsynastry\b/gi, 'sinastría')
+      .replace(/\bconjunction\b/gi, 'conjunción')
+      .replace(/\bopposition\b/gi, 'oposición')
+      .replace(/\bsquare\b/gi, 'cuadratura')
+      .replace(/\btrine\b/gi, 'trígono')
+      .replace(/\bsextile\b/gi, 'sextil')
+      .replace(/\bquincunx\b/gi, 'quincuncio')
+      .replace(/\bascendant\b/gi, 'Ascendente')
+      .replace(/\bdescendant\b/gi, 'Descendente')
+      .replace(/\bmidheaven\b/gi, 'Medio Cielo')
+      .replace(/\bic\b/g, 'Fondo de Cielo')
+      .replace(/\bhouse\s+(\d+)/gi, (_, n) => `Casa ${n}`)
+      .replace(/\bthe sun\b/gi, 'el Sol')
+      .replace(/\bthe moon\b/gi, 'la Luna')
+      .replace(/\bthe ascendant\b/gi, 'el Ascendente')
+      .replace(/\bpsychological\b/gi, 'psicológico')
+      .replace(/\bchallenge\b/gi, 'desafío')
+      .replace(/\bgrowth\b/gi, 'crecimiento')
+      .replace(/\bmaturity\b/gi, 'madurez')
+      .replace(/\btension\b/gi, 'tensión')
+      .replace(/\bharmony\b/gi, 'armonía')
+      .replace(/\bcompatibility\b/gi, 'compatibilidad');
   }
 
   function traducirPlanetasEnTexto(t) {
@@ -1247,10 +1323,10 @@
         const item = numero[clave];
         if (item && typeof item === 'object' && item.number !== undefined) {
           htmlNum += `
-            <div style="background:var(--marigold-soft);border-radius:12px;padding:14px;margin-bottom:10px;text-align:center;">
-              <div style="font-size:11px;color:var(--marigold);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">${NUMEROS_ES[clave] || prettificarClave(clave)}</div>
-              <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:32px;color:var(--plum);margin:4px 0;">${item.number}</div>
-              <div style="font-size:12px;color:var(--plum);">${SIGNIFICADOS_NUM[item.number] || ''}</div>
+            <div class="card-lectura" style="text-align:center;">
+              <div class="card-etiqueta">${NUMEROS_ES[clave] || prettificarClave(clave)}</div>
+              <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:34px;color:var(--plum);margin:4px 0;">${item.number}</div>
+              <div class="card-cuerpo" style="color:var(--ink-dim);">${SIGNIFICADOS_NUM[item.number] || ''}</div>
             </div>`;
         }
       });
@@ -1275,9 +1351,10 @@
         const naturaleza = c.star_data?.nature;
         const significadoPropio = significadoEstrella(naturaleza);
         return `
-          <div style="background:var(--marigold-soft);border-radius:12px;padding:12px 14px;margin-bottom:10px;">
-            <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14px;color:var(--plum);">✦ ${c.star} conjunción ${nombrePlaneta}</div>
-            <div style="font-size:12px;color:var(--plum);line-height:1.5;margin-top:4px;">${significadoPropio}</div>
+          <div class="card-lectura">
+            <div class="card-etiqueta">✦ ${c.star}</div>
+            <div class="card-titulo">Conjunción con ${nombrePlaneta}</div>
+            <div class="card-cuerpo">${significadoPropio}</div>
           </div>`;
       }).join('');
     }
@@ -1287,11 +1364,11 @@
     if (secciones?.length) {
       return botonCerrar + secciones.map(sec => `
         <div style="margin-bottom:14px;">
-          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--marigold);margin-bottom:8px;border-bottom:1px solid rgba(181,101,47,0.25);padding-bottom:4px;">${sec.title || ''}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14.5px;color:var(--marigold);margin-bottom:8px;border-bottom:1px solid var(--line);padding-bottom:4px;">${sec.title || ''}</div>
           ${(sec.interpretations || []).map(item => `
-            <div style="background:var(--marigold-soft);border-radius:12px;padding:12px 14px;margin-bottom:8px;">
-              <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:13px;color:var(--plum);margin-bottom:4px;">${traducirFactor(item.factor) || traducirTitulo(item.title) || ''}</div>
-              <div style="font-size:12px;color:var(--plum);line-height:1.55;">${limpiarTextoAPI(item.text)}</div>
+            <div class="card-lectura">
+              <div class="card-titulo">${traducirFactor(item.factor) || traducirTitulo(item.title) || ''}</div>
+              <div class="card-cuerpo">${limpiarTextoAPI(item.text)}</div>
             </div>
           `).join('')}
         </div>
@@ -1342,9 +1419,9 @@
     const interpretaciones = objeto?.data?.interpretations || objeto?.interpretations;
     if (interpretaciones?.length) {
       return botonCerrar + interpretaciones.map(item => `
-        <div style="background:var(--marigold-soft);border-radius:12px;padding:12px 14px;margin-bottom:10px;">
-          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14px;color:var(--plum);margin-bottom:4px;">${traducirTitulo(item.title)}</div>
-          <div style="font-size:12px;color:var(--plum);line-height:1.55;">${limpiarTextoAPI(item.text)}</div>
+        <div class="card-lectura">
+          <div class="card-titulo">${traducirTitulo(item.title)}</div>
+          <div class="card-cuerpo">${limpiarTextoAPI(item.text)}</div>
         </div>
       `).join('');
     }
@@ -1358,10 +1435,43 @@
           <div style="font-size:11.5px;color:var(--marigold);font-weight:600;margin-bottom:6px;">✨ Consejos de hoy</div>
           ${tips.map(t => `<div style="font-size:12px;color:var(--plum);margin-bottom:4px;">• ${t}</div>`).join('')}
         </div>` : '';
-      return botonCerrar + `<div style="background:var(--marigold-soft);border-radius:12px;padding:14px;font-size:13px;color:var(--plum);line-height:1.6;">${parrafos}${tipsHtml}</div>`;
+      return botonCerrar + `<div class="card-lectura"><div class="card-cuerpo">${parrafos}${tipsHtml}</div></div>`;
     }
     // Caso 3: no reconocido, mostramos crudo para diagnosticar
     return botonCerrar + `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(objeto, null, 2)}</pre>`;
+  }
+
+  async function verEnergiaDelDia() {
+    const contenedor = document.getElementById('energia-resultado');
+    contenedor.innerHTML = '<div class="disclaimer">Calculando tu energía de hoy...</div>';
+    try {
+      const r = await fetch('/energia-del-dia', { method: 'POST', headers: { Authorization: 'Bearer ' + SESION.token } });
+      const data = await r.json();
+      if (!r.ok) {
+        if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
+        contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        return;
+      }
+      const diaPersonal = data.ciclos?.data?.personal_day?.number || data.ciclos?.data?.personal_day_number;
+      const m = data.luna?.data?.lunar_metrics;
+      const botonCerrar = `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button onclick="document.getElementById('energia-resultado').innerHTML='';" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
+
+      if (diaPersonal || m) {
+        let html = `<div style="background:linear-gradient(135deg, var(--lilac), var(--marigold));border-radius:14px;padding:16px;color:#fff;">`;
+        if (diaPersonal) {
+          html += `<div style="font-size:11px;opacity:0.85;">Tu día personal</div><div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:36px;margin-bottom:8px;">${diaPersonal}</div>`;
+        }
+        if (m) {
+          html += `<div style="font-size:12.5px;">Luna en ${signoEs(m.moon_sign)} · ${faseLunarEs(m.moon_phase)}</div>`;
+        }
+        html += `</div>`;
+        contenedor.innerHTML = botonCerrar + html;
+      } else {
+        contenedor.innerHTML = botonCerrar + renderizarInforme(data.ciclos, null);
+      }
+    } catch (err) {
+      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+    }
   }
 
   async function verHoroscopoDiario() {
@@ -1564,9 +1674,9 @@
       const info = TEMAS_PLANETA_SIMPLE[clave];
       const aspectosDelPlaneta = (cd.aspects || []).filter(a => a.point1 === clave || a.point2 === clave);
       return `
-        <div style="background:var(--marigold-soft);border-radius:12px;padding:12px 14px;margin-bottom:8px;">
-          <div style="font-size:12.5px;color:var(--marigold);font-weight:700;margin-bottom:3px;">${info.emoji} ${info.titulo}</div>
-          <div style="font-size:12.5px;color:var(--plum);line-height:1.5;">${sintesisPlaneta(clave, p, aspectosDelPlaneta)}</div>
+        <div class="card-lectura">
+          <div class="card-etiqueta">${info.emoji} ${info.titulo}</div>
+          <div class="card-cuerpo">${sintesisPlaneta(clave, p, aspectosDelPlaneta)}</div>
         </div>`;
     }).join('');
 

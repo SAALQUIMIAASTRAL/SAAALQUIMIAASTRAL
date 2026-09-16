@@ -737,6 +737,36 @@ app.post('/estrellas-fijas', requireLogin, async (req, res) => {
   }
 });
 
+// RUTA: Mi energía del día (numerología del día + luna combinadas)
+app.post('/energia-del-dia', requireLogin, async (req, res) => {
+  try {
+    const perfil = await leerPerfil(req);
+    if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
+
+    const hoy = new Date();
+    const [ciclos, luna] = await Promise.all([
+      astrologyApi.post('/numerology/personal-cycles', {
+        subject: birthDataDesdePerfil(perfil),
+        target_date: { year: hoy.getUTCFullYear(), month: hoy.getUTCMonth() + 1, day: hoy.getUTCDate() },
+        language: 'es',
+      }).catch(err => ({ error: err?.response?.data || err.message })),
+      astrologyApi.post('/analysis/lunar-analysis', {
+        datetime_location: {
+          year: hoy.getUTCFullYear(), month: hoy.getUTCMonth() + 1, day: hoy.getUTCDate(),
+          hour: hoy.getUTCHours(), minute: hoy.getUTCMinutes(), second: 0,
+          city: perfil.ciudad_nacimiento || 'Mexico City', country_code: perfil.pais_codigo || 'MX',
+        },
+        report_options: { language: 'es' },
+      }).catch(err => ({ error: err?.response?.data || err.message })),
+    ]);
+
+    res.json({ ciclos: ciclos.data || ciclos, luna: luna.data || luna });
+  } catch (err) {
+    console.error(err?.response?.data || err.message);
+    res.status(500).json({ error: 'No se pudo calcular tu energía del día.', detalle_tecnico: err?.response?.data || err.message });
+  }
+});
+
 app.post('/horoscopo-diario', requireLogin, async (req, res) => {
   try {
     const perfil = await leerPerfil(req);
