@@ -2089,15 +2089,14 @@
       const botonCerrar = `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button onclick="document.getElementById('flor-resultado').innerHTML='';" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
 
       if (cd?.planetary_positions?.length) {
-        // Dibujamos la flor real
-        const svgFlor = dibujarFlorArmonica(cd.planetary_positions, cd.aspects);
+        let svgFlor = '';
+        try { svgFlor = dibujarFlorArmonica(cd.planetary_positions, cd.aspects); }
+        catch(e) { svgFlor = `<div class="disclaimer" style="color:#a5442f;">Error dibujando: ${e.message}</div>`; }
 
-        // Lista de posiciones
         const posiciones = cd.planetary_positions.map(p => `
-          <div class="carta-real-row">${nombrePlanetaEs(p.name)} en <b>${signoEs(p.sign)} ${p.degree ? Math.floor(p.degree)+'°' : ''}</b></div>
+          <div class="carta-real-row">${nombrePlanetaEs(p.name)} en <b>${signoEs(p.sign)} ${p.degree !== undefined ? Math.floor(p.degree)+'°' : ''}</b></div>
         `).join('');
 
-        // Aspectos armónicos
         let aspectosHtml = '';
         if (cd.aspects?.length) {
           aspectosHtml = '<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(181,101,47,0.25);font-size:11.5px;color:var(--marigold);font-weight:600;">Aspectos en la flor armónica 5</div>';
@@ -2105,14 +2104,9 @@
             <div class="carta-real-row" style="font-size:12px;">${nombrePlanetaEs(a.point1)} ${aspectoEs(a.aspect_type)} ${nombrePlanetaEs(a.point2)}</div>
           `).join('');
         }
-
         contenedor.innerHTML = botonCerrar + svgFlor + posiciones + aspectosHtml;
-      } else if (sd?.sun) {
-        // Tiene datos del sujeto pero no chart_data con posiciones — mostramos lo que hay
-        contenedor.innerHTML = botonCerrar + renderizarInforme(flor, 'flor-resultado');
       } else {
-        // Diagnóstico: mostrar la estructura real para saber qué trae
-        contenedor.innerHTML = botonCerrar + `<pre style="white-space:pre-wrap;font-size:9px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(data, null, 2)}</pre>`;
+        contenedor.innerHTML = botonCerrar + `<pre style="white-space:pre-wrap;font-size:9px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify({keys_flor:Object.keys(flor||{}), keys_cd:Object.keys(cd||{}), pos_count:cd?.planetary_positions?.length}, null, 2)}</pre>`;
       }
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
