@@ -1149,7 +1149,7 @@ app.post('/transitos-personales', requireLogin, async (req, res) => {
     const cached = cacheGet(cacheKey);
     if (cached) return res.json(cached);
 
-    const en30dias = new Date(hoy.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const en30dias = new Date(hoy.getTime() + 7 * 24 * 60 * 60 * 1000);
 
     const respuesta = await astrologyApi.post('/analysis/natal-transit-report', {
       subject: birthDataDesdePerfil(perfil),
