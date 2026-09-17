@@ -14,6 +14,22 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
+  --theme: light;
+}
+[data-theme="dark"]{
+  --blush-1: #1a0f2e;
+  --blush-2: #2d1b4e;
+  --paper: #1e1230;
+  --line: #3d2460;
+  --ink: #f0e8ff;
+  --ink-dim: #a89bc2;
+  --marigold-soft: #2a1a1f;
+  --plum: #d4b8ff;
+  --band-text: #fff;
+  --band-text-dim: rgba(255,255,255,0.65);
+  --moon-navy: #0d0820;
+}
+:root{
     /* --- Colores de marca (design system v1) --- */
     --plum:#2D1B4E;
     --plum-light:#6B4FA0;
@@ -438,7 +454,7 @@
             <div style="background:var(--marigold-soft);border-radius:12px;padding:12px;text-align:center;">
               <div style="font-size:22px;margin-bottom:4px;">✦</div>
               <div style="font-size:12px;font-weight:600;color:var(--plum);">Carta natal real</div>
-              <div style="font-size:10.5px;color:var(--ink-dim);">Swiss Ephemeris</div>
+              <div style="font-size:10.5px;color:var(--ink-dim);">Cálculos astronómicos precisos</div>
             </div>
             <div style="background:var(--lilac-soft);border-radius:12px;padding:12px;text-align:center;">
               <div style="font-size:22px;margin-bottom:4px;">🌙</div>
@@ -498,7 +514,7 @@
           <div style="text-align:center;margin-bottom:16px;">
             <div style="font-size:36px;margin-bottom:8px;">🌟</div>
             <h1 style="margin:0 0 6px;">Un momento más...</h1>
-            <div class="sub">Necesito tu fecha y lugar de nacimiento para calcular tu carta natal real con Swiss Ephemeris — la misma precisión que usan los astrólogos profesionales.</div>
+            <div class="sub">Necesito tu fecha y lugar de nacimiento para calcular tu carta natal real con Cálculos astronómicos precisos — la misma precisión que usan los astrólogos profesionales.</div>
           </div>
           <div class="auth-error" id="perfil-error"></div>
           <div class="auth-field"><label>¿Cómo te llamas?</label><input type="text" id="perfil-nombre" placeholder="Tu nombre"></div>
@@ -567,6 +583,18 @@
           <button class="btn-primary" style="background:var(--lilac);margin-bottom:16px;" onclick="enviarFeedback()">Enviar sugerencia</button>
           <div id="feedback-msg" style="font-size:12px;margin-bottom:12px;"></div>
 
+          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:8px;">Apariencia</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;background:var(--marigold-soft);border-radius:12px;padding:12px 14px;margin-bottom:16px;">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--plum);">Modo oscuro</div>
+              <div style="font-size:11px;color:var(--ink-dim);">Cambia entre fondo claro y oscuro</div>
+            </div>
+            <label style="position:relative;display:inline-block;width:46px;height:26px;cursor:pointer;">
+              <input type="checkbox" id="toggle-dark" onchange="cambiarTema(this.checked)" style="opacity:0;width:0;height:0;">
+              <span style="position:absolute;inset:0;background:#ccc;border-radius:26px;transition:0.3s;" id="toggle-dark-span"></span>
+              <span style="position:absolute;height:20px;width:20px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:0.3s;" id="toggle-dark-knob"></span>
+            </label>
+          </div>
           <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:8px;">Privacidad y datos</div>
           <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">
             <button onclick="descargarMisDatos()" style="background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px 12px;text-align:left;font-size:12.5px;color:var(--plum);cursor:pointer;">📥 Descargar mis datos</button>
@@ -911,6 +939,12 @@
               </div>
               <button onclick="accionSuscribirse()" id="btn-suscribirse" style="background:var(--marigold);color:#fff;border:none;border-radius:100px;padding:11px 20px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;box-shadow:0 4px 12px rgba(201,168,76,0.4);">Suscribirme →</button>
             </div>
+          </div>
+
+                    <div class="section" data-tab="carta" style="opacity:0.75;border:1px dashed var(--line);">
+            <h2>☀️ Revolución Solar</h2>
+            <div class="desc">Tu mapa del año — qué energías activa este cumpleaños en tu vida. <b>Próximamente.</b></div>
+            <button class="btn-primary" disabled style="opacity:0.5;">Disponible pronto</button>
           </div>
 
           <div class="section" data-tab="alquimia">
@@ -1418,7 +1452,8 @@
       const r = await fetchAuth('/eclipses-natal', { method: 'POST', headers: {} });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || 'No se pudo consultar.');
-      if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
+      if (detectarLimiteExcedido(data)) { const _cerrar_eclipses_resultado = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('eclipses-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
+      contenedor.innerHTML = _cerrar_eclipses_resultado + mensajeLimiteExcedido(); return; }
 
       const hoyTs = new Date().getTime();
       const seisMeses = hoyTs + 180 * 24 * 60 * 60 * 1000;
@@ -1843,7 +1878,8 @@
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
-        contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        const _cerrar_energia_resultado = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('energia-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
+      contenedor.innerHTML = _cerrar_energia_resultado + `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
 
@@ -1987,7 +2023,8 @@
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
         throw new Error(data.error || 'No se pudo generar.');
       }
-      if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
+      if (detectarLimiteExcedido(data)) { const _cerrar_horoscopo_resultado = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('horoscopo-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
+      contenedor.innerHTML = _cerrar_horoscopo_resultado + mensajeLimiteExcedido(); return; }
 
       const h = data.horoscopo?.data || data.horoscopo;
       const botonCerrar = `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button onclick="cerrar('horoscopo-resultado')" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
@@ -2657,7 +2694,8 @@
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
         throw new Error(data.error || 'No se pudo obtener.');
       }
-      if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
+      if (detectarLimiteExcedido(data)) { const _cerrar_transitos_hoy_resultado = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('transitos-hoy-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
+      contenedor.innerHTML = _cerrar_transitos_hoy_resultado + mensajeLimiteExcedido(); return; }
 
       const hoy = data.datos_hoy;
       const bruto = hoy?.subject_data || hoy;
@@ -2737,7 +2775,8 @@
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
-        contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        const _cerrar_transitos_resultado = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('transitos-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
+      contenedor.innerHTML = _cerrar_transitos_resultado + `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
       contenedor.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('numerologia-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>` + renderizarInforme(data.numerologia, null);
@@ -2869,7 +2908,8 @@
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
-        contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error}<br><pre style="font-size:9px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        const _cerrar_compuesta_resultado = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('compuesta-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
+      contenedor.innerHTML = _cerrar_compuesta_resultado + `<div class="disclaimer" style="color:#a5442f;">${data.error}<br><pre style="font-size:9px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
       const botonCerrar = `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button onclick="cerrar('compuesta-resultado')" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
@@ -2954,13 +2994,15 @@
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
-        contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo generar.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        const _cerrar_sinastria_resultado = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('sinastria-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
+      contenedor.innerHTML = _cerrar_sinastria_resultado + `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo generar.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
       const informe = renderizarInforme(data.reporte, null); // sin boton extra
       contenedor.innerHTML = informe;
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+      const _cerrar_resumen_natal_contenedor = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('resumen-natal-contenedor').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
+      contenedor.innerHTML = _cerrar_resumen_natal_contenedor + `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }
   }
 
@@ -3247,9 +3289,28 @@
   }
 
   // ---- Función global de cerrar sección ----
+  function cambiarTema(oscuro) {
+    document.documentElement.setAttribute('data-theme', oscuro ? 'dark' : 'light');
+    localStorage.setItem('saa_tema', oscuro ? 'dark' : 'light');
+    const span = document.getElementById('toggle-dark-span');
+    const knob = document.getElementById('toggle-dark-knob');
+    if (span) span.style.background = oscuro ? 'var(--marigold)' : '#ccc';
+    if (knob) knob.style.transform = oscuro ? 'translateX(20px)' : 'translateX(0)';
+  }
+
+  function aplicarTemaGuardado() {
+    const tema = localStorage.getItem('saa_tema') || 'light';
+    const oscuro = tema === 'dark';
+    document.documentElement.setAttribute('data-theme', tema);
+    const chk = document.getElementById('toggle-dark');
+    if (chk) chk.checked = oscuro;
+    cambiarTema(oscuro);
+  }
+
   function cerrar(id) { const el = document.getElementById(id); if (el) el.innerHTML = ''; }
 
     // Al cargar la página: ¿ya hay sesión guardada?
+  aplicarTemaGuardado();
   cambiarPestana('hoy');
   revisarPerfilYArrancar();
 
