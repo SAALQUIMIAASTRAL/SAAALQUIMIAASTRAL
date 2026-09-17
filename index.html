@@ -3095,7 +3095,7 @@
       const faseLunaHoy = data.luna?.data?.lunar_metrics?.moon_phase || '';
       const consejoDia = CONSEJOS_FASE[faseLunaHoy] || '';
       const consejoHtml = consejoDia ? `<div style="background:linear-gradient(135deg,var(--blush-2),var(--blush-1));border-radius:12px;padding:12px 14px;color:#fff;margin-bottom:10px;font-size:12.5px;line-height:1.6;">${consejoDia}</div>` : '';
-      contenedor.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('luna-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>` + consejoHtml + resumenHtml + renderizarInforme(data.luna, null);
+      contenedor.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('luna-cruda').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>` + consejoHtml + resumenHtml + renderizarInforme(data.luna, null);
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }
