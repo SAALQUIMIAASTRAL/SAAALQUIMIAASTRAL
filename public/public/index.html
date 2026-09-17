@@ -2360,8 +2360,6 @@
     actualizarBandaConCartaReal();
     cargarCartasGuardadas();
     cargarHomeSummary();
-    // Carga silenciosa de la carta si ya está en caché — la usuaria la ve lista sin tocar nada
-    setTimeout(() => calcularCartaReal(true), 1500);
   }
 
   async function cargarHomeSummary() {
