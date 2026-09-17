@@ -494,7 +494,7 @@ app.post('/mensaje-del-dia', requireLogin, async (req, res) => {
 // ============================================================
 // RUTA: Astrocartografía (mapa mundial de líneas planetarias)
 // ============================================================
-app.post('/astrocartografia', requireLogin, requirePremium, async (req, res) => {
+app.post('/astrocartografia', requireLogin, async (req, res) => {
   try {
     const otraCartaId = req.body?.otra_carta_id || null;
     const cacheKey = cacheHash(req.userId, 'acg', otraCartaId || 'propia');
@@ -654,7 +654,7 @@ app.delete('/mi-cuenta', requireLogin, async (req, res) => {
   }
 });
 
-app.post('/carta-compuesta', requireLogin, requirePremium, async (req, res) => {
+app.post('/carta-compuesta', requireLogin, async (req, res) => {
   try {
     const perfil = await leerPerfil(req);
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
@@ -694,7 +694,7 @@ app.post('/carta-compuesta', requireLogin, requirePremium, async (req, res) => {
   }
 });
 
-app.post('/sinastria', requireLogin, requirePremium, async (req, res) => {
+app.post('/sinastria', requireLogin, async (req, res) => {
   try {
     const perfil = await leerPerfil(req);
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
