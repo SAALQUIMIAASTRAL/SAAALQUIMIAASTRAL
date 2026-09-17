@@ -16,7 +16,7 @@ app.use((req, res, next) => {
 });
 app.use(express.static('public'));
 
-// ---- Caché en memoria (para datos semidinámicos, TTL en ms) ----
+// ---- Caché en memoria con limpieza automática ----
 const memoriaCache = new Map();
 function cacheGet(clave) {
   const item = memoriaCache.get(clave);
@@ -30,15 +30,32 @@ function cacheSet(clave, valor, ttlMs) {
 function cacheHash(...partes) {
   return crypto.createHash('md5').update(partes.join('|')).digest('hex').slice(0, 12);
 }
+
+// Limpieza automática cada 10 min — evita fugas de memoria
+setInterval(() => {
+  const ahora = Date.now();
+  for (const [clave, item] of memoriaCache.entries()) {
+    if (ahora > item.expira) memoriaCache.delete(clave);
+  }
+}, 10 * 60 * 1000);
+
 const TTL = {
-  TRANSITOS_HOY: 30 * 60 * 1000,      // 30 min
-  LUNA: 20 * 60 * 1000,               // 20 min
-  ECLIPSES: 24 * 60 * 60 * 1000,      // 24 hrs
-  HOROSCOPO: 60 * 60 * 1000,          // 1 hr
-  ENERGIA_DIA: 60 * 60 * 1000,        // 1 hr
-  TRANSITOS_PERSONALES: 60 * 60 * 1000, // 1 hr
-  CALENDARIO_LUNAR: 6 * 60 * 60 * 1000, // 6 hrs
+  PERFIL: 5 * 60 * 1000,                 // 5 min
+  TRANSITOS_HOY: 30 * 60 * 1000,         // 30 min (compartida entre usuarios)
+  LUNA: 30 * 60 * 1000,                  // 30 min
+  HOROSCOPO: 2 * 60 * 60 * 1000,         // 2 hrs (cambia poco en el día)
+  ENERGIA_DIA: 60 * 60 * 1000,           // 1 hr
+  TRANSITOS_PERSONALES: 2 * 60 * 60 * 1000, // 2 hrs
+  ECLIPSES: 48 * 60 * 60 * 1000,         // 48 hrs (cambian muy poco)
+  CALENDARIO_LUNAR: 12 * 60 * 60 * 1000, // 12 hrs
+  ASTROCARTOGRAFIA: 24 * 60 * 60 * 1000, // 24 hrs (estática basada en nacimiento)
+  NUMEROLOGIA: 24 * 60 * 60 * 1000,      // 24 hrs (día personal cambia a medianoche)
+  ESTRELLAS: 7 * 24 * 60 * 60 * 1000,    // 7 días (prácticamente estática)
 };
+
+// Helper: obtener hoy en formato YYYY-MM-DD para claves de caché
+const hoyStr = () => new Date().toISOString().slice(0, 10);
+const horaStr = () => new Date().toISOString().slice(0, 13);
 
 app.get('/', (req, res) => {
   res.json({ estado: 'Sam Alquimia Astral backend funcionando ✅', prueba: '/probar.html' });
@@ -69,24 +86,32 @@ async function requireLogin(req, res, next) {
   const authHeader = req.headers.authorization || '';
   const token = authHeader.replace('Bearer ', '');
 
-  if (!token) {
-    return res.status(401).json({ error: 'No iniciaste sesión.' });
-  }
+  if (!token) return res.status(401).json({ error: 'No iniciaste sesión.' });
 
   const { data, error } = await supabase.auth.getUser(token);
-  if (error || !data?.user) {
-    return res.status(401).json({ error: 'Sesión inválida o expirada.' });
-  }
+  if (error || !data?.user) return res.status(401).json({ error: 'Sesión inválida o expirada.' });
 
   req.userId = data.user.id;
   req.userEmail = data.user.email;
-
-  // Cliente de Supabase con el "pase" de ESTA usuaria, para que RLS funcione
   req.supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
     global: { headers: { Authorization: `Bearer ${token}` } },
   });
-
   next();
+}
+
+// Middleware para rutas Premium — verifica suscripción activa en la base de datos
+async function requirePremium(req, res, next) {
+  try {
+    const { data: sub } = await supabase.from('subscriptions').select('estado').eq('user_id', req.userId).maybeSingle();
+    // También permitir acceso al email admin (para que tú puedas probar todo)
+    const esAdmin = req.userEmail === (process.env.ADMIN_EMAIL || 'shernsndez.22@gmail.com');
+    if (!esAdmin && sub?.estado !== 'activa') {
+      return res.status(403).json({ error: 'Esta función requiere una suscripción activa.', premium_required: true });
+    }
+    next();
+  } catch (err) {
+    next(); // Si falla la verificación, dejamos pasar (mejor experiencia que bloquear)
+  }
 }
 
 // Helper: arma el objeto subject.birth_data a partir del perfil guardado
@@ -137,6 +162,14 @@ app.post('/auth/login', async (req, res) => {
   res.json({ sesion: data.session, usuario: data.user });
 });
 
+app.post('/auth/refresh', async (req, res) => {
+  const { refresh_token } = req.body;
+  if (!refresh_token) return res.status(400).json({ error: 'Falta el refresh_token.' });
+  const { data, error } = await supabase.auth.refreshSession({ refresh_token });
+  if (error) return res.status(401).json({ error: 'Sesión expirada. Inicia sesión de nuevo.' });
+  res.json({ sesion: data.session });
+});
+
 // ============================================================
 // RUTA: Guardar/actualizar el perfil (ciudad + país)
 // ============================================================
@@ -167,14 +200,13 @@ app.post('/perfil', requireLogin, async (req, res) => {
 
 // RUTA: Leer el perfil actual de la usuaria
 app.get('/perfil', requireLogin, async (req, res) => {
-  const { data, error } = await req.supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', req.userId)
-    .maybeSingle();
+  const [{ data, error }, { data: sub }] = await Promise.all([
+    req.supabase.from('profiles').select('*').eq('id', req.userId).maybeSingle(),
+    req.supabase.from('subscriptions').select('estado').eq('user_id', req.userId).maybeSingle(),
+  ]);
 
   if (error) return res.status(400).json({ error: error.message });
-  res.json({ perfil: data });
+  res.json({ perfil: data, suscripcion: sub?.estado || 'ninguna' });
 });
 
 // ============================================================
@@ -327,7 +359,7 @@ app.post('/luna', requireLogin, async (req, res) => {
   try {
     const perfil = await leerPerfil(req);
     const ahora = new Date();
-    const cacheKey = cacheHash(req.userId, ahora.toISOString().slice(0, 13)); // por hora
+    const cacheKey = cacheHash(req.userId, horaStr())
     const cached = cacheGet(cacheKey);
     if (cached) return res.json(cached);
 
@@ -360,13 +392,81 @@ app.post('/luna', requireLogin, async (req, res) => {
 // ============================================================
 // RUTA: Mensaje del día (Sol/Luna de hoy + tu carta real)
 // ============================================================
+// ============================================================
+// FASE 14 (parcial) — ENDPOINT AGREGADO DEL HOME
+// Una sola llamada que devuelve: saludo, luna, tránsito principal,
+// día personal y frase del día. Ahorra 3-4 llamadas al cargar la app.
+// ============================================================
+app.post('/home-summary', requireLogin, async (req, res) => {
+  try {
+    const perfil = await leerPerfil(req);
+    if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
+
+    const hoy = new Date();
+    const cacheKey = cacheHash(req.userId, 'home', hoyStr());
+    const cached = cacheGet(cacheKey);
+    if (cached) return res.json({ ...cached, nombre: perfil.nombre });
+
+    // Lanzar todas las llamadas en paralelo
+    const [lunaData, ciclosData, transitosHoyData] = await Promise.all([
+      astrologyApi.post('/analysis/lunar-analysis', {
+        datetime_location: {
+          year: hoy.getUTCFullYear(), month: hoy.getUTCMonth()+1, day: hoy.getUTCDate(),
+          hour: hoy.getUTCHours(), minute: hoy.getUTCMinutes(), second: 0,
+          city: perfil.ciudad_nacimiento || 'Mexico City', country_code: perfil.pais_codigo || 'MX',
+        },
+        report_options: { language: 'es' },
+      }).catch(() => null),
+      astrologyApi.post('/numerology/personal-cycles', {
+        subject: birthDataDesdePerfil(perfil),
+        target_date: { year: hoy.getUTCFullYear(), month: hoy.getUTCMonth()+1, day: hoy.getUTCDate() },
+        language: 'es',
+      }).catch(() => null),
+      astrologyApi.post('/charts/natal', {
+        subject: { name: 'Hoy', birth_data: { year: hoy.getUTCFullYear(), month: hoy.getUTCMonth()+1, day: hoy.getUTCDate(), hour: hoy.getUTCHours(), minute: 0, second: 0, city: 'Greenwich', country_code: 'GB' } },
+        options: { house_system: 'P', zodiac_type: 'Tropic', language: 'es' },
+      }).catch(() => null),
+    ]);
+
+    const luna = lunaData?.data?.data?.lunar_metrics;
+    const diaPersonal = ciclosData?.data?.data?.personal_day?.number || null;
+    const anioPersonal = ciclosData?.data?.data?.personal_year?.number || null;
+    const planetasHoy = transitosHoyData?.data?.subject_data;
+
+    // Extraer el tránsito más importante del día
+    let transitoPrincipal = null;
+    if (planetasHoy) {
+      const PESO = { Pluto:1, Neptune:2, Uranus:3, Saturn:4, Jupiter:5, Mars:6, Venus:7, Mercury:8, Sun:9, Moon:10 };
+      const planetaOrdenado = Object.keys(PESO).find(p => planetasHoy[p.toLowerCase()]);
+      if (planetaOrdenado) {
+        const pos = planetasHoy[planetaOrdenado.toLowerCase()];
+        transitoPrincipal = { planeta: planetaOrdenado, signo: pos.sign, grado: pos.position ? Math.floor(pos.position) : null };
+      }
+    }
+
+    const resumen = {
+      luna: luna ? { signo: luna.moon_sign, fase: luna.moon_phase, iluminacion: Math.round(luna.moon_illumination), dia_lunar: luna.moon_day } : null,
+      dia_personal: diaPersonal,
+      anio_personal: anioPersonal,
+      transito_principal: transitoPrincipal,
+      hora_local: hoy.getUTCHours(),
+    };
+
+    cacheSet(cacheKey, resumen, TTL.ENERGIA_DIA);
+    res.json({ ...resumen, nombre: perfil.nombre });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: 'No se pudo cargar el resumen del día.' });
+  }
+});
+
 app.post('/mensaje-del-dia', requireLogin, async (req, res) => {
   try {
     const perfil = await leerPerfil(req);
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
     const ahora = new Date();
-    const cacheKey = cacheHash('transitos-hoy', ahora.toISOString().slice(0, 13));
+    const cacheKey = cacheHash('transitos-hoy', horaStr());
     const cached = cacheGet(cacheKey);
     if (cached) return res.json({ ...cached, nombre: perfil.nombre });
 
@@ -394,11 +494,16 @@ app.post('/mensaje-del-dia', requireLogin, async (req, res) => {
 // ============================================================
 // RUTA: Astrocartografía (mapa mundial de líneas planetarias)
 // ============================================================
-app.post('/astrocartografia', requireLogin, async (req, res) => {
+app.post('/astrocartografia', requireLogin, requirePremium, async (req, res) => {
   try {
+    const otraCartaId = req.body?.otra_carta_id || null;
+    const cacheKey = cacheHash(req.userId, 'acg', otraCartaId || 'propia');
+    const cached = cacheGet(cacheKey);
+    if (cached) return res.json(cached);
+
     let datosSubject;
-    if (req.body?.otra_carta_id) {
-      const { data: persona, error } = await req.supabase.from('otras_cartas').select('*').eq('id', req.body?.otra_carta_id).single();
+    if (otraCartaId) {
+      const { data: persona, error } = await req.supabase.from('otras_cartas').select('*').eq('id', otraCartaId).single();
       if (error || !persona) return res.status(400).json({ error: 'No se encontró esa carta.' });
       datosSubject = birthDataDesdePerfil(persona, persona.nombre);
     } else {
@@ -420,12 +525,14 @@ app.post('/astrocartografia', requireLogin, async (req, res) => {
       },
     });
 
-    res.json({
+    const respuestaACG = {
       svg: respuesta.data?.svg_content || null,
       zonas_poder: respuesta.data?.map_data?.power_zones || [],
       lineas: respuesta.data?.map_data?.lines || [],
       ciudades: respuesta.data?.map_data?.cities_shown || [],
-    });
+    };
+    cacheSet(cacheKey, respuestaACG, TTL.ASTROCARTOGRAFIA);
+    res.json(respuestaACG);
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo generar la astrocartografía.', detalle_tecnico: err?.response?.data || err.message });
@@ -460,7 +567,7 @@ app.post('/feedback', requireLogin, async (req, res) => {
 });
 
 // FASE 9 — ASISTENTE IA (usa la carta natal como contexto)
-app.post('/asistente-ia', requireLogin, async (req, res) => {
+app.post('/asistente-ia', requireLogin, requirePremium, async (req, res) => {
   try {
     const { pregunta, historial } = req.body;
     if (!pregunta?.trim()) return res.status(400).json({ error: 'Falta la pregunta.' });
@@ -503,7 +610,51 @@ app.post('/asistente-ia', requireLogin, async (req, res) => {
   }
 });
 
-app.post('/carta-compuesta', requireLogin, async (req, res) => {
+// ============================================================
+// DERECHOS ARCO — Descarga y eliminación de datos del usuario
+// ============================================================
+app.get('/mis-datos', requireLogin, async (req, res) => {
+  try {
+    const [perfil, cartas, otras, diario, suscripcion] = await Promise.all([
+      req.supabase.from('profiles').select('*').eq('id', req.userId).maybeSingle(),
+      req.supabase.from('natal_charts').select('datos_carta, created_at').eq('user_id', req.userId).maybeSingle(),
+      req.supabase.from('otras_cartas').select('nombre, fecha_nacimiento, ciudad_nacimiento, created_at').eq('user_id', req.userId),
+      req.supabase.from('diario').select('fecha, estado_animo, categorias, texto, luna_signo, dia_personal, created_at').eq('user_id', req.userId).order('created_at', { ascending: false }).limit(100),
+      req.supabase.from('subscriptions').select('estado, created_at').eq('user_id', req.userId).maybeSingle(),
+    ]);
+    res.json({
+      exportado_el: new Date().toISOString(),
+      perfil: perfil.data,
+      carta_natal: cartas.data ? { calculada_el: cartas.data.created_at } : null,
+      personas_guardadas: otras.data || [],
+      entradas_diario: diario.data || [],
+      suscripcion: suscripcion.data,
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'No se pudieron exportar los datos.' });
+  }
+});
+
+app.delete('/mi-cuenta', requireLogin, async (req, res) => {
+  try {
+    // Borrar todos los datos del usuario en orden
+    await Promise.all([
+      req.supabase.from('diario').delete().eq('user_id', req.userId),
+      req.supabase.from('natal_charts').delete().eq('user_id', req.userId),
+      req.supabase.from('otras_cartas').delete().eq('user_id', req.userId),
+      req.supabase.from('subscriptions').delete().eq('user_id', req.userId),
+      req.supabase.from('feedback').delete().eq('user_id', req.userId),
+    ]);
+    await req.supabase.from('profiles').delete().eq('id', req.userId);
+    // Eliminar el usuario de auth (requiere service_role key en supabase admin)
+    await supabase.auth.admin.deleteUser(req.userId).catch(() => null);
+    res.json({ ok: true, mensaje: 'Cuenta y datos eliminados.' });
+  } catch (err) {
+    res.status(500).json({ error: 'No se pudo eliminar la cuenta.' });
+  }
+});
+
+app.post('/carta-compuesta', requireLogin, requirePremium, async (req, res) => {
   try {
     const perfil = await leerPerfil(req);
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
@@ -543,7 +694,7 @@ app.post('/carta-compuesta', requireLogin, async (req, res) => {
   }
 });
 
-app.post('/sinastria', requireLogin, async (req, res) => {
+app.post('/sinastria', requireLogin, requirePremium, async (req, res) => {
   try {
     const perfil = await leerPerfil(req);
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
@@ -719,7 +870,7 @@ app.post('/eclipses-natal', requireLogin, async (req, res) => {
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
     const hoy = new Date().toISOString().slice(0, 10);
-    const cacheKey = cacheHash(req.userId, 'eclipses', hoy);
+    const cacheKey = cacheHash(req.userId, 'eclipses', hoyStr());
     const cached = cacheGet(cacheKey);
     if (cached) return res.json(cached);
 
@@ -836,9 +987,14 @@ app.post('/relocacion', requireLogin, async (req, res) => {
 // RUTA: Numerología (números núcleo: camino de vida, destino, etc.)
 app.post('/numerologia', requireLogin, async (req, res) => {
   try {
+    const otraCartaId = req.body?.otra_carta_id || null;
+    const cacheKey = cacheHash(req.userId, 'numerologia', otraCartaId || 'propia', hoyStr());
+    const cached = cacheGet(cacheKey);
+    if (cached) return res.json(cached);
+
     let datosSubject;
-    if (req.body?.otra_carta_id) {
-      const { data: persona, error } = await req.supabase.from('otras_cartas').select('*').eq('id', req.body?.otra_carta_id).single();
+    if (otraCartaId) {
+      const { data: persona, error } = await req.supabase.from('otras_cartas').select('*').eq('id', otraCartaId).single();
       if (error || !persona) return res.status(400).json({ error: 'No se encontró esa carta.' });
       datosSubject = birthDataDesdePerfil(persona, persona.nombre);
     } else {
@@ -852,7 +1008,9 @@ app.post('/numerologia', requireLogin, async (req, res) => {
       language: 'es',
     });
 
-    res.json({ numerologia: respuesta.data });
+    const r = { numerologia: respuesta.data };
+    cacheSet(cacheKey, r, TTL.NUMEROLOGIA);
+    res.json(r);
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo calcular la numerología.', detalle_tecnico: err?.response?.data || err.message });
@@ -862,9 +1020,14 @@ app.post('/numerologia', requireLogin, async (req, res) => {
 // RUTA: Estrellas fijas — cuáles tocan tu carta (propia o guardada)
 app.post('/estrellas-fijas', requireLogin, async (req, res) => {
   try {
+    const otraCartaId = req.body?.otra_carta_id || null;
+    const cacheKey = cacheHash(req.userId, 'estrellas', otraCartaId || 'propia');
+    const cached = cacheGet(cacheKey);
+    if (cached) return res.json(cached);
+
     let datosSubject;
-    if (req.body?.otra_carta_id) {
-      const { data: persona, error } = await req.supabase.from('otras_cartas').select('*').eq('id', req.body?.otra_carta_id).single();
+    if (otraCartaId) {
+      const { data: persona, error } = await req.supabase.from('otras_cartas').select('*').eq('id', otraCartaId).single();
       if (error || !persona) return res.status(400).json({ error: 'No se encontró esa carta.' });
       datosSubject = birthDataDesdePerfil(persona, persona.nombre);
     } else {
@@ -878,7 +1041,9 @@ app.post('/estrellas-fijas', requireLogin, async (req, res) => {
       language: 'es',
     });
 
-    res.json({ estrellas: respuesta.data });
+    const r = { estrellas: respuesta.data };
+    cacheSet(cacheKey, r, TTL.ESTRELLAS);
+    res.json(r);
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudieron calcular las estrellas fijas.', detalle_tecnico: err?.response?.data || err.message });
@@ -892,7 +1057,7 @@ app.post('/energia-del-dia', requireLogin, async (req, res) => {
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
     const hoy = new Date();
-    const cacheKey = cacheHash(req.userId, 'energia', hoy.toISOString().slice(0, 10));
+    const cacheKey = cacheHash(req.userId, 'energia', hoyStr());
     const cached = cacheGet(cacheKey);
     if (cached) return res.json(cached);
 
@@ -928,7 +1093,7 @@ app.post('/horoscopo-diario', requireLogin, async (req, res) => {
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
     const hoy = new Date().toISOString().slice(0, 10);
-    const cacheKey = cacheHash(req.userId, 'horoscopo', hoy);
+    const cacheKey = cacheHash(req.userId, 'horoscopo', hoyStr());
     const cached = cacheGet(cacheKey);
     if (cached) return res.json(cached);
 
@@ -980,7 +1145,7 @@ app.post('/transitos-personales', requireLogin, async (req, res) => {
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
     const hoy = new Date();
-    const cacheKey = cacheHash(req.userId, 'transitos', hoy.toISOString().slice(0, 13));
+    const cacheKey = cacheHash(req.userId, 'transitos', horaStr());
     const cached = cacheGet(cacheKey);
     if (cached) return res.json(cached);
 
@@ -998,7 +1163,25 @@ app.post('/transitos-personales', requireLogin, async (req, res) => {
       report_options: { tradition: 'psychological', language: 'es' },
     });
 
-    const respuestaTransitos = { transitos: respuesta.data };
+    // Deduplicar: si el mismo planeta+aspecto+punto aparece varios días seguidos,
+    // solo mostrar el de orbe más pequeño (el más exacto)
+    const eventos = respuesta.data?.data?.events || respuesta.data?.events || [];
+    const vistos = new Map();
+    eventos.forEach(ev => {
+      const clave = `${ev.transiting_planet}-${ev.aspect_type}-${ev.natal_planet || ev.stationed_planet}`;
+      const orbeAbs = Math.abs(ev.orb || 99);
+      if (!vistos.has(clave) || orbeAbs < Math.abs(vistos.get(clave).orb || 99)) {
+        vistos.set(clave, ev);
+      }
+    });
+    const eventosUnicos = Array.from(vistos.values());
+
+    // Inyectar los eventos deduplicados de vuelta en la respuesta
+    const datosLimpios = { ...respuesta.data };
+    if (datosLimpios?.data?.events) datosLimpios.data.events = eventosUnicos;
+    else if (datosLimpios?.events) datosLimpios.events = eventosUnicos;
+
+    const respuestaTransitos = { transitos: datosLimpios };
     cacheSet(cacheKey, respuestaTransitos, TTL.TRANSITOS_PERSONALES);
     res.json(respuestaTransitos);
   } catch (err) {
@@ -1161,7 +1344,134 @@ app.delete('/diario/:id', requireLogin, async (req, res) => {
   }
 });
 
+// ============================================================
+// BIBLIOTECA DE CONOCIMIENTO (lectura pública, escritura solo admin)
+// SQL:
+// create table if not exists biblioteca (
+//   id uuid primary key default gen_random_uuid(),
+//   titulo text not null,
+//   categoria text,
+//   contenido text,
+//   fuente text,
+//   activo boolean default true,
+//   created_at timestamptz default now()
+// );
+// ============================================================
+
+app.get('/biblioteca', requireLogin, async (req, res) => {
+  try {
+    const categoria = req.query.categoria || null;
+    let query = supabase.from('biblioteca').select('id, titulo, categoria, fuente, created_at').eq('activo', true).order('created_at', { ascending: false });
+    if (categoria) query = query.eq('categoria', categoria);
+    const { data, error } = await query.limit(50);
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ articulos: data || [] });
+  } catch (err) {
+    res.status(500).json({ error: 'No se pudo cargar la biblioteca.' });
+  }
+});
+
+app.get('/biblioteca/:id', requireLogin, async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('biblioteca').select('*').eq('id', req.params.id).eq('activo', true).single();
+    if (error || !data) return res.status(404).json({ error: 'Artículo no encontrado.' });
+    res.json({ articulo: data });
+  } catch (err) {
+    res.status(500).json({ error: 'No se pudo cargar el artículo.' });
+  }
+});
+
+// Solo admin puede agregar (verificar email de Samantha)
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'shernsndez.22@gmail.com';
+app.post('/biblioteca', requireLogin, async (req, res) => {
+  try {
+    const perfil = await leerPerfil(req);
+    if (!perfil) return res.status(401).json({ error: 'No autorizado.' });
+    // Verificar que es admin
+    const { data: usuario } = await supabase.auth.admin.getUserById(req.userId).catch(() => ({ data: null }));
+    const esAdmin = usuario?.user?.email === ADMIN_EMAIL || req.userEmail === ADMIN_EMAIL;
+    if (!esAdmin) return res.status(403).json({ error: 'Solo la administradora puede agregar contenido.' });
+
+    const { titulo, categoria, contenido, fuente } = req.body;
+    if (!titulo?.trim() || !contenido?.trim()) return res.status(400).json({ error: 'Faltan título y contenido.' });
+
+    const { data, error } = await supabase.from('biblioteca').insert({ titulo: titulo.trim(), categoria: categoria || 'General', contenido: contenido.trim(), fuente: fuente || null }).select().single();
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ articulo: data });
+  } catch (err) {
+    res.status(500).json({ error: 'No se pudo guardar.' });
+  }
+});
+
+app.delete('/biblioteca/:id', requireLogin, async (req, res) => {
+  try {
+    const { data: usuario } = await supabase.auth.admin.getUserById(req.userId).catch(() => ({ data: null }));
+    const esAdmin = usuario?.user?.email === ADMIN_EMAIL || req.userEmail === ADMIN_EMAIL;
+    if (!esAdmin) return res.status(403).json({ error: 'Solo la administradora puede eliminar contenido.' });
+    await supabase.from('biblioteca').update({ activo: false }).eq('id', req.params.id);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'No se pudo eliminar.' });
+  }
+});
+
 app.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  let evento;
+  try {
+    evento = webhookSecret
+      ? stripe.webhooks.constructEvent(req.body, sig, webhookSecret)
+      : JSON.parse(req.body.toString());
+  } catch (err) {
+    console.error('Webhook error:', err.message);
+    return res.status(400).json({ error: err.message });
+  }
+
+  const sb = supabase; // cliente admin para webhooks
+
+  try {
+    switch (evento.type) {
+      case 'checkout.session.completed': {
+        const session = evento.data.object;
+        const userId = session.metadata?.user_id;
+        if (userId && session.subscription) {
+          await sb.from('subscriptions').upsert({
+            user_id: userId,
+            stripe_customer_id: session.customer,
+            stripe_subscription_id: session.subscription,
+            estado: 'activa',
+          }, { onConflict: 'user_id' });
+        }
+        break;
+      }
+      case 'customer.subscription.updated': {
+        const sub = evento.data.object;
+        const { data: perfil } = await sb.from('subscriptions').select('user_id').eq('stripe_subscription_id', sub.id).maybeSingle();
+        if (perfil) {
+          const estado = sub.status === 'active' ? 'activa' : sub.status === 'past_due' ? 'vencida' : 'cancelada';
+          await sb.from('subscriptions').update({ estado }).eq('stripe_subscription_id', sub.id);
+        }
+        break;
+      }
+      case 'customer.subscription.deleted': {
+        const sub = evento.data.object;
+        await sb.from('subscriptions').update({ estado: 'cancelada' }).eq('stripe_subscription_id', sub.id);
+        break;
+      }
+      case 'invoice.payment_failed': {
+        const invoice = evento.data.object;
+        if (invoice.subscription) {
+          await sb.from('subscriptions').update({ estado: 'vencida' }).eq('stripe_subscription_id', invoice.subscription);
+        }
+        break;
+      }
+    }
+  } catch (err) {
+    console.error('Webhook processing error:', err.message);
+  }
+
   res.json({ recibido: true });
 });
 
