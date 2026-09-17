@@ -634,21 +634,19 @@
 
           <div class="section" data-tab="hoy" id="seccion-carta-natal">
             <h2>Tu carta natal</h2>
-            <div class="desc" id="carta-desc">Swiss Ephemeris · precisión profesional</div>
             <div class="calc-form">
+              <!-- Botones siempre visibles -->
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-                <button class="btn-primary" id="btn-calcular-carta" onclick="calcularCartaReal()" style="font-size:12.5px;padding:10px 8px;">Ver mi carta</button>
-                <button class="btn-primary" onclick="verResumenNatal()" style="background:var(--marigold);font-size:12.5px;padding:10px 8px;">Mi personalidad</button>
+                <button class="btn-primary" id="btn-calcular-carta" onclick="calcularCartaReal()" style="font-size:12px;padding:10px 6px;">Ver mi carta</button>
+                <button class="btn-primary" onclick="verResumenNatal()" style="background:var(--marigold);font-size:12px;padding:10px 6px;">Mi personalidad</button>
               </div>
-              <button class="btn-primary" id="btn-carta-visual" style="background:var(--lilac);width:100%;margin-bottom:8px;" onclick="verCartaVisual()">Ver carta en rueda 🔮</button>
-              <div id="resumen-natal-contenedor" style="margin-top:2px;"></div>
-              <div id="carta-visual-contenedor" style="margin-top:8px;cursor:pointer;" onclick="verEnGrande()"></div>
-              <div class="desc" style="text-align:center;margin-top:4px;" id="zoom-hint"></div>
-              <div class="calc-result" id="calc-result">
-                <div class="calc-result-title">Tu resultado</div>
-                <div class="chip-list" style="margin-bottom:0;" id="carta-resultado-chips"></div>
-              </div>
+              <button class="btn-primary" id="btn-carta-visual" style="background:var(--lilac);width:100%;margin-bottom:8px;" onclick="verCartaVisual()">Ver en rueda 🔮</button>
             </div>
+            <!-- Resultados FUERA del calc-form para que cerrar no rompa los botones -->
+            <div id="carta-resultado-chips" style="margin-top:8px;"></div>
+            <div id="resumen-natal-contenedor" style="margin-top:8px;"></div>
+            <div id="carta-visual-contenedor" style="margin-top:8px;cursor:pointer;" onclick="verEnGrande()"></div>
+            <div id="zoom-hint" style="font-size:11.5px;color:var(--ink-dim);text-align:center;margin-top:4px;"></div>
           </div>
 
           <div class="section" data-tab="ciclos">
@@ -1576,10 +1574,7 @@
   }
 
   function renderizarInforme(objeto, idContenedor) {
-    const botonCerrar = idContenedor ? `
-      <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
-        <button onclick="document.getElementById('${idContenedor}').innerHTML='';" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button>
-      </div>` : '';
+    const botonCerrar = '';  // cada función maneja su propio cerrar
 
     // Caso especial: Numerología (pythagorean)
     const numero = objeto?.data?.pythagorean;
@@ -2526,7 +2521,6 @@
   async function calcularCartaReal(silencioso = false) {
     const boton = document.getElementById('btn-calcular-carta');
     const chips = document.getElementById('carta-resultado-chips');
-    const resultBox = document.getElementById('calc-result');
     if (!silencioso) { boton.textContent = 'Calculando...'; boton.disabled = true; }
     try {
       const r = await fetchAuth('/carta-natal', { method: 'POST', headers: {} });
@@ -2556,17 +2550,14 @@
         }
         chips.innerHTML = htmlSimple + `<div id="carta-detalle-tecnico" class="detalle-tecnico-oculto">${html}</div>`;
         if (data.desde_cache) chips.innerHTML += '';
-        resultBox.classList.add('show');
         // Si viene de caché, también cargamos la banda del home con los datos reales
         if (data.desde_cache) actualizarBandaConCartaReal();
       } else if (!silencioso) {
         chips.innerHTML = `<pre style="white-space:pre-wrap;font-size:9px;color:var(--plum);padding:8px;">${JSON.stringify(data.carta?.datos_carta, null, 2)}</pre>`;
-        resultBox.classList.add('show');
       }
     } catch (err) {
       if (!silencioso) {
         chips.innerHTML = `<div class="row" style="color:#a5442f;">${err.message}</div>`;
-        resultBox.classList.add('show');
       }
     }
     if (!silencioso) { boton.textContent = 'Calcular mi carta natal'; boton.disabled = false; }
