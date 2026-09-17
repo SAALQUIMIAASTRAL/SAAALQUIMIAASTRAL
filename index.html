@@ -2564,7 +2564,11 @@
   async function calcularCartaReal(silencioso = false) {
     const boton = document.getElementById('btn-calcular-carta');
     const chips = document.getElementById('carta-resultado-chips');
-    if (!silencioso) { boton.textContent = 'Calculando...'; boton.disabled = true; }
+    if (!silencioso) {
+      boton.textContent = 'Calculando...'; boton.disabled = true;
+      const rn = document.getElementById('resumen-natal-contenedor'); if (rn) rn.innerHTML = '';
+      const cv = document.getElementById('carta-visual-contenedor'); if (cv) cv.innerHTML = '';
+    }
     try {
       const r = await fetchAuth('/carta-natal', { method: 'POST', headers: {} });
       const data = await r.json();
@@ -2609,6 +2613,8 @@
   async function verCartaVisual() {
     const boton = document.getElementById('btn-carta-visual');
     const contenedor = document.getElementById('carta-visual-contenedor');
+    const chips = document.getElementById('carta-resultado-chips'); if (chips) chips.innerHTML = '';
+    const rn = document.getElementById('resumen-natal-contenedor'); if (rn) rn.innerHTML = '';
     boton.textContent = 'Generando tu rueda...';
     boton.disabled = true;
     try {
@@ -2989,6 +2995,8 @@
 
   async function verResumenNatal() {
     const contenedor = document.getElementById('resumen-natal-contenedor');
+    const chips = document.getElementById('carta-resultado-chips'); if (chips) chips.innerHTML = '';
+    const cv = document.getElementById('carta-visual-contenedor'); if (cv) cv.innerHTML = '';
     contenedor.innerHTML = '<div class="disclaimer">Generando tu resumen...</div>';
     try {
       const r = await fetchAuth('/resumen-natal', { method: 'POST', headers: {} });
