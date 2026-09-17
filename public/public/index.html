@@ -634,21 +634,19 @@
 
           <div class="section" data-tab="hoy" id="seccion-carta-natal">
             <h2>Tu carta natal</h2>
-            <div class="desc" id="carta-desc">Swiss Ephemeris · precisión profesional</div>
             <div class="calc-form">
+              <!-- Botones siempre visibles -->
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-                <button class="btn-primary" id="btn-calcular-carta" onclick="calcularCartaReal()" style="font-size:12.5px;padding:10px 8px;">Ver mi carta</button>
-                <button class="btn-primary" onclick="verResumenNatal()" style="background:var(--marigold);font-size:12.5px;padding:10px 8px;">Mi personalidad</button>
+                <button class="btn-primary" id="btn-calcular-carta" onclick="calcularCartaReal()" style="font-size:12px;padding:10px 6px;">Ver mi carta</button>
+                <button class="btn-primary" onclick="verResumenNatal()" style="background:var(--marigold);font-size:12px;padding:10px 6px;">Mi personalidad</button>
               </div>
-              <button class="btn-primary" id="btn-carta-visual" style="background:var(--lilac);width:100%;margin-bottom:8px;" onclick="verCartaVisual()">Ver carta en rueda 🔮</button>
-              <div id="resumen-natal-contenedor" style="margin-top:2px;"></div>
-              <div id="carta-visual-contenedor" style="margin-top:8px;cursor:pointer;" onclick="verEnGrande()"></div>
-              <div class="desc" style="text-align:center;margin-top:4px;" id="zoom-hint"></div>
-              <div class="calc-result" id="calc-result">
-                <div class="calc-result-title">Tu resultado</div>
-                <div class="chip-list" style="margin-bottom:0;" id="carta-resultado-chips"></div>
-              </div>
+              <button class="btn-primary" id="btn-carta-visual" style="background:var(--lilac);width:100%;margin-bottom:8px;" onclick="verCartaVisual()">Ver en rueda 🔮</button>
             </div>
+            <!-- Resultados FUERA del calc-form para que cerrar no rompa los botones -->
+            <div id="carta-resultado-chips" style="margin-top:8px;"></div>
+            <div id="resumen-natal-contenedor" style="margin-top:8px;"></div>
+            <div id="carta-visual-contenedor" style="margin-top:8px;cursor:pointer;" onclick="verEnGrande()"></div>
+            <div id="zoom-hint" style="font-size:11.5px;color:var(--ink-dim);text-align:center;margin-top:4px;"></div>
           </div>
 
           <div class="section" data-tab="ciclos">
@@ -664,11 +662,14 @@
             <div style="margin-bottom:10px;">
               <textarea id="diario-texto" placeholder="¿Cómo te sientes hoy? ¿Qué quieres recordar de este momento astrológico?" style="width:100%;min-height:90px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:var(--paper);resize:vertical;box-sizing:border-box;"></textarea>
             </div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;" id="diario-animo-btns">
-              <span style="font-size:11.5px;color:var(--ink-dim);align-self:center;">Estado:</span>
-              ${['🌟 Inspirada','😌 En paz','🤔 Reflexiva','😤 Tensa','🌊 Emocional','💪 Con energía'].map(e => `
-                <button onclick="seleccionarAnimo(this,'${e}')" style="background:var(--marigold-soft);border:1px solid var(--line);border-radius:100px;padding:4px 10px;font-size:11.5px;color:var(--plum);cursor:pointer;">${e}</button>
-              `).join('')}
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;" id="diario-animo-btns">
+              <span style="font-size:11.5px;color:var(--ink-dim);align-self:center;width:100%;margin-bottom:2px;">¿Cómo estás hoy?</span>
+              <button onclick="seleccionarAnimo(this,'🌟 Inspirada')" style="background:var(--marigold-soft);border:1px solid var(--line);border-radius:100px;padding:5px 10px;font-size:11.5px;color:var(--plum);cursor:pointer;">🌟 Inspirada</button>
+              <button onclick="seleccionarAnimo(this,'😌 En paz')" style="background:var(--marigold-soft);border:1px solid var(--line);border-radius:100px;padding:5px 10px;font-size:11.5px;color:var(--plum);cursor:pointer;">😌 En paz</button>
+              <button onclick="seleccionarAnimo(this,'🤔 Reflexiva')" style="background:var(--marigold-soft);border:1px solid var(--line);border-radius:100px;padding:5px 10px;font-size:11.5px;color:var(--plum);cursor:pointer;">🤔 Reflexiva</button>
+              <button onclick="seleccionarAnimo(this,'😤 Tensa')" style="background:var(--marigold-soft);border:1px solid var(--line);border-radius:100px;padding:5px 10px;font-size:11.5px;color:var(--plum);cursor:pointer;">😤 Tensa</button>
+              <button onclick="seleccionarAnimo(this,'🌊 Emocional')" style="background:var(--marigold-soft);border:1px solid var(--line);border-radius:100px;padding:5px 10px;font-size:11.5px;color:var(--plum);cursor:pointer;">🌊 Emocional</button>
+              <button onclick="seleccionarAnimo(this,'💪 Con energía')" style="background:var(--marigold-soft);border:1px solid var(--line);border-radius:100px;padding:5px 10px;font-size:11.5px;color:var(--plum);cursor:pointer;">💪 Con energía</button>
             </div>
             <input type="hidden" id="diario-animo-val">
             <button class="btn-primary" onclick="guardarDiario()">Guardar en mi diario</button>
@@ -679,7 +680,7 @@
 
           <div class="section" data-tab="ciclos">
             <h2>Próximos eclipses</h2>
-            <div class="desc">Cómo el próximo eclipse afecta específicamente tu carta natal.</div>
+            <div class="desc">Cómo los próximos eclipses afectan tu carta natal — ordenados por fecha. Se actualiza cada 6 meses.</div>
             <button class="btn-primary" onclick="verEclipses()">Ver cómo me afecta</button>
             <div id="eclipses-resultado" style="margin-top:14px;"></div>
           </div>
@@ -758,7 +759,7 @@
             <h2>Ciclo lunar</h2>
             <div class="desc" id="luna-intro">Qué significa cada fase y cómo aprovecharla.</div>
 
-            <button class="btn-primary" style="margin-bottom:14px;" onclick="cargarLunaReal()">Ver datos lunares reales de hoy</button>
+            <button class="btn-primary" style="margin-bottom:14px;" onclick="cargarLunaReal()">Ver mi luna de hoy</button>
             <div id="luna-cruda" style="margin-bottom:14px;"></div>
 
             <div class="moon-now" id="moon-now">
@@ -1418,7 +1419,10 @@
       if (!r.ok) throw new Error(data.error || 'No se pudo consultar.');
       if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
 
-      const importantes = data.como_te_afecta?.data?.impactful_eclipses;
+      const hoyTs = new Date().getTime();
+      const importantes = (data.como_te_afecta?.data?.impactful_eclipses || [])
+        .filter(e => e.date)
+        .sort((a,b) => new Date(a.date) - new Date(b.date));
       const listaConPosicion = data.proximos_eclipses?.data?.eclipses || [];
       const posicionesPorId = {};
       listaConPosicion.forEach(e => { posicionesPorId[e.eclipse_id] = e.zodiac_position; });
@@ -1576,10 +1580,7 @@
   }
 
   function renderizarInforme(objeto, idContenedor) {
-    const botonCerrar = idContenedor ? `
-      <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
-        <button onclick="document.getElementById('${idContenedor}').innerHTML='';" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button>
-      </div>` : '';
+    const botonCerrar = '';  // cada función maneja su propio cerrar
 
     // Caso especial: Numerología (pythagorean)
     const numero = objeto?.data?.pythagorean;
@@ -2526,7 +2527,6 @@
   async function calcularCartaReal(silencioso = false) {
     const boton = document.getElementById('btn-calcular-carta');
     const chips = document.getElementById('carta-resultado-chips');
-    const resultBox = document.getElementById('calc-result');
     if (!silencioso) { boton.textContent = 'Calculando...'; boton.disabled = true; }
     try {
       const r = await fetchAuth('/carta-natal', { method: 'POST', headers: {} });
@@ -2556,17 +2556,14 @@
         }
         chips.innerHTML = htmlSimple + `<div id="carta-detalle-tecnico" class="detalle-tecnico-oculto">${html}</div>`;
         if (data.desde_cache) chips.innerHTML += '';
-        resultBox.classList.add('show');
         // Si viene de caché, también cargamos la banda del home con los datos reales
         if (data.desde_cache) actualizarBandaConCartaReal();
       } else if (!silencioso) {
         chips.innerHTML = `<pre style="white-space:pre-wrap;font-size:9px;color:var(--plum);padding:8px;">${JSON.stringify(data.carta?.datos_carta, null, 2)}</pre>`;
-        resultBox.classList.add('show');
       }
     } catch (err) {
       if (!silencioso) {
         chips.innerHTML = `<div class="row" style="color:#a5442f;">${err.message}</div>`;
-        resultBox.classList.add('show');
       }
     }
     if (!silencioso) { boton.textContent = 'Calcular mi carta natal'; boton.disabled = false; }
@@ -2865,7 +2862,7 @@
     try {
       const r = await fetchAuth('/carta-compuesta', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + SESION.token },
         body: JSON.stringify(cuerpo),
       });
       const data = await r.json();
@@ -2933,7 +2930,7 @@
     try {
       const r = await fetchAuth('/sinastria', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + SESION.token },
         body: JSON.stringify(cuerpo),
       });
       const data = await r.json();
@@ -3038,7 +3035,21 @@
       if (data.luna?.data?.interpretations?.length > 3) {
         data.luna.data.interpretations = data.luna.data.interpretations.slice(0, 3);
       }
-      contenedor.innerHTML = resumenHtml + renderizarInforme(data.luna, 'luna-cruda');
+      // Consejo práctico según la fase lunar
+      const CONSEJOS_FASE = {
+        'New Moon':'🌑 Luna Nueva — siembra intenciones. Ideal para iniciar proyectos y hacer listas de deseos.',
+        'Waxing Crescent':'🌒 Luna Creciente — construye impulso. Toma acción sobre lo que iniciaste.',
+        'First Quarter':'🌓 Cuarto Creciente — supera obstáculos. Empuja con decisión.',
+        'Waxing Gibbous':'🌔 Gibosa Creciente — refina y ajusta antes de la Luna Llena.',
+        'Full Moon':'🌕 Luna Llena — máxima energía. Lo que sembraste se hace visible. Celebra y suelta.',
+        'Waning Gibbous':'🌖 Gibosa Menguante — comparte lo aprendido en este ciclo.',
+        'Last Quarter':'🌗 Cuarto Menguante — suelta y cierra. Haz espacio para lo nuevo.',
+        'Waning Crescent':'🌘 Luna Menguante — descansa y reflexiona. Pronto empieza un ciclo nuevo.',
+      };
+      const faseLunaHoy = data.luna?.data?.lunar_metrics?.moon_phase || '';
+      const consejoDia = CONSEJOS_FASE[faseLunaHoy] || '';
+      const consejoHtml = consejoDia ? `<div style="background:linear-gradient(135deg,var(--blush-2),var(--blush-1));border-radius:12px;padding:12px 14px;color:#fff;margin-bottom:10px;font-size:12.5px;line-height:1.6;">${consejoDia}</div>` : '';
+      contenedor.innerHTML = consejoHtml + resumenHtml + renderizarInforme(data.luna, 'luna-cruda');
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }
@@ -3214,11 +3225,23 @@
       const data = await r.json();
       const s = data.carta?.datos_carta?.subject_data;
       const cd = data.carta?.datos_carta?.chart_data;
-      if (s?.sun?.sign) document.getElementById('banda-sol').textContent = signoEs(s.sun.sign) + (s.sun.position ? ' ' + Math.floor(s.sun.position) + '°' : '');
-      if (s?.moon?.sign) document.getElementById('banda-luna').textContent = signoEs(s.moon.sign) + (s.moon.position ? ' ' + Math.floor(s.moon.position) + '°' : '');
-      const asc = cd?.planetary_positions?.find(p => p.name === 'Ascendant');
-      if (asc?.sign) document.getElementById('banda-asc').textContent = signoEs(asc.sign) + (asc.degree ? ' ' + Math.floor(asc.degree) + '°' : '');
-    } catch (e) { /* silencioso: se queda con el texto de ejemplo si falla */ }
+
+      // Solo actualizar si hay datos reales — nunca mostrar planetas extra
+      const posiciones = cd?.planetary_positions || [];
+      const buscar = (nombre) => posiciones.find(p => p.name === nombre);
+
+      const sol = buscar('Sun') || (s?.sun ? { sign: s.sun.sign, degree: s.sun.position } : null);
+      const luna = buscar('Moon') || (s?.moon ? { sign: s.moon.sign, degree: s.moon.position } : null);
+      const asc = buscar('Ascendant');
+
+      const elSol = document.getElementById('banda-sol');
+      const elLuna = document.getElementById('banda-luna');
+      const elAsc = document.getElementById('banda-asc');
+
+      if (sol?.sign && elSol) elSol.textContent = signoEs(sol.sign) + (sol.degree ? ' ' + Math.floor(sol.degree) + '°' : '');
+      if (luna?.sign && elLuna) elLuna.textContent = signoEs(luna.sign) + (luna.degree ? ' ' + Math.floor(luna.degree) + '°' : '');
+      if (asc?.sign && elAsc) elAsc.textContent = signoEs(asc.sign) + (asc.degree ? ' ' + Math.floor(asc.degree) + '°' : '');
+    } catch (e) { /* silencioso */ }
   }
 
   // ---- Función global de cerrar sección ----
