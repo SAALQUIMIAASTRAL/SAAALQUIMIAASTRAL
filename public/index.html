@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v80-nodo-norte -->
+<!-- VERSION-APP: v82-analisis-personalizado -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -614,7 +614,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v80-nodo-norte</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v82-analisis-personalizado</div>
         </div>
 
         <div class="topbar">
@@ -1067,13 +1067,19 @@
       }
 
       const _cerrar_acg = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('acg-mapa').innerHTML='';document.getElementById('acg-lines').innerHTML='';document.getElementById('acg-zoom-hint').textContent='';" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
+      if (data.analisis_personalizado) {
+        htmlLineas += `<div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin-bottom:8px;">Qué significan estos lugares para ti</div>`;
+        htmlLineas += renderizarInforme(data.analisis_personalizado, null);
+        htmlLineas += '<div style="font-family:\'Cormorant Garamond\',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin:14px 0 8px;">Qué significa cada línea</div>';
+      }
+
       if (data.lineas && data.lineas.length) {
         htmlLineas += data.lineas.slice(0, 6).map(l => `
           <div class="acg-line">
             <div class="em">${iconos[l.planet] || '✨'}</div>
             <div>
               <div class="cat">${planetasEs[l.planet] || l.planet} · ${lineasEs[l.line_type] || l.line_type}</div>
-              <p>${l.meaning || ''}</p>
+              <p>${limpiarTextoAPI(l.meaning) || ''}</p>
             </div>
           </div>
         `).join('');
@@ -2938,10 +2944,17 @@
       const botonCerrar = `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button onclick="cerrar('compuesta-resultado')" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
 
       let html = '';
+
+      // Reseña narrativa de la unión (si el servidor la generó)
+      if (data.reseña) {
+        html += `<div class="etiqueta-seccion">Qué representa esta unión</div>`;
+        html += renderizarInforme(data.reseña, null);
+      }
+
       // Carta compuesta — posiciones
       const cd = data.carta_compuesta?.chart_data || data.carta_compuesta?.data?.chart_data;
       if (cd?.planetary_positions?.length) {
-        html += `<div class="etiqueta-seccion">Carta compuesta (punto medio)</div>`;
+        html += `<div class="etiqueta-seccion" style="margin-top:12px;">Carta compuesta (punto medio)</div>`;
         html += cd.planetary_positions.map(p => `
           <div class="carta-real-row">${nombrePlanetaEs(p.name)} en <b>${signoEs(p.sign)} ${p.degree !== undefined ? Math.floor(p.degree)+'°' : ''}</b>${p.house ? ` <span style="color:var(--ink-dim);font-size:11px;">Casa ${p.house}</span>` : ''}</div>
         `).join('');
