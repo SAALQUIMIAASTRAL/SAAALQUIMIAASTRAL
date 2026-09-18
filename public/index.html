@@ -1066,6 +1066,7 @@
         htmlLineas += '<div style="font-family:\'Cormorant Garamond\',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin:14px 0 8px;">Qué significa cada línea</div>';
       }
 
+      const _cerrar_acg = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('acg-mapa').innerHTML='';document.getElementById('acg-lines').innerHTML='';document.getElementById('acg-zoom-hint').textContent='';" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
       if (data.lineas && data.lineas.length) {
         htmlLineas += data.lineas.slice(0, 6).map(l => `
           <div class="acg-line">
@@ -1076,11 +1077,11 @@
             </div>
           </div>
         `).join('');
-        contenedorLineas.innerHTML = htmlLineas;
+        contenedorLineas.innerHTML = _cerrar_acg + htmlLineas;
       } else if (htmlLineas) {
-        contenedorLineas.innerHTML = htmlLineas;
+        contenedorLineas.innerHTML = _cerrar_acg + htmlLineas;
       } else {
-        contenedorLineas.innerHTML = '<div class="disclaimer">No se encontraron líneas para mostrar.</div>';
+        contenedorLineas.innerHTML = _cerrar_acg + '<div class="disclaimer">No se encontraron líneas para mostrar.</div>';
       }
     } catch (err) {
       contenedorLineas.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
@@ -1686,7 +1687,7 @@
       Object.keys(numero).forEach(clave => {
         const item = numero[clave];
         if (item && typeof item === 'object' && item.number !== undefined) {
-          const etiqueta = NUMEROS_ES[clave] || prettificarClave(clave);
+          const etiqueta = NUMEROS_ES[clave] || NUMEROS_ES[clave.replace(/_number$/i, '')] || prettificarClave(clave);
           const n = item.number;
           const frase = (FRASES_POR_TIPO[clave] && FRASES_POR_TIPO[clave][n]) || FRASES_GENERICAS[n] || '';
           htmlNum += `
