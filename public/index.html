@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v78-disenio-transitos -->
+<!-- VERSION-APP: v80-nodo-norte -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -614,7 +614,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v78-disenio-transitos</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v80-nodo-norte</div>
         </div>
 
         <div class="topbar">
@@ -2480,6 +2480,7 @@
     Sun:'☉ Sol', Moon:'☽ Luna', Mercury:'☿ Mercurio', Venus:'♀ Venus', Mars:'♂ Marte',
     Jupiter:'♃ Júpiter', Saturn:'♄ Saturno', Uranus:'♅ Urano', Neptune:'♆ Neptuno', Pluto:'♇ Plutón',
     Chiron:'⚷ Quirón', 'N. Node (M)':'☊ Nodo Norte', 'S. Node (M)':'☋ Nodo Sur', Lilith:'⚸ Lilith',
+    Mean_Node:'☊ Nodo Norte', Mean_South_Node:'☋ Nodo Sur',
     Ascendant:'↑ Ascendente', Medium_Coeli:'⬆ Medio Cielo',
   };
   function nombrePlanetaEs(n) { return NOMBRES_PLANETAS_ES[n] || n; }
@@ -2739,7 +2740,7 @@
                   <span style="font-size:13px;color:#2D1B4E;font-weight:500;">${nombre}${p.retrograde ? ' <span style="color:#a5442f;font-size:10.5px;font-weight:700;" title="Retrógrado">R</span>' : ''}</span>
                 </span>
                 <span style="display:flex;align-items:center;gap:7px;">
-                  <span style="width:22px;height:22px;flex:none;border-radius:50%;background:${colorTextoSigno(p.sign)};color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;">${glifoSigno(p.sign)}</span>
+                  <span style="width:12px;height:12px;flex:none;border-radius:50%;background:${colorTextoSigno(p.sign)};"></span>
                   <span style="font-size:12.5px;font-weight:600;color:var(--ink-dim);">${gradoStr}</span>
                   <span style="font-size:12.5px;font-weight:700;color:${colorTextoSigno(p.sign)};">${signoEs(p.sign)}</span>
                 </span>
