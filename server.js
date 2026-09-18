@@ -985,6 +985,7 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
     const PUNTOS_EXITO = ['Sun', 'Venus', 'Jupiter', 'Medium_Coeli', 'Midheaven', 'MC', 'Ascendant'];
     let diasPoderPersonal = {};
     let diasPoderError = null;
+    let diasPoderDiagnostico = null;
     const eventosMes = transitosMes?.data?.data?.events || transitosMes?.data?.events || null;
     if (transitosMes?._error_debug) {
       diasPoderError = transitosMes._error_debug;
@@ -1004,6 +1005,14 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
         diasPoderPersonal[diaNum] = diasPoderPersonal[diaNum] || [];
         diasPoderPersonal[diaNum].push(`${ev.transiting_planet} en ${aspecto} con tu ${ev.natal_planet} natal`);
       });
+      // Diagnóstico temporal: si no encontramos ningún día, mostrar por qué (cuántos eventos había y cómo se ven)
+      if (Object.keys(diasPoderPersonal).length === 0) {
+        diasPoderDiagnostico = {
+          total_eventos_recibidos: eventosMes.length,
+          ejemplo_primer_evento: eventosMes[0] || null,
+          ejemplo_ultimo_evento: eventosMes[eventosMes.length - 1] || null,
+        };
+      }
     } else if (perfil) {
       diasPoderError = 'La respuesta no tuvo el campo "events" esperado. Estructura recibida: ' + JSON.stringify(Object.keys(transitosMes?.data || {}));
     }
@@ -1012,6 +1021,7 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
       mes, anio, calendario, detalle_dias: resultados, mercurio_retrogrado: mercurioRetrogrado,
       dias_poder_personal: diasPoderPersonal,
       dias_poder_personal_error: diasPoderError,
+      dias_poder_personal_diagnostico: diasPoderDiagnostico,
     });
   } catch (err) {
     console.error(err?.response?.data || err.message);
