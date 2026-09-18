@@ -517,7 +517,7 @@ app.post('/astrocartografia', requireLogin, async (req, res) => {
         subject: datosSubject,
         map_options: {
           planets: ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto', 'Mean_Node'],
-          line_types: ['AC', 'MC'],
+          line_types: ['AC', 'MC', 'DC', 'IC'],
           map_projection: 'mercator',
         },
         visual_options: {
