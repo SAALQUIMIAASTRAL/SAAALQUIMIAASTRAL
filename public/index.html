@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v85-ds-fix -->
+<!-- VERSION-APP: v87-dias-poder-personal -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -614,7 +614,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v85-ds-fix</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v87-dias-poder-personal</div>
         </div>
 
         <div class="topbar">
@@ -826,6 +826,7 @@
             <div class="desc">La Luna influye en todo. Aquí las fechas del mes donde la energía favorece cada tipo de acción.</div>
             <button class="btn-primary" style="margin-bottom:10px;" onclick="calcularCalendarioLunar(this)">Ver fechas exactas de este mes</button>
             <div id="aviso-mercurio-retro"></div>
+            <div id="dias-poder-personal"></div>
 
             <div class="day-item">
               <div class="ic">✂️</div>
@@ -1054,13 +1055,21 @@
       let htmlLineas = '';
 
       // Ciudades destacadas (lo más concreto y útil)
+      function traducirNombresPlanetasEnFrase(texto) {
+        if (!texto) return texto;
+        let resultado = texto;
+        Object.keys(PLANETAS_SOLO_NOMBRE_ES).forEach(en => {
+          resultado = resultado.replace(new RegExp('\\b' + en + '\\b', 'g'), PLANETAS_SOLO_NOMBRE_ES[en]);
+        });
+        return resultado;
+      }
       const ciudadesBuenas = (data.ciudades || []).filter(c => c.in_power_zone).sort((a, b) => (b.power_zone_strength || 0) - (a.power_zone_strength || 0)).slice(0, 6);
       if (ciudadesBuenas.length) {
         htmlLineas += `<div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin-bottom:8px;">📍 Ciudades donde tu energía se activa más</div>`;
         htmlLineas += ciudadesBuenas.map(c => `
           <div class="card-lectura">
             <div class="card-titulo">${c.name}, ${c.country}</div>
-            <div class="card-cuerpo" style="color:var(--ink-dim);">Cerca de tu línea de ${c.closest_line || 'energía activa'}</div>
+            <div class="card-cuerpo" style="color:var(--ink-dim);">Cerca de tu línea de ${traducirNombresPlanetasEnFrase(c.closest_line) || 'energía activa'}</div>
           </div>
         `).join('');
         htmlLineas += '<div style="font-family:\'Cormorant Garamond\',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin:14px 0 8px;">Qué significa cada línea</div>';
@@ -3073,6 +3082,30 @@
         avisoMercurio.innerHTML = '<div class="disclaimer" style="background:#fbe6e3;color:#a5442f;border-radius:10px;padding:10px 12px;margin-bottom:12px;">☿ Mercurio está retrógrado este mes — mejor revisar dos veces contratos, mensajes importantes y acuerdos antes de firmar.</div>';
       } else {
         avisoMercurio.innerHTML = '';
+      }
+
+      // Días de poder personal — cruzando tu carta natal real
+      const contenedorPersonal = document.getElementById('dias-poder-personal');
+      const diasPersonal = data.dias_poder_personal || {};
+      const clavesDias = Object.keys(diasPersonal).map(Number).sort((a, b) => a - b);
+      if (clavesDias.length) {
+        contenedorPersonal.innerHTML = `
+          <div class="card-lectura" style="background:var(--marigold-soft);border:1px solid var(--marigold-mid);margin-bottom:14px;">
+            <div class="card-titulo">✨ Tus días de poder personal en ${nombreMes}</div>
+            <div class="card-cuerpo" style="color:var(--ink-dim);margin-bottom:8px;">Calculado cruzando los tránsitos del mes con tu carta natal real — estos días específicos son buenos para ti, no genéricos.</div>
+            ${clavesDias.map(dia => `
+              <div style="margin-bottom:6px;font-size:12.5px;">
+                <b style="color:var(--marigold-dark);">Día ${dia}:</b>
+                <span style="color:var(--plum);">${diasPersonal[dia].join('; ')}</span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      } else if (data.dias_poder_personal_error) {
+        contenedorPersonal.innerHTML = `<div class="disclaimer" style="color:#a5442f;margin-bottom:14px;">No se pudo calcular tus días de poder personal este mes. <span style="opacity:0.7;font-size:10.5px;">(detalle técnico disponible en consola)</span></div>`;
+        console.error('dias_poder_personal_error:', data.dias_poder_personal_error);
+      } else {
+        contenedorPersonal.innerHTML = `<div class="disclaimer" style="margin-bottom:14px;">Este mes no hay tránsitos especialmente favorables (Sol, Venus o Júpiter en buen ángulo con tu carta) — es un mes más tranquilo, no significa que sea malo.</div>`;
       }
     } catch (err) {
       alert(err.message);
