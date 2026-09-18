@@ -921,6 +921,7 @@ app.post('/eclipses-natal', requireLogin, async (req, res) => {
 // RUTA: Calendario lunar del mes — mejores días específicos por actividad
 app.post('/calendario-lunar', requireLogin, async (req, res) => {
   try {
+    const perfil = await leerPerfil(req);
     const hoy = new Date();
     const anio = hoy.getUTCFullYear();
     const mes = hoy.getUTCMonth() + 1;
@@ -928,13 +929,13 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
 
     const dias = Array.from({ length: diasEnMes }, (_, i) => i + 1);
 
-    const [resultados, chartHoy] = await Promise.all([
+    const [resultados, chartHoy, transitosMes] = await Promise.all([
       Promise.all(dias.map(async (dia) => {
         try {
           const r = await astrologyApi.post('/analysis/lunar-analysis', {
             datetime_location: {
               year: anio, month: mes, day: dia, hour: 12, minute: 0, second: 0,
-              city: 'Mexico City', country_code: 'MX',
+              city: perfil?.ciudad_nacimiento || 'Mexico City', country_code: perfil?.pais_codigo || 'MX',
             },
             report_options: { language: 'es' },
           });
@@ -945,9 +946,21 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
         }
       })),
       astrologyApi.post('/charts/natal', {
-        subject: { name: 'Hoy', birth_data: { year: anio, month: mes, day: hoy.getUTCDate(), hour: 12, minute: 0, second: 0, city: 'Mexico City', country_code: 'MX' } },
+        subject: { name: 'Hoy', birth_data: { year: anio, month: mes, day: hoy.getUTCDate(), hour: 12, minute: 0, second: 0, city: perfil?.ciudad_nacimiento || 'Mexico City', country_code: perfil?.pais_codigo || 'MX' } },
         options: { house_system: 'P', zodiac_type: 'Tropic' },
       }).catch(() => null),
+      // ---- Días de poder PERSONALES: cruzamos el mes completo contra la carta natal real ----
+      perfil ? astrologyApi.post('/analysis/natal-transit-report', {
+        subject: birthDataDesdePerfil(perfil),
+        transit_time: {
+          date_range: {
+            start_date: { year: anio, month: mes, day: 1 },
+            end_date: { year: anio, month: mes, day: diasEnMes },
+          },
+        },
+        orb: 2,
+        report_options: { tradition: 'psychological', language: 'es' },
+      }).catch(e => { console.error('natal-transit-report (calendario) falló:', e?.response?.data || e.message); return { _error_debug: e?.response?.data || e.message }; }) : Promise.resolve(null),
     ]);
 
     const mercurioRetrogrado = chartHoy?.data?.subject_data?.mercury?.retrograde || false;
@@ -966,7 +979,40 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
       entrevista_trabajo: resultados.filter(d => creciente(d.fase) && ['Leo', 'Cap', 'Sag'].includes(d.signo)).map(d => d.dia),
     };
 
-    res.json({ mes, anio, calendario, detalle_dias: resultados, mercurio_retrogrado: mercurioRetrogrado });
+    // ---- Procesar días de poder personal ----
+    const PLANETAS_BENEFICOS = ['Sun', 'Venus', 'Jupiter'];
+    const ASPECTOS_FAVORABLES = ['trine', 'sextile', 'conjunction'];
+    const PUNTOS_EXITO = ['Sun', 'Venus', 'Jupiter', 'Medium_Coeli', 'Midheaven', 'MC', 'Ascendant'];
+    let diasPoderPersonal = {};
+    let diasPoderError = null;
+    const eventosMes = transitosMes?.data?.data?.events || transitosMes?.data?.events || null;
+    if (transitosMes?._error_debug) {
+      diasPoderError = transitosMes._error_debug;
+    } else if (Array.isArray(eventosMes)) {
+      eventosMes.forEach(ev => {
+        const aspecto = (ev.aspect_type || '').toLowerCase();
+        const favorable = ASPECTOS_FAVORABLES.includes(aspecto)
+          && PLANETAS_BENEFICOS.includes(ev.transiting_planet)
+          && PUNTOS_EXITO.includes(ev.natal_planet);
+        if (!favorable) return;
+        const fechaCruda = ev.date || ev.exact_date || ev.timestamp || ev.start_date || ev.datetime;
+        if (!fechaCruda) return;
+        let diaNum = null;
+        if (typeof fechaCruda === 'object' && fechaCruda.day) diaNum = fechaCruda.day;
+        else { const d = new Date(fechaCruda); if (!isNaN(d)) diaNum = d.getUTCDate(); }
+        if (!diaNum) return;
+        diasPoderPersonal[diaNum] = diasPoderPersonal[diaNum] || [];
+        diasPoderPersonal[diaNum].push(`${ev.transiting_planet} en ${aspecto} con tu ${ev.natal_planet} natal`);
+      });
+    } else if (perfil) {
+      diasPoderError = 'La respuesta no tuvo el campo "events" esperado. Estructura recibida: ' + JSON.stringify(Object.keys(transitosMes?.data || {}));
+    }
+
+    res.json({
+      mes, anio, calendario, detalle_dias: resultados, mercurio_retrogrado: mercurioRetrogrado,
+      dias_poder_personal: diasPoderPersonal,
+      dias_poder_personal_error: diasPoderError,
+    });
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo calcular el calendario lunar.', detalle_tecnico: err?.response?.data || err.message });
