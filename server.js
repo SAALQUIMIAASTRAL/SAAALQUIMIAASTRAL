@@ -512,24 +512,31 @@ app.post('/astrocartografia', requireLogin, async (req, res) => {
       datosSubject = birthDataDesdePerfil(perfil);
     }
 
-    const respuesta = await astrologyApi.post('/astrocartography/map', {
-      subject: datosSubject,
-      map_options: {
-        planets: ['Sun', 'Moon', 'Venus', 'Jupiter', 'Mars'],
-        line_types: ['AC', 'MC'],
-        map_projection: 'mercator',
-      },
-      visual_options: {
-        width: 1000, height: 500, theme: 'modern', show_legend: true,
-        city_min_population: 500000, language: 'es',
-      },
-    });
+    const [respuesta, analisisLugares] = await Promise.all([
+      astrologyApi.post('/astrocartography/map', {
+        subject: datosSubject,
+        map_options: {
+          planets: ['Sun', 'Moon', 'Venus', 'Jupiter', 'Mars'],
+          line_types: ['AC', 'MC'],
+          map_projection: 'mercator',
+        },
+        visual_options: {
+          width: 1000, height: 500, theme: 'modern', show_legend: true,
+          city_min_population: 500000, language: 'es',
+        },
+      }),
+      astrologyApi.post('/astrocartography/location-analysis', {
+        subject: datosSubject,
+        analysis_options: { language: 'es', tradition: 'psychological' },
+      }).catch(e => { console.error('location-analysis falló:', e?.response?.data || e.message); return null; }),
+    ]);
 
     const respuestaACG = {
       svg: respuesta.data?.svg_content || null,
       zonas_poder: respuesta.data?.map_data?.power_zones || [],
       lineas: respuesta.data?.map_data?.lines || [],
       ciudades: respuesta.data?.map_data?.cities_shown || [],
+      analisis_personalizado: analisisLugares?.data || null,
     };
     cacheSet(cacheKey, respuestaACG, TTL.ASTROCARTOGRAFIA);
     res.json(respuestaACG);
@@ -671,7 +678,7 @@ app.post('/carta-compuesta', requireLogin, async (req, res) => {
       datosOtraPersona = birthDataDesdePerfil({ fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo }, nombre);
     }
 
-    const [compuesta, dinamica] = await Promise.all([
+    const [compuesta, dinamica, reseñaCompuesta] = await Promise.all([
       astrologyApi.post('/charts/composite', {
         subject1: birthDataDesdePerfil(perfil),
         subject2: datosOtraPersona,
@@ -682,11 +689,17 @@ app.post('/carta-compuesta', requireLogin, async (req, res) => {
         subject2: datosOtraPersona,
         options: { language: 'es' },
       }).catch(e => ({ error: e?.response?.data || e.message })),
+      astrologyApi.post('/analysis/composite-report', {
+        subject1: birthDataDesdePerfil(perfil),
+        subject2: datosOtraPersona,
+        report_options: { tradition: 'psychological', language: 'es' },
+      }).catch(e => { console.error('composite-report falló:', e?.response?.data || e.message); return null; }),
     ]);
 
     res.json({
       carta_compuesta: compuesta.data || compuesta,
       dinamica_ahora: dinamica.data || dinamica,
+      reseña: reseñaCompuesta?.data || null,
     });
   } catch (err) {
     console.error(err?.response?.data || err.message);
@@ -975,6 +988,7 @@ app.post('/relocacion', requireLogin, async (req, res) => {
         show_changes: true,
         highlight_angular_changes: true,
       },
+      report_options: { tradition: 'psychological', language: 'es' },
     });
 
     res.json({ relocacion: respuesta.data });
