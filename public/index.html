@@ -1349,7 +1349,7 @@
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || 'No se pudo generar.');
       if (data.svg) {
-        const _bcCv = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('carta-visual-contenedor').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
+        const _bcCv = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="event.stopPropagation();document.getElementById('carta-visual-contenedor').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
         contenedor.innerHTML = _bcCv + `<div style="border-radius:14px;overflow:hidden;background:var(--paper);border:1px solid var(--line);">${data.svg}</div>`;
         const svgEl = contenedor.querySelector('svg');
         if (svgEl) { svgEl.removeAttribute('width'); svgEl.removeAttribute('height'); svgEl.style.cssText = 'width:100%;height:auto;display:block;'; }
@@ -2551,7 +2551,7 @@
       <div id="bloque-esencia">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
           <div style="font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--ink-dim);">Tu carta en palabras simples</div>
-          <button onclick="document.getElementById('bloque-esencia').remove();" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 12px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button>
+          <button onclick="document.getElementById('carta-resultado-chips').innerHTML='';" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 12px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button>
         </div>
         ${tarjetas}
         <button class="btn-outline" style="width:100%;margin-top:8px;" onclick="
@@ -2629,7 +2629,7 @@
         return;
       }
       if (data.svg) {
-        const _bcCv = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('carta-visual-contenedor').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
+        const _bcCv = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="event.stopPropagation();document.getElementById('carta-visual-contenedor').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
         contenedor.innerHTML = _bcCv + `<div style="border-radius:14px;overflow:hidden;background:var(--paper);border:1px solid var(--line);">${data.svg}</div>`;
         document.getElementById('zoom-hint').textContent = '👆 Toca la carta para verla en grande';
         // Hacer que el SVG sea responsive
