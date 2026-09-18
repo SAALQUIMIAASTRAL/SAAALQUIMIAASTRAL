@@ -999,7 +999,7 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
         const aspecto = (ev.aspect_type || '').toLowerCase();
         const favorable = ASPECTOS_FAVORABLES.includes(aspecto)
           && PLANETAS_BENEFICOS.includes(ev.transiting_planet)
-          && PUNTOS_EXITO.includes(ev.natal_planet);
+          && PUNTOS_EXITO.includes(ev.stationed_planet);
         if (!favorable) return;
         const fechaCruda = ev.date || ev.exact_date || ev.timestamp || ev.start_date || ev.datetime;
         if (!fechaCruda) return;
@@ -1008,7 +1008,7 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
         else { const d = new Date(fechaCruda); if (!isNaN(d)) diaNum = d.getUTCDate(); }
         if (!diaNum) return;
         diasPoderPersonal[diaNum] = diasPoderPersonal[diaNum] || [];
-        diasPoderPersonal[diaNum].push(`${ev.transiting_planet} en ${aspecto} con tu ${ev.natal_planet} natal`);
+        diasPoderPersonal[diaNum].push(`${ev.transiting_planet} en ${aspecto} con tu ${ev.stationed_planet} natal`);
       });
       // Diagnóstico temporal: si no encontramos ningún día, mostrar por qué (cuántos eventos había y cómo se ven)
       if (Object.keys(diasPoderPersonal).length === 0) {
