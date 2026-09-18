@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
+<!-- VERSION-APP: v77-cierres-20260917 -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -613,6 +614,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v77-cierres-20260917</div>
         </div>
 
         <div class="topbar">
@@ -2564,7 +2566,11 @@
   async function calcularCartaReal(silencioso = false) {
     const boton = document.getElementById('btn-calcular-carta');
     const chips = document.getElementById('carta-resultado-chips');
-    if (!silencioso) { boton.textContent = 'Calculando...'; boton.disabled = true; }
+    if (!silencioso) {
+      boton.textContent = 'Calculando...'; boton.disabled = true;
+      const rn = document.getElementById('resumen-natal-contenedor'); if (rn) rn.innerHTML = '';
+      const cv = document.getElementById('carta-visual-contenedor'); if (cv) cv.innerHTML = '';
+    }
     try {
       const r = await fetchAuth('/carta-natal', { method: 'POST', headers: {} });
       const data = await r.json();
@@ -2609,6 +2615,8 @@
   async function verCartaVisual() {
     const boton = document.getElementById('btn-carta-visual');
     const contenedor = document.getElementById('carta-visual-contenedor');
+    const chips = document.getElementById('carta-resultado-chips'); if (chips) chips.innerHTML = '';
+    const rn = document.getElementById('resumen-natal-contenedor'); if (rn) rn.innerHTML = '';
     boton.textContent = 'Generando tu rueda...';
     boton.disabled = true;
     try {
@@ -2744,7 +2752,8 @@
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
         throw new Error(data.error || 'No se pudo calcular.');
       }
-      contenedor.innerHTML = renderizarInforme(data.transitos, 'transitos-resultado');
+      const _cerrar_transitos_ok = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('transitos-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
+      contenedor.innerHTML = _cerrar_transitos_ok + renderizarInforme(data.transitos, 'transitos-resultado');
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }
@@ -2775,8 +2784,8 @@
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
-        const _cerrar_transitos_resultado = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('transitos-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
-      contenedor.innerHTML = _cerrar_transitos_resultado + `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        const _cerrar_numerologia_error = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('numerologia-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
+      contenedor.innerHTML = _cerrar_numerologia_error + `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
       contenedor.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('numerologia-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>` + renderizarInforme(data.numerologia, null);
@@ -2988,18 +2997,21 @@
 
   async function verResumenNatal() {
     const contenedor = document.getElementById('resumen-natal-contenedor');
+    const chips = document.getElementById('carta-resultado-chips'); if (chips) chips.innerHTML = '';
+    const cv = document.getElementById('carta-visual-contenedor'); if (cv) cv.innerHTML = '';
     contenedor.innerHTML = '<div class="disclaimer">Generando tu resumen...</div>';
     try {
       const r = await fetchAuth('/resumen-natal', { method: 'POST', headers: {} });
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
-        const _cerrar_sinastria_resultado = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('sinastria-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
-      contenedor.innerHTML = _cerrar_sinastria_resultado + `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo generar.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        const _cerrar_resumen_natal_error = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('resumen-natal-contenedor').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
+      contenedor.innerHTML = _cerrar_resumen_natal_error + `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo generar.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
+      const _cerrar_resumen_natal_ok = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('resumen-natal-contenedor').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
       const informe = renderizarInforme(data.reporte, null); // sin boton extra
-      contenedor.innerHTML = informe;
+      contenedor.innerHTML = _cerrar_resumen_natal_ok + informe;
     } catch (err) {
       const _cerrar_resumen_natal_contenedor = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('resumen-natal-contenedor').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
       contenedor.innerHTML = _cerrar_resumen_natal_contenedor + `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
@@ -3093,7 +3105,7 @@
       const faseLunaHoy = data.luna?.data?.lunar_metrics?.moon_phase || '';
       const consejoDia = CONSEJOS_FASE[faseLunaHoy] || '';
       const consejoHtml = consejoDia ? `<div style="background:linear-gradient(135deg,var(--blush-2),var(--blush-1));border-radius:12px;padding:12px 14px;color:#fff;margin-bottom:10px;font-size:12.5px;line-height:1.6;">${consejoDia}</div>` : '';
-      contenedor.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('luna-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>` + consejoHtml + resumenHtml + renderizarInforme(data.luna, null);
+      contenedor.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('luna-cruda').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>` + consejoHtml + resumenHtml + renderizarInforme(data.luna, null);
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }
@@ -3133,6 +3145,7 @@
     const semilla = hoy.getFullYear() * 366 + hoy.getMonth() * 31 + hoy.getDate();
     const carta = TAROT_ARCANOS[semilla % TAROT_ARCANOS.length];
     document.getElementById('tarot-resultado').innerHTML = `
+      <div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('tarot-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>
       <div style="display:flex;flex-direction:column;align-items:center;">
         <div style="position:relative;width:160px;height:256px;margin-bottom:14px;filter:drop-shadow(0 12px 20px rgba(43,20,60,0.45));">
           <svg width="160" height="256" viewBox="0 0 160 256" style="position:absolute;top:0;left:0;">
@@ -3240,7 +3253,8 @@
         contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
-      contenedor.innerHTML = renderizarInforme(data.relocacion, 'reloc-resultado');
+      const _cerrar_reloc_ok = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('reloc-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
+      contenedor.innerHTML = _cerrar_reloc_ok + renderizarInforme(data.relocacion, 'reloc-resultado');
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }
