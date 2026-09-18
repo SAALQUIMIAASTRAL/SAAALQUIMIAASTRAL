@@ -49,9 +49,9 @@
     --band-text-dim:#B8A8D4;
 
     /* --- Superficies --- */
-    --paper:#F7F0FF;
-    --page-bg:#EDE5F8;
-    --line:#D8C8F0;
+    --paper:#FFFFFF;
+    --page-bg:#FBFAFC;
+    --line:#E5E0EA;
     --moon-navy:#0F0A1A;
 
     /* --- Sistema de tipografía --- */
@@ -2710,6 +2710,11 @@
       const bruto = hoy?.subject_data || hoy;
       const botonCerrarLocal = `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button onclick="cerrar('transitos-hoy-resultado')" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
 
+      const GLIFO_PLANETA_HOY = { Sun:'☉', Moon:'☽', Mercury:'☿', Venus:'♀', Mars:'♂', Jupiter:'♃', Saturn:'♄',
+        Uranus:'♅', Neptune:'♆', Pluto:'♇', Chiron:'⚷', Mean_Node:'☊', Lilith:'⚸' };
+      const ELEMENTO_COLOR_TEXTO = { fire:'#c1481f', earth:'#5c4a35', air:'#2f5a86', water:'#4a3a8a' };
+      function colorTextoSigno(abrev) { return ELEMENTO_COLOR_TEXTO[SIGNO_ELEMENTO[abrev]] || 'var(--marigold-dark)'; }
+
       if (bruto && bruto.sun) {
         const CLAVE_A_NOMBRE = {
           sun:'Sun', moon:'Moon', mercury:'Mercury', venus:'Venus', mars:'Mars',
@@ -2718,23 +2723,30 @@
         };
         const filas = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','chiron','mean_node','lilith']
           .filter(k => bruto[k])
-          .map(k => {
+          .map((k, idx) => {
             const p = bruto[k];
-            const nombre = nombrePlanetaEs(CLAVE_A_NOMBRE[k] || (k.charAt(0).toUpperCase() + k.slice(1)));
+            const claveNombre = CLAVE_A_NOMBRE[k] || (k.charAt(0).toUpperCase() + k.slice(1));
+            const nombre = nombrePlanetaEs(claveNombre);
+            const glifoPlaneta = GLIFO_PLANETA_HOY[claveNombre] || '✦';
             const grados = p.position !== undefined ? Math.floor(p.position) : null;
             const minutos = p.position !== undefined ? Math.floor((p.position % 1) * 60) : null;
             const gradoStr = grados !== null ? `${grados}°${minutos !== null ? minutos.toString().padStart(2,'0')+"'" : ''}` : '';
+            const abrevSigno = (p.sign || '').slice(0, 3);
             return `
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);">
-                <span style="font-size:13px;color:var(--plum);">${nombre}${p.retrograde ? ' <span style="color:#a5442f;font-size:11px;" title="Retrógrado">℞</span>' : ''}</span>
-                <span style="display:flex;align-items:center;gap:6px;">
-                  <span style="background:${colorSigno(p.sign)};color:#fff;border-radius:100px;padding:3px 10px 3px 6px;font-size:11.5px;font-weight:600;display:inline-flex;align-items:center;gap:4px;box-shadow:0 2px 5px rgba(0,0,0,0.15);"><span style="font-size:13px;">${glifoSigno(p.sign)}</span>${signoEs(p.sign)}</span>
-                  <span style="font-size:12px;font-weight:600;color:var(--plum);font-family:'Cormorant Garamond',serif;">${gradoStr}</span>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:${idx % 2 === 0 ? '#FFFFFF' : '#F7F5FC'};">
+                <span style="display:flex;align-items:center;gap:10px;">
+                  <span style="width:26px;height:26px;flex:none;border-radius:50%;background:#F0EAFB;display:flex;align-items:center;justify-content:center;font-size:13px;color:#2D1B4E;">${glifoPlaneta}</span>
+                  <span style="font-size:13px;color:#2D1B4E;font-weight:500;">${nombre}${p.retrograde ? ' <span style="color:#a5442f;font-size:10.5px;font-weight:700;" title="Retrógrado">R</span>' : ''}</span>
+                </span>
+                <span style="display:flex;align-items:center;gap:7px;">
+                  <span style="width:20px;height:20px;flex:none;border-radius:50%;background:${colorSigno(p.sign)};color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;">${glifoSigno(p.sign)}</span>
+                  <span style="font-size:12.5px;font-weight:600;color:var(--ink-dim);">${gradoStr}</span>
+                  <span style="font-size:12.5px;font-weight:700;color:${colorTextoSigno(p.sign)};">${signoEs(p.sign)}</span>
                 </span>
               </div>
             `;
           }).join('');
-        contenedor.innerHTML = botonCerrarLocal + `<div style="background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:6px 14px;">${filas}</div>`;
+        contenedor.innerHTML = botonCerrarLocal + `<div style="background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;">${filas}</div>`;
       } else {
         contenedor.innerHTML = botonCerrarLocal + `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(hoy, null, 2)}</pre>`;
       }
