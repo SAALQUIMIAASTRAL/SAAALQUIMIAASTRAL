@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v77-cierres-20260917 -->
+<!-- VERSION-APP: v78-disenio-transitos -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -614,7 +614,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v77-cierres-20260917</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v78-disenio-transitos</div>
         </div>
 
         <div class="topbar">
@@ -2726,7 +2726,7 @@
           .map((k, idx) => {
             const p = bruto[k];
             const claveNombre = CLAVE_A_NOMBRE[k] || (k.charAt(0).toUpperCase() + k.slice(1));
-            const nombre = nombrePlanetaEs(claveNombre);
+            const nombre = nombrePlanetaEs(claveNombre).replace(/^\S+\s+/, '');
             const glifoPlaneta = GLIFO_PLANETA_HOY[claveNombre] || '✦';
             const grados = p.position !== undefined ? Math.floor(p.position) : null;
             const minutos = p.position !== undefined ? Math.floor((p.position % 1) * 60) : null;
@@ -2739,7 +2739,7 @@
                   <span style="font-size:13px;color:#2D1B4E;font-weight:500;">${nombre}${p.retrograde ? ' <span style="color:#a5442f;font-size:10.5px;font-weight:700;" title="Retrógrado">R</span>' : ''}</span>
                 </span>
                 <span style="display:flex;align-items:center;gap:7px;">
-                  <span style="width:20px;height:20px;flex:none;border-radius:50%;background:${colorSigno(p.sign)};color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;">${glifoSigno(p.sign)}</span>
+                  <span style="width:22px;height:22px;flex:none;border-radius:50%;background:${colorTextoSigno(p.sign)};color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;">${glifoSigno(p.sign)}</span>
                   <span style="font-size:12.5px;font-weight:600;color:var(--ink-dim);">${gradoStr}</span>
                   <span style="font-size:12.5px;font-weight:700;color:${colorTextoSigno(p.sign)};">${signoEs(p.sign)}</span>
                 </span>
