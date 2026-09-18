@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
+<!-- VERSION-APP: v77-cierres-20260917 -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,6 +15,22 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
+  --theme: light;
+}
+[data-theme="dark"]{
+  --blush-1: #1a0f2e;
+  --blush-2: #2d1b4e;
+  --paper: #1e1230;
+  --line: #3d2460;
+  --ink: #f0e8ff;
+  --ink-dim: #a89bc2;
+  --marigold-soft: #2a1a1f;
+  --plum: #d4b8ff;
+  --band-text: #fff;
+  --band-text-dim: rgba(255,255,255,0.65);
+  --moon-navy: #0d0820;
+}
+:root{
     /* --- Colores de marca (design system v1) --- */
     --plum:#2D1B4E;
     --plum-light:#6B4FA0;
@@ -438,7 +455,7 @@
             <div style="background:var(--marigold-soft);border-radius:12px;padding:12px;text-align:center;">
               <div style="font-size:22px;margin-bottom:4px;">✦</div>
               <div style="font-size:12px;font-weight:600;color:var(--plum);">Carta natal real</div>
-              <div style="font-size:10.5px;color:var(--ink-dim);">Swiss Ephemeris</div>
+              <div style="font-size:10.5px;color:var(--ink-dim);">Cálculos astronómicos precisos</div>
             </div>
             <div style="background:var(--lilac-soft);border-radius:12px;padding:12px;text-align:center;">
               <div style="font-size:22px;margin-bottom:4px;">🌙</div>
@@ -498,7 +515,7 @@
           <div style="text-align:center;margin-bottom:16px;">
             <div style="font-size:36px;margin-bottom:8px;">🌟</div>
             <h1 style="margin:0 0 6px;">Un momento más...</h1>
-            <div class="sub">Necesito tu fecha y lugar de nacimiento para calcular tu carta natal real con Swiss Ephemeris — la misma precisión que usan los astrólogos profesionales.</div>
+            <div class="sub">Necesito tu fecha y lugar de nacimiento para calcular tu carta natal real con Cálculos astronómicos precisos — la misma precisión que usan los astrólogos profesionales.</div>
           </div>
           <div class="auth-error" id="perfil-error"></div>
           <div class="auth-field"><label>¿Cómo te llamas?</label><input type="text" id="perfil-nombre" placeholder="Tu nombre"></div>
@@ -567,6 +584,18 @@
           <button class="btn-primary" style="background:var(--lilac);margin-bottom:16px;" onclick="enviarFeedback()">Enviar sugerencia</button>
           <div id="feedback-msg" style="font-size:12px;margin-bottom:12px;"></div>
 
+          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:8px;">Apariencia</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;background:var(--marigold-soft);border-radius:12px;padding:12px 14px;margin-bottom:16px;">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--plum);">Modo oscuro</div>
+              <div style="font-size:11px;color:var(--ink-dim);">Cambia entre fondo claro y oscuro</div>
+            </div>
+            <label style="position:relative;display:inline-block;width:46px;height:26px;cursor:pointer;">
+              <input type="checkbox" id="toggle-dark" onchange="cambiarTema(this.checked)" style="opacity:0;width:0;height:0;">
+              <span style="position:absolute;inset:0;background:#ccc;border-radius:26px;transition:0.3s;" id="toggle-dark-span"></span>
+              <span style="position:absolute;height:20px;width:20px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:0.3s;" id="toggle-dark-knob"></span>
+            </label>
+          </div>
           <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:8px;">Privacidad y datos</div>
           <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">
             <button onclick="descargarMisDatos()" style="background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px 12px;text-align:left;font-size:12.5px;color:var(--plum);cursor:pointer;">📥 Descargar mis datos</button>
@@ -585,6 +614,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v77-cierres-20260917</div>
         </div>
 
         <div class="topbar">
@@ -640,7 +670,7 @@
                 <button class="btn-primary" id="btn-calcular-carta" onclick="calcularCartaReal()" style="font-size:12px;padding:10px 6px;">Ver mi carta</button>
                 <button class="btn-primary" onclick="verResumenNatal()" style="background:var(--marigold);font-size:12px;padding:10px 6px;">Mi personalidad</button>
               </div>
-              <button class="btn-primary" id="btn-carta-visual" style="background:var(--lilac);width:100%;margin-bottom:8px;" onclick="verCartaVisual()">Ver en rueda 🔮</button>
+              <button class="btn-primary" id="btn-carta-visual" style="background:var(--lilac);width:100%;margin-bottom:8px;" onclick="verCartaVisual()">Ver gráfico de carta 🔮</button>
             </div>
             <!-- Resultados FUERA del calc-form para que cerrar no rompa los botones -->
             <div id="carta-resultado-chips" style="margin-top:8px;"></div>
@@ -792,8 +822,8 @@
           </div>
 
           <div class="section" data-tab="ciclos">
-            <h2>Mejores días para...</h2>
-            <div class="desc">Según la tradición astrológica y la fase lunar actual.</div>
+            <h2>¿Cuándo hacer cada cosa?</h2>
+            <div class="desc">La Luna influye en todo. Aquí las fechas del mes donde la energía favorece cada tipo de acción.</div>
             <button class="btn-primary" style="margin-bottom:10px;" onclick="calcularCalendarioLunar(this)">Ver fechas exactas de este mes</button>
             <div id="aviso-mercurio-retro"></div>
 
@@ -891,10 +921,10 @@
             </div>
           </div>
 
-          <div class="section" data-tab="alquimia">
+          <div class="section" data-tab="alquimia" style="opacity:0.6;">
             <h2>🤖 Asistente IA</h2>
-            <div class="desc">Pregúntale a tu carta cualquier cosa — qué significa un planeta, qué esperar de un tránsito, cómo aprovechar este momento astrológico.</div>
-            <button class="btn-primary" onclick="abrirAsistenteIA()">Abrir el asistente</button>
+            <div class="desc">Próximamente — pregúntale a tu carta cualquier cosa.</div>
+            <button class="btn-primary" disabled style="opacity:0.5;">Próximamente</button>
           </div>
 
           <div style="background:linear-gradient(160deg,var(--plum),var(--blush-2));border-radius:16px;padding:20px 18px;color:#fff;margin:12px 16px;box-shadow:0 6px 20px rgba(45,27,78,0.35);" id="tarjeta-suscripcion" data-tab="alquimia">
@@ -913,6 +943,12 @@
             </div>
           </div>
 
+                    <div class="section" data-tab="carta" style="opacity:0.75;border:1px dashed var(--line);">
+            <h2>☀️ Revolución Solar</h2>
+            <div class="desc">Tu mapa del año — qué energías activa este cumpleaños en tu vida. <b>Próximamente.</b></div>
+            <button class="btn-primary" disabled style="opacity:0.5;">Disponible pronto</button>
+          </div>
+
           <div class="section" data-tab="alquimia">
             <h2>Más herramientas</h2>
             <div class="tools-grid">
@@ -924,7 +960,7 @@
                 <div class="icon"><svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="10" stroke="#fff" stroke-width="1.6"/><ellipse cx="16" cy="16" rx="10" ry="4.2" stroke="#fff" stroke-width="1.2" opacity="0.8"/><ellipse cx="16" cy="16" rx="4.2" ry="10" stroke="#fff" stroke-width="1.2" opacity="0.8"/><circle cx="20" cy="11" r="1.8" fill="#c9793f"/></svg></div>
                 <div class="tt-text">Astrocartografía<span>Tu mapa de reubicación</span></div>
               </div>
-              <div class="tool-tile t3" onclick="abrirAsistenteIA()" style="cursor:pointer;">
+              <div class="tool-tile t3" onclick="mostrarProximamente('Asistente IA')" style="cursor:pointer;opacity:0.5;">
                 <div class="icon"><svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="7" fill="#fff" opacity="0.15"/><circle cx="16" cy="16" r="7" stroke="#fff" stroke-width="1.4"/><path d="M16 6l1 3-1 3-1-3z" fill="#fff"/><path d="M25 12l-2.5 1.5L25 15l1-1.5z" fill="#fff"/><path d="M7 12l2.5 1.5L7 15l-1-1.5z" fill="#fff"/></svg></div>
                 <div class="tt-text">Asistente IA<span>Pregúntale a tu carta</span></div>
               </div>
@@ -1313,7 +1349,8 @@
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || 'No se pudo generar.');
       if (data.svg) {
-        contenedor.innerHTML = `<div style="border-radius:14px;overflow:hidden;background:var(--paper);border:1px solid var(--line);">${data.svg}</div>`;
+        const _bcCv = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('carta-visual-contenedor').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
+        contenedor.innerHTML = _bcCv + `<div style="border-radius:14px;overflow:hidden;background:var(--paper);border:1px solid var(--line);">${data.svg}</div>`;
         const svgEl = contenedor.querySelector('svg');
         if (svgEl) { svgEl.removeAttribute('width'); svgEl.removeAttribute('height'); svgEl.style.cssText = 'width:100%;height:auto;display:block;'; }
       } else {
@@ -1417,11 +1454,13 @@
       const r = await fetchAuth('/eclipses-natal', { method: 'POST', headers: {} });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || 'No se pudo consultar.');
-      if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
+      if (detectarLimiteExcedido(data)) { const _cerrar_eclipses_resultado = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('eclipses-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
+      contenedor.innerHTML = _cerrar_eclipses_resultado + mensajeLimiteExcedido(); return; }
 
       const hoyTs = new Date().getTime();
+      const seisMeses = hoyTs + 180 * 24 * 60 * 60 * 1000;
       const importantes = (data.como_te_afecta?.data?.impactful_eclipses || [])
-        .filter(e => e.date)
+        .filter(e => e.date && new Date(e.date).getTime() >= hoyTs && new Date(e.date).getTime() <= seisMeses)
         .sort((a,b) => new Date(a.date) - new Date(b.date));
       const listaConPosicion = data.proximos_eclipses?.data?.eclipses || [];
       const posicionesPorId = {};
@@ -1719,7 +1758,7 @@
         return prioA - prioB;
       });
       const principales = ordenados.slice(0, 5);
-      const encabezado = `<div style="font-size:11px;color:var(--ink-dim);margin-bottom:10px;">Estos son los tránsitos más importantes de tu próximo mes — los demás son menores y no requieren tanta atención.</div>`;
+      const encabezado = `<div style="font-size:11px;color:var(--ink-dim);margin-bottom:10px;">Tus tránsitos más importantes de los próximos 7 días.</div>`;
       // Explicaciones por planeta transitante + aspecto + punto natal
       function explicarTransito(planetaEn, aspecto, puntoNatal) {
         const es = aspecto;
@@ -1841,7 +1880,8 @@
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
-        contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        const _cerrar_energia_resultado = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('energia-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
+      contenedor.innerHTML = _cerrar_energia_resultado + `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
 
@@ -1914,9 +1954,9 @@
         if (lunaSigno) html += `<div class="tarjeta-lectura armonia"><div class="cuerpo">🌙 ${lunaSigno}</div></div>`;
         if (lunaFase) html += `<div class="tarjeta-lectura neutral"><div class="cuerpo">☽ ${lunaFase}</div></div>`;
 
-        contenedor.innerHTML = botonCerrar + html;
+        contenedor.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('energia-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>` + html;
       } else {
-        contenedor.innerHTML = botonCerrar + renderizarInforme(data.ciclos, 'energia-resultado');
+        contenedor.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('energia-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>` + renderizarInforme(data.ciclos, null);
       }
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
@@ -1985,7 +2025,8 @@
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
         throw new Error(data.error || 'No se pudo generar.');
       }
-      if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
+      if (detectarLimiteExcedido(data)) { const _cerrar_horoscopo_resultado = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('horoscopo-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
+      contenedor.innerHTML = _cerrar_horoscopo_resultado + mensajeLimiteExcedido(); return; }
 
       const h = data.horoscopo?.data || data.horoscopo;
       const botonCerrar = `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button onclick="cerrar('horoscopo-resultado')" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
@@ -2056,7 +2097,7 @@
       const data = await r.json();
 
       if (!data.articulos?.length) {
-        lista.innerHTML = '<div class="disclaimer">La biblioteca está vacía por ahora.</div>';
+        lista.innerHTML = '<div class="disclaimer">La biblioteca de conocimiento está en construcción. Pronto encontrarás aquí artículos y guías sobre astrología.</div>';
         return;
       }
 
@@ -2525,7 +2566,11 @@
   async function calcularCartaReal(silencioso = false) {
     const boton = document.getElementById('btn-calcular-carta');
     const chips = document.getElementById('carta-resultado-chips');
-    if (!silencioso) { boton.textContent = 'Calculando...'; boton.disabled = true; }
+    if (!silencioso) {
+      boton.textContent = 'Calculando...'; boton.disabled = true;
+      const rn = document.getElementById('resumen-natal-contenedor'); if (rn) rn.innerHTML = '';
+      const cv = document.getElementById('carta-visual-contenedor'); if (cv) cv.innerHTML = '';
+    }
     try {
       const r = await fetchAuth('/carta-natal', { method: 'POST', headers: {} });
       const data = await r.json();
@@ -2570,6 +2615,8 @@
   async function verCartaVisual() {
     const boton = document.getElementById('btn-carta-visual');
     const contenedor = document.getElementById('carta-visual-contenedor');
+    const chips = document.getElementById('carta-resultado-chips'); if (chips) chips.innerHTML = '';
+    const rn = document.getElementById('resumen-natal-contenedor'); if (rn) rn.innerHTML = '';
     boton.textContent = 'Generando tu rueda...';
     boton.disabled = true;
     try {
@@ -2582,7 +2629,8 @@
         return;
       }
       if (data.svg) {
-        contenedor.innerHTML = `<div style="border-radius:14px;overflow:hidden;background:var(--paper);border:1px solid var(--line);">${data.svg}</div>`;
+        const _bcCv = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('carta-visual-contenedor').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
+        contenedor.innerHTML = _bcCv + `<div style="border-radius:14px;overflow:hidden;background:var(--paper);border:1px solid var(--line);">${data.svg}</div>`;
         document.getElementById('zoom-hint').textContent = '👆 Toca la carta para verla en grande';
         // Hacer que el SVG sea responsive
         const svgEl = contenedor.querySelector('svg');
@@ -2654,7 +2702,8 @@
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
         throw new Error(data.error || 'No se pudo obtener.');
       }
-      if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
+      if (detectarLimiteExcedido(data)) { const _cerrar_transitos_hoy_resultado = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('transitos-hoy-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
+      contenedor.innerHTML = _cerrar_transitos_hoy_resultado + mensajeLimiteExcedido(); return; }
 
       const hoy = data.datos_hoy;
       const bruto = hoy?.subject_data || hoy;
@@ -2703,7 +2752,8 @@
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
         throw new Error(data.error || 'No se pudo calcular.');
       }
-      contenedor.innerHTML = renderizarInforme(data.transitos, 'transitos-resultado');
+      const _cerrar_transitos_ok = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('transitos-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
+      contenedor.innerHTML = _cerrar_transitos_ok + renderizarInforme(data.transitos, 'transitos-resultado');
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }
@@ -2720,7 +2770,7 @@
         contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
-      contenedor.innerHTML = renderizarInforme(data.estrellas, 'estrellas-resultado');
+      contenedor.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('estrellas-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>` + renderizarInforme(data.estrellas, null);
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }
@@ -2734,10 +2784,11 @@
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
-        contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        const _cerrar_numerologia_error = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('numerologia-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
+      contenedor.innerHTML = _cerrar_numerologia_error + `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
-      contenedor.innerHTML = renderizarInforme(data.numerologia, 'numerologia-resultado');
+      contenedor.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('numerologia-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>` + renderizarInforme(data.numerologia, null);
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }
@@ -2866,7 +2917,8 @@
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
-        contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error}<br><pre style="font-size:9px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        const _cerrar_compuesta_resultado = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('compuesta-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
+      contenedor.innerHTML = _cerrar_compuesta_resultado + `<div class="disclaimer" style="color:#a5442f;">${data.error}<br><pre style="font-size:9px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
       const botonCerrar = `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button onclick="cerrar('compuesta-resultado')" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
@@ -2919,8 +2971,8 @@
         ciudad_nacimiento: document.getElementById('sin-ciudad').value.trim(),
         pais_codigo: document.getElementById('sin-pais').value,
       };
-      if (!cuerpo.nombre || !cuerpo.fecha_nacimiento || !cuerpo.ciudad_nacimiento || !cuerpo.pais_codigo) {
-        contenedor.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Llena todos los datos de la otra persona.</div>';
+      if (!cuerpo.nombre || !cuerpo.fecha_nacimiento) {
+        contenedor.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Llena al menos nombre y fecha de nacimiento.</div>';
         return;
       }
     }
@@ -2936,7 +2988,8 @@
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
         throw new Error(data.error || 'No se pudo calcular.');
       }
-      contenedor.innerHTML = renderizarInforme(data.reporte, 'sinastria-resultado');
+      const _bcSin = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('sinastria-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
+      contenedor.innerHTML = _bcSin + renderizarInforme(data.reporte, null);
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }
@@ -2944,19 +2997,24 @@
 
   async function verResumenNatal() {
     const contenedor = document.getElementById('resumen-natal-contenedor');
+    const chips = document.getElementById('carta-resultado-chips'); if (chips) chips.innerHTML = '';
+    const cv = document.getElementById('carta-visual-contenedor'); if (cv) cv.innerHTML = '';
     contenedor.innerHTML = '<div class="disclaimer">Generando tu resumen...</div>';
     try {
       const r = await fetchAuth('/resumen-natal', { method: 'POST', headers: {} });
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
-        contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo generar.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        const _cerrar_resumen_natal_error = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('resumen-natal-contenedor').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
+      contenedor.innerHTML = _cerrar_resumen_natal_error + `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo generar.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
+      const _cerrar_resumen_natal_ok = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('resumen-natal-contenedor').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
       const informe = renderizarInforme(data.reporte, null); // sin boton extra
-      contenedor.innerHTML = informe;
+      contenedor.innerHTML = _cerrar_resumen_natal_ok + informe;
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+      const _cerrar_resumen_natal_contenedor = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('resumen-natal-contenedor').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
+      contenedor.innerHTML = _cerrar_resumen_natal_contenedor + `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }
   }
 
@@ -3047,7 +3105,7 @@
       const faseLunaHoy = data.luna?.data?.lunar_metrics?.moon_phase || '';
       const consejoDia = CONSEJOS_FASE[faseLunaHoy] || '';
       const consejoHtml = consejoDia ? `<div style="background:linear-gradient(135deg,var(--blush-2),var(--blush-1));border-radius:12px;padding:12px 14px;color:#fff;margin-bottom:10px;font-size:12.5px;line-height:1.6;">${consejoDia}</div>` : '';
-      contenedor.innerHTML = consejoHtml + resumenHtml + renderizarInforme(data.luna, 'luna-cruda');
+      contenedor.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('luna-cruda').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>` + consejoHtml + resumenHtml + renderizarInforme(data.luna, null);
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }
@@ -3087,6 +3145,7 @@
     const semilla = hoy.getFullYear() * 366 + hoy.getMonth() * 31 + hoy.getDate();
     const carta = TAROT_ARCANOS[semilla % TAROT_ARCANOS.length];
     document.getElementById('tarot-resultado').innerHTML = `
+      <div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('tarot-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>
       <div style="display:flex;flex-direction:column;align-items:center;">
         <div style="position:relative;width:160px;height:256px;margin-bottom:14px;filter:drop-shadow(0 12px 20px rgba(43,20,60,0.45));">
           <svg width="160" height="256" viewBox="0 0 160 256" style="position:absolute;top:0;left:0;">
@@ -3194,7 +3253,8 @@
         contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
-      contenedor.innerHTML = renderizarInforme(data.relocacion, 'reloc-resultado');
+      const _cerrar_reloc_ok = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('reloc-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
+      contenedor.innerHTML = _cerrar_reloc_ok + renderizarInforme(data.relocacion, 'reloc-resultado');
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }
@@ -3243,9 +3303,28 @@
   }
 
   // ---- Función global de cerrar sección ----
+  function cambiarTema(oscuro) {
+    document.documentElement.setAttribute('data-theme', oscuro ? 'dark' : 'light');
+    localStorage.setItem('saa_tema', oscuro ? 'dark' : 'light');
+    const span = document.getElementById('toggle-dark-span');
+    const knob = document.getElementById('toggle-dark-knob');
+    if (span) span.style.background = oscuro ? 'var(--marigold)' : '#ccc';
+    if (knob) knob.style.transform = oscuro ? 'translateX(20px)' : 'translateX(0)';
+  }
+
+  function aplicarTemaGuardado() {
+    const tema = localStorage.getItem('saa_tema') || 'light';
+    const oscuro = tema === 'dark';
+    document.documentElement.setAttribute('data-theme', tema);
+    const chk = document.getElementById('toggle-dark');
+    if (chk) chk.checked = oscuro;
+    cambiarTema(oscuro);
+  }
+
   function cerrar(id) { const el = document.getElementById(id); if (el) el.innerHTML = ''; }
 
     // Al cargar la página: ¿ya hay sesión guardada?
+  aplicarTemaGuardado();
   cambiarPestana('hoy');
   revisarPerfilYArrancar();
 
