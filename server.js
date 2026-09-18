@@ -927,6 +927,11 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
     const mes = hoy.getUTCMonth() + 1;
     const diasEnMes = new Date(Date.UTC(anio, mes, 0)).getUTCDate();
 
+    // Caché por usuario + mes/año — este cálculo cuesta ~32 créditos de API, no debe repetirse en cada clic
+    const cacheKey = cacheHash(req.userId, 'calendario-lunar', `${anio}-${mes}`);
+    const cached = cacheGet(cacheKey);
+    if (cached) return res.json(cached);
+
     const dias = Array.from({ length: diasEnMes }, (_, i) => i + 1);
 
     const [resultados, chartHoy, transitosMes] = await Promise.all([
@@ -1017,12 +1022,14 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
       diasPoderError = 'La respuesta no tuvo el campo "events" esperado. Estructura recibida: ' + JSON.stringify(Object.keys(transitosMes?.data || {}));
     }
 
-    res.json({
+    const respuestaCalendario = {
       mes, anio, calendario, detalle_dias: resultados, mercurio_retrogrado: mercurioRetrogrado,
       dias_poder_personal: diasPoderPersonal,
       dias_poder_personal_error: diasPoderError,
       dias_poder_personal_diagnostico: diasPoderDiagnostico,
-    });
+    };
+    cacheSet(cacheKey, respuestaCalendario, TTL.CALENDARIO_LUNAR);
+    res.json(respuestaCalendario);
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo calcular el calendario lunar.', detalle_tecnico: err?.response?.data || err.message });
