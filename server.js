@@ -516,7 +516,7 @@ app.post('/astrocartografia', requireLogin, async (req, res) => {
       astrologyApi.post('/astrocartography/map', {
         subject: datosSubject,
         map_options: {
-          planets: ['Sun', 'Moon', 'Venus', 'Jupiter', 'Mars'],
+          planets: ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto', 'Mean_Node'],
           line_types: ['AC', 'MC'],
           map_projection: 'mercator',
         },
@@ -528,7 +528,7 @@ app.post('/astrocartografia', requireLogin, async (req, res) => {
       astrologyApi.post('/astrocartography/location-analysis', {
         subject: datosSubject,
         analysis_options: { language: 'es', tradition: 'psychological' },
-      }).catch(e => { console.error('location-analysis falló:', e?.response?.data || e.message); return null; }),
+      }).catch(e => { const detalle = e?.response?.data || e.message; console.error('location-analysis falló:', detalle); return { _error_debug: detalle }; }),
     ]);
 
     const respuestaACG = {
@@ -537,6 +537,7 @@ app.post('/astrocartografia', requireLogin, async (req, res) => {
       lineas: respuesta.data?.map_data?.lines || [],
       ciudades: respuesta.data?.map_data?.cities_shown || [],
       analisis_personalizado: analisisLugares?.data || null,
+      analisis_personalizado_error: analisisLugares?._error_debug || null,
     };
     cacheSet(cacheKey, respuestaACG, TTL.ASTROCARTOGRAFIA);
     res.json(respuestaACG);
