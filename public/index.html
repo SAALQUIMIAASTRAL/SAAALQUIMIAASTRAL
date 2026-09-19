@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v91-editar-con-lapiz -->
+<!-- VERSION-APP: v92-carta-siempre-calculada -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -648,7 +648,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v91-editar-con-lapiz</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v92-carta-siempre-calculada</div>
         </div>
 
         <div class="topbar">
@@ -2583,12 +2583,13 @@
     mostrarPantalla('login');
   }
 
-  function entrarALaApp(perfil) {
+  async function entrarALaApp(perfil) {
     mostrarPantalla(null);
     SESION.nombre = perfil?.nombre || 'Usuaria';
     const greet = document.getElementById('greeting-word');
     const nombreEl = document.querySelector('.band h1');
     if (nombreEl) nombreEl.innerHTML = `<span id="greeting-word">${greet ? greet.textContent : 'Hola'}</span>, ${SESION.nombre}`;
+    await calcularCartaReal(true); // asegura que la carta exista (la calcula si hace falta, silenciosamente)
     actualizarBandaConCartaReal();
     cargarCartasGuardadas();
     cargarHomeSummary();
