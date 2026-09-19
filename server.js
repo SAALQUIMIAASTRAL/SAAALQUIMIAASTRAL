@@ -190,7 +190,7 @@ app.get('/buscar-ciudad', async (req, res) => {
       timeout: 6000,
     });
     const resultados = (r.data || [])
-      .filter(item => ['city', 'town', 'village', 'municipality', 'administrative'].includes(item.type) || item.class === 'place')
+      .filter(item => ['city', 'town', 'village', 'municipality', 'hamlet'].includes(item.type))
       .map(item => ({
         etiqueta: item.display_name,
         ciudad: item.address?.city || item.address?.town || item.address?.village || item.name,
