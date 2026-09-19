@@ -235,8 +235,20 @@ app.post('/perfil', requireLogin, async (req, res) => {
 
   if (error) return res.status(400).json({ error: error.message });
 
-  // Invalidar caché del perfil y la carta guardada al cambiar datos de nacimiento
+  // Invalidar TODO lo que depende de los datos de nacimiento al editarlos —
+  // si no, quedan resultados viejos calculados con la fecha/ciudad anterior.
+  const hoy = new Date();
+  const anioActual = hoy.getUTCFullYear();
+  const mesActual = hoy.getUTCMonth() + 1;
   memoriaCache.delete(cacheHash('perfil', req.userId));
+  memoriaCache.delete(cacheHash(req.userId, 'acg', 'propia'));
+  memoriaCache.delete(cacheHash(req.userId, 'estrellas', 'propia'));
+  memoriaCache.delete(cacheHash(req.userId, 'calendario-lunar', `${anioActual}-${mesActual}`));
+  memoriaCache.delete(cacheHash(req.userId, 'home', hoyStr()));
+  memoriaCache.delete(cacheHash(req.userId, 'numerologia', 'propia', hoyStr()));
+  memoriaCache.delete(cacheHash(req.userId, 'energia', hoyStr()));
+  memoriaCache.delete(cacheHash(req.userId, 'horoscopo', hoyStr()));
+  memoriaCache.delete(cacheHash(req.userId, 'transitos', horaStr()));
   await req.supabase.from('natal_charts').delete().eq('user_id', req.userId);
 
   res.json({ mensaje: 'Perfil guardado', perfil: data });
