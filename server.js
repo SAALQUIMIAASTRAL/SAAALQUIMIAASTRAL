@@ -986,6 +986,13 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
 
     // ---- Procesar días de poder personal ----
     const PLANETAS_BENEFICOS = ['Sun', 'Venus', 'Jupiter'];
+    const NOMBRE_ES = {
+      Sun: 'Sol', Moon: 'Luna', Mercury: 'Mercurio', Venus: 'Venus', Mars: 'Marte',
+      Jupiter: 'Júpiter', Saturn: 'Saturno', Uranus: 'Urano', Neptune: 'Neptuno', Pluto: 'Plutón',
+      Medium_Coeli: 'Medio Cielo', Midheaven: 'Medio Cielo', MC: 'Medio Cielo',
+      Ascendant: 'Ascendente', Descendant: 'Descendente', Imum_Coeli: 'Fondo de Cielo',
+    };
+    const ASPECTO_ES = { trine: 'trígono', sextile: 'sextil', conjunction: 'conjunción', square: 'cuadratura', opposition: 'oposición' };
     const ASPECTOS_FAVORABLES = ['trine', 'sextile', 'conjunction'];
     const PUNTOS_EXITO = ['Sun', 'Venus', 'Jupiter', 'Medium_Coeli', 'Midheaven', 'MC', 'Ascendant'];
     let diasPoderPersonal = {};
@@ -1008,7 +1015,7 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
         else { const d = new Date(fechaCruda); if (!isNaN(d)) diaNum = d.getUTCDate(); }
         if (!diaNum) return;
         diasPoderPersonal[diaNum] = diasPoderPersonal[diaNum] || [];
-        diasPoderPersonal[diaNum].push(`${ev.transiting_planet} en ${aspecto} con tu ${ev.stationed_planet} natal`);
+        diasPoderPersonal[diaNum].push(`${NOMBRE_ES[ev.transiting_planet] || ev.transiting_planet} en ${ASPECTO_ES[aspecto] || aspecto} con tu ${NOMBRE_ES[ev.stationed_planet] || ev.stationed_planet} natal`);
       });
       // Diagnóstico temporal: si no encontramos ningún día, mostrar por qué (cuántos eventos había y cómo se ven)
       if (Object.keys(diasPoderPersonal).length === 0) {
