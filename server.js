@@ -190,7 +190,11 @@ app.get('/buscar-ciudad', async (req, res) => {
       timeout: 6000,
     });
     const resultados = (r.data || [])
-      .filter(item => ['city', 'town', 'village', 'municipality', 'hamlet'].includes(item.type))
+      .filter(item => {
+        const a = item.address || {};
+        const esLugarReal = Boolean(a.city || a.town || a.village || a.municipality || a.hamlet);
+        return esLugarReal && item.type !== 'state' && item.type !== 'country';
+      })
       .map(item => ({
         etiqueta: item.display_name,
         ciudad: item.address?.city || item.address?.town || item.address?.village || item.name,
