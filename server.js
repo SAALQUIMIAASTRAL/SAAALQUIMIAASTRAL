@@ -118,13 +118,18 @@ async function requirePremium(req, res, next) {
 function birthDataDesdePerfil(perfil, nombre) {
   const [anio, mes, dia] = perfil.fecha_nacimiento.split('-').map(Number);
   const [hora, minuto] = (perfil.hora_nacimiento || '12:00').split(':').map(Number);
+  const birthData = {
+    year: anio, month: mes, day: dia, hour: hora, minute: minuto, second: 0,
+    city: perfil.ciudad_nacimiento,
+    country_code: perfil.pais_codigo,
+  };
+  // Si ya tenemos coordenadas exactas (del buscador de ciudades), las mandamos también —
+  // así la API no depende de adivinar la ubicación solo por el nombre escrito.
+  if (typeof perfil.latitud === 'number' && !isNaN(perfil.latitud)) birthData.latitude = perfil.latitud;
+  if (typeof perfil.longitud === 'number' && !isNaN(perfil.longitud)) birthData.longitude = perfil.longitud;
   return {
     name: nombre || perfil.nombre || 'Usuaria',
-    birth_data: {
-      year: anio, month: mes, day: dia, hour: hora, minute: minuto, second: 0,
-      city: perfil.ciudad_nacimiento,
-      country_code: perfil.pais_codigo,
-    },
+    birth_data: birthData,
   };
 }
 
@@ -171,21 +176,56 @@ app.post('/auth/refresh', async (req, res) => {
 });
 
 // ============================================================
+// RUTA: Buscar ciudad con coordenadas reales (evita fallos silenciosos
+// cuando el nombre de la ciudad no coincide exacto con lo que la API de
+// astrología reconoce por su cuenta)
+// ============================================================
+app.get('/buscar-ciudad', async (req, res) => {
+  const q = (req.query.q || '').trim();
+  if (q.length < 3) return res.json({ resultados: [] });
+  try {
+    const r = await axios.get('https://nominatim.openstreetmap.org/search', {
+      params: { q, format: 'json', addressdetails: 1, limit: 6, 'accept-language': 'es' },
+      headers: { 'User-Agent': 'SamAlquimiaAstral/1.0 (contacto: shernsndez.22@gmail.com)' },
+      timeout: 6000,
+    });
+    const resultados = (r.data || [])
+      .filter(item => ['city', 'town', 'village', 'municipality', 'administrative'].includes(item.type) || item.class === 'place')
+      .map(item => ({
+        etiqueta: item.display_name,
+        ciudad: item.address?.city || item.address?.town || item.address?.village || item.name,
+        pais_codigo: (item.address?.country_code || '').toUpperCase(),
+        latitud: parseFloat(item.lat),
+        longitud: parseFloat(item.lon),
+      }));
+    res.json({ resultados });
+  } catch (err) {
+    console.error('buscar-ciudad falló:', err.message);
+    res.json({ resultados: [] });
+  }
+});
+
+// ============================================================
 // RUTA: Guardar/actualizar el perfil (ciudad + país)
 // ============================================================
 app.post('/perfil', requireLogin, async (req, res) => {
-  const { nombre, fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo } = req.body;
+  const { nombre, fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo, latitud, longitud } = req.body;
+
+  const datosAGuardar = {
+    id: req.userId,
+    nombre,
+    fecha_nacimiento,
+    hora_nacimiento,
+    ciudad_nacimiento,
+    pais_codigo,
+  };
+  // Solo actualizamos coordenadas si vienen (evita borrar unas ya guardadas al editar solo el nombre, por ejemplo)
+  if (typeof latitud === 'number' && !isNaN(latitud)) datosAGuardar.latitud = latitud;
+  if (typeof longitud === 'number' && !isNaN(longitud)) datosAGuardar.longitud = longitud;
 
   const { data, error } = await req.supabase
     .from('profiles')
-    .upsert({
-      id: req.userId,
-      nombre,
-      fecha_nacimiento,
-      hora_nacimiento,
-      ciudad_nacimiento,
-      pais_codigo,
-    })
+    .upsert(datosAGuardar)
     .select()
     .single();
 
@@ -247,8 +287,9 @@ app.post('/carta-natal', requireLogin, async (req, res) => {
 
     res.json({ mensaje: 'Carta natal calculada', carta: cartaGuardada, desde_cache: false });
   } catch (err) {
-    console.error(err?.response?.data || err.message);
-    res.status(500).json({ error: 'No se pudo calcular la carta. Revisa los datos de nacimiento.' });
+    const detalle = err?.response?.data || err.message;
+    console.error('carta-natal falló:', detalle);
+    res.status(500).json({ error: 'No se pudo calcular la carta. Revisa los datos de nacimiento.', detalle_tecnico: detalle });
   }
 });
 
