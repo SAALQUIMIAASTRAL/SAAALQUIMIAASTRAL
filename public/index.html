@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v90-buscador-ciudades -->
+<!-- VERSION-APP: v91-editar-con-lapiz -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -568,24 +568,36 @@
             <div id="perfil-email-mostrar" style="font-size:13.5px;color:var(--plum);font-weight:600;"></div>
           </div>
 
-          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:8px;">Mi nombre y datos de nacimiento</div>
-          <div class="disclaimer" style="margin-bottom:10px;">Si algo quedó mal escrito al registrarte, corrígelo aquí. Al guardar, tu carta natal se vuelve a calcular con los datos nuevos.</div>
-          <div class="auth-error" id="editar-datos-error"></div>
-          <div class="auth-field"><label>Nombre</label><input type="text" id="editar-nombre" placeholder="Tu nombre"></div>
-          <div class="auth-field"><label>Fecha de nacimiento</label><input type="date" id="editar-fecha"></div>
-          <div class="auth-field"><label>Hora de nacimiento</label><input type="time" id="editar-hora"></div>
-          <div class="auth-field"><label>Ciudad de nacimiento</label><input type="text" id="editar-ciudad" placeholder="Ej. Mérida" oninput="buscarCiudadEnVivo('editar')" autocomplete="off">
-            <input type="hidden" id="editar-lat">
-            <input type="hidden" id="editar-lng">
-            <div id="editar-ciudad-sugerencias" style="position:relative;z-index:5;"></div>
+          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+            <span>Mi nombre y datos de nacimiento</span>
+            <span onclick="activarEdicionDatos()" style="cursor:pointer;font-size:13px;font-weight:600;color:var(--marigold-dark);" id="boton-editar-datos">✏️ Editar</span>
           </div>
-          <div class="auth-field"><label>País</label>
-            <select id="editar-pais" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;width:100%;">
-              <option value="">Selecciona tu país</option>
-            </select>
+
+          <div id="vista-datos-resumen" style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:16px;font-size:13px;color:var(--plum);line-height:1.9;"></div>
+
+          <div id="editar-datos-form" style="display:none;">
+            <div class="disclaimer" style="margin-bottom:10px;">Si algo quedó mal escrito al registrarte, corrígelo aquí. Al guardar, tu carta natal se vuelve a calcular con los datos nuevos.</div>
+            <div class="auth-error" id="editar-datos-error"></div>
+            <div class="auth-field"><label>Nombre</label><input type="text" id="editar-nombre" placeholder="Tu nombre"></div>
+            <div class="auth-field"><label>Fecha de nacimiento</label><input type="date" id="editar-fecha"></div>
+            <div class="auth-field"><label>Hora de nacimiento</label><input type="time" id="editar-hora"></div>
+            <div class="auth-field"><label>Ciudad de nacimiento</label><input type="text" id="editar-ciudad" placeholder="Ej. Mérida" oninput="buscarCiudadEnVivo('editar')" autocomplete="off">
+              <input type="hidden" id="editar-lat">
+              <input type="hidden" id="editar-lng">
+              <div id="editar-ciudad-sugerencias" style="position:relative;z-index:5;"></div>
+            </div>
+            <div class="auth-field"><label>País</label>
+              <select id="editar-pais" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;width:100%;">
+                <option value="">Selecciona tu país</option>
+              </select>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn-primary" style="background:var(--lilac);margin-bottom:6px;" onclick="guardarDatosNacimiento()">Guardar cambios</button>
+              <button class="btn-primary" style="background:var(--ink-dim);margin-bottom:6px;" onclick="cancelarEdicionDatos()">Cancelar</button>
+            </div>
           </div>
-          <button class="btn-primary" style="background:var(--lilac);margin-bottom:6px;" onclick="guardarDatosNacimiento()">Guardar cambios</button>
           <div id="editar-datos-msg" style="font-size:12px;margin-bottom:16px;"></div>
+
 
           <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:6px;">Suscripción</div>
           <div id="perfil-estado-sub" style="font-size:12.5px;font-weight:600;margin-bottom:10px;"></div>
@@ -636,7 +648,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v90-buscador-ciudades</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v91-editar-con-lapiz</div>
         </div>
 
         <div class="topbar">
@@ -2326,22 +2338,52 @@
     cargarDatosParaEditar();
   }
 
+  let _datosNacimientoActuales = null;
+
   async function cargarDatosParaEditar() {
     ocultarErrorEn('editar-datos-error');
     document.getElementById('editar-datos-msg').textContent = '';
+    const resumen = document.getElementById('vista-datos-resumen');
+    resumen.innerHTML = 'Cargando...';
     try {
       const r = await fetchAuth('/perfil', { headers: {} });
       const data = await r.json();
       const p = data.perfil;
-      if (!p) return;
-      document.getElementById('editar-nombre').value = p.nombre || '';
-      document.getElementById('editar-fecha').value = p.fecha_nacimiento || '';
-      document.getElementById('editar-hora').value = (p.hora_nacimiento || '12:00').slice(0, 5);
-      document.getElementById('editar-ciudad').value = p.ciudad_nacimiento || '';
-      document.getElementById('editar-pais').value = p.pais_codigo || '';
+      _datosNacimientoActuales = p;
+      if (!p) { resumen.innerHTML = '<span style="color:var(--ink-dim);">No hay datos guardados todavía.</span>'; return; }
+      const fechaLegible = p.fecha_nacimiento ? new Date(p.fecha_nacimiento + 'T00:00:00').toLocaleDateString('es-MX', { day:'numeric', month:'long', year:'numeric' }) : '—';
+      resumen.innerHTML = `
+        <div><b>Nombre:</b> ${p.nombre || '—'}</div>
+        <div><b>Fecha:</b> ${fechaLegible}</div>
+        <div><b>Hora:</b> ${(p.hora_nacimiento || '12:00').slice(0,5)}</div>
+        <div><b>Ciudad:</b> ${p.ciudad_nacimiento || '—'}${p.latitud ? ' <span style="color:var(--armonia);font-size:11px;">✓ ubicación exacta</span>' : ''}</div>
+        <div><b>País:</b> ${p.pais_codigo || '—'}</div>
+      `;
     } catch (e) {
-      // Si falla, dejamos los campos vacíos sin bloquear la pantalla
+      resumen.innerHTML = '<span style="color:#a5442f;">No se pudieron cargar tus datos.</span>';
     }
+  }
+
+  function activarEdicionDatos() {
+    const p = _datosNacimientoActuales || {};
+    document.getElementById('editar-nombre').value = p.nombre || '';
+    document.getElementById('editar-fecha').value = p.fecha_nacimiento || '';
+    document.getElementById('editar-hora').value = (p.hora_nacimiento || '12:00').slice(0, 5);
+    document.getElementById('editar-ciudad').value = p.ciudad_nacimiento || '';
+    document.getElementById('editar-pais').value = p.pais_codigo || '';
+    document.getElementById('editar-lat').value = p.latitud || '';
+    document.getElementById('editar-lng').value = p.longitud || '';
+    document.getElementById('vista-datos-resumen').style.display = 'none';
+    document.getElementById('editar-datos-form').style.display = 'block';
+    document.getElementById('boton-editar-datos').style.display = 'none';
+  }
+
+  function cancelarEdicionDatos() {
+    document.getElementById('editar-datos-form').style.display = 'none';
+    document.getElementById('vista-datos-resumen').style.display = 'block';
+    document.getElementById('boton-editar-datos').style.display = 'inline';
+    document.getElementById('editar-datos-msg').textContent = '';
+    ocultarErrorEn('editar-datos-error');
   }
 
   async function guardarDatosNacimiento() {
@@ -2370,12 +2412,14 @@
       });
       const data = await r.json();
       if (!r.ok) return mostrarErrorEn('editar-datos-error', data.error || 'No se pudo guardar.');
-      msgEl.style.color = 'var(--armonia)';
-      msgEl.textContent = '✔ Guardado. Tu carta natal se recalculará la próxima vez que la abras.';
       SESION.nombre = data.perfil?.nombre || SESION.nombre;
       const greet = document.getElementById('greeting-word');
       const nombreEl = document.querySelector('.band h1');
       if (nombreEl && SESION.nombre) nombreEl.innerHTML = `<span id="greeting-word">${greet ? greet.textContent : 'Hola'}</span>, ${SESION.nombre}`;
+      cancelarEdicionDatos();
+      await cargarDatosParaEditar();
+      document.getElementById('editar-datos-msg').style.color = 'var(--armonia)';
+      document.getElementById('editar-datos-msg').textContent = '✔ Guardado. Tu carta natal se recalculará la próxima vez que la abras.';
     } catch (e) {
       mostrarErrorEn('editar-datos-error', 'No se pudo conectar. Intenta de nuevo.');
     }
