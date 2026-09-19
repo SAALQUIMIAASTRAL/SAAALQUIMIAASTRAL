@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v89-editar-datos -->
+<!-- VERSION-APP: v90-buscador-ciudades -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -527,8 +527,11 @@
           </div>
           <div class="auth-field">
             <label>Ciudad de nacimiento</label>
-            <input type="text" id="perfil-ciudad" placeholder="Ej. Mérida">
-            <div style="font-size:10.5px;color:var(--ink-dim);margin-top:3px;">Escribe el nombre completo (ej. "Ciudad de México", no "CDMX")</div>
+            <input type="text" id="perfil-ciudad" placeholder="Ej. Mérida" oninput="buscarCiudadEnVivo('perfil')" autocomplete="off">
+            <input type="hidden" id="perfil-lat">
+            <input type="hidden" id="perfil-lng">
+            <div id="perfil-ciudad-sugerencias" style="position:relative;z-index:5;"></div>
+            <div style="font-size:10.5px;color:var(--ink-dim);margin-top:3px;">Escribe y elige tu ciudad de la lista para que la ubicación sea exacta</div>
           </div>
           <div class="auth-field"><label>País</label>
             <select id="perfil-pais" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;width:100%;">
@@ -571,7 +574,11 @@
           <div class="auth-field"><label>Nombre</label><input type="text" id="editar-nombre" placeholder="Tu nombre"></div>
           <div class="auth-field"><label>Fecha de nacimiento</label><input type="date" id="editar-fecha"></div>
           <div class="auth-field"><label>Hora de nacimiento</label><input type="time" id="editar-hora"></div>
-          <div class="auth-field"><label>Ciudad de nacimiento</label><input type="text" id="editar-ciudad" placeholder="Ej. Mérida"></div>
+          <div class="auth-field"><label>Ciudad de nacimiento</label><input type="text" id="editar-ciudad" placeholder="Ej. Mérida" oninput="buscarCiudadEnVivo('editar')" autocomplete="off">
+            <input type="hidden" id="editar-lat">
+            <input type="hidden" id="editar-lng">
+            <div id="editar-ciudad-sugerencias" style="position:relative;z-index:5;"></div>
+          </div>
           <div class="auth-field"><label>País</label>
             <select id="editar-pais" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;width:100%;">
               <option value="">Selecciona tu país</option>
@@ -629,7 +636,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v89-editar-datos</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v90-buscador-ciudades</div>
         </div>
 
         <div class="topbar">
@@ -2348,6 +2355,10 @@
       ciudad_nacimiento: document.getElementById('editar-ciudad').value.trim(),
       pais_codigo: document.getElementById('editar-pais').value.trim().toUpperCase(),
     };
+    const latVal = parseFloat(document.getElementById('editar-lat').value);
+    const lngVal = parseFloat(document.getElementById('editar-lng').value);
+    if (!isNaN(latVal)) cuerpo.latitud = latVal;
+    if (!isNaN(lngVal)) cuerpo.longitud = lngVal;
     if (!cuerpo.nombre || !cuerpo.fecha_nacimiento || !cuerpo.ciudad_nacimiento || cuerpo.pais_codigo.length !== 2) {
       return mostrarErrorEn('editar-datos-error', 'Llena tu nombre, fecha, ciudad y un país válido.');
     }
@@ -2450,6 +2461,50 @@
     await revisarPerfilYArrancar();
   }
 
+  let _timerBusquedaCiudad = null;
+  function buscarCiudadEnVivo(prefijo) {
+    clearTimeout(_timerBusquedaCiudad);
+    const input = document.getElementById(`${prefijo}-ciudad`);
+    const contenedor = document.getElementById(`${prefijo}-ciudad-sugerencias`);
+    // Si edita el texto a mano, invalidamos las coordenadas guardadas hasta que elija una sugerencia de nuevo
+    document.getElementById(`${prefijo}-lat`).value = '';
+    document.getElementById(`${prefijo}-lng`).value = '';
+    const texto = input.value.trim();
+    if (texto.length < 3) { contenedor.innerHTML = ''; return; }
+    _timerBusquedaCiudad = setTimeout(async () => {
+      try {
+        const r = await fetch('/buscar-ciudad?q=' + encodeURIComponent(texto));
+        const data = await r.json();
+        const resultados = data.resultados || [];
+        if (!resultados.length) { contenedor.innerHTML = ''; return; }
+        contenedor.innerHTML = `
+          <div style="position:absolute;left:0;right:0;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 4px 14px rgba(0,0,0,0.12);max-height:180px;overflow-y:auto;">
+            ${resultados.map((c, i) => `
+              <div onclick='elegirCiudad("${prefijo}", ${i})' style="padding:9px 12px;font-size:12.5px;color:var(--plum);cursor:pointer;border-bottom:1px solid var(--line);">${c.etiqueta}</div>
+            `).join('')}
+          </div>
+        `;
+        window[`_ciudadesEncontradas_${prefijo}`] = resultados;
+      } catch (e) { contenedor.innerHTML = ''; }
+    }, 400);
+  }
+
+  function elegirCiudad(prefijo, indice) {
+    const c = (window[`_ciudadesEncontradas_${prefijo}`] || [])[indice];
+    if (!c) return;
+    document.getElementById(`${prefijo}-ciudad`).value = c.ciudad || c.etiqueta;
+    document.getElementById(`${prefijo}-lat`).value = c.latitud;
+    document.getElementById(`${prefijo}-lng`).value = c.longitud;
+    document.getElementById(`${prefijo}-ciudad-sugerencias`).innerHTML = '';
+    if (c.pais_codigo) {
+      const selectPais = document.getElementById(`${prefijo}-pais`);
+      if (selectPais && [...selectPais.options].some(o => o.value === c.pais_codigo)) {
+        selectPais.value = c.pais_codigo;
+      }
+    }
+  }
+
+
   async function accionGuardarPerfil() {
     ocultarErrorEn('perfil-error');
     const cuerpo = {
@@ -2459,6 +2514,10 @@
       ciudad_nacimiento: document.getElementById('perfil-ciudad').value.trim(),
       pais_codigo: document.getElementById('perfil-pais').value.trim().toUpperCase(),
     };
+    const latVal = parseFloat(document.getElementById('perfil-lat').value);
+    const lngVal = parseFloat(document.getElementById('perfil-lng').value);
+    if (!isNaN(latVal)) cuerpo.latitud = latVal;
+    if (!isNaN(lngVal)) cuerpo.longitud = lngVal;
     if (!cuerpo.nombre || !cuerpo.fecha_nacimiento || !cuerpo.ciudad_nacimiento || cuerpo.pais_codigo.length !== 2) {
       return mostrarErrorEn('perfil-error', 'Llena tu nombre, fecha, ciudad y un código de país de 2 letras (ej. MX).');
     }
@@ -2663,7 +2722,11 @@
     try {
       const r = await fetchAuth('/carta-natal', { method: 'POST', headers: {} });
       const data = await r.json();
-      if (!r.ok) throw new Error(data.error || 'Error al calcular');
+      if (!r.ok) {
+        const e = new Error(data.error || 'Error al calcular');
+        e.detalle = data.detalle_tecnico;
+        throw e;
+      }
 
       const s = data.carta?.datos_carta?.subject_data;
       const cd = data.carta?.datos_carta?.chart_data;
@@ -2695,7 +2758,8 @@
       }
     } catch (err) {
       if (!silencioso) {
-        chips.innerHTML = `<div class="row" style="color:#a5442f;">${err.message}</div>`;
+        chips.innerHTML = `<div class="row" style="color:#a5442f;">${err.message}</div>` +
+          (err.detalle ? `<pre style="white-space:pre-wrap;font-size:9px;color:#a5442f;opacity:0.7;padding:8px;">${typeof err.detalle === 'string' ? err.detalle : JSON.stringify(err.detalle, null, 2)}</pre>` : '');
       }
     }
     if (!silencioso) { boton.textContent = 'Calcular mi carta natal'; boton.disabled = false; }
