@@ -993,6 +993,21 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
       Ascendant: 'Ascendente', Descendant: 'Descendente', Imum_Coeli: 'Fondo de Cielo',
     };
     const ASPECTO_ES = { trine: 'trígono', sextile: 'sextil', conjunction: 'conjunción', square: 'cuadratura', opposition: 'oposición' };
+    const BUENO_PARA = {
+      Sun: 'destacar, liderar, mostrarte y ganar visibilidad',
+      Moon: 'tu bienestar emocional, el hogar y la familia',
+      Mercury: 'comunicar, firmar, negociar y cerrar acuerdos',
+      Venus: 'el amor, la belleza, el dinero y las relaciones',
+      Mars: 'tomar acción, arrancar proyectos y tener energía extra',
+      Jupiter: 'crecer, expandirte, tener suerte y oportunidades',
+      Saturn: 'compromisos serios, estructura y responsabilidad',
+      Medium_Coeli: 'tu carrera, tu imagen pública y lanzamientos',
+      Midheaven: 'tu carrera, tu imagen pública y lanzamientos',
+      MC: 'tu carrera, tu imagen pública y lanzamientos',
+      Ascendant: 'tu imagen personal y las primeras impresiones',
+      Descendant: 'sociedades, pareja y acuerdos con otros',
+      Imum_Coeli: 'tu casa, tus raíces y tu vida privada',
+    };
     const ASPECTOS_FAVORABLES = ['trine', 'sextile', 'conjunction'];
     const PUNTOS_EXITO = ['Sun', 'Venus', 'Jupiter', 'Medium_Coeli', 'Midheaven', 'MC', 'Ascendant'];
     let diasPoderPersonal = {};
@@ -1015,7 +1030,9 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
         else { const d = new Date(fechaCruda); if (!isNaN(d)) diaNum = d.getUTCDate(); }
         if (!diaNum) return;
         diasPoderPersonal[diaNum] = diasPoderPersonal[diaNum] || [];
-        diasPoderPersonal[diaNum].push(`${NOMBRE_ES[ev.transiting_planet] || ev.transiting_planet} en ${ASPECTO_ES[aspecto] || aspecto} con tu ${NOMBRE_ES[ev.stationed_planet] || ev.stationed_planet} natal`);
+        const buenoPara = BUENO_PARA[ev.stationed_planet];
+        const mensaje = `${NOMBRE_ES[ev.transiting_planet] || ev.transiting_planet} en ${ASPECTO_ES[aspecto] || aspecto} con tu ${NOMBRE_ES[ev.stationed_planet] || ev.stationed_planet} natal` + (buenoPara ? ` — bueno para ${buenoPara}` : '');
+        diasPoderPersonal[diaNum].push(mensaje);
       });
       // Diagnóstico temporal: si no encontramos ningún día, mostrar por qué (cuántos eventos había y cómo se ven)
       if (Object.keys(diasPoderPersonal).length === 0) {
