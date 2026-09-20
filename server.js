@@ -73,6 +73,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 // ---- Conexión a Astrology API ----
 const astrologyApi = axios.create({
   baseURL: process.env.ASTROLOGY_API_BASE_URL,
+  timeout: 20000, // 20s — evita que la app se quede "colgada" si la API tarda o no responde
   headers: {
     Authorization: `Bearer ${process.env.ASTROLOGY_API_KEY}`,
     'Content-Type': 'application/json',
@@ -828,6 +829,17 @@ app.get('/otras-cartas/:id', requireLogin, async (req, res) => {
   res.json({ carta: data });
 });
 
+// RUTA: Eliminar una carta de otra persona (se usa también para "editar": borrar y volver a calcular)
+app.delete('/otras-cartas/:id', requireLogin, async (req, res) => {
+  const { error } = await req.supabase
+    .from('otras_cartas')
+    .delete()
+    .eq('id', req.params.id)
+    .eq('user_id', req.userId);
+  if (error) return res.status(400).json({ error: error.message });
+  res.json({ mensaje: 'Carta eliminada' });
+});
+
 // RUTA: Resumen de personalidad de una carta guardada (otra persona)
 app.post('/otras-cartas/:id/resumen', requireLogin, async (req, res) => {
   try {
@@ -894,7 +906,7 @@ app.post('/otras-cartas/:id/visual', requireLogin, async (req, res) => {
 // RUTA: Guardar y calcular la carta de otra persona (familia, pareja, amigas — hasta 8)
 app.post('/otras-cartas', requireLogin, async (req, res) => {
   try {
-    const { nombre, fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo } = req.body;
+    const { nombre, fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo, latitud, longitud } = req.body;
     if (!nombre || !fecha_nacimiento || !ciudad_nacimiento || !pais_codigo) {
       return res.status(400).json({ error: 'Faltan datos de la persona.' });
     }
@@ -903,16 +915,20 @@ app.post('/otras-cartas', requireLogin, async (req, res) => {
     if (count >= 8) return res.status(400).json({ error: 'Ya tienes 8 cartas guardadas (el máximo).' });
 
     const respuesta = await astrologyApi.post('/charts/natal', {
-      subject: birthDataDesdePerfil({ fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo }, nombre),
+      subject: birthDataDesdePerfil({ fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo, latitud, longitud }, nombre),
       options: { house_system: 'P', zodiac_type: 'Tropic', language: 'es' },
     });
 
+    const registroAGuardar = {
+      user_id: req.userId, nombre, fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo,
+      datos_carta: respuesta.data,
+    };
+    if (typeof latitud === 'number' && !isNaN(latitud)) registroAGuardar.latitud = latitud;
+    if (typeof longitud === 'number' && !isNaN(longitud)) registroAGuardar.longitud = longitud;
+
     const { data, error } = await req.supabase
       .from('otras_cartas')
-      .insert({
-        user_id: req.userId, nombre, fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo,
-        datos_carta: respuesta.data,
-      })
+      .insert(registroAGuardar)
       .select()
       .single();
 
