@@ -1142,17 +1142,28 @@ app.post('/relocacion', requireLogin, async (req, res) => {
     const { ciudad, pais_codigo } = req.body;
     if (!ciudad || !pais_codigo) return res.status(400).json({ error: 'Falta la ciudad donde vives ahora.' });
 
-    const respuesta = await astrologyApi.post('/analysis/relocation', {
-      subject: birthDataDesdePerfil(perfil),
-      options: {
-        target_location: { city: ciudad, country_code: pais_codigo },
-        show_changes: true,
-        highlight_angular_changes: true,
-      },
-      report_options: { tradition: 'psychological', language: 'es' },
-    });
+    const [respuesta, reseñaReloc] = await Promise.all([
+      astrologyApi.post('/analysis/relocation', {
+        subject: birthDataDesdePerfil(perfil),
+        options: {
+          target_location: { city: ciudad, country_code: pais_codigo },
+          show_changes: true,
+          highlight_angular_changes: true,
+        },
+        report_options: { tradition: 'psychological', language: 'es' },
+      }),
+      astrologyApi.post('/analysis/relocation-report', {
+        subject: birthDataDesdePerfil(perfil),
+        options: { target_location: { city: ciudad, country_code: pais_codigo } },
+        report_options: { tradition: 'psychological', language: 'es' },
+      }).catch(e => { console.error('relocation-report falló:', e?.response?.data || e.message); return { _error_debug: e?.response?.data || e.message }; }),
+    ]);
 
-    res.json({ relocacion: respuesta.data });
+    res.json({
+      relocacion: respuesta.data,
+      reseña: reseñaReloc?.data || null,
+      reseña_error: reseñaReloc?._error_debug || null,
+    });
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo calcular la relocación.', detalle_tecnico: err?.response?.data || err.message });
@@ -1214,6 +1225,7 @@ app.post('/estrellas-fijas', requireLogin, async (req, res) => {
     const respuesta = await astrologyApi.post('/fixed-stars/report', {
       subject: datosSubject,
       language: 'es',
+      report_options: { tradition: 'psychological', language: 'es' },
     });
 
     const r = { estrellas: respuesta.data };
