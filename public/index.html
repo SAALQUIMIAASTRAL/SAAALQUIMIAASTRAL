@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v97-estrellas-fijas-explicadas -->
+<!-- VERSION-APP: v99-ajustes-traduccion -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -648,7 +648,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v97-estrellas-fijas-explicadas</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v99-ajustes-traduccion</div>
         </div>
 
         <div class="topbar">
@@ -1693,7 +1693,75 @@
       .replace(/\bmaturity\b/gi, 'madurez')
       .replace(/\btension\b/gi, 'tensión')
       .replace(/\bharmony\b/gi, 'armonía')
-      .replace(/\bcompatibility\b/gi, 'compatibilidad');
+      .replace(/\bcompatibility\b/gi, 'compatibilidad')
+      // Términos que se cuelan en informes de estrellas fijas y relocación
+      .replace(/\bopposite\b/gi, 'en oposición con')
+      .replace(/\bconjunct\b/gi, 'en conjunción con')
+      .replace(/\bcreates?\b/gi, 'crea')
+      .replace(/\bbetween\b/gi, 'entre')
+      .replace(/\bqualities of\b/gi, 'cualidades de')
+      .replace(/\bthe native\b/gi, 'la persona')
+      .replace(/\bfaces\b/gi, 'enfrenta')
+      .replace(/\bintense\b/gi, 'intensas')
+      .replace(/\blimitations\b/gi, 'limitaciones')
+      .replace(/\brequire[s]?\b/gi, 'requieren')
+      .replace(/\bstrategic responses?\b/gi, 'respuestas estratégicas')
+      .replace(/\bdanger of\b/gi, 'riesgo de')
+      .replace(/\bself-destruction\b/gi, 'autodestrucción')
+      .replace(/\brigidity\b/gi, 'rigidez')
+      .replace(/\bmust balance\b/gi, 'debe equilibrar')
+      .replace(/\bstructure\b/gi, 'estructura')
+      .replace(/\bintensity\b/gi, 'intensidad')
+      .replace(/\bstrategic\b/gi, 'estratégica')
+      .replace(/\bpatience\b/gi, 'paciencia')
+      .replace(/\bendurance\b/gi, 'resistencia')
+      .replace(/\bextreme tests? of\b/gi, 'pruebas extremas de')
+      .replace(/\bsuccess\b/gi, 'éxito')
+      .replace(/\bhappiness\b/gi, 'felicidad')
+      .replace(/\breligion\b/gi, 'espiritualidad')
+      .replace(/\bphilosophy\b/gi, 'filosofía')
+      .replace(/\bcombines?\b/gi, 'combina')
+      .replace(/\benergies\b/gi, 'energías')
+      .replace(/\bemphasizing\b/gi, 'resaltando')
+      .replace(/\bnature[,.]?\b/gi, 'naturaleza')
+      .replace(/\bwith\b/gi, 'con')
+      .replace(/\bbrings\b/gi, 'trae')
+      .replace(/\bbeauty\b/gi, 'belleza')
+      .replace(/\bwhere\b/gi, 'donde')
+      .replace(/\bhome, family, and emotional roots\b/gi, 'el hogar, la familia y las raíces emocionales')
+      .replace(/\breceive loving focus\b/gi, 'reciben atención amorosa')
+      .replace(/\binvestigating life'?s depths\b/gi, 'explorar las profundidades de la vida')
+      .replace(/\bmanaging shared resources\b/gi, 'administrar recursos compartidos')
+      .replace(/\bconsume energy\b/gi, 'consume energía')
+      .replace(/\bcan make\b/gi, 'puede hacer que')
+      .replace(/\bfeel inhibited\b/gi, 'se sienta inhibida')
+      .replace(/\bcalls strongly toward\b/gi, 'llama fuertemente hacia')
+      .replace(/\bservice and healing\b/gi, 'el servicio y la sanación')
+      .replace(/\bhosts?\b/gi, 'alberga')
+      .replace(/\bdeepest shifts\b/gi, 'los cambios más profundos')
+      .replace(/\bnoticeable\b/gi, 'notable')
+      .replace(/\bidentity adjustment\b/gi, 'ajuste de identidad')
+      .replace(/\bsubtle but real changes\b/gi, 'cambios sutiles pero reales')
+      .replace(/\bself-presentation\b/gi, 'cómo te presentas')
+      .replace(/\bfirst impressions\b/gi, 'las primeras impresiones')
+      .replace(/\bcareer adjustment\b/gi, 'ajuste profesional')
+      .replace(/\bprofessional goals\b/gi, 'metas profesionales')
+      .replace(/\bpublic image\b/gi, 'imagen pública')
+      .replace(/\bshift to align with\b/gi, 'se ajustan para alinearse con')
+      .replace(/\bnew opportunities\b/gi, 'nuevas oportunidades')
+      .replace(/\bIn this location:?\s*/gi, 'En este lugar: ')
+      .replace(/\b(\d+)(st|nd|rd|th)\s+house\b/gi, (_, n) => `Casa ${n}`)
+      .replace(/\benergy emphasized through\b/gi, 'energía resaltada a través del ángulo de tu')
+      .replace(/\bangle\b/gi, '')
+      .replace(/Noticeable identity adjustment - subtle but real changes in self-presentation and first impressions\.?/gi,
+        'Ajuste notable de identidad: cambios sutiles pero reales en cómo te presentas y en las primeras impresiones que das.')
+      .replace(/Career adjustment - professional goals and public image shift to align with new opportunities\.?/gi,
+        'Ajuste profesional: tus metas de carrera y tu imagen pública se realinean con nuevas oportunidades.')
+      .replace(/\bshining\b/gi, 'brillando')
+      .replace(/\bdefines purpose\b/gi, 'define tu propósito')
+      .replace(/\bjoyful expression\b/gi, 'expresión gozosa')
+      .replace(/\bcreative\b/gi, 'creativa')
+      .replace(/\bemotional roots\b/gi, 'raíces emocionales');
   }
 
   function traducirPlanetasEnTexto(t) {
