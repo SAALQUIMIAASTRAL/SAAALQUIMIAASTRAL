@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v92-carta-siempre-calculada -->
+<!-- VERSION-APP: v93-editar-otras-cartas -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -648,7 +648,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v92-carta-siempre-calculada</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v93-editar-otras-cartas</div>
         </div>
 
         <div class="topbar">
@@ -689,7 +689,11 @@
                 <label>Fecha de nacimiento<input type="date" id="nc-fecha"></label>
                 <label>Hora<input type="time" id="nc-hora" value="12:00"></label>
               </div>
-              <label>Ciudad de nacimiento<input type="text" id="nc-ciudad"></label>
+              <label>Ciudad de nacimiento<input type="text" id="nc-ciudad" oninput="buscarCiudadEnVivo('nc')" autocomplete="off">
+                <input type="hidden" id="nc-lat">
+                <input type="hidden" id="nc-lng">
+                <div id="nc-ciudad-sugerencias" style="position:relative;z-index:5;"></div>
+              </label>
               <label>País<select id="nc-pais" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;"><option value="">Selecciona el país</option></select></label>
               <button class="btn-primary" onclick="guardarNuevaCarta()">Calcular y guardar</button>
               <div id="nc-resultado"></div>
@@ -765,7 +769,7 @@
 
           <div class="section" data-tab="hoy">
             <h2>Tránsitos personales</h2>
-            <div class="desc">Un tránsito ocurre cuando un planeta en el cielo, en este momento, activa un punto exacto de tu carta natal — eso es lo que marca "buenos días" o "días de cuidado" para ti. Aquí están los próximos 30 días.</div>
+            <div class="desc">Un tránsito ocurre cuando un planeta en el cielo, en este momento, activa un punto exacto de tu carta natal — eso es lo que marca "buenos días" o "días de cuidado" para ti. Aquí están los próximos 7 días.</div>
             <button class="btn-primary" onclick="verTransitosReales()">Ver mis tránsitos reales</button>
             <div id="transitos-resultado" style="margin-top:14px;"></div>
           </div>
@@ -1320,6 +1324,7 @@
       const r = await fetchAuth('/otras-cartas/' + id, { headers: {} });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || 'No se pudo cargar.');
+      _otrasCartasCache[id] = data.carta;
 
       const cd = data.carta?.datos_carta?.chart_data;
       let filasPlanetas = '';
@@ -1341,6 +1346,10 @@
           <button class="btn-primary" style="background:var(--blush-1);margin-top:10px;" onclick="verFuncionOtraCarta('${id}', '${nombre}', 'numerologia')">Su numerología</button>
           <button class="btn-primary" style="background:var(--blush-1);margin-top:10px;" onclick="verFuncionOtraCarta('${id}', '${nombre}', 'estrellas-fijas')">Sus estrellas fijas</button>
           <button class="btn-primary" style="background:var(--blush-1);margin-top:10px;" onclick="verFuncionOtraCarta('${id}', '${nombre}', 'astrocartografia')">Su astrocartografía</button>
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <button class="btn-primary" style="background:var(--ink-dim);" onclick="editarOtraCarta('${id}')">✏️ Editar datos</button>
+            <button class="btn-primary" style="background:#a5442f;" onclick="eliminarOtraCarta('${id}', '${nombre}')">🗑 Eliminar</button>
+          </div>
           <div id="carta-otro-visual" style="margin-top:12px;"></div>
           <div id="carta-otro-resumen" style="margin-top:12px;"></div>
           <div id="carta-otro-extra" style="margin-top:12px;"></div>
@@ -1418,7 +1427,13 @@
 
   function mostrarFormularioCarta() {
     const f = document.getElementById('form-nueva-carta');
-    f.style.display = f.style.display === 'none' ? 'flex' : 'none';
+    const abriendo = f.style.display === 'none';
+    f.style.display = abriendo ? 'flex' : 'none';
+    if (abriendo) {
+      _editandoCartaId = null;
+      ['nc-nombre', 'nc-fecha', 'nc-hora', 'nc-ciudad', 'nc-pais', 'nc-lat', 'nc-lng'].forEach(id => { document.getElementById(id).value = ''; });
+      document.getElementById('nc-hora').value = '12:00';
+    }
   }
 
   async function cargarCartasGuardadas() {
@@ -1442,6 +1457,36 @@
     } catch (e) { /* silencioso */ }
   }
 
+  const _otrasCartasCache = {};
+  let _editandoCartaId = null;
+
+  function editarOtraCarta(id) {
+    const c = _otrasCartasCache[id];
+    if (!c) return;
+    _editandoCartaId = id;
+    document.getElementById('nc-nombre').value = c.nombre || '';
+    document.getElementById('nc-fecha').value = c.fecha_nacimiento || '';
+    document.getElementById('nc-hora').value = (c.hora_nacimiento || '12:00').slice(0, 5);
+    document.getElementById('nc-ciudad').value = c.ciudad_nacimiento || '';
+    document.getElementById('nc-pais').value = c.pais_codigo || '';
+    document.getElementById('nc-lat').value = c.latitud || '';
+    document.getElementById('nc-lng').value = c.longitud || '';
+    document.getElementById('form-nueva-carta').style.display = 'block';
+    document.getElementById('form-nueva-carta').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  async function eliminarOtraCarta(id, nombre) {
+    if (!confirm(`¿Eliminar la carta de ${nombre}? Esto no se puede deshacer.`)) return;
+    try {
+      const r = await fetchAuth('/otras-cartas/' + id, { method: 'DELETE', headers: {} });
+      if (!r.ok) { const d = await r.json(); throw new Error(d.error || 'No se pudo eliminar.'); }
+      document.getElementById('carta-otro-detalle').innerHTML = '';
+      cargarCartasGuardadas();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
   async function guardarNuevaCarta() {
     const resultado = document.getElementById('nc-resultado');
     const cuerpo = {
@@ -1451,12 +1496,19 @@
       ciudad_nacimiento: document.getElementById('nc-ciudad').value.trim(),
       pais_codigo: document.getElementById('nc-pais').value,
     };
+    const latVal = parseFloat(document.getElementById('nc-lat').value);
+    const lngVal = parseFloat(document.getElementById('nc-lng').value);
+    if (!isNaN(latVal)) cuerpo.latitud = latVal;
+    if (!isNaN(lngVal)) cuerpo.longitud = lngVal;
     if (!cuerpo.nombre || !cuerpo.fecha_nacimiento || !cuerpo.ciudad_nacimiento || !cuerpo.pais_codigo) {
       resultado.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Llena todos los datos.</div>';
       return;
     }
     resultado.innerHTML = '<div class="disclaimer">Calculando y guardando...</div>';
     try {
+      if (_editandoCartaId) {
+        await fetchAuth('/otras-cartas/' + _editandoCartaId, { method: 'DELETE', headers: {} });
+      }
       const r = await fetchAuth('/otras-cartas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1466,6 +1518,8 @@
       if (!r.ok) throw new Error(data.error || 'No se pudo guardar.');
       resultado.innerHTML = '<div class="disclaimer">¡Guardada! 🎉</div>';
       document.getElementById('form-nueva-carta').style.display = 'none';
+      document.getElementById('carta-otro-detalle').innerHTML = '';
+      _editandoCartaId = null;
       cargarCartasGuardadas();
     } catch (err) {
       resultado.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
