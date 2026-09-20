@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v95-diario-y-confirmacion-email -->
+<!-- VERSION-APP: v97-estrellas-fijas-explicadas -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -648,7 +648,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v95-diario-y-confirmacion-email</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v97-estrellas-fijas-explicadas</div>
         </div>
 
         <div class="topbar">
@@ -1098,14 +1098,6 @@
       let htmlLineas = '';
 
       // Ciudades destacadas (lo más concreto y útil)
-      function traducirNombresPlanetasEnFrase(texto) {
-        if (!texto) return texto;
-        let resultado = texto;
-        Object.keys(PLANETAS_SOLO_NOMBRE_ES).forEach(en => {
-          resultado = resultado.replace(new RegExp('\\b' + en + '\\b', 'g'), PLANETAS_SOLO_NOMBRE_ES[en]);
-        });
-        return resultado;
-      }
       const ciudadesBuenas = (data.ciudades || []).filter(c => c.in_power_zone).sort((a, b) => (b.power_zone_strength || 0) - (a.power_zone_strength || 0)).slice(0, 6);
       if (ciudadesBuenas.length) {
         htmlLineas += `<div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin-bottom:8px;">📍 Ciudades donde tu energía se activa más</div>`;
@@ -1613,6 +1605,14 @@
     Chiron:'Quirón', Ascendant:'Ascendente', Medium_Coeli:'Medio Cielo', Descendant:'Descendente',
     Imum_Coeli:'Fondo de Cielo', Mean_Node:'Nodo Norte', Mean_South_Node:'Nodo Sur', Lilith:'Lilith',
   };
+  function traducirNombresPlanetasEnFrase(texto) {
+    if (!texto) return texto;
+    let resultado = texto;
+    Object.keys(PLANETAS_SOLO_NOMBRE_ES).forEach(en => {
+      resultado = resultado.replace(new RegExp('\\b' + en + '\\b', 'g'), PLANETAS_SOLO_NOMBRE_ES[en]);
+    });
+    return resultado;
+  }
   function traducirTitulo(t) {
     if (!t || typeof t !== 'string') return t;
 
@@ -3041,7 +3041,21 @@
         contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
-      contenedor.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('estrellas-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>` + renderizarInforme(data.estrellas, null);
+      const d = data.estrellas?.data || {};
+      const todas = [...(d.conjunctions || []), ...(d.oppositions || [])].sort((a, b) => (b.strength || 0) - (a.strength || 0));
+      const ASPECTO_ES_ESTRELLA = { conjunction: 'en conjunción con', opposition: 'en oposición con' };
+      let htmlEstrellas = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('estrellas-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
+      if (todas.length) {
+        htmlEstrellas += todas.map(e => `
+          <div class="card-lectura" style="margin-bottom:10px;">
+            <div class="card-titulo">${nombrePlanetaEs(e.planet)} ${ASPECTO_ES_ESTRELLA[e.aspect] || e.aspect} ${e.star}${e.star_data?.traditional_name ? ` <span style="font-weight:400;font-size:11px;color:var(--ink-dim);">(${limpiarTextoAPI(e.star_data.traditional_name)})</span>` : ''}</div>
+            <div class="card-cuerpo" style="color:var(--plum);margin-top:4px;">${limpiarTextoAPI(traducirNombresPlanetasEnFrase(e.interpretation || ''))}</div>
+          </div>
+        `).join('');
+      } else {
+        htmlEstrellas += '<div class="disclaimer">No se encontraron estrellas fijas activas en tu carta esta vez.</div>';
+      }
+      contenedor.innerHTML = htmlEstrellas;
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }
@@ -3557,9 +3571,14 @@
       }
       const _cerrar_reloc_ok = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('reloc-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
       let htmlReloc = _cerrar_reloc_ok;
-      if (data.reseña) {
+      const factores = data.relocacion?.data?.key_factors || [];
+      if (factores.length) {
         htmlReloc += `<div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin-bottom:8px;">Qué significa esta mudanza para ti</div>`;
-        htmlReloc += renderizarInforme(data.reseña, null);
+        htmlReloc += factores.map(f => `
+          <div class="card-lectura" style="margin-bottom:8px;">
+            <div class="card-cuerpo" style="color:var(--plum);">${limpiarTextoAPI(traducirNombresPlanetasEnFrase(f.interpretation || f.factor || ''))}</div>
+          </div>
+        `).join('');
         htmlReloc += '<div style="font-family:\'Cormorant Garamond\',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin:14px 0 8px;">Detalle técnico</div>';
       }
       htmlReloc += renderizarInforme(data.relocacion, 'reloc-resultado');
