@@ -75,7 +75,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 // Si falla, regresa los textos originales sin tronar la sección.
 async function traducirTextosConIA(textos) {
   const lista = (textos || []).filter(t => t && typeof t === 'string');
-  if (!lista.length) return [];
+  if (!lista.length) return { textos: [], debug: 'sin textos que traducir' };
   try {
     const prompt = `Traduce cada uno de estos textos de astrología al español natural, con tono cálido y profesional (no traducción literal palabra por palabra). Responde ÚNICAMENTE con un array JSON de strings, en el mismo orden, sin explicación ni markdown:\n\n${JSON.stringify(lista)}`;
     const respuesta = await fetch('https://api.anthropic.com/v1/messages', {
@@ -84,13 +84,22 @@ async function traducirTextosConIA(textos) {
       body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] }),
     });
     const datos = await respuesta.json();
+    if (!respuesta.ok) {
+      return { textos: lista, debug: `Anthropic respondió ${respuesta.status}: ${JSON.stringify(datos).slice(0, 500)}` };
+    }
     const texto = (datos.content?.[0]?.text || '[]').replace(/```json|```/g, '').trim();
-    const traducidos = JSON.parse(texto);
-    if (!Array.isArray(traducidos) || traducidos.length !== lista.length) return lista;
-    return traducidos;
+    let traducidos;
+    try {
+      traducidos = JSON.parse(texto);
+    } catch (eParse) {
+      return { textos: lista, debug: `No se pudo parsear como JSON. Texto crudo: ${texto.slice(0, 500)}` };
+    }
+    if (!Array.isArray(traducidos) || traducidos.length !== lista.length) {
+      return { textos: lista, debug: `Array no coincide en tamaño. Esperado ${lista.length}, recibido ${Array.isArray(traducidos) ? traducidos.length : typeof traducidos}` };
+    }
+    return { textos: traducidos, debug: null };
   } catch (e) {
-    console.error('traducirTextosConIA falló:', e.message);
-    return lista;
+    return { textos: lista, debug: 'Excepción: ' + e.message };
   }
 }
 
@@ -1173,10 +1182,10 @@ app.post('/relocacion', requireLogin, async (req, res) => {
     });
 
     const factores = respuesta.data?.data?.key_factors || [];
-    const traducidos = await traducirTextosConIA(factores.map(f => f.interpretation || f.factor || ''));
+    const { textos: traducidos, debug: traduccionDebug } = await traducirTextosConIA(factores.map(f => f.interpretation || f.factor || ''));
     factores.forEach((f, i) => { if (traducidos[i]) f.interpretation = traducidos[i]; });
 
-    res.json({ relocacion: respuesta.data });
+    res.json({ relocacion: respuesta.data, traduccion_debug: traduccionDebug });
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo calcular la relocación.', detalle_tecnico: err?.response?.data || err.message });
@@ -1248,13 +1257,13 @@ app.post('/estrellas-fijas', requireLogin, async (req, res) => {
       textosATraducir.push(c.interpretation || '');
       textosATraducir.push(c.star_data?.traditional_name || '');
     });
-    const traducidos = await traducirTextosConIA(textosATraducir);
+    const { textos: traducidos, debug: traduccionDebug } = await traducirTextosConIA(textosATraducir);
     contactos.forEach((c, i) => {
       if (traducidos[i * 2]) c.interpretation = traducidos[i * 2];
       if (traducidos[i * 2 + 1] && c.star_data) c.star_data.traditional_name = traducidos[i * 2 + 1];
     });
 
-    const r = { estrellas: respuesta.data };
+    const r = { estrellas: respuesta.data, traduccion_debug: traduccionDebug };
     cacheSet(cacheKey, r, TTL.ESTRELLAS);
     res.json(r);
   } catch (err) {
