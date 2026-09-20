@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v99-ajustes-traduccion -->
+<!-- VERSION-APP: v100-traduccion-real-con-ia -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -648,7 +648,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v99-ajustes-traduccion</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v100-traduccion-real-con-ia</div>
         </div>
 
         <div class="topbar">
@@ -3116,8 +3116,8 @@
       if (todas.length) {
         htmlEstrellas += todas.map(e => `
           <div class="card-lectura" style="margin-bottom:10px;">
-            <div class="card-titulo">${nombrePlanetaEs(e.planet)} ${ASPECTO_ES_ESTRELLA[e.aspect] || e.aspect} ${e.star}${e.star_data?.traditional_name ? ` <span style="font-weight:400;font-size:11px;color:var(--ink-dim);">(${limpiarTextoAPI(e.star_data.traditional_name)})</span>` : ''}</div>
-            <div class="card-cuerpo" style="color:var(--plum);margin-top:4px;">${limpiarTextoAPI(traducirNombresPlanetasEnFrase(e.interpretation || ''))}</div>
+            <div class="card-titulo">${nombrePlanetaEs(e.planet)} ${ASPECTO_ES_ESTRELLA[e.aspect] || e.aspect} ${e.star}${e.star_data?.traditional_name ? ` <span style="font-weight:400;font-size:11px;color:var(--ink-dim);">(${e.star_data.traditional_name})</span>` : ''}</div>
+            <div class="card-cuerpo" style="color:var(--plum);margin-top:4px;">${e.interpretation || ''}</div>
           </div>
         `).join('');
       } else {
@@ -3644,7 +3644,7 @@
         htmlReloc += `<div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin-bottom:8px;">Qué significa esta mudanza para ti</div>`;
         htmlReloc += factores.map(f => `
           <div class="card-lectura" style="margin-bottom:8px;">
-            <div class="card-cuerpo" style="color:var(--plum);">${limpiarTextoAPI(traducirNombresPlanetasEnFrase(f.interpretation || f.factor || ''))}</div>
+            <div class="card-cuerpo" style="color:var(--plum);">${f.interpretation || f.factor || ''}</div>
           </div>
         `).join('');
         htmlReloc += '<div style="font-family:\'Cormorant Garamond\',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin:14px 0 8px;">Detalle técnico</div>';
