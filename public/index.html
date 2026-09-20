@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v94-relocacion-resena -->
+<!-- VERSION-APP: v95-diario-y-confirmacion-email -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -648,7 +648,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v94-relocacion-resena</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v95-diario-y-confirmacion-email</div>
         </div>
 
         <div class="topbar">
@@ -2537,6 +2537,7 @@
     } else {
       document.getElementById('login-email').value = email;
       mostrarPantalla('login');
+      mostrarErrorEn('login-error', '✔ Cuenta creada. Revisa tu correo (' + email + ') y toca el link de confirmación antes de entrar. Si no lo ves, checa spam.');
     }
   }
 
@@ -2549,7 +2550,13 @@
       body: JSON.stringify({ email, password }),
     });
     const data = await r.json();
-    if (!r.ok || !data.sesion) return mostrarErrorEn('login-error', data.error || 'Correo o contraseña incorrectos.');
+    if (!r.ok || !data.sesion) {
+      const crudo = data.error || '';
+      const mensaje = /email not confirmed|not confirmed/i.test(crudo)
+        ? 'Todavía no confirmas tu correo. Revisa tu bandeja (y spam) y toca el link que te mandamos.'
+        : (crudo || 'Correo o contraseña incorrectos.');
+      return mostrarErrorEn('login-error', mensaje);
+    }
     SESION.token = data.sesion.access_token;
     SESION.email = data.usuario?.email || email;
     SESION.refresh = data.sesion.refresh_token || null;
