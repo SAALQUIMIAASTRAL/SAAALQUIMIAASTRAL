@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v93-editar-otras-cartas -->
+<!-- VERSION-APP: v94-relocacion-resena -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -648,7 +648,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v93-editar-otras-cartas</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v94-relocacion-resena</div>
         </div>
 
         <div class="topbar">
@@ -3549,7 +3549,14 @@
         return;
       }
       const _cerrar_reloc_ok = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('reloc-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
-      contenedor.innerHTML = _cerrar_reloc_ok + renderizarInforme(data.relocacion, 'reloc-resultado');
+      let htmlReloc = _cerrar_reloc_ok;
+      if (data.reseña) {
+        htmlReloc += `<div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin-bottom:8px;">Qué significa esta mudanza para ti</div>`;
+        htmlReloc += renderizarInforme(data.reseña, null);
+        htmlReloc += '<div style="font-family:\'Cormorant Garamond\',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin:14px 0 8px;">Detalle técnico</div>';
+      }
+      htmlReloc += renderizarInforme(data.relocacion, 'reloc-resultado');
+      contenedor.innerHTML = htmlReloc;
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }
