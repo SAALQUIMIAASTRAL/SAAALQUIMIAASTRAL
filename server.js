@@ -71,6 +71,29 @@ const supabase = createClient(
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 // ---- Conexión a Astrology API ----
+// Traduce una lista de textos al español con Claude (mucho más confiable que reemplazos de palabras sueltas).
+// Si falla, regresa los textos originales sin tronar la sección.
+async function traducirTextosConIA(textos) {
+  const lista = (textos || []).filter(t => t && typeof t === 'string');
+  if (!lista.length) return [];
+  try {
+    const prompt = `Traduce cada uno de estos textos de astrología al español natural, con tono cálido y profesional (no traducción literal palabra por palabra). Responde ÚNICAMENTE con un array JSON de strings, en el mismo orden, sin explicación ni markdown:\n\n${JSON.stringify(lista)}`;
+    const respuesta = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY || '', 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] }),
+    });
+    const datos = await respuesta.json();
+    const texto = (datos.content?.[0]?.text || '[]').replace(/```json|```/g, '').trim();
+    const traducidos = JSON.parse(texto);
+    if (!Array.isArray(traducidos) || traducidos.length !== lista.length) return lista;
+    return traducidos;
+  } catch (e) {
+    console.error('traducirTextosConIA falló:', e.message);
+    return lista;
+  }
+}
+
 const astrologyApi = axios.create({
   baseURL: process.env.ASTROLOGY_API_BASE_URL,
   timeout: 20000, // 20s — evita que la app se quede "colgada" si la API tarda o no responde
@@ -1142,28 +1165,18 @@ app.post('/relocacion', requireLogin, async (req, res) => {
     const { ciudad, pais_codigo } = req.body;
     if (!ciudad || !pais_codigo) return res.status(400).json({ error: 'Falta la ciudad donde vives ahora.' });
 
-    const [respuesta, reseñaReloc] = await Promise.all([
-      astrologyApi.post('/analysis/relocation', {
-        subject: birthDataDesdePerfil(perfil),
-        options: {
-          target_location: { city: ciudad, country_code: pais_codigo },
-          show_changes: true,
-          highlight_angular_changes: true,
-        },
-        report_options: { tradition: 'psychological', language: 'es' },
-      }),
-      astrologyApi.post('/analysis/relocation-report', {
-        subject: birthDataDesdePerfil(perfil),
-        options: { target_location: { city: ciudad, country_code: pais_codigo } },
-        report_options: { tradition: 'psychological', language: 'es' },
-      }).catch(e => { console.error('relocation-report falló:', e?.response?.data || e.message); return { _error_debug: e?.response?.data || e.message }; }),
-    ]);
-
-    res.json({
-      relocacion: respuesta.data,
-      reseña: reseñaReloc?.data || null,
-      reseña_error: reseñaReloc?._error_debug || null,
+    const respuesta = await astrologyApi.post('/analysis/relocation', {
+      subject: birthDataDesdePerfil(perfil),
+      options: {
+        target_location: { city: ciudad, country_code: pais_codigo },
+      },
     });
+
+    const factores = respuesta.data?.data?.key_factors || [];
+    const traducidos = await traducirTextosConIA(factores.map(f => f.interpretation || f.factor || ''));
+    factores.forEach((f, i) => { if (traducidos[i]) f.interpretation = traducidos[i]; });
+
+    res.json({ relocacion: respuesta.data });
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo calcular la relocación.', detalle_tecnico: err?.response?.data || err.message });
@@ -1226,6 +1239,19 @@ app.post('/estrellas-fijas', requireLogin, async (req, res) => {
       subject: datosSubject,
       language: 'es',
       report_options: { tradition: 'psychological', language: 'es' },
+    });
+
+    // Traducir de verdad las interpretaciones y nombres tradicionales (en inglés en la respuesta cruda)
+    const contactos = [...(respuesta.data?.data?.conjunctions || []), ...(respuesta.data?.data?.oppositions || [])];
+    const textosATraducir = [];
+    contactos.forEach(c => {
+      textosATraducir.push(c.interpretation || '');
+      textosATraducir.push(c.star_data?.traditional_name || '');
+    });
+    const traducidos = await traducirTextosConIA(textosATraducir);
+    contactos.forEach((c, i) => {
+      if (traducidos[i * 2]) c.interpretation = traducidos[i * 2];
+      if (traducidos[i * 2 + 1] && c.star_data) c.star_data.traditional_name = traducidos[i * 2 + 1];
     });
 
     const r = { estrellas: respuesta.data };
