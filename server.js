@@ -76,29 +76,47 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 async function traducirTextosConIA(textos) {
   const lista = (textos || []).filter(t => t && typeof t === 'string');
   if (!lista.length) return { textos: [], debug: 'sin textos que traducir' };
+  if (!process.env.ANTHROPIC_API_KEY) {
+    console.error('traducirTextosConIA: falta ANTHROPIC_API_KEY en las variables de entorno');
+    return { textos: lista, debug: 'Falta la variable de entorno ANTHROPIC_API_KEY en Render.' };
+  }
   try {
     const prompt = `Traduce cada uno de estos textos de astrología al español natural, con tono cálido y profesional (no traducción literal palabra por palabra). Responde ÚNICAMENTE con un array JSON de strings, en el mismo orden, sin explicación ni markdown:\n\n${JSON.stringify(lista)}`;
+    const controlador = new AbortController();
+    const timeoutId = setTimeout(() => controlador.abort(), 20000);
     const respuesta = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY || '', 'anthropic-version': '2023-06-01' },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] }),
+      signal: controlador.signal,
     });
+    clearTimeout(timeoutId);
     const datos = await respuesta.json();
     if (!respuesta.ok) {
+      console.error('traducirTextosConIA: Anthropic respondió', respuesta.status, JSON.stringify(datos).slice(0, 800));
       return { textos: lista, debug: `Anthropic respondió ${respuesta.status}: ${JSON.stringify(datos).slice(0, 500)}` };
     }
-    const texto = (datos.content?.[0]?.text || '[]').replace(/```json|```/g, '').trim();
+    let texto = (datos.content?.[0]?.text || '[]').trim();
+    // Quita bloques de markdown si los hay
+    texto = texto.replace(/^```(json)?/i, '').replace(/```$/, '').trim();
+    // Si Claude mandó texto antes/después del array, nos quedamos solo con lo que está entre [ ]
+    const inicio = texto.indexOf('[');
+    const fin = texto.lastIndexOf(']');
+    if (inicio !== -1 && fin !== -1 && fin > inicio) texto = texto.slice(inicio, fin + 1);
     let traducidos;
     try {
       traducidos = JSON.parse(texto);
     } catch (eParse) {
+      console.error('traducirTextosConIA: no se pudo parsear. Texto crudo:', texto.slice(0, 800));
       return { textos: lista, debug: `No se pudo parsear como JSON. Texto crudo: ${texto.slice(0, 500)}` };
     }
     if (!Array.isArray(traducidos) || traducidos.length !== lista.length) {
+      console.error('traducirTextosConIA: tamaño no coincide. Esperado', lista.length, 'recibido', Array.isArray(traducidos) ? traducidos.length : typeof traducidos);
       return { textos: lista, debug: `Array no coincide en tamaño. Esperado ${lista.length}, recibido ${Array.isArray(traducidos) ? traducidos.length : typeof traducidos}` };
     }
     return { textos: traducidos, debug: null };
   } catch (e) {
+    console.error('traducirTextosConIA falló:', e.message);
     return { textos: lista, debug: 'Excepción: ' + e.message };
   }
 }
@@ -1644,6 +1662,92 @@ app.delete('/biblioteca/:id', requireLogin, async (req, res) => {
     const esAdmin = usuario?.user?.email === ADMIN_EMAIL || req.userEmail === ADMIN_EMAIL;
     if (!esAdmin) return res.status(403).json({ error: 'Solo la administradora puede eliminar contenido.' });
     await supabase.from('biblioteca').update({ activo: false }).eq('id', req.params.id);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'No se pudo eliminar.' });
+  }
+});
+
+// ============================================================
+// EVENTOS ASTROLÓGICOS — avisos personalizados por equinoccios, eclipses,
+// cambios de planeta, etc. Los crea la admin y cada usuaria solo ve los
+// que le tocan (por fecha vigente + su signo solar, o "todos").
+// Tabla necesaria en Supabase (SQL ya provisto aparte):
+// create table if not exists eventos_astrologicos (
+//   id uuid primary key default gen_random_uuid(),
+//   titulo text not null,
+//   tipo text,
+//   fecha_inicio date not null,
+//   fecha_fin date not null,
+//   signos_afectados text[] default null,   -- null = todos los signos
+//   mensaje text not null,
+//   activo boolean default true,
+//   created_at timestamptz default now()
+// );
+// ============================================================
+
+app.post('/eventos-astrologicos', requireLogin, async (req, res) => {
+  try {
+    const { data: usuario } = await supabase.auth.admin.getUserById(req.userId).catch(() => ({ data: null }));
+    const esAdmin = usuario?.user?.email === ADMIN_EMAIL || req.userEmail === ADMIN_EMAIL;
+    if (!esAdmin) return res.status(403).json({ error: 'Solo la administradora puede crear eventos.' });
+
+    const { titulo, tipo, fecha_inicio, fecha_fin, signos_afectados, mensaje } = req.body;
+    if (!titulo?.trim() || !fecha_inicio || !fecha_fin || !mensaje?.trim()) {
+      return res.status(400).json({ error: 'Faltan título, fechas o mensaje.' });
+    }
+    // signos_afectados: array de abreviaturas (Ari, Tau, Gem...) o null/[] para "todos"
+    const signos = Array.isArray(signos_afectados) && signos_afectados.length ? signos_afectados : null;
+
+    const { data, error } = await supabase.from('eventos_astrologicos').insert({
+      titulo: titulo.trim(), tipo: tipo || 'general', fecha_inicio, fecha_fin,
+      signos_afectados: signos, mensaje: mensaje.trim(),
+    }).select().single();
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ evento: data });
+  } catch (err) {
+    res.status(500).json({ error: 'No se pudo guardar el evento.' });
+  }
+});
+
+app.get('/eventos-astrologicos/activo', requireLogin, async (req, res) => {
+  try {
+    const hoy = new Date().toISOString().slice(0, 10);
+    const { data: eventos, error } = await supabase
+      .from('eventos_astrologicos')
+      .select('*')
+      .eq('activo', true)
+      .lte('fecha_inicio', hoy)
+      .gte('fecha_fin', hoy)
+      .order('created_at', { ascending: false });
+    if (error) return res.status(400).json({ error: error.message });
+    if (!eventos?.length) return res.json({ evento: null });
+
+    // Sacamos el signo solar de la usuaria desde su carta natal ya calculada
+    const { data: carta } = await req.supabase
+      .from('natal_charts')
+      .select('datos_carta')
+      .eq('user_id', req.userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const posiciones = carta?.datos_carta?.chart_data?.planetary_positions || [];
+    const sol = posiciones.find(p => p.name === 'Sun') || carta?.datos_carta?.subject_data?.sun;
+    const signoSolar = sol?.sign || null;
+
+    const evento = eventos.find(e => !e.signos_afectados || (signoSolar && e.signos_afectados.includes(signoSolar)));
+    res.json({ evento: evento || null });
+  } catch (err) {
+    res.status(500).json({ error: 'No se pudo revisar eventos.' });
+  }
+});
+
+app.delete('/eventos-astrologicos/:id', requireLogin, async (req, res) => {
+  try {
+    const { data: usuario } = await supabase.auth.admin.getUserById(req.userId).catch(() => ({ data: null }));
+    const esAdmin = usuario?.user?.email === ADMIN_EMAIL || req.userEmail === ADMIN_EMAIL;
+    if (!esAdmin) return res.status(403).json({ error: 'Solo la administradora puede eliminar eventos.' });
+    await supabase.from('eventos_astrologicos').update({ activo: false }).eq('id', req.params.id);
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: 'No se pudo eliminar.' });
