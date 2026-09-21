@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v102-planes-suscripcion -->
+<!-- VERSION-APP: v103-eventos-astrologicos -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -648,7 +648,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v102-planes-suscripcion</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v103-eventos-astrologicos</div>
         </div>
 
         <div class="topbar">
@@ -673,6 +673,8 @@
             </div>
             <span class="link-arrow" onclick="document.getElementById('seccion-carta-natal').scrollIntoView({behavior:'smooth', block:'start'})" style="cursor:pointer;">Ver carta completa ›</span>
           </div>
+
+          <div id="evento-astrologico-banner"></div>
 
           <div class="section" data-tab="carta">
             <h2>Tus cartas</h2>
@@ -962,6 +964,42 @@
               <div class="auth-field"><label>Contenido</label><textarea id="bib-contenido" placeholder="Pega o escribe el texto aquí..." style="width:100%;min-height:120px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);resize:vertical;box-sizing:border-box;"></textarea></div>
               <button class="btn-primary" onclick="guardarArticulo()">Guardar artículo</button>
               <div id="bib-admin-msg" style="font-size:12px;margin-top:6px;"></div>
+
+              <div class="etiqueta-seccion" style="margin-top:18px;">✨ Nuevo evento astrológico</div>
+              <div class="disclaimer" style="margin-bottom:8px;">Este aviso aparece en el inicio de las usuarias cuando su signo solar coincide (o a todas, si dejas los signos vacíos) y la fecha de hoy cae dentro del rango.</div>
+              <div class="auth-field"><label>Título</label><input type="text" id="ev-titulo" placeholder="Ej. Equinoccio de Otoño"></div>
+              <div class="auth-field"><label>Tipo</label>
+                <select id="ev-tipo" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;">
+                  <option value="equinoccio">Equinoccio / Solsticio</option>
+                  <option value="eclipse">Eclipse</option>
+                  <option value="cambio_planeta">Cambio de planeta de signo</option>
+                  <option value="general">General</option>
+                </select>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <div class="auth-field" style="flex:1;"><label>Desde</label><input type="date" id="ev-fecha-inicio"></div>
+                <div class="auth-field" style="flex:1;"><label>Hasta</label><input type="date" id="ev-fecha-fin"></div>
+              </div>
+              <div class="auth-field">
+                <label>Signos a los que afecta (deja vacío = todas)</label>
+                <div id="ev-signos" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;">
+                  <label style="font-size:11px;"><input type="checkbox" value="Ari"> Aries</label>
+                  <label style="font-size:11px;"><input type="checkbox" value="Tau"> Tauro</label>
+                  <label style="font-size:11px;"><input type="checkbox" value="Gem"> Géminis</label>
+                  <label style="font-size:11px;"><input type="checkbox" value="Can"> Cáncer</label>
+                  <label style="font-size:11px;"><input type="checkbox" value="Leo"> Leo</label>
+                  <label style="font-size:11px;"><input type="checkbox" value="Vir"> Virgo</label>
+                  <label style="font-size:11px;"><input type="checkbox" value="Lib"> Libra</label>
+                  <label style="font-size:11px;"><input type="checkbox" value="Sco"> Escorpio</label>
+                  <label style="font-size:11px;"><input type="checkbox" value="Sag"> Sagitario</label>
+                  <label style="font-size:11px;"><input type="checkbox" value="Cap"> Capricornio</label>
+                  <label style="font-size:11px;"><input type="checkbox" value="Aqu"> Acuario</label>
+                  <label style="font-size:11px;"><input type="checkbox" value="Pis"> Piscis</label>
+                </div>
+              </div>
+              <div class="auth-field"><label>Mensaje personalizado</label><textarea id="ev-mensaje" placeholder="Ej. Lilith entra a tu signo — esperá que tu magnetismo y tu necesidad de autenticidad se intensifiquen este mes." style="width:100%;min-height:90px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);resize:vertical;box-sizing:border-box;"></textarea></div>
+              <button class="btn-primary" style="background:var(--lilac);" onclick="guardarEventoAstrologico()">Publicar evento</button>
+              <div id="ev-admin-msg" style="font-size:12px;margin-top:6px;"></div>
             </div>
           </div>
 
@@ -2366,7 +2404,38 @@
       document.getElementById('bib-titulo').value = '';
       document.getElementById('bib-contenido').value = '';
       document.getElementById('bib-fuente').value = '';
-      await cargarBiblioteca();
+    } catch (e) { msg.textContent = e.message; msg.style.color = '#a5442f'; }
+  }
+
+  async function guardarEventoAstrologico() {
+    const msg = document.getElementById('ev-admin-msg');
+    const signosElegidos = [...document.querySelectorAll('#ev-signos input:checked')].map(i => i.value);
+    const cuerpo = {
+      titulo: document.getElementById('ev-titulo').value.trim(),
+      tipo: document.getElementById('ev-tipo').value,
+      fecha_inicio: document.getElementById('ev-fecha-inicio').value,
+      fecha_fin: document.getElementById('ev-fecha-fin').value,
+      signos_afectados: signosElegidos,
+      mensaje: document.getElementById('ev-mensaje').value.trim(),
+    };
+    if (!cuerpo.titulo || !cuerpo.fecha_inicio || !cuerpo.fecha_fin || !cuerpo.mensaje) {
+      msg.textContent = 'Faltan título, fechas o mensaje.'; msg.style.color = '#a5442f'; return;
+    }
+    msg.textContent = 'Publicando...'; msg.style.color = 'var(--ink-dim)';
+    try {
+      const r = await fetchAuth('/eventos-astrologicos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cuerpo),
+      });
+      const data = await r.json();
+      if (!r.ok) { msg.textContent = data.error || 'Error.'; msg.style.color = '#a5442f'; return; }
+      msg.textContent = '✓ Evento publicado.'; msg.style.color = 'var(--armonia)';
+      document.getElementById('ev-titulo').value = '';
+      document.getElementById('ev-mensaje').value = '';
+      document.getElementById('ev-fecha-inicio').value = '';
+      document.getElementById('ev-fecha-fin').value = '';
+      document.querySelectorAll('#ev-signos input:checked').forEach(i => i.checked = false);
     } catch (e) { msg.textContent = e.message; msg.style.color = '#a5442f'; }
   }
 
@@ -2737,6 +2806,31 @@
     actualizarBandaConCartaReal();
     cargarCartasGuardadas();
     cargarHomeSummary();
+    cargarEventoAstrologico();
+  }
+
+  const ICONO_TIPO_EVENTO = { equinoccio: '🍂', eclipse: '🌑', cambio_planeta: '🪐', general: '✨' };
+
+  async function cargarEventoAstrologico() {
+    const contenedor = document.getElementById('evento-astrologico-banner');
+    if (!contenedor) return;
+    try {
+      const r = await fetchAuth('/eventos-astrologicos/activo', { headers: {} });
+      const data = await r.json();
+      if (!data.evento) { contenedor.innerHTML = ''; return; }
+      const ev = data.evento;
+      contenedor.innerHTML = `
+        <div style="background:linear-gradient(135deg,var(--lilac),var(--plum));border-radius:14px;padding:16px;margin:0 16px 14px;color:#fff;box-shadow:0 4px 16px rgba(45,27,78,0.3);">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div style="font-size:11px;letter-spacing:0.5px;text-transform:uppercase;opacity:0.85;margin-bottom:4px;">${ICONO_TIPO_EVENTO[ev.tipo] || '✨'} ${ev.titulo}</div>
+            <span onclick="document.getElementById('evento-astrologico-banner').innerHTML=''" style="cursor:pointer;opacity:0.7;font-size:13px;">✕</span>
+          </div>
+          <div style="font-size:13px;line-height:1.5;">${ev.mensaje}</div>
+        </div>
+      `;
+    } catch (e) {
+      contenedor.innerHTML = '';
+    }
   }
 
   async function cargarHomeSummary() {
