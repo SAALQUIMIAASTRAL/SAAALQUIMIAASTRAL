@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v103-eventos-astrologicos -->
+<!-- VERSION-APP: v105-cierre-grafico-otra-carta -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -648,7 +648,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v103-eventos-astrologicos</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v105-cierre-grafico-otra-carta</div>
         </div>
 
         <div class="topbar">
@@ -1410,43 +1410,45 @@
     const rutas = { 'numerologia':'/numerologia', 'flor-armonica':'/flor-armonica', 'estrellas-fijas':'/estrellas-fijas', 'astrocartografia':'/astrocartografia' };
     const llaves = { 'numerologia':'numerologia', 'flor-armonica':'flor', 'estrellas-fijas':'estrellas', 'astrocartografia':null };
     contenedor.innerHTML = '<div class="disclaimer">Calculando para ' + nombre + '...</div>';
+    const _cerrarExtra = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('carta-otro-extra').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
     try {
-      const r = await fetch(rutas[funcion], {
+      const r = await fetchAuth(rutas[funcion], {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ otra_carta_id: id }),
       });
       const data = await r.json();
       if (!r.ok) {
-        if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
-        contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        if (detectarLimiteExcedido(data)) { contenedor.innerHTML = _cerrarExtra + mensajeLimiteExcedido(); return; }
+        contenedor.innerHTML = _cerrarExtra + `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
       if (funcion === 'astrocartografia') {
-        contenedor.innerHTML = data.svg
+        contenedor.innerHTML = _cerrarExtra + (data.svg
           ? `<div style="background:#fff;border-radius:14px;padding:8px;border:1px solid var(--line);overflow:hidden;">${data.svg}</div>`
-          : '<div class="disclaimer">No se pudo generar el mapa.</div>';
+          : '<div class="disclaimer">No se pudo generar el mapa.</div>');
       } else {
-        contenedor.innerHTML = renderizarInforme(data[llaves[funcion]], 'carta-otro-extra');
+        contenedor.innerHTML = _cerrarExtra + renderizarInforme(data[llaves[funcion]], 'carta-otro-extra');
       }
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+      contenedor.innerHTML = _cerrarExtra + `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }
   }
 
   async function verResumenOtraCarta(id, nombre) {
     const contenedor = document.getElementById('carta-otro-resumen');
     contenedor.innerHTML = '<div class="disclaimer">Generando el análisis de ' + nombre + '...</div>';
+    const _cerrarResumen = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('carta-otro-resumen').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
     try {
       const r = await fetchAuth('/otras-cartas/' + id + '/resumen', { method: 'POST', headers: {} });
       const data = await r.json();
       if (!r.ok) {
-        if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
+        if (detectarLimiteExcedido(data)) { contenedor.innerHTML = _cerrarResumen + mensajeLimiteExcedido(); return; }
         throw new Error(data.error || 'No se pudo generar.');
       }
-      contenedor.innerHTML = renderizarInforme(data.reporte, 'carta-otro-resumen');
+      contenedor.innerHTML = _cerrarResumen + renderizarInforme(data.reporte, 'carta-otro-resumen');
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+      contenedor.innerHTML = _cerrarResumen + `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }
   }
 
@@ -1458,7 +1460,7 @@
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || 'No se pudo generar.');
       if (data.svg) {
-        const _bcCv = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="event.stopPropagation();document.getElementById('carta-visual-contenedor').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
+        const _bcCv = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('carta-otro-visual').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
         contenedor.innerHTML = _bcCv + `<div style="border-radius:14px;overflow:hidden;background:var(--paper);border:1px solid var(--line);">${data.svg}</div>`;
         const svgEl = contenedor.querySelector('svg');
         if (svgEl) { svgEl.removeAttribute('width'); svgEl.removeAttribute('height'); svgEl.style.cssText = 'width:100%;height:auto;display:block;'; }
