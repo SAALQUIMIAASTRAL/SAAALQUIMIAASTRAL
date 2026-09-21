@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v100-traduccion-real-con-ia -->
+<!-- VERSION-APP: v102-planes-suscripcion -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -648,7 +648,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v100-traduccion-real-con-ia</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v102-planes-suscripcion</div>
         </div>
 
         <div class="topbar">
@@ -978,9 +978,24 @@
               ✓ Carta natal completa · ✓ Astrocartografía · ✓ Ciclo lunar personalizado<br>
               ✓ Hasta 8 cartas guardadas · ✓ Asistente IA · ✓ Diario astrológico
             </div>
+            <div style="display:flex;gap:6px;margin-bottom:14px;" id="selector-plan">
+              <div class="chip-plan" data-plan="mensual" onclick="elegirPlanSuscripcion('mensual')" style="flex:1;text-align:center;padding:9px 4px;border-radius:10px;cursor:pointer;background:rgba(255,255,255,0.22);border:1.5px solid #fff;">
+                <div style="font-size:11px;font-weight:600;">Mensual</div>
+                <div style="font-size:14px;font-weight:700;">$8.88</div>
+              </div>
+              <div class="chip-plan" data-plan="semestral" onclick="elegirPlanSuscripcion('semestral')" style="flex:1;text-align:center;padding:9px 4px;border-radius:10px;cursor:pointer;background:rgba(255,255,255,0.08);border:1.5px solid transparent;">
+                <div style="font-size:11px;font-weight:600;">6 meses</div>
+                <div style="font-size:14px;font-weight:700;">$48</div>
+              </div>
+              <div class="chip-plan" data-plan="anual" onclick="elegirPlanSuscripcion('anual')" style="flex:1;text-align:center;padding:9px 4px;border-radius:10px;cursor:pointer;background:rgba(255,255,255,0.08);border:1.5px solid transparent;position:relative;">
+                <div style="position:absolute;top:-9px;right:2px;background:var(--marigold);color:#fff;font-size:8.5px;font-weight:700;padding:2px 6px;border-radius:100px;">MEJOR</div>
+                <div style="font-size:11px;font-weight:600;">Anual</div>
+                <div style="font-size:14px;font-weight:700;">$96</div>
+              </div>
+            </div>
             <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
               <div>
-                <div style="font-family:'Cormorant Garamond',serif;font-size:28px;color:#fff;line-height:1;">$8.88<span style="font-size:13px;color:var(--band-text-dim);font-family:'Work Sans',sans-serif;"> USD/mes</span></div>
+                <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:#fff;line-height:1;" id="precio-plan-elegido">$8.88<span style="font-size:12px;color:var(--band-text-dim);font-family:'Work Sans',sans-serif;"> USD/mes</span></div>
                 <div style="font-size:10.5px;color:var(--band-text-dim);">Cancela cuando quieras</div>
               </div>
               <button onclick="accionSuscribirse()" id="btn-suscribirse" style="background:var(--marigold);color:#fff;border:none;border-radius:100px;padding:11px 20px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;box-shadow:0 4px 12px rgba(201,168,76,0.4);">Suscribirme →</button>
@@ -2175,13 +2190,13 @@
       const r = await fetchAuth('/diario', { headers: {} });
       const data = await r.json();
       if (!data.entradas?.length) { lista.innerHTML = '<div class="disclaimer">Aún no tienes entradas en el diario.</div>'; return; }
-      lista.innerHTML = data.entradas.map(e => `
+      lista.innerHTML = data.entradas.map((e, idx) => `
         <div class="tarjeta-lectura neutral" style="margin-bottom:8px;">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
-            <div style="font-size:11px;color:var(--ink-dim);">${e.fecha}${e.estado_animo ? ' · ' + e.estado_animo : ''}${e.luna_signo ? ' · ☽ ' + signoEs(e.luna_signo) : ''}${e.dia_personal ? ' · Día ' + e.dia_personal : ''}</div>
-            <button onclick="eliminarEntradaDiario('${e.id}')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--ink-dim);">✕</button>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;cursor:pointer;" onclick="document.getElementById('diario-cuerpo-${idx}').style.display = document.getElementById('diario-cuerpo-${idx}').style.display === 'none' ? 'block' : 'none';">
+            <div style="font-size:11px;color:var(--ink-dim);">▸ ${e.fecha}${e.estado_animo ? ' · ' + e.estado_animo : ''}${e.luna_signo ? ' · ☽ ' + signoEs(e.luna_signo) : ''}${e.dia_personal ? ' · Día ' + e.dia_personal : ''}</div>
+            <button onclick="event.stopPropagation();eliminarEntradaDiario('${e.id}')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--ink-dim);">✕</button>
           </div>
-          <div class="cuerpo">${e.texto}</div>
+          <div class="cuerpo" id="diario-cuerpo-${idx}" style="display:none;">${e.texto}</div>
         </div>
       `).join('');
     } catch (e) { lista.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${e.message}</div>`; }
@@ -2985,12 +3000,28 @@
     }, 100);
   }
 
+  let _planElegido = 'mensual';
+  const _PRECIOS_PLAN = { mensual: '$8.88<span style="font-size:12px;color:var(--band-text-dim);font-family:\'Work Sans\',sans-serif;"> USD/mes</span>', semestral: '$48<span style="font-size:12px;color:var(--band-text-dim);font-family:\'Work Sans\',sans-serif;"> USD/6 meses</span>', anual: '$96<span style="font-size:12px;color:var(--band-text-dim);font-family:\'Work Sans\',sans-serif;"> USD/año</span>' };
+  function elegirPlanSuscripcion(plan) {
+    _planElegido = plan;
+    document.querySelectorAll('#selector-plan .chip-plan').forEach(el => {
+      const activo = el.dataset.plan === plan;
+      el.style.background = activo ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.08)';
+      el.style.borderColor = activo ? '#fff' : 'transparent';
+    });
+    document.getElementById('precio-plan-elegido').innerHTML = _PRECIOS_PLAN[plan];
+  }
+
   async function accionSuscribirse() {
     const boton = document.getElementById('btn-suscribirse');
     boton.textContent = 'Un momento...';
     boton.disabled = true;
     try {
-      const r = await fetchAuth('/suscripcion/iniciar', { method: 'POST', headers: {} });
+      const r = await fetchAuth('/suscripcion/iniciar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: _planElegido }),
+      });
       const data = await r.json();
       if (data.url) {
         window.location.href = data.url;
