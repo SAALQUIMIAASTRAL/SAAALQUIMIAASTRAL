@@ -62,9 +62,13 @@ app.get('/', (req, res) => {
 });
 
 // ---- Conexión a Supabase ----
+// Cliente ADMIN real: usa la clave de rol de servicio, que se salta las políticas
+// de seguridad (RLS). Se usa solo en el servidor, nunca se manda al navegador.
+// Si SUPABASE_SERVICE_ROLE_KEY no está configurada, cae de vuelta a la anónima
+// (para no tronar la app), pero entonces seguirá topándose con RLS igual que antes.
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
 );
 
 // ---- Conexión a Stripe (cobros) ----
