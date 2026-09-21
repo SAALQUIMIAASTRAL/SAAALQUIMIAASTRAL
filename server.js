@@ -1446,6 +1446,10 @@ app.post('/suscripcion/iniciar', requireLogin, async (req, res) => {
       payment_method_types: ['card'],
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
+      subscription_data: {
+        trial_period_days: 7,
+        metadata: { user_id: req.userId, plan },
+      },
       success_url: `${req.headers.origin || 'https://tuapp.com'}/pago-exitoso`,
       cancel_url: `${req.headers.origin || 'https://tuapp.com'}/pago-cancelado`,
       metadata: { user_id: req.userId, plan },
@@ -1681,7 +1685,7 @@ app.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async (r
         const sub = evento.data.object;
         const { data: perfil } = await sb.from('subscriptions').select('user_id').eq('stripe_subscription_id', sub.id).maybeSingle();
         if (perfil) {
-          const estado = sub.status === 'active' ? 'activa' : sub.status === 'past_due' ? 'vencida' : 'cancelada';
+          const estado = (sub.status === 'active' || sub.status === 'trialing') ? 'activa' : sub.status === 'past_due' ? 'vencida' : 'cancelada';
           await sb.from('subscriptions').update({ estado }).eq('stripe_subscription_id', sub.id);
         }
         break;
