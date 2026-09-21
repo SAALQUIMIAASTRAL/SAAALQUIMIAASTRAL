@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v82-analisis-personalizado -->
+<!-- VERSION-APP: v101-diario-colapsado -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -527,8 +527,11 @@
           </div>
           <div class="auth-field">
             <label>Ciudad de nacimiento</label>
-            <input type="text" id="perfil-ciudad" placeholder="Ej. Mérida">
-            <div style="font-size:10.5px;color:var(--ink-dim);margin-top:3px;">Escribe el nombre completo (ej. "Ciudad de México", no "CDMX")</div>
+            <input type="text" id="perfil-ciudad" placeholder="Ej. Mérida" oninput="buscarCiudadEnVivo('perfil')" autocomplete="off">
+            <input type="hidden" id="perfil-lat">
+            <input type="hidden" id="perfil-lng">
+            <div id="perfil-ciudad-sugerencias" style="position:relative;z-index:5;"></div>
+            <div style="font-size:10.5px;color:var(--ink-dim);margin-top:3px;">Escribe y elige tu ciudad de la lista para que la ubicación sea exacta</div>
           </div>
           <div class="auth-field"><label>País</label>
             <select id="perfil-pais" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;width:100%;">
@@ -564,6 +567,37 @@
             <div style="font-size:11px;color:var(--ink-dim);margin-bottom:2px;">Correo</div>
             <div id="perfil-email-mostrar" style="font-size:13.5px;color:var(--plum);font-weight:600;"></div>
           </div>
+
+          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+            <span>Mi nombre y datos de nacimiento</span>
+            <span onclick="activarEdicionDatos()" style="cursor:pointer;font-size:13px;font-weight:600;color:var(--marigold-dark);" id="boton-editar-datos">✏️ Editar</span>
+          </div>
+
+          <div id="vista-datos-resumen" style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:16px;font-size:13px;color:var(--plum);line-height:1.9;"></div>
+
+          <div id="editar-datos-form" style="display:none;">
+            <div class="disclaimer" style="margin-bottom:10px;">Si algo quedó mal escrito al registrarte, corrígelo aquí. Al guardar, tu carta natal se vuelve a calcular con los datos nuevos.</div>
+            <div class="auth-error" id="editar-datos-error"></div>
+            <div class="auth-field"><label>Nombre</label><input type="text" id="editar-nombre" placeholder="Tu nombre"></div>
+            <div class="auth-field"><label>Fecha de nacimiento</label><input type="date" id="editar-fecha"></div>
+            <div class="auth-field"><label>Hora de nacimiento</label><input type="time" id="editar-hora"></div>
+            <div class="auth-field"><label>Ciudad de nacimiento</label><input type="text" id="editar-ciudad" placeholder="Ej. Mérida" oninput="buscarCiudadEnVivo('editar')" autocomplete="off">
+              <input type="hidden" id="editar-lat">
+              <input type="hidden" id="editar-lng">
+              <div id="editar-ciudad-sugerencias" style="position:relative;z-index:5;"></div>
+            </div>
+            <div class="auth-field"><label>País</label>
+              <select id="editar-pais" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;width:100%;">
+                <option value="">Selecciona tu país</option>
+              </select>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn-primary" style="background:var(--lilac);margin-bottom:6px;" onclick="guardarDatosNacimiento()">Guardar cambios</button>
+              <button class="btn-primary" style="background:var(--ink-dim);margin-bottom:6px;" onclick="cancelarEdicionDatos()">Cancelar</button>
+            </div>
+          </div>
+          <div id="editar-datos-msg" style="font-size:12px;margin-bottom:16px;"></div>
+
 
           <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:6px;">Suscripción</div>
           <div id="perfil-estado-sub" style="font-size:12.5px;font-weight:600;margin-bottom:10px;"></div>
@@ -614,7 +648,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v82-analisis-personalizado</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v101-diario-colapsado</div>
         </div>
 
         <div class="topbar">
@@ -655,7 +689,11 @@
                 <label>Fecha de nacimiento<input type="date" id="nc-fecha"></label>
                 <label>Hora<input type="time" id="nc-hora" value="12:00"></label>
               </div>
-              <label>Ciudad de nacimiento<input type="text" id="nc-ciudad"></label>
+              <label>Ciudad de nacimiento<input type="text" id="nc-ciudad" oninput="buscarCiudadEnVivo('nc')" autocomplete="off">
+                <input type="hidden" id="nc-lat">
+                <input type="hidden" id="nc-lng">
+                <div id="nc-ciudad-sugerencias" style="position:relative;z-index:5;"></div>
+              </label>
               <label>País<select id="nc-pais" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;"><option value="">Selecciona el país</option></select></label>
               <button class="btn-primary" onclick="guardarNuevaCarta()">Calcular y guardar</button>
               <div id="nc-resultado"></div>
@@ -731,7 +769,7 @@
 
           <div class="section" data-tab="hoy">
             <h2>Tránsitos personales</h2>
-            <div class="desc">Un tránsito ocurre cuando un planeta en el cielo, en este momento, activa un punto exacto de tu carta natal — eso es lo que marca "buenos días" o "días de cuidado" para ti. Aquí están los próximos 30 días.</div>
+            <div class="desc">Un tránsito ocurre cuando un planeta en el cielo, en este momento, activa un punto exacto de tu carta natal — eso es lo que marca "buenos días" o "días de cuidado" para ti. Aquí están los próximos 7 días.</div>
             <button class="btn-primary" onclick="verTransitosReales()">Ver mis tránsitos reales</button>
             <div id="transitos-resultado" style="margin-top:14px;"></div>
           </div>
@@ -826,6 +864,12 @@
             <div class="desc">La Luna influye en todo. Aquí las fechas del mes donde la energía favorece cada tipo de acción.</div>
             <button class="btn-primary" style="margin-bottom:10px;" onclick="calcularCalendarioLunar(this)">Ver fechas exactas de este mes</button>
             <div id="aviso-mercurio-retro"></div>
+            <div id="dias-poder-personal"></div>
+
+            <div class="card-lectura">
+              <div class="card-titulo">📅 Calendario general (tradición astrológica)</div>
+              <div class="card-cuerpo" style="color:var(--ink-dim);">Estas fechas son iguales para todas las usuarias — están basadas en la fase y el signo de la Luna, no en tu carta personal.</div>
+            </div>
 
             <div class="day-item">
               <div class="ic">✂️</div>
@@ -1048,7 +1092,7 @@
 
       const iconos = { Sun:'☀️', Moon:'🌙', Venus:'💗', Mars:'🔥', Jupiter:'🚀', Saturn:'🪐', Mercury:'☿️' };
       const planetasEs = { Sun:'Sol', Moon:'Luna', Venus:'Venus', Mars:'Marte', Jupiter:'Júpiter', Saturn:'Saturno', Mercury:'Mercurio' };
-      const lineasEs = { AC:'Ascendente (identidad)', MC:'Medio Cielo (vocación)', DC:'Descendente (relaciones)', IC:'Fondo de Cielo (hogar)' };
+      const lineasEs = { AC:'Ascendente (identidad)', MC:'Medio Cielo (vocación)', DS:'Descendente (relaciones)', IC:'Fondo de Cielo (hogar)' };
       const AREAS_ACG_ES = { identity:'identidad y liderazgo', career:'carrera y vocación', love:'amor y relaciones', prosperity:'prosperidad y dinero', health:'salud', home:'hogar', creativity:'creatividad', spirituality:'espiritualidad', communication:'comunicación', travel:'viajes', power:'poder personal' };
 
       let htmlLineas = '';
@@ -1060,7 +1104,7 @@
         htmlLineas += ciudadesBuenas.map(c => `
           <div class="card-lectura">
             <div class="card-titulo">${c.name}, ${c.country}</div>
-            <div class="card-cuerpo" style="color:var(--ink-dim);">Cerca de tu línea de ${c.closest_line || 'energía activa'}</div>
+            <div class="card-cuerpo" style="color:var(--ink-dim);">Cerca de tu línea de ${traducirNombresPlanetasEnFrase(c.closest_line) || 'energía activa'}</div>
           </div>
         `).join('');
         htmlLineas += '<div style="font-family:\'Cormorant Garamond\',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin:14px 0 8px;">Qué significa cada línea</div>';
@@ -1074,7 +1118,7 @@
       }
 
       if (data.lineas && data.lineas.length) {
-        htmlLineas += data.lineas.slice(0, 6).map(l => `
+        htmlLineas += data.lineas.slice(0, 40).map(l => `
           <div class="acg-line">
             <div class="em">${iconos[l.planet] || '✨'}</div>
             <div>
@@ -1216,7 +1260,7 @@
 
   function llenarMenuPaises() {
     PAISES.sort((a, b) => a[1].localeCompare(b[1]));
-    ['perfil-pais', 'sin-pais', 'nc-pais', 'reloc-pais'].forEach(idSelect => {
+    ['perfil-pais', 'sin-pais', 'nc-pais', 'reloc-pais', 'editar-pais'].forEach(idSelect => {
       const select = document.getElementById(idSelect);
       if (!select) return;
       PAISES.forEach(([codigo, nombre]) => {
@@ -1272,6 +1316,7 @@
       const r = await fetchAuth('/otras-cartas/' + id, { headers: {} });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || 'No se pudo cargar.');
+      _otrasCartasCache[id] = data.carta;
 
       const cd = data.carta?.datos_carta?.chart_data;
       let filasPlanetas = '';
@@ -1293,6 +1338,10 @@
           <button class="btn-primary" style="background:var(--blush-1);margin-top:10px;" onclick="verFuncionOtraCarta('${id}', '${nombre}', 'numerologia')">Su numerología</button>
           <button class="btn-primary" style="background:var(--blush-1);margin-top:10px;" onclick="verFuncionOtraCarta('${id}', '${nombre}', 'estrellas-fijas')">Sus estrellas fijas</button>
           <button class="btn-primary" style="background:var(--blush-1);margin-top:10px;" onclick="verFuncionOtraCarta('${id}', '${nombre}', 'astrocartografia')">Su astrocartografía</button>
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <button class="btn-primary" style="background:var(--ink-dim);" onclick="editarOtraCarta('${id}')">✏️ Editar datos</button>
+            <button class="btn-primary" style="background:#a5442f;" onclick="eliminarOtraCarta('${id}', '${nombre}')">🗑 Eliminar</button>
+          </div>
           <div id="carta-otro-visual" style="margin-top:12px;"></div>
           <div id="carta-otro-resumen" style="margin-top:12px;"></div>
           <div id="carta-otro-extra" style="margin-top:12px;"></div>
@@ -1370,7 +1419,13 @@
 
   function mostrarFormularioCarta() {
     const f = document.getElementById('form-nueva-carta');
-    f.style.display = f.style.display === 'none' ? 'flex' : 'none';
+    const abriendo = f.style.display === 'none';
+    f.style.display = abriendo ? 'flex' : 'none';
+    if (abriendo) {
+      _editandoCartaId = null;
+      ['nc-nombre', 'nc-fecha', 'nc-hora', 'nc-ciudad', 'nc-pais', 'nc-lat', 'nc-lng'].forEach(id => { document.getElementById(id).value = ''; });
+      document.getElementById('nc-hora').value = '12:00';
+    }
   }
 
   async function cargarCartasGuardadas() {
@@ -1394,6 +1449,36 @@
     } catch (e) { /* silencioso */ }
   }
 
+  const _otrasCartasCache = {};
+  let _editandoCartaId = null;
+
+  function editarOtraCarta(id) {
+    const c = _otrasCartasCache[id];
+    if (!c) return;
+    _editandoCartaId = id;
+    document.getElementById('nc-nombre').value = c.nombre || '';
+    document.getElementById('nc-fecha').value = c.fecha_nacimiento || '';
+    document.getElementById('nc-hora').value = (c.hora_nacimiento || '12:00').slice(0, 5);
+    document.getElementById('nc-ciudad').value = c.ciudad_nacimiento || '';
+    document.getElementById('nc-pais').value = c.pais_codigo || '';
+    document.getElementById('nc-lat').value = c.latitud || '';
+    document.getElementById('nc-lng').value = c.longitud || '';
+    document.getElementById('form-nueva-carta').style.display = 'block';
+    document.getElementById('form-nueva-carta').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  async function eliminarOtraCarta(id, nombre) {
+    if (!confirm(`¿Eliminar la carta de ${nombre}? Esto no se puede deshacer.`)) return;
+    try {
+      const r = await fetchAuth('/otras-cartas/' + id, { method: 'DELETE', headers: {} });
+      if (!r.ok) { const d = await r.json(); throw new Error(d.error || 'No se pudo eliminar.'); }
+      document.getElementById('carta-otro-detalle').innerHTML = '';
+      cargarCartasGuardadas();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
   async function guardarNuevaCarta() {
     const resultado = document.getElementById('nc-resultado');
     const cuerpo = {
@@ -1403,12 +1488,19 @@
       ciudad_nacimiento: document.getElementById('nc-ciudad').value.trim(),
       pais_codigo: document.getElementById('nc-pais').value,
     };
+    const latVal = parseFloat(document.getElementById('nc-lat').value);
+    const lngVal = parseFloat(document.getElementById('nc-lng').value);
+    if (!isNaN(latVal)) cuerpo.latitud = latVal;
+    if (!isNaN(lngVal)) cuerpo.longitud = lngVal;
     if (!cuerpo.nombre || !cuerpo.fecha_nacimiento || !cuerpo.ciudad_nacimiento || !cuerpo.pais_codigo) {
       resultado.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Llena todos los datos.</div>';
       return;
     }
     resultado.innerHTML = '<div class="disclaimer">Calculando y guardando...</div>';
     try {
+      if (_editandoCartaId) {
+        await fetchAuth('/otras-cartas/' + _editandoCartaId, { method: 'DELETE', headers: {} });
+      }
       const r = await fetchAuth('/otras-cartas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1418,6 +1510,8 @@
       if (!r.ok) throw new Error(data.error || 'No se pudo guardar.');
       resultado.innerHTML = '<div class="disclaimer">¡Guardada! 🎉</div>';
       document.getElementById('form-nueva-carta').style.display = 'none';
+      document.getElementById('carta-otro-detalle').innerHTML = '';
+      _editandoCartaId = null;
       cargarCartasGuardadas();
     } catch (err) {
       resultado.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
@@ -1511,6 +1605,14 @@
     Chiron:'Quirón', Ascendant:'Ascendente', Medium_Coeli:'Medio Cielo', Descendant:'Descendente',
     Imum_Coeli:'Fondo de Cielo', Mean_Node:'Nodo Norte', Mean_South_Node:'Nodo Sur', Lilith:'Lilith',
   };
+  function traducirNombresPlanetasEnFrase(texto) {
+    if (!texto) return texto;
+    let resultado = texto;
+    Object.keys(PLANETAS_SOLO_NOMBRE_ES).forEach(en => {
+      resultado = resultado.replace(new RegExp('\\b' + en + '\\b', 'g'), PLANETAS_SOLO_NOMBRE_ES[en]);
+    });
+    return resultado;
+  }
   function traducirTitulo(t) {
     if (!t || typeof t !== 'string') return t;
 
@@ -1591,7 +1693,75 @@
       .replace(/\bmaturity\b/gi, 'madurez')
       .replace(/\btension\b/gi, 'tensión')
       .replace(/\bharmony\b/gi, 'armonía')
-      .replace(/\bcompatibility\b/gi, 'compatibilidad');
+      .replace(/\bcompatibility\b/gi, 'compatibilidad')
+      // Términos que se cuelan en informes de estrellas fijas y relocación
+      .replace(/\bopposite\b/gi, 'en oposición con')
+      .replace(/\bconjunct\b/gi, 'en conjunción con')
+      .replace(/\bcreates?\b/gi, 'crea')
+      .replace(/\bbetween\b/gi, 'entre')
+      .replace(/\bqualities of\b/gi, 'cualidades de')
+      .replace(/\bthe native\b/gi, 'la persona')
+      .replace(/\bfaces\b/gi, 'enfrenta')
+      .replace(/\bintense\b/gi, 'intensas')
+      .replace(/\blimitations\b/gi, 'limitaciones')
+      .replace(/\brequire[s]?\b/gi, 'requieren')
+      .replace(/\bstrategic responses?\b/gi, 'respuestas estratégicas')
+      .replace(/\bdanger of\b/gi, 'riesgo de')
+      .replace(/\bself-destruction\b/gi, 'autodestrucción')
+      .replace(/\brigidity\b/gi, 'rigidez')
+      .replace(/\bmust balance\b/gi, 'debe equilibrar')
+      .replace(/\bstructure\b/gi, 'estructura')
+      .replace(/\bintensity\b/gi, 'intensidad')
+      .replace(/\bstrategic\b/gi, 'estratégica')
+      .replace(/\bpatience\b/gi, 'paciencia')
+      .replace(/\bendurance\b/gi, 'resistencia')
+      .replace(/\bextreme tests? of\b/gi, 'pruebas extremas de')
+      .replace(/\bsuccess\b/gi, 'éxito')
+      .replace(/\bhappiness\b/gi, 'felicidad')
+      .replace(/\breligion\b/gi, 'espiritualidad')
+      .replace(/\bphilosophy\b/gi, 'filosofía')
+      .replace(/\bcombines?\b/gi, 'combina')
+      .replace(/\benergies\b/gi, 'energías')
+      .replace(/\bemphasizing\b/gi, 'resaltando')
+      .replace(/\bnature[,.]?\b/gi, 'naturaleza')
+      .replace(/\bwith\b/gi, 'con')
+      .replace(/\bbrings\b/gi, 'trae')
+      .replace(/\bbeauty\b/gi, 'belleza')
+      .replace(/\bwhere\b/gi, 'donde')
+      .replace(/\bhome, family, and emotional roots\b/gi, 'el hogar, la familia y las raíces emocionales')
+      .replace(/\breceive loving focus\b/gi, 'reciben atención amorosa')
+      .replace(/\binvestigating life'?s depths\b/gi, 'explorar las profundidades de la vida')
+      .replace(/\bmanaging shared resources\b/gi, 'administrar recursos compartidos')
+      .replace(/\bconsume energy\b/gi, 'consume energía')
+      .replace(/\bcan make\b/gi, 'puede hacer que')
+      .replace(/\bfeel inhibited\b/gi, 'se sienta inhibida')
+      .replace(/\bcalls strongly toward\b/gi, 'llama fuertemente hacia')
+      .replace(/\bservice and healing\b/gi, 'el servicio y la sanación')
+      .replace(/\bhosts?\b/gi, 'alberga')
+      .replace(/\bdeepest shifts\b/gi, 'los cambios más profundos')
+      .replace(/\bnoticeable\b/gi, 'notable')
+      .replace(/\bidentity adjustment\b/gi, 'ajuste de identidad')
+      .replace(/\bsubtle but real changes\b/gi, 'cambios sutiles pero reales')
+      .replace(/\bself-presentation\b/gi, 'cómo te presentas')
+      .replace(/\bfirst impressions\b/gi, 'las primeras impresiones')
+      .replace(/\bcareer adjustment\b/gi, 'ajuste profesional')
+      .replace(/\bprofessional goals\b/gi, 'metas profesionales')
+      .replace(/\bpublic image\b/gi, 'imagen pública')
+      .replace(/\bshift to align with\b/gi, 'se ajustan para alinearse con')
+      .replace(/\bnew opportunities\b/gi, 'nuevas oportunidades')
+      .replace(/\bIn this location:?\s*/gi, 'En este lugar: ')
+      .replace(/\b(\d+)(st|nd|rd|th)\s+house\b/gi, (_, n) => `Casa ${n}`)
+      .replace(/\benergy emphasized through\b/gi, 'energía resaltada a través del ángulo de tu')
+      .replace(/\bangle\b/gi, '')
+      .replace(/Noticeable identity adjustment - subtle but real changes in self-presentation and first impressions\.?/gi,
+        'Ajuste notable de identidad: cambios sutiles pero reales en cómo te presentas y en las primeras impresiones que das.')
+      .replace(/Career adjustment - professional goals and public image shift to align with new opportunities\.?/gi,
+        'Ajuste profesional: tus metas de carrera y tu imagen pública se realinean con nuevas oportunidades.')
+      .replace(/\bshining\b/gi, 'brillando')
+      .replace(/\bdefines purpose\b/gi, 'define tu propósito')
+      .replace(/\bjoyful expression\b/gi, 'expresión gozosa')
+      .replace(/\bcreative\b/gi, 'creativa')
+      .replace(/\bemotional roots\b/gi, 'raíces emocionales');
   }
 
   function traducirPlanetasEnTexto(t) {
@@ -2005,13 +2175,13 @@
       const r = await fetchAuth('/diario', { headers: {} });
       const data = await r.json();
       if (!data.entradas?.length) { lista.innerHTML = '<div class="disclaimer">Aún no tienes entradas en el diario.</div>'; return; }
-      lista.innerHTML = data.entradas.map(e => `
+      lista.innerHTML = data.entradas.map((e, idx) => `
         <div class="tarjeta-lectura neutral" style="margin-bottom:8px;">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
-            <div style="font-size:11px;color:var(--ink-dim);">${e.fecha}${e.estado_animo ? ' · ' + e.estado_animo : ''}${e.luna_signo ? ' · ☽ ' + signoEs(e.luna_signo) : ''}${e.dia_personal ? ' · Día ' + e.dia_personal : ''}</div>
-            <button onclick="eliminarEntradaDiario('${e.id}')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--ink-dim);">✕</button>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;cursor:pointer;" onclick="document.getElementById('diario-cuerpo-${idx}').style.display = document.getElementById('diario-cuerpo-${idx}').style.display === 'none' ? 'block' : 'none';">
+            <div style="font-size:11px;color:var(--ink-dim);">▸ ${e.fecha}${e.estado_animo ? ' · ' + e.estado_animo : ''}${e.luna_signo ? ' · ☽ ' + signoEs(e.luna_signo) : ''}${e.dia_personal ? ' · Día ' + e.dia_personal : ''}</div>
+            <button onclick="event.stopPropagation();eliminarEntradaDiario('${e.id}')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--ink-dim);">✕</button>
           </div>
-          <div class="cuerpo">${e.texto}</div>
+          <div class="cuerpo" id="diario-cuerpo-${idx}" style="display:none;">${e.texto}</div>
         </div>
       `).join('');
     } catch (e) { lista.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${e.message}</div>`; }
@@ -2287,6 +2457,94 @@
       estadoEl.style.color = colors[s] || 'var(--ink-dim)';
     }
     mostrarPantalla('mi-perfil');
+    cargarDatosParaEditar();
+  }
+
+  let _datosNacimientoActuales = null;
+
+  async function cargarDatosParaEditar() {
+    ocultarErrorEn('editar-datos-error');
+    document.getElementById('editar-datos-msg').textContent = '';
+    const resumen = document.getElementById('vista-datos-resumen');
+    resumen.innerHTML = 'Cargando...';
+    try {
+      const r = await fetchAuth('/perfil', { headers: {} });
+      const data = await r.json();
+      const p = data.perfil;
+      _datosNacimientoActuales = p;
+      if (!p) { resumen.innerHTML = '<span style="color:var(--ink-dim);">No hay datos guardados todavía.</span>'; return; }
+      const fechaLegible = p.fecha_nacimiento ? new Date(p.fecha_nacimiento + 'T00:00:00').toLocaleDateString('es-MX', { day:'numeric', month:'long', year:'numeric' }) : '—';
+      resumen.innerHTML = `
+        <div><b>Nombre:</b> ${p.nombre || '—'}</div>
+        <div><b>Fecha:</b> ${fechaLegible}</div>
+        <div><b>Hora:</b> ${(p.hora_nacimiento || '12:00').slice(0,5)}</div>
+        <div><b>Ciudad:</b> ${p.ciudad_nacimiento || '—'}${p.latitud ? ' <span style="color:var(--armonia);font-size:11px;">✓ ubicación exacta</span>' : ''}</div>
+        <div><b>País:</b> ${p.pais_codigo || '—'}</div>
+      `;
+    } catch (e) {
+      resumen.innerHTML = '<span style="color:#a5442f;">No se pudieron cargar tus datos.</span>';
+    }
+  }
+
+  function activarEdicionDatos() {
+    const p = _datosNacimientoActuales || {};
+    document.getElementById('editar-nombre').value = p.nombre || '';
+    document.getElementById('editar-fecha').value = p.fecha_nacimiento || '';
+    document.getElementById('editar-hora').value = (p.hora_nacimiento || '12:00').slice(0, 5);
+    document.getElementById('editar-ciudad').value = p.ciudad_nacimiento || '';
+    document.getElementById('editar-pais').value = p.pais_codigo || '';
+    document.getElementById('editar-lat').value = p.latitud || '';
+    document.getElementById('editar-lng').value = p.longitud || '';
+    document.getElementById('vista-datos-resumen').style.display = 'none';
+    document.getElementById('editar-datos-form').style.display = 'block';
+    document.getElementById('boton-editar-datos').style.display = 'none';
+  }
+
+  function cancelarEdicionDatos() {
+    document.getElementById('editar-datos-form').style.display = 'none';
+    document.getElementById('vista-datos-resumen').style.display = 'block';
+    document.getElementById('boton-editar-datos').style.display = 'inline';
+    document.getElementById('editar-datos-msg').textContent = '';
+    ocultarErrorEn('editar-datos-error');
+  }
+
+  async function guardarDatosNacimiento() {
+    ocultarErrorEn('editar-datos-error');
+    const msgEl = document.getElementById('editar-datos-msg');
+    msgEl.textContent = '';
+    const cuerpo = {
+      nombre: document.getElementById('editar-nombre').value.trim(),
+      fecha_nacimiento: document.getElementById('editar-fecha').value,
+      hora_nacimiento: document.getElementById('editar-hora').value || '12:00',
+      ciudad_nacimiento: document.getElementById('editar-ciudad').value.trim(),
+      pais_codigo: document.getElementById('editar-pais').value.trim().toUpperCase(),
+    };
+    const latVal = parseFloat(document.getElementById('editar-lat').value);
+    const lngVal = parseFloat(document.getElementById('editar-lng').value);
+    if (!isNaN(latVal)) cuerpo.latitud = latVal;
+    if (!isNaN(lngVal)) cuerpo.longitud = lngVal;
+    if (!cuerpo.nombre || !cuerpo.fecha_nacimiento || !cuerpo.ciudad_nacimiento || cuerpo.pais_codigo.length !== 2) {
+      return mostrarErrorEn('editar-datos-error', 'Llena tu nombre, fecha, ciudad y un país válido.');
+    }
+    try {
+      const r = await fetchAuth('/perfil', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cuerpo),
+      });
+      const data = await r.json();
+      if (!r.ok) return mostrarErrorEn('editar-datos-error', data.error || 'No se pudo guardar.');
+      SESION.nombre = data.perfil?.nombre || SESION.nombre;
+      const greet = document.getElementById('greeting-word');
+      const nombreEl = document.querySelector('.band h1');
+      if (nombreEl && SESION.nombre) nombreEl.innerHTML = `<span id="greeting-word">${greet ? greet.textContent : 'Hola'}</span>, ${SESION.nombre}`;
+      cancelarEdicionDatos();
+      await cargarDatosParaEditar();
+      document.getElementById('editar-datos-msg').style.color = 'var(--armonia)';
+      document.getElementById('editar-datos-msg').textContent = '✔ Guardado. Tu carta natal se recalculará la próxima vez que la abras.';
+    } catch (e) {
+      mostrarErrorEn('editar-datos-error', 'No se pudo conectar. Intenta de nuevo.');
+    }
   }
 
   async function abrirPortalPago() {
@@ -2347,6 +2605,7 @@
     } else {
       document.getElementById('login-email').value = email;
       mostrarPantalla('login');
+      mostrarErrorEn('login-error', '✔ Cuenta creada. Revisa tu correo (' + email + ') y toca el link de confirmación antes de entrar. Si no lo ves, checa spam.');
     }
   }
 
@@ -2359,7 +2618,13 @@
       body: JSON.stringify({ email, password }),
     });
     const data = await r.json();
-    if (!r.ok || !data.sesion) return mostrarErrorEn('login-error', data.error || 'Correo o contraseña incorrectos.');
+    if (!r.ok || !data.sesion) {
+      const crudo = data.error || '';
+      const mensaje = /email not confirmed|not confirmed/i.test(crudo)
+        ? 'Todavía no confirmas tu correo. Revisa tu bandeja (y spam) y toca el link que te mandamos.'
+        : (crudo || 'Correo o contraseña incorrectos.');
+      return mostrarErrorEn('login-error', mensaje);
+    }
     SESION.token = data.sesion.access_token;
     SESION.email = data.usuario?.email || email;
     SESION.refresh = data.sesion.refresh_token || null;
@@ -2368,6 +2633,50 @@
     if (SESION.email) localStorage.setItem('saa_email', SESION.email);
     await revisarPerfilYArrancar();
   }
+
+  let _timerBusquedaCiudad = null;
+  function buscarCiudadEnVivo(prefijo) {
+    clearTimeout(_timerBusquedaCiudad);
+    const input = document.getElementById(`${prefijo}-ciudad`);
+    const contenedor = document.getElementById(`${prefijo}-ciudad-sugerencias`);
+    // Si edita el texto a mano, invalidamos las coordenadas guardadas hasta que elija una sugerencia de nuevo
+    document.getElementById(`${prefijo}-lat`).value = '';
+    document.getElementById(`${prefijo}-lng`).value = '';
+    const texto = input.value.trim();
+    if (texto.length < 3) { contenedor.innerHTML = ''; return; }
+    _timerBusquedaCiudad = setTimeout(async () => {
+      try {
+        const r = await fetch('/buscar-ciudad?q=' + encodeURIComponent(texto));
+        const data = await r.json();
+        const resultados = data.resultados || [];
+        if (!resultados.length) { contenedor.innerHTML = ''; return; }
+        contenedor.innerHTML = `
+          <div style="position:absolute;left:0;right:0;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 4px 14px rgba(0,0,0,0.12);max-height:180px;overflow-y:auto;">
+            ${resultados.map((c, i) => `
+              <div onclick='elegirCiudad("${prefijo}", ${i})' style="padding:9px 12px;font-size:12.5px;color:var(--plum);cursor:pointer;border-bottom:1px solid var(--line);">${c.etiqueta}</div>
+            `).join('')}
+          </div>
+        `;
+        window[`_ciudadesEncontradas_${prefijo}`] = resultados;
+      } catch (e) { contenedor.innerHTML = ''; }
+    }, 400);
+  }
+
+  function elegirCiudad(prefijo, indice) {
+    const c = (window[`_ciudadesEncontradas_${prefijo}`] || [])[indice];
+    if (!c) return;
+    document.getElementById(`${prefijo}-ciudad`).value = c.ciudad || c.etiqueta;
+    document.getElementById(`${prefijo}-lat`).value = c.latitud;
+    document.getElementById(`${prefijo}-lng`).value = c.longitud;
+    document.getElementById(`${prefijo}-ciudad-sugerencias`).innerHTML = '';
+    if (c.pais_codigo) {
+      const selectPais = document.getElementById(`${prefijo}-pais`);
+      if (selectPais && [...selectPais.options].some(o => o.value === c.pais_codigo)) {
+        selectPais.value = c.pais_codigo;
+      }
+    }
+  }
+
 
   async function accionGuardarPerfil() {
     ocultarErrorEn('perfil-error');
@@ -2378,6 +2687,10 @@
       ciudad_nacimiento: document.getElementById('perfil-ciudad').value.trim(),
       pais_codigo: document.getElementById('perfil-pais').value.trim().toUpperCase(),
     };
+    const latVal = parseFloat(document.getElementById('perfil-lat').value);
+    const lngVal = parseFloat(document.getElementById('perfil-lng').value);
+    if (!isNaN(latVal)) cuerpo.latitud = latVal;
+    if (!isNaN(lngVal)) cuerpo.longitud = lngVal;
     if (!cuerpo.nombre || !cuerpo.fecha_nacimiento || !cuerpo.ciudad_nacimiento || cuerpo.pais_codigo.length !== 2) {
       return mostrarErrorEn('perfil-error', 'Llena tu nombre, fecha, ciudad y un código de país de 2 letras (ej. MX).');
     }
@@ -2399,12 +2712,13 @@
     mostrarPantalla('login');
   }
 
-  function entrarALaApp(perfil) {
+  async function entrarALaApp(perfil) {
     mostrarPantalla(null);
     SESION.nombre = perfil?.nombre || 'Usuaria';
     const greet = document.getElementById('greeting-word');
     const nombreEl = document.querySelector('.band h1');
     if (nombreEl) nombreEl.innerHTML = `<span id="greeting-word">${greet ? greet.textContent : 'Hola'}</span>, ${SESION.nombre}`;
+    await calcularCartaReal(true); // asegura que la carta exista (la calcula si hace falta, silenciosamente)
     actualizarBandaConCartaReal();
     cargarCartasGuardadas();
     cargarHomeSummary();
@@ -2582,7 +2896,11 @@
     try {
       const r = await fetchAuth('/carta-natal', { method: 'POST', headers: {} });
       const data = await r.json();
-      if (!r.ok) throw new Error(data.error || 'Error al calcular');
+      if (!r.ok) {
+        const e = new Error(data.error || 'Error al calcular');
+        e.detalle = data.detalle_tecnico;
+        throw e;
+      }
 
       const s = data.carta?.datos_carta?.subject_data;
       const cd = data.carta?.datos_carta?.chart_data;
@@ -2614,7 +2932,8 @@
       }
     } catch (err) {
       if (!silencioso) {
-        chips.innerHTML = `<div class="row" style="color:#a5442f;">${err.message}</div>`;
+        chips.innerHTML = `<div class="row" style="color:#a5442f;">${err.message}</div>` +
+          (err.detalle ? `<pre style="white-space:pre-wrap;font-size:9px;color:#a5442f;opacity:0.7;padding:8px;">${typeof err.detalle === 'string' ? err.detalle : JSON.stringify(err.detalle, null, 2)}</pre>` : '');
       }
     }
     if (!silencioso) { boton.textContent = 'Calcular mi carta natal'; boton.disabled = false; }
@@ -2790,7 +3109,21 @@
         contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
-      contenedor.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('estrellas-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>` + renderizarInforme(data.estrellas, null);
+      const d = data.estrellas?.data || {};
+      const todas = [...(d.conjunctions || []), ...(d.oppositions || [])].sort((a, b) => (b.strength || 0) - (a.strength || 0));
+      const ASPECTO_ES_ESTRELLA = { conjunction: 'en conjunción con', opposition: 'en oposición con' };
+      let htmlEstrellas = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('estrellas-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
+      if (todas.length) {
+        htmlEstrellas += todas.map(e => `
+          <div class="card-lectura" style="margin-bottom:10px;">
+            <div class="card-titulo">${nombrePlanetaEs(e.planet)} ${ASPECTO_ES_ESTRELLA[e.aspect] || e.aspect} ${e.star}${e.star_data?.traditional_name ? ` <span style="font-weight:400;font-size:11px;color:var(--ink-dim);">(${e.star_data.traditional_name})</span>` : ''}</div>
+            <div class="card-cuerpo" style="color:var(--plum);margin-top:4px;">${e.interpretation || ''}</div>
+          </div>
+        `).join('');
+      } else {
+        htmlEstrellas += '<div class="disclaimer">No se encontraron estrellas fijas activas en tu carta esta vez.</div>';
+      }
+      contenedor.innerHTML = htmlEstrellas;
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }
@@ -3074,6 +3407,30 @@
       } else {
         avisoMercurio.innerHTML = '';
       }
+
+      // Días de poder personal — cruzando tu carta natal real
+      const contenedorPersonal = document.getElementById('dias-poder-personal');
+      const diasPersonal = data.dias_poder_personal || {};
+      const clavesDias = Object.keys(diasPersonal).map(Number).sort((a, b) => a - b);
+      if (clavesDias.length) {
+        contenedorPersonal.innerHTML = `
+          <div class="card-lectura" style="background:var(--marigold-soft);border:1px solid var(--marigold-mid);margin-bottom:14px;">
+            <div class="card-titulo">✨ Tus días de poder personal en ${nombreMes}</div>
+            <div class="card-cuerpo" style="color:var(--ink-dim);margin-bottom:8px;">Calculado cruzando los tránsitos del mes con tu carta natal real — estos días específicos son buenos para ti, no genéricos.</div>
+            ${clavesDias.map(dia => `
+              <div style="margin-bottom:6px;font-size:12.5px;">
+                <b style="color:var(--marigold-dark);">Día ${dia}:</b>
+                <span style="color:var(--plum);">${diasPersonal[dia].join('; ')}</span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      } else if (data.dias_poder_personal_error) {
+        contenedorPersonal.innerHTML = `<div class="disclaimer" style="color:#a5442f;margin-bottom:14px;">No se pudo calcular tus días de poder personal este mes. <span style="opacity:0.7;font-size:10.5px;">(detalle técnico disponible en consola)</span></div>`;
+        console.error('dias_poder_personal_error:', data.dias_poder_personal_error);
+      } else {
+        contenedorPersonal.innerHTML = `<div class="disclaimer" style="margin-bottom:14px;">Este mes no hay tránsitos especialmente favorables (Sol, Venus o Júpiter en buen ángulo con tu carta) — es un mes más tranquilo, no significa que sea malo.</div>`;
+      }
     } catch (err) {
       alert(err.message);
     }
@@ -3281,7 +3638,19 @@
         return;
       }
       const _cerrar_reloc_ok = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('reloc-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
-      contenedor.innerHTML = _cerrar_reloc_ok + renderizarInforme(data.relocacion, 'reloc-resultado');
+      let htmlReloc = _cerrar_reloc_ok;
+      const factores = data.relocacion?.data?.key_factors || [];
+      if (factores.length) {
+        htmlReloc += `<div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin-bottom:8px;">Qué significa esta mudanza para ti</div>`;
+        htmlReloc += factores.map(f => `
+          <div class="card-lectura" style="margin-bottom:8px;">
+            <div class="card-cuerpo" style="color:var(--plum);">${f.interpretation || f.factor || ''}</div>
+          </div>
+        `).join('');
+        htmlReloc += '<div style="font-family:\'Cormorant Garamond\',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin:14px 0 8px;">Detalle técnico</div>';
+      }
+      htmlReloc += renderizarInforme(data.relocacion, 'reloc-resultado');
+      contenedor.innerHTML = htmlReloc;
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }
