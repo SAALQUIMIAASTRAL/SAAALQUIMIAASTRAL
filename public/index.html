@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v105-cierre-grafico-otra-carta -->
+<!-- VERSION-APP: v106-quitar-botones-otra-carta -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -648,7 +648,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v105-cierre-grafico-otra-carta</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v106-quitar-botones-otra-carta</div>
         </div>
 
         <div class="topbar">
@@ -1389,8 +1389,6 @@
           <button class="btn-primary" style="background:var(--lilac);margin-top:10px;" onclick="verVisualOtraCarta('${id}')">Ver su carta en rueda 🔮</button>
           <button class="btn-primary" style="background:var(--marigold);margin-top:10px;" onclick="verResumenOtraCarta('${id}', '${nombre}')">Ver análisis de personalidad</button>
           <button class="btn-primary" style="background:var(--blush-1);margin-top:10px;" onclick="verFuncionOtraCarta('${id}', '${nombre}', 'numerologia')">Su numerología</button>
-          <button class="btn-primary" style="background:var(--blush-1);margin-top:10px;" onclick="verFuncionOtraCarta('${id}', '${nombre}', 'estrellas-fijas')">Sus estrellas fijas</button>
-          <button class="btn-primary" style="background:var(--blush-1);margin-top:10px;" onclick="verFuncionOtraCarta('${id}', '${nombre}', 'astrocartografia')">Su astrocartografía</button>
           <div style="display:flex;gap:8px;margin-top:10px;">
             <button class="btn-primary" style="background:var(--ink-dim);" onclick="editarOtraCarta('${id}')">✏️ Editar datos</button>
             <button class="btn-primary" style="background:#a5442f;" onclick="eliminarOtraCarta('${id}', '${nombre}')">🗑 Eliminar</button>
