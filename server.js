@@ -1414,6 +1414,15 @@ app.post('/transitos-personales', requireLogin, async (req, res) => {
 
 app.post('/suscripcion/iniciar', requireLogin, async (req, res) => {
   try {
+    const PRECIOS_POR_PLAN = {
+      mensual: process.env.STRIPE_PRICE_ID,
+      semestral: process.env.STRIPE_PRICE_ID_SEMESTRAL,
+      anual: process.env.STRIPE_PRICE_ID_ANUAL,
+    };
+    const plan = PRECIOS_POR_PLAN[req.body?.plan] ? req.body.plan : 'mensual';
+    const priceId = PRECIOS_POR_PLAN[plan];
+    if (!priceId) return res.status(400).json({ error: `Falta configurar el precio de Stripe para el plan "${plan}".` });
+
     // Buscamos si ya existe un customer_id guardado; si no, creamos uno en Stripe
     const { data: subExistente } = await req.supabase
       .from('subscriptions')
@@ -1436,10 +1445,10 @@ app.post('/suscripcion/iniciar', requireLogin, async (req, res) => {
       mode: 'subscription',
       payment_method_types: ['card'],
       customer: customerId,
-      line_items: [{ price: process.env.STRIPE_PRICE_ID, quantity: 1 }],
+      line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${req.headers.origin || 'https://tuapp.com'}/pago-exitoso`,
       cancel_url: `${req.headers.origin || 'https://tuapp.com'}/pago-cancelado`,
-      metadata: { user_id: req.userId },
+      metadata: { user_id: req.userId, plan },
     });
 
     res.json({ url: sesionPago.url });
