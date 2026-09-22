@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v110-reabrir-detalle-al-editar -->
+<!-- VERSION-APP: v111-verificar-borrado-real -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -648,7 +648,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v110-reabrir-detalle-al-editar</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v111-verificar-borrado-real</div>
         </div>
 
         <div class="topbar">
@@ -1544,13 +1544,15 @@
   }
 
   async function confirmarEliminarOtraCarta(id) {
+    const cajaConfirmar = document.getElementById('confirmar-eliminar-carta');
     try {
       const r = await fetchAuth('/otras-cartas/' + id, { method: 'DELETE', headers: {} });
-      if (!r.ok) { const d = await r.json(); throw new Error(d.error || 'No se pudo eliminar.'); }
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'No se pudo eliminar.');
       document.getElementById('carta-otro-detalle').innerHTML = '';
       cargarCartasGuardadas();
     } catch (err) {
-      alert(err.message);
+      if (cajaConfirmar) cajaConfirmar.innerHTML = `<div style="font-size:12px;color:#a5442f;">${err.message}</div>`;
     }
   }
 
