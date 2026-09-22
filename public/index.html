@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v111-verificar-borrado-real -->
+<!-- VERSION-APP: v112-ciudades-acg-mas-detalle -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -648,7 +648,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v111-verificar-borrado-real</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v112-ciudades-acg-mas-detalle</div>
         </div>
 
         <div class="topbar">
@@ -1148,18 +1148,61 @@
       const lineasEs = { AC:'Ascendente (identidad)', MC:'Medio Cielo (vocación)', DS:'Descendente (relaciones)', IC:'Fondo de Cielo (hogar)' };
       const AREAS_ACG_ES = { identity:'identidad y liderazgo', career:'carrera y vocación', love:'amor y relaciones', prosperity:'prosperidad y dinero', health:'salud', home:'hogar', creativity:'creatividad', spirituality:'espiritualidad', communication:'comunicación', travel:'viajes', power:'poder personal' };
 
+      // Qué podría ayudarte específicamente en una ciudad según qué planeta+línea la activa
+      const AYUDA_CIUDAD_PLANETA_LINEA = {
+        'Sun-AC': 'Aquí tu identidad brilla con más fuerza — buen lugar para reinventarte, liderar o ser vista como realmente eres.',
+        'Sun-MC': 'Ciudad ideal para el reconocimiento profesional — tu carrera y tu propósito de vida se vuelven más visibles aquí.',
+        'Sun-DS': 'Aquí atraes relaciones (de pareja o negocios) con personas seguras de sí mismas — el vínculo con otros se vuelve central.',
+        'Sun-IC': 'Buen lugar para construir raíces, familia y un hogar que sea reflejo genuino de quién eres.',
+        'Moon-AC': 'Tu sensibilidad y tu intuición se activan aquí — buen lugar para sanar emocionalmente o reconectar contigo misma.',
+        'Moon-MC': 'Puedes construir una carrera ligada al cuidado, la crianza o lo emocional (salud, terapia, hostelería).',
+        'Moon-DS': 'Las relaciones aquí se sienten más profundas y familiares — buen lugar para el hogar compartido o vínculos de por vida.',
+        'Moon-IC': 'Ciudad muy fuerte para el hogar y la familia — puede sentirse como "volver a casa" aunque sea la primera vez que vas.',
+        'Venus-AC': 'Aquí te ven (y te sientes) más atractiva, magnética y en armonía — favorece el amor propio y la belleza personal.',
+        'Venus-MC': 'Muy buena para carreras creativas, de belleza, moda o cualquier cosa donde el buen gusto y el encanto abran puertas.',
+        'Venus-DS': 'Una de las mejores ubicaciones para el amor — facilita conocer pareja o fortalecer relaciones existentes.',
+        'Venus-IC': 'Un hogar bello y armonioso — buen lugar para decorar, embellecer tu espacio y sentirte en paz.',
+        'Mars-AC': 'Tu energía y determinación se disparan aquí — bueno para emprender, competir o defender lo que quieres, con cuidado de no sobre-exigirte.',
+        'Mars-MC': 'Carrera con mucha acción y ambición — puedes avanzar rápido, pero cuida el estrés y el ritmo acelerado.',
+        'Mars-DS': 'Relaciones intensas y apasionadas — también puede traer más conflicto, así que conviene comunicarte con claridad.',
+        'Mars-IC': 'Mucha energía en el hogar — bueno para proyectos de renovación, pero cuida la tensión familiar.',
+        'Jupiter-AC': 'Una de las mejores líneas que puedes pisar — expansión, buena suerte y crecimiento personal notorio aquí.',
+        'Jupiter-MC': 'Excelente para la carrera — oportunidades, reconocimiento y crecimiento profesional real.',
+        'Jupiter-DS': 'Relaciones que expanden tu vida — sociedades, matrimonios o alianzas con buena fortuna.',
+        'Jupiter-IC': 'Abundancia en el hogar — buen lugar para invertir en propiedad o hacer crecer tu vida familiar.',
+        'Saturn-AC': 'Aquí se pide madurez y disciplina — no es la más fácil, pero construir algo aquí te da bases muy sólidas a largo plazo.',
+        'Saturn-MC': 'Carrera seria y estructurada — los logros toman tiempo, pero son duraderos y respetados.',
+        'Saturn-DS': 'Relaciones con compromiso real, aunque puede costar más trabajo — bueno para vínculos serios y a largo plazo.',
+        'Saturn-IC': 'Puede sentirse pesado en lo familiar al inicio, pero construye una base de hogar muy sólida con el tiempo.',
+        'Mercury-AC': 'Tu mente se agiliza aquí — buen lugar para estudiar, escribir o comunicar tus ideas con claridad.',
+        'Mercury-MC': 'Carreras de comunicación, ventas, enseñanza o negocios se benefician mucho aquí.',
+        'Mercury-DS': 'Relaciones basadas en la conversación y el entendimiento mutuo — bueno para socios de negocio o parejas con quien hablas de todo.',
+        'Mercury-IC': 'Buen lugar para estudiar en casa, trabajar remoto o tener una vida familiar donde se habla y se conecta mucho.',
+      };
+      function ayudaEspecificaCiudad(closestLine) {
+        if (!closestLine) return '';
+        for (const clave of Object.keys(AYUDA_CIUDAD_PLANETA_LINEA)) {
+          const [planetaEn, tipoLinea] = clave.split('-');
+          if (closestLine.includes(planetaEn) && closestLine.includes(tipoLinea)) return AYUDA_CIUDAD_PLANETA_LINEA[clave];
+        }
+        return '';
+      }
+
       let htmlLineas = '';
 
       // Ciudades destacadas (lo más concreto y útil)
       const ciudadesBuenas = (data.ciudades || []).filter(c => c.in_power_zone).sort((a, b) => (b.power_zone_strength || 0) - (a.power_zone_strength || 0)).slice(0, 6);
       if (ciudadesBuenas.length) {
         htmlLineas += `<div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin-bottom:8px;">📍 Ciudades donde tu energía se activa más</div>`;
-        htmlLineas += ciudadesBuenas.map(c => `
+        htmlLineas += ciudadesBuenas.map(c => {
+          const ayuda = ayudaEspecificaCiudad(c.closest_line);
+          return `
           <div class="card-lectura">
             <div class="card-titulo">${c.name}, ${c.country}</div>
-            <div class="card-cuerpo" style="color:var(--ink-dim);">Cerca de tu línea de ${traducirNombresPlanetasEnFrase(c.closest_line) || 'energía activa'}</div>
+            <div class="card-etiqueta">Cerca de tu línea de ${traducirNombresPlanetasEnFrase(c.closest_line) || 'energía activa'}</div>
+            ${ayuda ? `<div class="card-cuerpo" style="color:var(--plum);margin-top:4px;">${ayuda}</div>` : ''}
           </div>
-        `).join('');
+        `}).join('');
         htmlLineas += '<div style="font-family:\'Cormorant Garamond\',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin:14px 0 8px;">Qué significa cada línea</div>';
       }
 
