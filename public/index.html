@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v118-cerrar-dias-poder-personal -->
+<!-- VERSION-APP: v120-horaria-y-acg-mejorado -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -648,7 +648,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v118-cerrar-dias-poder-personal</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v120-horaria-y-acg-mejorado</div>
         </div>
 
         <div class="topbar">
@@ -871,44 +871,47 @@
             <div id="aviso-mercurio-retro"></div>
             <div id="dias-poder-personal"></div>
 
-            <div class="card-lectura">
-              <div class="card-titulo">📅 Calendario general (tradición astrológica)</div>
-              <div class="card-cuerpo" style="color:var(--ink-dim);">Estas fechas son iguales para todas las usuarias — están basadas en la fase y el signo de la Luna, no en tu carta personal.</div>
-            </div>
+            <div id="calendario-general-bloque">
+              <div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('calendario-general-bloque').style.display='none'" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>
+              <div class="card-lectura">
+                <div class="card-titulo">📅 Calendario general (tradición astrológica)</div>
+                <div class="card-cuerpo" style="color:var(--ink-dim);">Estas fechas son iguales para todas las usuarias — están basadas en la fase y el signo de la Luna, no en tu carta personal.</div>
+              </div>
 
-            <div class="day-item">
-              <div class="ic">✂️</div>
-              <div><h4>Cortarte el cabello</h4><div class="when" id="fechas-cabello">Luna creciente en Tauro o Leo</div><p>Se asocia con crecimiento más rápido y con más volumen.</p></div>
-            </div>
-            <div class="day-item">
-              <div class="ic">🎨</div>
-              <div><h4>Tatuarte</h4><div class="when" id="fechas-tatuaje">Luna menguante, evitando Escorpio</div><p>Tradicionalmente se prefiere para mejor cicatrización y menos sensibilidad.</p></div>
-            </div>
-            <div class="day-item">
-              <div class="ic">🚀</div>
-              <div><h4>Lanzar tu negocio o producto</h4><div class="when" id="fechas-negocio">Luna nueva o creciente en tu signo</div><p>Energía de inicio: ideal para anunciar algo y que tome impulso.</p></div>
-            </div>
-            <div class="day-item">
-              <div class="ic">💳</div>
-              <div><h4>Pedir un crédito</h4><div class="when" id="fechas-credito">Luna creciente en Tauro o Capricornio</div><p>Se asocia con estabilidad y compromisos que crecen de forma sólida.</p></div>
-            </div>
-            <div class="day-item">
-              <div class="ic">✍️</div>
-              <div><h4>Firmar un contrato</h4><div class="when" id="fechas-contrato">Luna creciente en Virgo, Libra o Capricornio</div><p>Favorece los acuerdos claros y duraderos.</p></div>
-            </div>
-            <div class="day-item">
-              <div class="ic">💼</div>
-              <div><h4>Entrevista de trabajo</h4><div class="when" id="fechas-entrevista">Luna creciente en Leo, Capricornio o Sagitario</div><p>Ayuda a mostrar confianza y buena impresión.</p></div>
-            </div>
-            <div class="day-item">
-              <div class="ic">🩺</div>
-              <div><h4>Cirugías</h4><div class="when" id="fechas-cirugia">Luna menguante, evitando Luna llena</div><p>La tradición sugiere menguante para recuperaciones más tranquilas.</p></div>
-            </div>
+              <div class="day-item">
+                <div class="ic">✂️</div>
+                <div><h4>Cortarte el cabello</h4><div class="when" id="fechas-cabello">Luna creciente en Tauro o Leo</div><p>Se asocia con crecimiento más rápido y con más volumen.</p></div>
+              </div>
+              <div class="day-item">
+                <div class="ic">🎨</div>
+                <div><h4>Tatuarte</h4><div class="when" id="fechas-tatuaje">Luna menguante, evitando Escorpio</div><p>Tradicionalmente se prefiere para mejor cicatrización y menos sensibilidad.</p></div>
+              </div>
+              <div class="day-item">
+                <div class="ic">🚀</div>
+                <div><h4>Lanzar tu negocio o producto</h4><div class="when" id="fechas-negocio">Luna nueva o creciente en tu signo</div><p>Energía de inicio: ideal para anunciar algo y que tome impulso.</p></div>
+              </div>
+              <div class="day-item">
+                <div class="ic">💳</div>
+                <div><h4>Pedir un crédito</h4><div class="when" id="fechas-credito">Luna creciente en Tauro o Capricornio</div><p>Se asocia con estabilidad y compromisos que crecen de forma sólida.</p></div>
+              </div>
+              <div class="day-item">
+                <div class="ic">✍️</div>
+                <div><h4>Firmar un contrato</h4><div class="when" id="fechas-contrato">Luna creciente en Virgo, Libra o Capricornio</div><p>Favorece los acuerdos claros y duraderos.</p></div>
+              </div>
+              <div class="day-item">
+                <div class="ic">💼</div>
+                <div><h4>Entrevista de trabajo</h4><div class="when" id="fechas-entrevista">Luna creciente en Leo, Capricornio o Sagitario</div><p>Ayuda a mostrar confianza y buena impresión.</p></div>
+              </div>
+              <div class="day-item">
+                <div class="ic">🩺</div>
+                <div><h4>Cirugías</h4><div class="when" id="fechas-cirugia">Luna menguante, evitando Luna llena</div><p>La tradición sugiere menguante para recuperaciones más tranquilas.</p></div>
+              </div>
 
-            <div class="disclaimer">Estas son guías de la tradición astrológica, pensadas para acompañar tu intuición — no sustituyen la opinión de tu médico, cirujano o asesor financiero.</div>
+              <div class="disclaimer">Estas son guías de la tradición astrológica, pensadas para acompañar tu intuición — no sustituyen la opinión de tu médico, cirujano o asesor financiero.</div>
+            </div>
           </div>
 
-          <div class="section" data-tab="ciclos">
+          <div class="section" data-tab="alquimia">
             <h2>🔮 Pregúntale a las estrellas</h2>
             <div class="desc">Astrología horaria: haz una pregunta específica y se calcula la carta del momento exacto en que preguntas, para darte una respuesta.</div>
             <textarea id="horaria-pregunta" placeholder="Ej. ¿Debería aceptar este trabajo?" style="width:100%;min-height:70px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);resize:vertical;box-sizing:border-box;margin-bottom:10px;"></textarea>
@@ -1155,7 +1158,7 @@
       }
 
       const iconos = { Sun:'☀️', Moon:'🌙', Venus:'💗', Mars:'🔥', Jupiter:'🚀', Saturn:'🪐', Mercury:'☿️' };
-      const planetasEs = { Sun:'Sol', Moon:'Luna', Venus:'Venus', Mars:'Marte', Jupiter:'Júpiter', Saturn:'Saturno', Mercury:'Mercurio' };
+      const planetasEs = PLANETAS_SOLO_NOMBRE_ES;
       const lineasEs = { AC:'Ascendente (identidad)', MC:'Medio Cielo (vocación)', DS:'Descendente (relaciones)', IC:'Fondo de Cielo (hogar)' };
       const AREAS_ACG_ES = { identity:'identidad y liderazgo', career:'carrera y vocación', love:'amor y relaciones', prosperity:'prosperidad y dinero', health:'salud', home:'hogar', creativity:'creatividad', spirituality:'espiritualidad', communication:'comunicación', travel:'viajes', power:'poder personal' };
 
@@ -1191,23 +1194,27 @@
         'Mercury-IC': 'Buen lugar para estudiar en casa, trabajar remoto o tener una vida familiar donde se habla y se conecta mucho.',
       };
       const SIGNIFICADO_PLANETA_ACG = {
-        Sun: 'vitalidad, confianza y reconocimiento personal',
-        Moon: 'conexión emocional y sensación de pertenencia',
-        Mercury: 'claridad mental y facilidad para comunicarte',
-        Venus: 'amor, belleza y armonía en tus vínculos',
-        Mars: 'energía, acción y determinación (con más intensidad de lo normal)',
-        Jupiter: 'suerte, expansión y oportunidades de crecimiento',
-        Saturn: 'estructura y logros duraderos, aunque con más esfuerzo',
-        Uranus: 'cambio, libertad y sorpresas inesperadas',
-        Neptune: 'intuición, espiritualidad y sensibilidad artística',
-        Pluto: 'transformación profunda y poder personal',
+        Sun: { energia: 'vitalidad y reconocimiento personal', consejo: 'buen lugar si buscas que te vean, liderar o reinventarte' },
+        Moon: { energia: 'conexión emocional y sensación de pertenencia', consejo: 'ideal para sanar emocionalmente o sentirte en casa' },
+        Mercury: { energia: 'claridad mental y comunicación', consejo: 'favorece estudiar, escribir o cerrar negociaciones' },
+        Venus: { energia: 'amor, belleza y armonía', consejo: 'una de las mejores zonas para el amor o proyectos creativos' },
+        Mars: { energia: 'energía y determinación intensa', consejo: 'bueno para emprender o competir, cuidando no quemarte' },
+        Jupiter: { energia: 'suerte y expansión', consejo: 'favorece crecer un negocio, estudiar o invertir' },
+        Saturn: { energia: 'estructura y logros duraderos', consejo: 'pide más esfuerzo al inicio, pero construye algo sólido' },
+        Uranus: { energia: 'cambio y libertad', consejo: 'bueno si buscas romper rutina o reinventarte de golpe' },
+        Neptune: { energia: 'intuición y sensibilidad espiritual', consejo: 'ideal para arte, espiritualidad, pero cuida idealizar de más' },
+        Pluto: { energia: 'transformación profunda y poder personal', consejo: 'zona de cambios intensos — nada se queda igual aquí' },
       };
       function ayudaEspecificaCiudad(closestLine) {
         if (!closestLine) return '';
         const planetasEncontrados = Object.keys(SIGNIFICADO_PLANETA_ACG).filter(p => closestLine.includes(p));
         if (!planetasEncontrados.length) return '';
-        const frases = planetasEncontrados.map(p => SIGNIFICADO_PLANETA_ACG[p]);
-        return `Aquí se activa tu energía de ${frases.join(' y de ')} — buen lugar para apoyarte en eso.`;
+        if (planetasEncontrados.length === 1) {
+          const p = SIGNIFICADO_PLANETA_ACG[planetasEncontrados[0]];
+          return `Aquí se activa tu energía de ${p.energia} — ${p.consejo}.`;
+        }
+        const consejos = planetasEncontrados.map(p => SIGNIFICADO_PLANETA_ACG[p].consejo);
+        return `Combina ${planetasEncontrados.map(p => SIGNIFICADO_PLANETA_ACG[p].energia).join(' con ')}. ${consejos[0].charAt(0).toUpperCase() + consejos[0].slice(1)}, y también ${consejos[1]}.`;
       }
 
       let htmlLineas = '';
