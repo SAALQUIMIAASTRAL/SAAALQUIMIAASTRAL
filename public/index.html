@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v115-luna-vacia-campos-reales -->
+<!-- VERSION-APP: v116-cambios-de-signo-reales -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -648,7 +648,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v115-luna-vacia-campos-reales</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v116-cambios-de-signo-reales</div>
         </div>
 
         <div class="topbar">
@@ -1315,15 +1315,56 @@
   // Ahora solo se muestran datos reales al darle clic a "Ver datos lunares reales de hoy".
 
 
+  const CAMBIOS_DE_SIGNO_2026 = [
+    { sign: 'Aries', emoji: '♈', start: '2026-03-20T14:46:00Z' },
+    { sign: 'Tauro', emoji: '♉', start: '2026-04-20T13:39:00Z' },
+    { sign: 'Géminis', emoji: '♊', start: '2026-05-21T12:35:00Z' },
+    { sign: 'Cáncer', emoji: '♋', start: '2026-06-21T08:24:00Z' },
+    { sign: 'Leo', emoji: '♌', start: '2026-07-22T19:13:00Z' },
+    { sign: 'Virgo', emoji: '♍', start: '2026-08-23T02:19:00Z' },
+    { sign: 'Libra', emoji: '♎', start: '2026-09-23T00:06:00Z' },
+    { sign: 'Escorpio', emoji: '♏', start: '2026-10-23T09:13:00Z' },
+    { sign: 'Sagitario', emoji: '♐', start: '2026-11-22T06:50:00Z' },
+    { sign: 'Capricornio', emoji: '♑', start: '2026-12-21T20:50:00Z' },
+    { sign: 'Acuario', emoji: '♒', start: '2027-01-20T03:29:00Z' },
+    { sign: 'Piscis', emoji: '♓', start: '2027-02-18T17:14:00Z' },
+    { sign: 'Aries', emoji: '♈', start: '2027-03-20T20:25:00Z' },
+  ];
+  function getCurrentSeason(now) {
+    let actual = CAMBIOS_DE_SIGNO_2026[0];
+    for (const c of CAMBIOS_DE_SIGNO_2026) {
+      if (new Date(c.start) <= now) actual = c; else break;
+    }
+    return actual;
+  }
+  function getNextSeasonChange(now) {
+    for (const c of CAMBIOS_DE_SIGNO_2026) {
+      const fecha = new Date(c.start);
+      if (fecha > now) {
+        const msRestantes = fecha - now;
+        const horas = msRestantes / 3600000;
+        return { next: c, days: Math.ceil(horas / 24), hours: horas };
+      }
+    }
+    return { next: CAMBIOS_DE_SIGNO_2026[0], days: 365, hours: 8760 };
+  }
+
   (function renderSeasonBanner(){
     const el = document.getElementById('season-banner');
     if (!el || typeof getCurrentSeason !== 'function') return;
     const now = new Date();
     const current = getCurrentSeason(now);
-    const { next, days } = getNextSeasonChange(now);
+    const { next, days, hours } = getNextSeasonChange(now);
+    const esEquinoccioOSolsticio = ['Aries','Cáncer','Libra','Capricornio'].includes(next.sign);
+    const palabra = esEquinoccioOSolsticio ? (next.sign === 'Aries' || next.sign === 'Libra' ? 'equinoccio' : 'solsticio') : 'entrada';
+    let textoFaltante;
+    if (hours < 1) textoFaltante = `¡Es hoy! Faltan ${Math.round(hours * 60)} minutos para el ${palabra}/entrada a ${next.sign} ${next.emoji}`;
+    else if (hours < 24) textoFaltante = `¡Es hoy! Faltan ${Math.round(hours)} horas para el ${palabra}/entrada a ${next.sign} ${next.emoji}`;
+    else if (days <= 14) textoFaltante = `Faltan ${days} días para el ${palabra}/entrada a ${next.sign} ${next.emoji}`;
+    else textoFaltante = `Entra ${next.sign} en ${days} días`;
     el.innerHTML = `
       <span class="now">${current.emoji} Temporada de ${current.sign}</span>
-      <span class="next">${days <= 14 ? `Faltan ${days} días para el equinoccio/entrada a ${next.sign} ${next.emoji}` : `Entra ${next.sign} en ${days} días`}</span>
+      <span class="next">${textoFaltante}</span>
     `;
   })();
 
