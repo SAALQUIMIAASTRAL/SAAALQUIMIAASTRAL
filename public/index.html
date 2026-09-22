@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v127-precios-actualizados -->
+<!-- VERSION-APP: v128-terminos-y-privacidad -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -506,8 +506,38 @@
           <div class="auth-error" id="registro-error"></div>
           <div class="auth-field"><label>Correo</label><input type="email" id="registro-email"></div>
           <div class="auth-field"><label>Contraseña</label><input type="password" id="registro-pass" placeholder="Mínimo 6 caracteres"></div>
+          <label style="display:flex;align-items:flex-start;gap:8px;font-size:11.5px;color:var(--ink-dim);margin:6px 0 12px;line-height:1.4;">
+            <input type="checkbox" id="registro-acepta-terminos" style="margin-top:2px;">
+            <span>Acepto los <a onclick="event.preventDefault();mostrarLegal('terminos')" style="color:var(--marigold-dark);cursor:pointer;">Términos y Condiciones</a> y el <a onclick="event.preventDefault();mostrarLegal('privacidad')" style="color:var(--marigold-dark);cursor:pointer;">Aviso de Privacidad</a>.</span>
+          </label>
           <button class="btn-primary" onclick="accionRegistro()">Crear cuenta</button>
           <div class="auth-switch">¿Ya tienes cuenta? <a onclick="mostrarPantalla('login')">Inicia sesión</a></div>
+        </div>
+
+        <!-- Pantalla legal: Términos y Aviso de Privacidad -->
+        <div class="auth-overlay" id="pantalla-legal" style="text-align:left;">
+          <button onclick="volverDeLegal()" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;margin-bottom:14px;">← Volver</button>
+          <div id="legal-contenido" style="font-size:12.5px;color:var(--plum);line-height:1.7;max-height:65vh;overflow-y:auto;padding-right:4px;">
+            <h2 style="font-size:16px;">Aviso de Privacidad</h2>
+            <p><b>1. Responsable del tratamiento.</b> Samantha Jossely Hernández Rivas, Persona Física con Actividad Empresarial (México), domicilio en Calle 110 y 111 Amavita Caucel, 53Q, C.P. 97305, Mérida, Yucatán, México. Contacto: soporte@samalquimiaastral.com.</p>
+            <p><b>2. Datos que recolectamos.</b> Nombre de usuario y correo electrónico; fecha, hora y ciudad/país de nacimiento; cookies e identificadores de dispositivo; información de pago procesada de forma independiente por Stripe (nunca almacenamos datos de tarjetas).</p>
+            <p><b>3. Para qué los usamos.</b> Registrar tu cuenta; calcular tu Carta Natal, tránsitos, horóscopos y demás análisis; procesar tus solicitudes mediante modelos de Inteligencia Artificial (Anthropic Claude) de forma cifrada y segura; enviarte reportes a tu correo; gestionar cobros y suscripciones vía Stripe. Opcionalmente, y solo si lo autorizas, enviarte promociones y novedades (puedes cancelar cuando quieras).</p>
+            <p><b>4. Transferencia de datos y procesamiento con IA.</b> Para generar tus reportes, las posiciones planetarias (nunca tu nombre ni tu correo) se envían de forma cifrada a proveedores de Inteligencia Artificial (Anthropic) únicamente con fines de procesamiento técnico. Nunca vendemos, rentamos ni compartimos tus datos con terceros para fines comerciales o publicitarios.</p>
+            <p><b>5. Tus derechos (LATAM):</b></p>
+            <p><b>México (LFPDPPP):</b> Tienes derecho a Acceder, Rectificar, Cancelar u Oponerte (Derechos ARCO), incluida la eliminación definitiva de tu cuenta y datos de nacimiento. Escribe a soporte@samalquimiaastral.com; respondemos en máximo 20 días hábiles.</p>
+            <p><b>Colombia (Ley 1581 de 2012):</b> Al marcar "Acepto" otorgas autorización previa, expresa e informada para recolectar, almacenar y usar tus datos según esta política.</p>
+            <p><b>Perú (Ley N° 29733):</b> Tus datos se incorporan a nuestro banco de datos de usuarios, administrado con seguridad y confidencialidad conforme a la ley peruana.</p>
+            <p><b>Argentina (Ley N° 25.326):</b> Tienes derecho de acceso gratuito a tus datos cada seis meses. Tus datos se transfieren internacionalmente a servidores seguros para el funcionamiento de la app y el pago vía Stripe.</p>
+
+            <h2 style="font-size:16px;margin-top:20px;">Términos y Condiciones</h2>
+            <p><b>1. Aceptación.</b> Al usar la plataforma o realizar un pago, aceptas estos Términos en su totalidad.</p>
+            <p><b>2. Aviso legal crítico.</b> Todas las herramientas, predicciones, horóscopos y análisis se ofrecen exclusivamente con fines de entretenimiento, recreación y autoconocimiento. Nada de lo generado sustituye asesoría médica, psicológica, psiquiátrica, financiera, de inversión o legal. Tú eres responsable de tus propias decisiones.</p>
+            <p><b>3. Precios e impuestos.</b> Los precios se muestran en USD o su equivalente local. Conforme a las leyes de protección al consumidor de México (PROFECO) y Latinoamérica, los precios finales ya incluyen IVA o impuestos digitales locales aplicables.</p>
+            <p><b>4. Suscripciones y pagos (Stripe).</b> Los cobros se procesan de forma externa y segura vía Stripe. Al contratar un plan Mensual, Semestral o Anual, autorizas cargos automáticos recurrentes al inicio de cada periodo, hasta que canceles.</p>
+            <p><b>5. Cancelaciones y reembolsos.</b> Puedes cancelar tu suscripción cuando quieras, sin penalización, desde tu perfil — seguirás con acceso premium hasta que termine el periodo ya pagado. No se hacen reembolsos de reportes digitales (como la Revolución Solar) una vez generados y enviados, por tratarse de bienes digitales de entrega inmediata.</p>
+            <p><b>6. Jurisdicción.</b> Estos Términos se rigen por las leyes de los Estados Unidos Mexicanos; cualquier controversia se somete a los tribunales de Mérida, Yucatán, México.</p>
+            <p style="color:var(--ink-dim);font-size:11px;margin-top:16px;">Última actualización: 22 de septiembre de 2026.</p>
+          </div>
         </div>
 
         <!-- Pantalla de PERFIL (datos de nacimiento) -->
@@ -644,11 +674,11 @@
             </div>
           </div>
           <div style="font-size:10.5px;color:var(--ink-dim);margin-bottom:16px;line-height:1.5;">
-            <a href="#" onclick="return false;" style="color:var(--marigold-dark);">Aviso de Privacidad</a> · <a href="#" onclick="return false;" style="color:var(--marigold-dark);">Términos y Condiciones</a>
+            <a href="#" onclick="event.preventDefault();mostrarLegal('privacidad')" style="color:var(--marigold-dark);">Aviso de Privacidad</a> · <a href="#" onclick="event.preventDefault();mostrarLegal('terminos')" style="color:var(--marigold-dark);">Términos y Condiciones</a>
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v127-precios-actualizados</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v128-terminos-y-privacidad</div>
         </div>
 
         <div class="topbar">
@@ -2817,12 +2847,32 @@
     document.getElementById(id).classList.remove('show');
   }
 
+  let _legalOrigen = 'registro';
+  function mostrarLegal(seccion) {
+    _legalOrigen = (typeof SESION !== 'undefined' && SESION.token) ? 'mi-perfil' : 'registro';
+    mostrarPantalla('legal');
+    setTimeout(() => {
+      const contenedor = document.getElementById('legal-contenido');
+      const encabezado = [...contenedor.querySelectorAll('h2')].find(h =>
+        seccion === 'privacidad' ? h.textContent.includes('Privacidad') : h.textContent.includes('Términos')
+      );
+      if (encabezado) encabezado.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  }
+  function volverDeLegal() {
+    if (_legalOrigen === 'mi-perfil') { mostrarPantalla(null); abrirPerfil(); }
+    else mostrarPantalla('registro');
+  }
+
   async function accionRegistro() {
     ocultarErrorEn('registro-error');
     const email = document.getElementById('registro-email').value.trim();
     const password = document.getElementById('registro-pass').value;
     if (!email || password.length < 6) {
       return mostrarErrorEn('registro-error', 'Escribe un correo válido y una contraseña de al menos 6 caracteres.');
+    }
+    if (!document.getElementById('registro-acepta-terminos').checked) {
+      return mostrarErrorEn('registro-error', 'Debes aceptar los Términos y Condiciones y el Aviso de Privacidad para continuar.');
     }
     const r = await fetch('/auth/registro', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
