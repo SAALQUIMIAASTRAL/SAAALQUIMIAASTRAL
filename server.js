@@ -77,33 +77,29 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 // ---- Conexión a Astrology API ----
 // Traduce una lista de textos al español con Claude (mucho más confiable que reemplazos de palabras sueltas).
 // Si falla, regresa los textos originales sin tronar la sección.
-async function traducirTextosConIA(textos) {
-  const lista = (textos || []).filter(t => t && typeof t === 'string');
-  if (!lista.length) return { textos: [], debug: 'sin textos que traducir' };
+async function traducirBloque(lista) {
   if (!process.env.ANTHROPIC_API_KEY) {
-    console.error('traducirTextosConIA: falta ANTHROPIC_API_KEY en las variables de entorno');
+    console.error('traducirBloque: falta ANTHROPIC_API_KEY en las variables de entorno');
     return { textos: lista, debug: 'Falta la variable de entorno ANTHROPIC_API_KEY en Render.' };
   }
   try {
     const prompt = `Traduce cada uno de estos textos de astrología al español de México/Latinoamérica, natural y con tono cálido y profesional (no traducción literal palabra por palabra, y sin modismos de España como "vosotros" o "vale"). Responde ÚNICAMENTE con un array JSON de strings, en el mismo orden, sin explicación ni markdown:\n\n${JSON.stringify(lista)}`;
     const controlador = new AbortController();
-    const timeoutId = setTimeout(() => controlador.abort(), 20000);
+    const timeoutId = setTimeout(() => controlador.abort(), 25000);
     const respuesta = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] }),
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 8000, messages: [{ role: 'user', content: prompt }] }),
       signal: controlador.signal,
     });
     clearTimeout(timeoutId);
     const datos = await respuesta.json();
     if (!respuesta.ok) {
-      console.error('traducirTextosConIA: Anthropic respondió', respuesta.status, JSON.stringify(datos).slice(0, 800));
+      console.error('traducirBloque: Anthropic respondió', respuesta.status, JSON.stringify(datos).slice(0, 800));
       return { textos: lista, debug: `Anthropic respondió ${respuesta.status}: ${JSON.stringify(datos).slice(0, 500)}` };
     }
     let texto = (datos.content?.[0]?.text || '[]').trim();
-    // Quita bloques de markdown si los hay
     texto = texto.replace(/^```(json)?/i, '').replace(/```$/, '').trim();
-    // Si Claude mandó texto antes/después del array, nos quedamos solo con lo que está entre [ ]
     const inicio = texto.indexOf('[');
     const fin = texto.lastIndexOf(']');
     if (inicio !== -1 && fin !== -1 && fin > inicio) texto = texto.slice(inicio, fin + 1);
@@ -111,24 +107,38 @@ async function traducirTextosConIA(textos) {
     try {
       traducidos = JSON.parse(texto);
     } catch (eParse) {
-      console.error('traducirTextosConIA: no se pudo parsear. Texto crudo:', texto.slice(0, 800));
+      console.error('traducirBloque: no se pudo parsear. Texto crudo:', texto.slice(0, 800));
       return { textos: lista, debug: `No se pudo parsear como JSON. Texto crudo: ${texto.slice(0, 500)}` };
     }
     if (!Array.isArray(traducidos) || traducidos.length !== lista.length) {
-      console.error('traducirTextosConIA: tamaño no coincide. Esperado', lista.length, 'recibido', Array.isArray(traducidos) ? traducidos.length : typeof traducidos);
+      console.error('traducirBloque: tamaño no coincide. Esperado', lista.length, 'recibido', Array.isArray(traducidos) ? traducidos.length : typeof traducidos);
       return { textos: lista, debug: `Array no coincide en tamaño. Esperado ${lista.length}, recibido ${Array.isArray(traducidos) ? traducidos.length : typeof traducidos}` };
     }
     return { textos: traducidos, debug: null };
   } catch (e) {
-    console.error('traducirTextosConIA falló:', e.message);
+    console.error('traducirBloque falló:', e.message);
     return { textos: lista, debug: 'Excepción: ' + e.message };
   }
+}
+
+// Traduce una lista completa dividiéndola en bloques de 25 (respuestas grandes como
+// sinastría pueden traer 60+ textos, y un solo bloque gigante es más frágil/lento)
+async function traducirTextosConIA(textos) {
+  const lista = (textos || []).filter(t => t && typeof t === 'string');
+  if (!lista.length) return { textos: [], debug: 'sin textos que traducir' };
+  const TAMANO_BLOQUE = 25;
+  const bloques = [];
+  for (let i = 0; i < lista.length; i += TAMANO_BLOQUE) bloques.push(lista.slice(i, i + TAMANO_BLOQUE));
+  const resultados = await Promise.all(bloques.map(traducirBloque));
+  const textosFinal = resultados.flatMap(r => r.textos);
+  const primerError = resultados.find(r => r.debug)?.debug || null;
+  return { textos: textosFinal, debug: primerError };
 }
 
 // Busca CUALQUIER campo de texto interpretativo (interpretation, description, meaning,
 // summary, advice, judgment) en cualquier nivel anidado de una respuesta, y lo traduce
 // con IA en el mismo lugar. Así no dependemos de conocer la forma exacta de cada endpoint.
-const CAMPOS_INTERPRETATIVOS = ['interpretation', 'description', 'meaning', 'summary', 'advice', 'judgment', 'answer'];
+const CAMPOS_INTERPRETATIVOS = ['interpretation', 'description', 'meaning', 'summary', 'advice', 'judgment', 'answer', 'text', 'narrative', 'analysis'];
 async function traducirInterpretacionesEnObjeto(raiz) {
   const objetos = [];
   function buscar(obj) {
