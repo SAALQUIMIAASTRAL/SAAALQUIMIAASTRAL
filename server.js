@@ -551,6 +551,7 @@ app.post('/horaria', requireLogin, async (req, res) => {
 
     const respuesta = await astrologyApi.post('/horary/ask', {
       question: pregunta.trim(),
+      question_time: ahora.toISOString(),
       datetime_location: {
         year: ahora.getUTCFullYear(),
         month: ahora.getUTCMonth() + 1,
