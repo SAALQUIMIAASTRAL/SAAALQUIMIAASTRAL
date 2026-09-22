@@ -1158,6 +1158,9 @@ app.put('/otras-cartas/:id', requireLogin, async (req, res) => {
       datos_carta: respuesta.data,
       latitud: (typeof latitud === 'number' && !isNaN(latitud)) ? latitud : null,
       longitud: (typeof longitud === 'number' && !isNaN(longitud)) ? longitud : null,
+      sinastria_cache: null,
+      resumen_cache: null,
+      svg_visual: null,
     };
 
     const { data, error } = await req.supabase
