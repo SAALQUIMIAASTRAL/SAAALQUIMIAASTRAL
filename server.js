@@ -994,6 +994,43 @@ app.post('/otras-cartas', requireLogin, async (req, res) => {
   }
 });
 
+// RUTA: Editar una carta ya existente — ACTUALIZA en el mismo lugar (no crea una nueva)
+app.put('/otras-cartas/:id', requireLogin, async (req, res) => {
+  try {
+    const { nombre, fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo, latitud, longitud } = req.body;
+    if (!nombre || !fecha_nacimiento || !ciudad_nacimiento || !pais_codigo) {
+      return res.status(400).json({ error: 'Faltan datos de la persona.' });
+    }
+
+    const respuesta = await astrologyApi.post('/charts/natal', {
+      subject: birthDataDesdePerfil({ fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo, latitud, longitud }, nombre),
+      options: { house_system: 'P', zodiac_type: 'Tropic', language: 'es' },
+    });
+
+    const registroActualizado = {
+      nombre, fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo,
+      datos_carta: respuesta.data,
+      latitud: (typeof latitud === 'number' && !isNaN(latitud)) ? latitud : null,
+      longitud: (typeof longitud === 'number' && !isNaN(longitud)) ? longitud : null,
+    };
+
+    const { data, error } = await req.supabase
+      .from('otras_cartas')
+      .update(registroActualizado)
+      .eq('id', req.params.id)
+      .eq('user_id', req.userId)
+      .select()
+      .single();
+
+    if (error) return res.status(400).json({ error: error.message });
+    if (!data) return res.status(404).json({ error: 'No se encontró esa carta.' });
+    res.json({ mensaje: 'Carta actualizada', carta: data });
+  } catch (err) {
+    console.error(err?.response?.data || err.message);
+    res.status(500).json({ error: 'No se pudo actualizar la carta.', detalle_tecnico: err?.response?.data || err.message });
+  }
+});
+
 // RUTA: Listar las cartas de otras personas ya guardadas
 app.get('/otras-cartas', requireLogin, async (req, res) => {
   const { data, error } = await req.supabase
