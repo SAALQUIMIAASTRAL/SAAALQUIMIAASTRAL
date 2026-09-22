@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v106-quitar-botones-otra-carta -->
+<!-- VERSION-APP: v107-eliminar-sin-confirm-nativo -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -648,7 +648,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v106-quitar-botones-otra-carta</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v107-eliminar-sin-confirm-nativo</div>
         </div>
 
         <div class="topbar">
@@ -1520,8 +1520,20 @@
     document.getElementById('form-nueva-carta').scrollIntoView({ behavior: 'smooth' });
   }
 
-  async function eliminarOtraCarta(id, nombre) {
-    if (!confirm(`¿Eliminar la carta de ${nombre}? Esto no se puede deshacer.`)) return;
+  function eliminarOtraCarta(id, nombre) {
+    const contenedor = document.getElementById('carta-otro-detalle');
+    contenedor.innerHTML += `
+      <div id="confirmar-eliminar-carta" style="background:#fdeceb;border:1px solid #e8b4ac;border-radius:12px;padding:14px;margin-top:10px;">
+        <div style="font-size:13px;color:#a5442f;margin-bottom:10px;">¿Eliminar la carta de ${nombre}? Esto no se puede deshacer.</div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="confirmarEliminarOtraCarta('${id}')" style="flex:1;background:#a5442f;color:#fff;border:none;border-radius:100px;padding:9px;font-size:12.5px;cursor:pointer;">Sí, eliminar</button>
+          <button onclick="document.getElementById('confirmar-eliminar-carta').remove()" style="flex:1;background:#fff;border:1px solid var(--line);border-radius:100px;padding:9px;font-size:12.5px;color:var(--plum);cursor:pointer;">Cancelar</button>
+        </div>
+      </div>
+    `;
+  }
+
+  async function confirmarEliminarOtraCarta(id) {
     try {
       const r = await fetchAuth('/otras-cartas/' + id, { method: 'DELETE', headers: {} });
       if (!r.ok) { const d = await r.json(); throw new Error(d.error || 'No se pudo eliminar.'); }
