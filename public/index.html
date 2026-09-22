@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v122-semana-lunar-real -->
+<!-- VERSION-APP: v123-arreglos-multiples -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -648,7 +648,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v122-semana-lunar-real</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v123-arreglos-multiples</div>
         </div>
 
         <div class="topbar">
@@ -1732,6 +1732,9 @@
   const AREAS_VIDA_ES = {
     identity: 'identidad', health: 'salud', finance: 'finanzas', career: 'carrera',
     love: 'amor', relationships: 'relaciones', spirituality: 'espiritualidad',
+    learning: 'aprendizaje', communication: 'comunicación', home: 'hogar', family: 'familia',
+    creativity: 'creatividad', travel: 'viajes', transformation: 'transformación',
+    friendship: 'amistades', community: 'comunidad', service: 'servicio', power: 'poder personal',
   };
   function formatearFechaEs(fechaISO) {
     const [anio, mes, dia] = fechaISO.split('T')[0].split('-');
