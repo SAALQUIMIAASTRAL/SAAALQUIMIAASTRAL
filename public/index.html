@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v116-cambios-de-signo-reales -->
+<!-- VERSION-APP: v118-cerrar-dias-poder-personal -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -648,7 +648,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v116-cambios-de-signo-reales</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v118-cerrar-dias-poder-personal</div>
         </div>
 
         <div class="topbar">
@@ -1190,13 +1190,24 @@
         'Mercury-DS': 'Relaciones basadas en la conversación y el entendimiento mutuo — bueno para socios de negocio o parejas con quien hablas de todo.',
         'Mercury-IC': 'Buen lugar para estudiar en casa, trabajar remoto o tener una vida familiar donde se habla y se conecta mucho.',
       };
+      const SIGNIFICADO_PLANETA_ACG = {
+        Sun: 'vitalidad, confianza y reconocimiento personal',
+        Moon: 'conexión emocional y sensación de pertenencia',
+        Mercury: 'claridad mental y facilidad para comunicarte',
+        Venus: 'amor, belleza y armonía en tus vínculos',
+        Mars: 'energía, acción y determinación (con más intensidad de lo normal)',
+        Jupiter: 'suerte, expansión y oportunidades de crecimiento',
+        Saturn: 'estructura y logros duraderos, aunque con más esfuerzo',
+        Uranus: 'cambio, libertad y sorpresas inesperadas',
+        Neptune: 'intuición, espiritualidad y sensibilidad artística',
+        Pluto: 'transformación profunda y poder personal',
+      };
       function ayudaEspecificaCiudad(closestLine) {
         if (!closestLine) return '';
-        for (const clave of Object.keys(AYUDA_CIUDAD_PLANETA_LINEA)) {
-          const [planetaEn, tipoLinea] = clave.split('-');
-          if (closestLine.includes(planetaEn) && closestLine.includes(tipoLinea)) return AYUDA_CIUDAD_PLANETA_LINEA[clave];
-        }
-        return '';
+        const planetasEncontrados = Object.keys(SIGNIFICADO_PLANETA_ACG).filter(p => closestLine.includes(p));
+        if (!planetasEncontrados.length) return '';
+        const frases = planetasEncontrados.map(p => SIGNIFICADO_PLANETA_ACG[p]);
+        return `Aquí se activa tu energía de ${frases.join(' y de ')} — buen lugar para apoyarte en eso.`;
       }
 
       let htmlLineas = '';
@@ -3668,6 +3679,7 @@
       const clavesDias = Object.keys(diasPersonal).map(Number).sort((a, b) => a - b);
       if (clavesDias.length) {
         contenedorPersonal.innerHTML = `
+          <div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('dias-poder-personal').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>
           <div class="card-lectura" style="background:var(--marigold-soft);border:1px solid var(--marigold-mid);margin-bottom:14px;">
             <div class="card-titulo">✨ Tus días de poder personal en ${nombreMes}</div>
             <div class="card-cuerpo" style="color:var(--ink-dim);margin-bottom:8px;">Calculado cruzando los tránsitos del mes con tu carta natal real — estos días específicos son buenos para ti, no genéricos.</div>
