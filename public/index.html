@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v128-terminos-y-privacidad -->
+<!-- VERSION-APP: v129-cerrar-biblioteca-consistente -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -678,7 +678,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v128-terminos-y-privacidad</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v129-cerrar-biblioteca-consistente</div>
         </div>
 
         <div class="topbar">
@@ -997,7 +997,7 @@
 
             <!-- Lector de artículo -->
             <div id="bib-lector" style="display:none;margin-top:14px;">
-              <button onclick="cerrarArticulo()" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;margin-bottom:12px;">← Volver a la lista</button>
+              <div style="display:flex;justify-content:flex-end;margin-bottom:12px;"><button onclick="cerrarArticulo()" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>
               <div id="bib-articulo-titulo" style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:18px;color:var(--plum);margin-bottom:4px;"></div>
               <div id="bib-articulo-meta" style="font-size:11px;color:var(--ink-dim);margin-bottom:12px;"></div>
               <div id="bib-articulo-cuerpo" style="font-size:13px;color:var(--plum);line-height:1.7;white-space:pre-wrap;"></div>
