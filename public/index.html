@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v108-editar-actualiza-en-lugar -->
+<!-- VERSION-APP: v109-mostrar-error-lista-cartas -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -648,7 +648,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v108-editar-actualiza-en-lugar</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v109-mostrar-error-lista-cartas</div>
         </div>
 
         <div class="topbar">
@@ -1484,6 +1484,12 @@
   async function cargarCartasGuardadas() {
     try {
       const r = await fetchAuth('/otras-cartas', { headers: {} });
+      if (!r.ok) {
+        console.error('cargarCartasGuardadas: respuesta no OK', r.status);
+        const carousel = document.getElementById('cartas-carousel');
+        if (carousel) carousel.insertAdjacentHTML('afterbegin', `<div style="font-size:10px;color:#a5442f;">Error ${r.status} al cargar la lista, recarga la página.</div>`);
+        return;
+      }
       const data = await r.json();
       const carousel = document.getElementById('cartas-carousel');
       const chipsHtml = (data.cartas || []).map(c => `
@@ -1499,7 +1505,11 @@
         selectorSin.innerHTML = '<option value="">✏️ Escribir datos de una persona nueva</option>' +
           (data.cartas || []).map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
       }
-    } catch (e) { /* silencioso */ }
+    } catch (e) {
+      console.error('cargarCartasGuardadas falló:', e.message);
+      const carousel = document.getElementById('cartas-carousel');
+      if (carousel) carousel.insertAdjacentHTML('afterbegin', `<div style="font-size:10px;color:#a5442f;">No se pudo cargar la lista: ${e.message}</div>`);
+    }
   }
 
   const _otrasCartasCache = {};
