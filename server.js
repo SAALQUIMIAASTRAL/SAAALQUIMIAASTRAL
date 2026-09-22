@@ -1735,10 +1735,18 @@ app.get('/biblioteca', requireLogin, async (req, res) => {
     let query = supabase.from('biblioteca').select('id, titulo, categoria, fuente, created_at').eq('activo', true).order('created_at', { ascending: false });
     if (categoria) query = query.eq('categoria', categoria);
     const { data, error } = await query.limit(50);
-    if (error) return res.status(400).json({ error: error.message });
-    res.json({ articulos: data || [] });
+    if (error) return res.status(400).json({ error: error.message, debug_error: error });
+
+    // Diagnóstico: si viene vacío, revisamos sin el filtro de activo para saber si el problema es ese filtro
+    let debug = null;
+    if (!data || data.length === 0) {
+      const { data: sinFiltro, error: errorSinFiltro } = await supabase.from('biblioteca').select('id, activo').limit(5);
+      debug = { total_sin_filtro_activo: sinFiltro?.length || 0, muestra: sinFiltro, error_sin_filtro: errorSinFiltro?.message || null };
+    }
+
+    res.json({ articulos: data || [], debug });
   } catch (err) {
-    res.status(500).json({ error: 'No se pudo cargar la biblioteca.' });
+    res.status(500).json({ error: 'No se pudo cargar la biblioteca.', debug_catch: err.message });
   }
 });
 
