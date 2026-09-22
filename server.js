@@ -993,18 +993,27 @@ app.post('/sinastria', requireLogin, async (req, res) => {
       report_options: { tradition: 'psychological', language: 'es' },
     });
 
-    // Traducir de verdad las interpretaciones de cada aspecto (vienen mezcladas con inglés)
-    const listaAspectos = respuesta.data?.data?.aspects || respuesta.data?.data?.synastry_aspects || respuesta.data?.aspects || [];
-    if (listaAspectos.length) {
-      const { textos: traducidos } = await traducirTextosConIA(listaAspectos.map(a => a.interpretation || ''));
-      listaAspectos.forEach((a, i) => { if (traducidos[i]) a.interpretation = traducidos[i]; });
+    // Buscamos y traducimos CUALQUIER campo "interpretation" en toda la respuesta,
+    // sin importar en qué nivel de anidación esté (la ruta exacta puede variar)
+    const objetosConInterpretacion = [];
+    function buscarInterpretaciones(obj) {
+      if (!obj || typeof obj !== 'object') return;
+      if (typeof obj.interpretation === 'string' && obj.interpretation.trim()) objetosConInterpretacion.push(obj);
+      for (const key of Object.keys(obj)) {
+        if (obj[key] && typeof obj[key] === 'object') buscarInterpretaciones(obj[key]);
+      }
+    }
+    buscarInterpretaciones(respuesta.data);
+    if (objetosConInterpretacion.length) {
+      const { textos: traducidos } = await traducirTextosConIA(objetosConInterpretacion.map(o => o.interpretation));
+      objetosConInterpretacion.forEach((o, i) => { if (traducidos[i]) o.interpretation = traducidos[i]; });
     }
 
     if (personaGuardada) {
       await req.supabase.from('otras_cartas').update({ sinastria_cache: respuesta.data }).eq('id', personaGuardada.id);
     }
 
-    res.json({ reporte: respuesta.data, desde_cache: false });
+    res.json({ reporte: respuesta.data, desde_cache: false, debug_interpretaciones_traducidas: objetosConInterpretacion.length });
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo calcular la sinastría.', detalle_tecnico: err?.response?.data || err.message });
