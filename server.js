@@ -127,7 +127,7 @@ async function traducirTextosConIA(textos) {
 
 const astrologyApi = axios.create({
   baseURL: process.env.ASTROLOGY_API_BASE_URL,
-  timeout: 20000, // 20s — evita que la app se quede "colgada" si la API tarda o no responde
+  timeout: 45000, // 45s — suficiente incluso para cálculos pesados (astrocartografía), pero sigue evitando que la app se quede colgada para siempre
   headers: {
     Authorization: `Bearer ${process.env.ASTROLOGY_API_KEY}`,
     'Content-Type': 'application/json',
@@ -532,6 +532,43 @@ app.post('/luna-vacia', requireLogin, async (req, res) => {
     console.error('luna-vacia falló:', err?.response?.data || err.message);
     res.status(500).json({
       error: 'No se pudo obtener la Luna Vacía de Curso.',
+      detalle_tecnico: err?.response?.data || err.message,
+    });
+  }
+});
+
+// ============================================================
+// RUTA: Astrología Horaria — respuesta a una pregunta específica,
+// calculada con la carta del momento exacto en que se pregunta.
+// ============================================================
+app.post('/horaria', requireLogin, async (req, res) => {
+  try {
+    const { pregunta } = req.body;
+    if (!pregunta || !pregunta.trim()) return res.status(400).json({ error: 'Escribe tu pregunta primero.' });
+
+    const perfil = await leerPerfil(req);
+    const ahora = new Date();
+
+    const respuesta = await astrologyApi.post('/horary/ask', {
+      question: pregunta.trim(),
+      datetime_location: {
+        year: ahora.getUTCFullYear(),
+        month: ahora.getUTCMonth() + 1,
+        day: ahora.getUTCDate(),
+        hour: ahora.getUTCHours(),
+        minute: ahora.getUTCMinutes(),
+        second: 0,
+        city: perfil?.ciudad_nacimiento || 'Mexico City',
+        country_code: perfil?.pais_codigo || 'MX',
+      },
+      report_options: { language: 'es' },
+    });
+
+    res.json({ mensaje: 'Respuesta horaria', horaria: respuesta.data });
+  } catch (err) {
+    console.error('horaria falló:', err?.response?.data || err.message);
+    res.status(500).json({
+      error: 'No se pudo calcular la respuesta horaria.',
       detalle_tecnico: err?.response?.data || err.message,
     });
   }
