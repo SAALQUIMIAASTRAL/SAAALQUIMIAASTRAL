@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v123-arreglos-multiples -->
+<!-- VERSION-APP: v124-horaria-legible -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -648,7 +648,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v123-arreglos-multiples</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v124-horaria-legible</div>
         </div>
 
         <div class="topbar">
@@ -3889,7 +3889,12 @@
           </div>
         `;
       } else {
-        contenedor.innerHTML = _cerrar + `<pre style="white-space:pre-wrap;font-size:9px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(data.horaria, null, 2)}</pre>`;
+        contenedor.innerHTML = _cerrar + `
+          <div class="card-lectura" style="margin-bottom:10px;">
+            <div class="card-etiqueta">Tu pregunta</div>
+            <div class="card-titulo" style="font-size:13px;">${pregunta}</div>
+          </div>
+        ` + renderizarInforme(data.horaria, null);
       }
       cargarHorariasGuardadas();
     } catch (err) {
