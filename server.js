@@ -561,7 +561,6 @@ app.post('/horaria', requireLogin, async (req, res) => {
         city: perfil?.ciudad_nacimiento || 'Mexico City',
         country_code: perfil?.pais_codigo || 'MX',
       },
-      report_options: { language: 'es' },
     });
 
     // Guardamos la pregunta para poder revisarla más adelante, cuando el aspecto se cumpla
