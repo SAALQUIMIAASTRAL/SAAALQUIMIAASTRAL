@@ -502,6 +502,42 @@ app.post('/luna', requireLogin, async (req, res) => {
 });
 
 // ============================================================
+// RUTA: Luna Vacía de Curso — ventana de hoy (si existe)
+// ============================================================
+app.post('/luna-vacia', requireLogin, async (req, res) => {
+  try {
+    const perfil = await leerPerfil(req);
+    const ahora = new Date();
+    const cacheKey = cacheHash(req.userId, 'luna-vacia', hoyStr());
+    const cached = cacheGet(cacheKey);
+    if (cached) return res.json(cached);
+
+    const respuesta = await astrologyApi.post('/lunar/void-of-course', {
+      datetime_location: {
+        year: ahora.getUTCFullYear(),
+        month: ahora.getUTCMonth() + 1,
+        day: ahora.getUTCDate(),
+        hour: 0,
+        minute: 0,
+        second: 0,
+        city: perfil?.ciudad_nacimiento || 'Mexico City',
+        country_code: perfil?.pais_codigo || 'MX',
+      },
+    });
+
+    const respuestaVoC = { mensaje: 'Luna vacía de hoy', voc: respuesta.data };
+    cacheSet(cacheKey, respuestaVoC, TTL.LUNA);
+    res.json(respuestaVoC);
+  } catch (err) {
+    console.error('luna-vacia falló:', err?.response?.data || err.message);
+    res.status(500).json({
+      error: 'No se pudo obtener la Luna Vacía de Curso.',
+      detalle_tecnico: err?.response?.data || err.message,
+    });
+  }
+});
+
+// ============================================================
 // RUTA: Mensaje del día (Sol/Luna de hoy + tu carta real)
 // ============================================================
 // ============================================================
