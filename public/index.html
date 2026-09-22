@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v125-horaria-tarjetas -->
+<!-- VERSION-APP: v127-precios-actualizados -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -648,7 +648,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v125-horaria-tarjetas</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v127-precios-actualizados</div>
         </div>
 
         <div class="topbar">
@@ -903,6 +903,7 @@
             </div>
           </div>
 
+          <!-- Astrología Horaria: pausada temporalmente, retomar después del lanzamiento
           <div class="section" data-tab="alquimia">
             <h2>🔮 Pregúntale a las estrellas</h2>
             <div class="desc">Astrología horaria: haz una pregunta específica y se calcula la carta del momento exacto en que preguntas, para darte una respuesta.</div>
@@ -925,6 +926,7 @@
             <div class="disclaimer" style="margin-bottom:10px;">Muchas respuestas horarias se confirman con el tiempo, cuando el evento que preguntaste realmente sucede. Guarda tu pregunta y vuelve a revisarla cuando tengas novedades.</div>
             <div id="horarias-guardadas-lista"></div>
           </div>
+          -->
 
           <div class="section" data-tab="carta">
             <h2>Astrocartografía</h2>
@@ -1044,12 +1046,12 @@
               </div>
               <div class="chip-plan" data-plan="semestral" onclick="elegirPlanSuscripcion('semestral')" style="flex:1;text-align:center;padding:9px 4px;border-radius:10px;cursor:pointer;background:rgba(255,255,255,0.08);border:1.5px solid transparent;">
                 <div style="font-size:11px;font-weight:600;">6 meses</div>
-                <div style="font-size:14px;font-weight:700;">$48</div>
+                <div style="font-size:14px;font-weight:700;">$14.99</div>
               </div>
               <div class="chip-plan" data-plan="anual" onclick="elegirPlanSuscripcion('anual')" style="flex:1;text-align:center;padding:9px 4px;border-radius:10px;cursor:pointer;background:rgba(255,255,255,0.08);border:1.5px solid transparent;position:relative;">
                 <div style="position:absolute;top:-9px;right:2px;background:var(--marigold);color:#fff;font-size:8.5px;font-weight:700;padding:2px 6px;border-radius:100px;">MEJOR</div>
                 <div style="font-size:11px;font-weight:600;">Anual</div>
-                <div style="font-size:14px;font-weight:700;">$96</div>
+                <div style="font-size:14px;font-weight:700;">$29.99</div>
               </div>
             </div>
             <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
@@ -3282,7 +3284,7 @@
   }
 
   let _planElegido = 'mensual';
-  const _PRECIOS_PLAN = { mensual: '$8.88<span style="font-size:12px;color:var(--band-text-dim);font-family:\'Work Sans\',sans-serif;"> USD/mes</span>', semestral: '$48<span style="font-size:12px;color:var(--band-text-dim);font-family:\'Work Sans\',sans-serif;"> USD/6 meses</span>', anual: '$96<span style="font-size:12px;color:var(--band-text-dim);font-family:\'Work Sans\',sans-serif;"> USD/año</span>' };
+  const _PRECIOS_PLAN = { mensual: '$8.88<span style="font-size:12px;color:var(--band-text-dim);font-family:\'Work Sans\',sans-serif;"> USD/mes</span>', semestral: '$14.99<span style="font-size:12px;color:var(--band-text-dim);font-family:\'Work Sans\',sans-serif;"> USD/6 meses</span>', anual: '$29.99<span style="font-size:12px;color:var(--band-text-dim);font-family:\'Work Sans\',sans-serif;"> USD/año</span>' };
   function elegirPlanSuscripcion(plan) {
     _planElegido = plan;
     document.querySelectorAll('#selector-plan .chip-plan').forEach(el => {
