@@ -125,6 +125,29 @@ async function traducirTextosConIA(textos) {
   }
 }
 
+// Busca CUALQUIER campo de texto interpretativo (interpretation, description, meaning,
+// summary, advice, judgment) en cualquier nivel anidado de una respuesta, y lo traduce
+// con IA en el mismo lugar. Así no dependemos de conocer la forma exacta de cada endpoint.
+const CAMPOS_INTERPRETATIVOS = ['interpretation', 'description', 'meaning', 'summary', 'advice', 'judgment', 'answer'];
+async function traducirInterpretacionesEnObjeto(raiz) {
+  const objetos = [];
+  function buscar(obj) {
+    if (!obj || typeof obj !== 'object') return;
+    if (Array.isArray(obj)) { obj.forEach(buscar); return; }
+    for (const campo of CAMPOS_INTERPRETATIVOS) {
+      if (typeof obj[campo] === 'string' && obj[campo].trim().length > 3) objetos.push({ obj, campo });
+    }
+    for (const key of Object.keys(obj)) {
+      if (obj[key] && typeof obj[key] === 'object') buscar(obj[key]);
+    }
+  }
+  buscar(raiz);
+  if (!objetos.length) return 0;
+  const { textos: traducidos } = await traducirTextosConIA(objetos.map(o => o.obj[o.campo]));
+  objetos.forEach((o, i) => { if (traducidos[i]) o.obj[o.campo] = traducidos[i]; });
+  return objetos.length;
+}
+
 const astrologyApi = axios.create({
   baseURL: process.env.ASTROLOGY_API_BASE_URL,
   timeout: 45000, // 45s — suficiente incluso para cálculos pesados (astrocartografía), pero sigue evitando que la app se quede colgada para siempre
@@ -456,6 +479,8 @@ app.post('/resumen-natal', requireLogin, async (req, res) => {
       report_options: { tradition: 'psychological', language: 'es' },
     });
 
+    await traducirInterpretacionesEnObjeto(respuesta.data);
+
     if (cartaExistente?.id) {
       await req.supabase.from('natal_charts').update({ resumen_cache: respuesta.data }).eq('id', cartaExistente.id);
     }
@@ -490,6 +515,7 @@ app.post('/luna', requireLogin, async (req, res) => {
     });
 
     const respuestaLuna = { mensaje: 'Datos lunares de hoy', luna: respuesta.data };
+    await traducirInterpretacionesEnObjeto(respuestaLuna);
     cacheSet(cacheKey, respuestaLuna, TTL.LUNA);
     res.json(respuestaLuna);
   } catch (err) {
@@ -785,6 +811,7 @@ app.post('/astrocartografia', requireLogin, async (req, res) => {
       analisis_personalizado: analisisLugares?.data || null,
       analisis_personalizado_error: analisisLugares?._error_debug || null,
     };
+    await traducirInterpretacionesEnObjeto(respuestaACG);
     cacheSet(cacheKey, respuestaACG, TTL.ASTROCARTOGRAFIA);
     res.json(respuestaACG);
   } catch (err) {
@@ -941,6 +968,12 @@ app.post('/carta-compuesta', requireLogin, async (req, res) => {
         subject2: datosOtraPersona,
         report_options: { tradition: 'psychological', language: 'es' },
       }).catch(e => { console.error('composite-report falló:', e?.response?.data || e.message); return null; }),
+    ]);
+
+    await Promise.all([
+      traducirInterpretacionesEnObjeto(compuesta.data || compuesta),
+      traducirInterpretacionesEnObjeto(dinamica.data || dinamica),
+      traducirInterpretacionesEnObjeto(reseñaCompuesta?.data),
     ]);
 
     res.json({
@@ -1444,6 +1477,7 @@ app.post('/numerologia', requireLogin, async (req, res) => {
       language: 'es',
     });
 
+    await traducirInterpretacionesEnObjeto(respuesta.data);
     const r = { numerologia: respuesta.data };
     cacheSet(cacheKey, r, TTL.NUMEROLOGIA);
     res.json(r);
@@ -1529,6 +1563,7 @@ app.post('/energia-del-dia', requireLogin, async (req, res) => {
     ]);
 
     const respuestaEnergia = { ciclos: ciclos.data || ciclos, luna: luna.data || luna };
+    await traducirInterpretacionesEnObjeto(respuestaEnergia);
     cacheSet(cacheKey, respuestaEnergia, TTL.ENERGIA_DIA);
     res.json(respuestaEnergia);
   } catch (err) {
@@ -1553,6 +1588,7 @@ app.post('/horoscopo-diario', requireLogin, async (req, res) => {
     });
 
     const respuestaHoroscopo = { horoscopo: respuesta.data };
+    await traducirInterpretacionesEnObjeto(respuestaHoroscopo);
     cacheSet(cacheKey, respuestaHoroscopo, TTL.HOROSCOPO);
     res.json(respuestaHoroscopo);
   } catch (err) {
@@ -1581,6 +1617,7 @@ app.post('/flor-armonica', requireLogin, async (req, res) => {
       options: { house_system: 'P', zodiac_type: 'Tropic', language: 'es' },
     });
 
+    await traducirInterpretacionesEnObjeto(respuesta.data);
     res.json({ flor: respuesta.data });
   } catch (err) {
     console.error(err?.response?.data || err.message);
@@ -1632,6 +1669,7 @@ app.post('/transitos-personales', requireLogin, async (req, res) => {
     else if (datosLimpios?.events) datosLimpios.events = eventosUnicos;
 
     const respuestaTransitos = { transitos: datosLimpios };
+    await traducirInterpretacionesEnObjeto(respuestaTransitos);
     cacheSet(cacheKey, respuestaTransitos, TTL.TRANSITOS_PERSONALES);
     res.json(respuestaTransitos);
   } catch (err) {
