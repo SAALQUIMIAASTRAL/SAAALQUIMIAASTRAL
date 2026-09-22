@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v120-horaria-y-acg-mejorado -->
+<!-- VERSION-APP: v122-semana-lunar-real -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -648,7 +648,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v120-horaria-y-acg-mejorado</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v122-semana-lunar-real</div>
         </div>
 
         <div class="topbar">
@@ -853,15 +853,7 @@
               <div class="phase-chip"><div class="esfera-mini" style="background:linear-gradient(90deg, #e8e4d8 50%, #1b1730 50%);"></div><div class="l">Menguante</div><div class="k">Soltar</div></div>
             </div>
             <div class="desc" style="margin-top:16px;margin-bottom:8px;">Próximos 7 días</div>
-            <div class="week-strip">
-              <div class="wd"><div class="n">Sáb</div><div class="m">🌑</div></div>
-              <div class="wd"><div class="n">Dom</div><div class="m">🌒</div></div>
-              <div class="wd"><div class="n">Lun</div><div class="m">🌒</div></div>
-              <div class="wd"><div class="n">Mar</div><div class="m">🌓</div></div>
-              <div class="wd"><div class="n">Mié</div><div class="m">🌓</div></div>
-              <div class="wd"><div class="n">Jue</div><div class="m">🌔</div></div>
-              <div class="wd"><div class="n">Vie</div><div class="m">🌔</div></div>
-            </div>
+            <div class="week-strip" id="semana-lunar"></div>
           </div>
 
           <div class="section" data-tab="ciclos">
@@ -914,9 +906,24 @@
           <div class="section" data-tab="alquimia">
             <h2>🔮 Pregúntale a las estrellas</h2>
             <div class="desc">Astrología horaria: haz una pregunta específica y se calcula la carta del momento exacto en que preguntas, para darte una respuesta.</div>
+            <div class="card-lectura" style="margin-bottom:14px;">
+              <div class="card-titulo">Una tradición milenaria</div>
+              <div class="card-cuerpo" style="color:var(--ink-dim);">
+                La astrología horaria es una de las ramas más antiguas de esta práctica — los astrólogos clásicos la usaban para responder preguntas concretas leyendo el cielo del momento exacto en que se preguntaba. Su sistematización más conocida se la debemos a <b>William Lilly</b>, astrólogo inglés del siglo XVII, cuya obra <i>Christian Astrology</i> (1647) sigue siendo la referencia de esta técnica hasta hoy.
+                <br><br>
+                Es una herramienta seria, no un juego. Antes de preguntar, tómate un momento para respirar y enfocar bien tu mente en lo que de verdad quieres saber — la tradición dice que una pregunta hecha con calma y claridad da una respuesta más certera.
+              </div>
+            </div>
             <textarea id="horaria-pregunta" placeholder="Ej. ¿Debería aceptar este trabajo?" style="width:100%;min-height:70px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);resize:vertical;box-sizing:border-box;margin-bottom:10px;"></textarea>
             <button class="btn-primary" onclick="preguntarHoraria()">Preguntar</button>
             <div id="horaria-resultado" style="margin-top:14px;"></div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;margin-bottom:8px;">
+              <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);">Tus preguntas guardadas</div>
+              <span onclick="cargarHorariasGuardadas()" style="font-size:11.5px;color:var(--marigold-dark);cursor:pointer;">↻ Actualizar</span>
+            </div>
+            <div class="disclaimer" style="margin-bottom:10px;">Muchas respuestas horarias se confirman con el tiempo, cuando el evento que preguntaste realmente sucede. Guarda tu pregunta y vuelve a revisarla cuando tengas novedades.</div>
+            <div id="horarias-guardadas-lista"></div>
           </div>
 
           <div class="section" data-tab="carta">
@@ -2954,6 +2961,36 @@
     cargarCartasGuardadas();
     cargarHomeSummary();
     cargarEventoAstrologico();
+    renderizarSemanaLunar();
+  }
+
+  function faseLunarEmoji(fecha) {
+    const lunaNuevaRef = Date.UTC(2000, 0, 6, 18, 14, 0);
+    const cicloSinodico = 29.530588853;
+    const dias = (fecha.getTime() - lunaNuevaRef) / 86400000;
+    const posicion = (((dias % cicloSinodico) + cicloSinodico) % cicloSinodico) / cicloSinodico;
+    if (posicion < 0.0625 || posicion >= 0.9375) return '🌑';
+    if (posicion < 0.1875) return '🌒';
+    if (posicion < 0.3125) return '🌓';
+    if (posicion < 0.4375) return '🌔';
+    if (posicion < 0.5625) return '🌕';
+    if (posicion < 0.6875) return '🌖';
+    if (posicion < 0.8125) return '🌗';
+    return '🌘';
+  }
+
+  function renderizarSemanaLunar() {
+    const contenedor = document.getElementById('semana-lunar');
+    if (!contenedor) return;
+    const NOMBRES_DIA = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+    const hoy = new Date();
+    let html = '';
+    for (let i = 0; i < 7; i++) {
+      const dia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + i);
+      const esHoy = i === 0;
+      html += `<div class="wd" style="${esHoy ? 'font-weight:700;' : ''}"><div class="n">${esHoy ? 'Hoy' : NOMBRES_DIA[dia.getDay()]}</div><div class="m">${faseLunarEmoji(dia)}</div></div>`;
+    }
+    contenedor.innerHTML = html;
   }
 
   const ICONO_TIPO_EVENTO = { equinoccio: '🍂', eclipse: '🌑', cambio_planeta: '🪐', general: '✨' };
@@ -3851,9 +3888,55 @@
       } else {
         contenedor.innerHTML = _cerrar + `<pre style="white-space:pre-wrap;font-size:9px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(data.horaria, null, 2)}</pre>`;
       }
+      cargarHorariasGuardadas();
     } catch (err) {
       contenedor.innerHTML = _cerrar + `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }
+  }
+
+  async function cargarHorariasGuardadas() {
+    const contenedor = document.getElementById('horarias-guardadas-lista');
+    if (!contenedor) return;
+    try {
+      const r = await fetchAuth('/horarias-guardadas', { headers: {} });
+      const data = await r.json();
+      if (!r.ok) { contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo cargar.'}</div>`; return; }
+      const preguntas = data.preguntas || [];
+      if (!preguntas.length) { contenedor.innerHTML = '<div class="disclaimer">Todavía no has guardado ninguna pregunta.</div>'; return; }
+      contenedor.innerHTML = preguntas.map(p => `
+        <div class="card-lectura" style="margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div class="card-etiqueta">${new Date(p.created_at).toLocaleDateString('es-MX', { day:'numeric', month:'short', year:'numeric' })} ${p.revisada ? '· ✅ Revisada' : '· ⏳ Pendiente'}</div>
+            <button onclick="eliminarHorariaGuardada('${p.id}')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--ink-dim);">✕</button>
+          </div>
+          <div class="card-titulo" style="font-size:13px;">${p.pregunta}</div>
+          ${p.respuesta ? `<div class="card-cuerpo" style="margin-top:6px;">${p.respuesta}</div>` : ''}
+          ${!p.revisada ? `<button onclick="marcarHorariaRevisada('${p.id}')" style="margin-top:8px;background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:11.5px;color:var(--plum);cursor:pointer;">✅ Marcar como revisada (¿se cumplió?)</button>` : ''}
+        </div>
+      `).join('');
+    } catch (e) {
+      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${e.message}</div>`;
+    }
+  }
+
+  async function marcarHorariaRevisada(id) {
+    try {
+      const r = await fetchAuth('/horarias-guardadas/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      if (!r.ok) { const d = await r.json(); throw new Error(d.error); }
+      cargarHorariasGuardadas();
+    } catch (e) { alert(e.message); }
+  }
+
+  async function eliminarHorariaGuardada(id) {
+    try {
+      const r = await fetchAuth('/horarias-guardadas/' + id, { method: 'DELETE', headers: {} });
+      if (!r.ok) { const d = await r.json(); throw new Error(d.error); }
+      cargarHorariasGuardadas();
+    } catch (e) { alert(e.message); }
   }
 
   const TAROT_ARCANOS = [
