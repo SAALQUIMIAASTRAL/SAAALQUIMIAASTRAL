@@ -85,7 +85,7 @@ async function traducirTextosConIA(textos) {
     return { textos: lista, debug: 'Falta la variable de entorno ANTHROPIC_API_KEY en Render.' };
   }
   try {
-    const prompt = `Traduce cada uno de estos textos de astrología al español natural, con tono cálido y profesional (no traducción literal palabra por palabra). Responde ÚNICAMENTE con un array JSON de strings, en el mismo orden, sin explicación ni markdown:\n\n${JSON.stringify(lista)}`;
+    const prompt = `Traduce cada uno de estos textos de astrología al español de México/Latinoamérica, natural y con tono cálido y profesional (no traducción literal palabra por palabra, y sin modismos de España como "vosotros" o "vale"). Responde ÚNICAMENTE con un array JSON de strings, en el mismo orden, sin explicación ni markdown:\n\n${JSON.stringify(lista)}`;
     const controlador = new AbortController();
     const timeoutId = setTimeout(() => controlador.abort(), 20000);
     const respuesta = await fetch('https://api.anthropic.com/v1/messages', {
@@ -993,6 +993,13 @@ app.post('/sinastria', requireLogin, async (req, res) => {
       options: { house_system: 'P', zodiac_type: 'Tropic' },
       report_options: { tradition: 'psychological', language: 'es' },
     });
+
+    // Traducir de verdad las interpretaciones de cada aspecto (vienen mezcladas con inglés)
+    const listaAspectos = respuesta.data?.data?.aspects || respuesta.data?.data?.synastry_aspects || respuesta.data?.aspects || [];
+    if (listaAspectos.length) {
+      const { textos: traducidos } = await traducirTextosConIA(listaAspectos.map(a => a.interpretation || ''));
+      listaAspectos.forEach((a, i) => { if (traducidos[i]) a.interpretation = traducidos[i]; });
+    }
 
     if (personaGuardada) {
       await req.supabase.from('otras_cartas').update({ sinastria_cache: respuesta.data }).eq('id', personaGuardada.id);
