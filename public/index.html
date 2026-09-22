@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v113-luna-vacia-de-curso -->
+<!-- VERSION-APP: v115-luna-vacia-campos-reales -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -648,7 +648,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v113-luna-vacia-de-curso</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v115-luna-vacia-campos-reales</div>
         </div>
 
         <div class="topbar">
@@ -906,6 +906,14 @@
             </div>
 
             <div class="disclaimer">Estas son guías de la tradición astrológica, pensadas para acompañar tu intuición — no sustituyen la opinión de tu médico, cirujano o asesor financiero.</div>
+          </div>
+
+          <div class="section" data-tab="ciclos">
+            <h2>🔮 Pregúntale a las estrellas</h2>
+            <div class="desc">Astrología horaria: haz una pregunta específica y se calcula la carta del momento exacto en que preguntas, para darte una respuesta.</div>
+            <textarea id="horaria-pregunta" placeholder="Ej. ¿Debería aceptar este trabajo?" style="width:100%;min-height:70px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);resize:vertical;box-sizing:border-box;margin-bottom:10px;"></textarea>
+            <button class="btn-primary" onclick="preguntarHoraria()">Preguntar</button>
+            <div id="horaria-resultado" style="margin-top:14px;"></div>
           </div>
 
           <div class="section" data-tab="carta">
@@ -3712,11 +3720,12 @@
         contenedor.innerHTML = _cerrar + `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo consultar.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
-      const v = data.voc?.data || data.voc || {};
-      // Buscamos el estado activo/inactivo y las horas, con varios nombres posibles por si el formato exacto difiere
-      const activo = v.is_void ?? v.void ?? v.active ?? (Array.isArray(v.periods) ? v.periods.length > 0 : null);
-      const inicio = v.start || v.void_start || v.periods?.[0]?.start;
-      const fin = v.end || v.void_end || v.periods?.[0]?.end;
+      const cs = data.voc?.data?.current_status || data.voc?.current_status || {};
+      const activo = cs.is_void_of_course ?? null;
+      const inicio = cs.void_start;
+      const fin = cs.void_end;
+      const signoActual = cs.current_moon_sign;
+      const signoSiguiente = cs.next_moon_sign;
       const fmtHora = (iso) => {
         if (!iso) return '';
         try { return new Date(iso).toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit' }); } catch (e) { return iso; }
@@ -3741,9 +3750,46 @@
           </div>
         `;
       } else if (activo === false) {
-        contenedor.innerHTML = _cerrar + `<div class="disclaimer">Hoy no hay Luna Vacía de Curso — es un día normal para iniciar cosas nuevas.</div>`;
+        const proximaInfo = fin ? `<div style="font-size:11.5px;color:var(--ink-dim);margin-top:6px;">Próximo cambio de signo (${signoActual ? signoEs(signoActual) : ''} → ${signoSiguiente ? signoEs(signoSiguiente) : ''}): ${new Date(fin).toLocaleString('es-MX', { day:'numeric', month:'long', hour:'numeric', minute:'2-digit' })}</div>` : '';
+        contenedor.innerHTML = _cerrar + `<div class="disclaimer">Hoy no hay Luna Vacía de Curso — es un día normal para iniciar cosas nuevas.${proximaInfo}</div>`;
       } else {
         contenedor.innerHTML = _cerrar + `<pre style="white-space:pre-wrap;font-size:9px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(data.voc, null, 2)}</pre>`;
+      }
+    } catch (err) {
+      contenedor.innerHTML = _cerrar + `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+    }
+  }
+
+  async function preguntarHoraria() {
+    const pregunta = document.getElementById('horaria-pregunta').value.trim();
+    const contenedor = document.getElementById('horaria-resultado');
+    if (!pregunta) { contenedor.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Escribe tu pregunta primero.</div>'; return; }
+    contenedor.innerHTML = '<div class="disclaimer">Calculando la carta del momento...</div>';
+    const _cerrar = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('horaria-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
+    try {
+      const r = await fetchAuth('/horaria', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pregunta }),
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        if (detectarLimiteExcedido(data)) { contenedor.innerHTML = _cerrar + mensajeLimiteExcedido(); return; }
+        contenedor.innerHTML = _cerrar + `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        return;
+      }
+      const h = data.horaria?.data || data.horaria || {};
+      const respuestaTexto = h.answer || h.judgment || h.interpretation || h.text || h.result;
+      if (respuestaTexto && typeof respuestaTexto === 'string') {
+        contenedor.innerHTML = _cerrar + `
+          <div class="card-lectura">
+            <div class="card-etiqueta">Tu pregunta</div>
+            <div class="card-titulo" style="font-size:13px;">${pregunta}</div>
+            <div class="card-cuerpo" style="margin-top:8px;">${respuestaTexto}</div>
+          </div>
+        `;
+      } else {
+        contenedor.innerHTML = _cerrar + `<pre style="white-space:pre-wrap;font-size:9px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(data.horaria, null, 2)}</pre>`;
       }
     } catch (err) {
       contenedor.innerHTML = _cerrar + `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
