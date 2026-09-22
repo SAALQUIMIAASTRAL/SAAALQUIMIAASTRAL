@@ -885,13 +885,17 @@ app.get('/otras-cartas/:id', requireLogin, async (req, res) => {
 
 // RUTA: Eliminar una carta de otra persona (se usa también para "editar": borrar y volver a calcular)
 app.delete('/otras-cartas/:id', requireLogin, async (req, res) => {
-  const { error } = await req.supabase
+  const { data, error } = await req.supabase
     .from('otras_cartas')
     .delete()
     .eq('id', req.params.id)
-    .eq('user_id', req.userId);
+    .eq('user_id', req.userId)
+    .select();
   if (error) return res.status(400).json({ error: error.message });
-  res.json({ mensaje: 'Carta eliminada' });
+  if (!data || data.length === 0) {
+    return res.status(404).json({ error: `No se encontró ninguna carta con ese ID para borrar (id enviado: ${req.params.id}).` });
+  }
+  res.json({ mensaje: 'Carta eliminada', borrada: data[0] });
 });
 
 // RUTA: Resumen de personalidad de una carta guardada (otra persona)
