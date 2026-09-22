@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v124-horaria-legible -->
+<!-- VERSION-APP: v125-horaria-tarjetas -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -648,7 +648,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v124-horaria-legible</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v125-horaria-tarjetas</div>
         </div>
 
         <div class="topbar">
@@ -3879,7 +3879,7 @@
         return;
       }
       const h = data.horaria?.data || data.horaria || {};
-      const respuestaTexto = h.answer || h.judgment || h.interpretation || h.text || h.result;
+      const respuestaTexto = h.answer || h.judgment || h.interpretation || h.text || h.result || h.verdict || h.outcome;
       if (respuestaTexto && typeof respuestaTexto === 'string') {
         contenedor.innerHTML = _cerrar + `
           <div class="card-lectura">
@@ -3887,6 +3887,20 @@
             <div class="card-titulo" style="font-size:13px;">${pregunta}</div>
             <div class="card-cuerpo" style="margin-top:8px;">${respuestaTexto}</div>
           </div>
+        `;
+      } else if (h.radicality) {
+        const rad = h.radicality;
+        const consideraciones = (rad.considerations || []).filter(c => c.message);
+        contenedor.innerHTML = _cerrar + `
+          <div class="card-lectura" style="margin-bottom:10px;">
+            <div class="card-etiqueta">Tu pregunta</div>
+            <div class="card-titulo" style="font-size:13px;">${pregunta}</div>
+          </div>
+          <div class="card-lectura" style="margin-bottom:10px;background:${rad.is_radical ? 'var(--marigold-soft)' : '#fdeceb'};">
+            <div class="card-titulo" style="font-size:13px;">${rad.is_radical ? '✅ Carta válida para juzgar' : '⚠️ Carta con reservas'} (${Math.round(rad.score || 0)}% de confianza)</div>
+          </div>
+          ${consideraciones.map(c => `<div class="card-lectura" style="margin-bottom:8px;"><div class="card-cuerpo">${c.message}</div></div>`).join('')}
+          ${!consideraciones.length ? renderizarInforme(data.horaria, null) : ''}
         `;
       } else {
         contenedor.innerHTML = _cerrar + `
