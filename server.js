@@ -551,7 +551,14 @@ app.post('/horaria', requireLogin, async (req, res) => {
 
     const respuesta = await astrologyApi.post('/horary/ask', {
       question: pregunta.trim(),
-      question_time: ahora.toISOString(),
+      question_time: {
+        year: ahora.getUTCFullYear(),
+        month: ahora.getUTCMonth() + 1,
+        day: ahora.getUTCDate(),
+        hour: ahora.getUTCHours(),
+        minute: ahora.getUTCMinutes(),
+        second: 0,
+      },
       datetime_location: {
         year: ahora.getUTCFullYear(),
         month: ahora.getUTCMonth() + 1,
@@ -565,13 +572,75 @@ app.post('/horaria', requireLogin, async (req, res) => {
       report_options: { language: 'es' },
     });
 
-    res.json({ mensaje: 'Respuesta horaria', horaria: respuesta.data });
+    // Guardamos la pregunta para poder revisarla más adelante, cuando el aspecto se cumpla
+    const h = respuesta.data?.data || respuesta.data || {};
+    const textoRespuesta = h.answer || h.judgment || h.interpretation || h.text || h.result || null;
+    let guardadaId = null;
+    try {
+      const { data: guardada } = await req.supabase.from('horarias_guardadas').insert({
+        user_id: req.userId,
+        pregunta: pregunta.trim(),
+        respuesta: typeof textoRespuesta === 'string' ? textoRespuesta : null,
+      }).select('id').single();
+      guardadaId = guardada?.id || null;
+    } catch (eGuardar) {
+      console.error('No se pudo guardar la pregunta horaria (no es crítico):', eGuardar.message);
+    }
+
+    res.json({ mensaje: 'Respuesta horaria', horaria: respuesta.data, guardada_id: guardadaId });
   } catch (err) {
     console.error('horaria falló:', err?.response?.data || err.message);
     res.status(500).json({
       error: 'No se pudo calcular la respuesta horaria.',
       detalle_tecnico: err?.response?.data || err.message,
     });
+  }
+});
+
+app.get('/horarias-guardadas', requireLogin, async (req, res) => {
+  try {
+    const { data, error } = await req.supabase
+      .from('horarias_guardadas')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ preguntas: data || [] });
+  } catch (err) {
+    res.status(500).json({ error: 'No se pudieron cargar tus preguntas guardadas.' });
+  }
+});
+
+app.put('/horarias-guardadas/:id', requireLogin, async (req, res) => {
+  try {
+    const { nota_revision } = req.body;
+    const { data, error } = await req.supabase
+      .from('horarias_guardadas')
+      .update({ revisada: true, nota_revision: nota_revision || null })
+      .eq('id', req.params.id)
+      .eq('user_id', req.userId)
+      .select()
+      .single();
+    if (error) return res.status(400).json({ error: error.message });
+    if (!data) return res.status(404).json({ error: 'No se encontró esa pregunta.' });
+    res.json({ mensaje: 'Marcada como revisada', pregunta: data });
+  } catch (err) {
+    res.status(500).json({ error: 'No se pudo actualizar.' });
+  }
+});
+
+app.delete('/horarias-guardadas/:id', requireLogin, async (req, res) => {
+  try {
+    const { data, error } = await req.supabase
+      .from('horarias_guardadas')
+      .delete()
+      .eq('id', req.params.id)
+      .eq('user_id', req.userId)
+      .select();
+    if (error) return res.status(400).json({ error: error.message });
+    if (!data || data.length === 0) return res.status(404).json({ error: 'No se encontró esa pregunta.' });
+    res.json({ mensaje: 'Eliminada' });
+  } catch (err) {
+    res.status(500).json({ error: 'No se pudo eliminar.' });
   }
 });
 
@@ -1144,6 +1213,18 @@ app.post('/eclipses-natal', requireLogin, async (req, res) => {
       try {
         const r = await astrologyApi.post('/eclipses/interpretation', { eclipse_id: idPrincipal, language: 'es' });
         interpretacionCompleta = r.data;
+
+        // Traducir de verdad las ventanas de tiempo y consejos (vienen en inglés aunque pidamos language:'es')
+        const interp = interpretacionCompleta?.data?.interpretation || interpretacionCompleta?.interpretation;
+        if (interp) {
+          const tv = interp.timing_windows || {};
+          const textosATraducir = [tv.pre_eclipse || '', tv.eclipse_day || '', tv.post_eclipse || '', ...(interp.advice || [])];
+          const { textos: traducidos } = await traducirTextosConIA(textosATraducir);
+          if (tv.pre_eclipse) tv.pre_eclipse = traducidos[0] || tv.pre_eclipse;
+          if (tv.eclipse_day) tv.eclipse_day = traducidos[1] || tv.eclipse_day;
+          if (tv.post_eclipse) tv.post_eclipse = traducidos[2] || tv.post_eclipse;
+          if (interp.advice?.length) interp.advice = interp.advice.map((a, i) => traducidos[3 + i] || a);
+        }
       } catch (e) { /* si falla, seguimos sin ella */ }
     }
 
