@@ -158,6 +158,66 @@ async function traducirInterpretacionesEnObjeto(raiz) {
   return objetos.length;
 }
 
+// Toma los 40-70 fragmentos técnicos crudos de la carta natal (planeta+signo, planeta+casa,
+// aspectos) y los sintetiza en 10 bloques de personalidad integrados, en español simple,
+// siguiendo las reglas del documento de producto: sin absolutos, 80-160 palabras cada uno,
+// integrando varios factores en vez de solo concatenar "Sol en X + Luna en Y".
+const CATEGORIAS_PERSONALIDAD = [
+  ['mi_esencia', 'Mi esencia'], ['mis_emociones', 'Mis emociones'],
+  ['como_pienso', 'Cómo pienso y me comunico'], ['como_amo', 'Cómo amo'],
+  ['como_actuo', 'Cómo actúo'], ['trabajo_vocacion', 'Trabajo y vocación'],
+  ['dinero_seguridad', 'Dinero y seguridad'], ['mis_relaciones', 'Mis relaciones'],
+  ['mis_fortalezas', 'Mis fortalezas'], ['mis_retos', 'Mis retos y crecimiento'],
+];
+async function sintetizarPersonalidad10Bloques(interpretaciones) {
+  const fragmentos = (interpretaciones || [])
+    .filter(i => i.text && i.title)
+    .map(i => `${i.title}: ${i.text}`)
+    .join('\n\n');
+  if (!fragmentos.trim()) return null;
+  if (!process.env.ANTHROPIC_API_KEY) return null;
+
+  const listaCategorias = CATEGORIAS_PERSONALIDAD.map(([clave, nombre]) => `- ${clave}: "${nombre}"`).join('\n');
+  const prompt = `Eres una astróloga profesional escribiendo un análisis de personalidad en español de México/Latinoamérica, cálido pero profesional, para alguien SIN conocimientos de astrología.
+
+Con base ÚNICAMENTE en estos datos técnicos reales de la carta natal (no inventes nada que no esté aquí):
+
+${fragmentos}
+
+Escribe una síntesis integrada en exactamente estas 10 categorías. Cada bloque debe INTEGRAR varios factores relevantes en una narrativa fluida (nunca "Sol en X + Luna en Y", sino un texto que combine y resuelva lo que esos factores dicen juntos). Usa lenguaje de tendencia ("tiende a", "puede", "suele notar"), nunca absolutos ("siempre", "nunca", "te va a pasar"). Cada bloque debe tener entre 80 y 160 palabras.
+
+Categorías (usa exactamente estas llaves):
+${listaCategorias}
+
+Responde ÚNICAMENTE con un objeto JSON con esas 10 llaves exactas, cada una con el texto de ese bloque. Sin explicación ni markdown.`;
+
+  try {
+    const controlador = new AbortController();
+    const timeoutId = setTimeout(() => controlador.abort(), 40000);
+    const respuesta = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 4000, messages: [{ role: 'user', content: prompt }] }),
+      signal: controlador.signal,
+    });
+    clearTimeout(timeoutId);
+    const datos = await respuesta.json();
+    if (!respuesta.ok) {
+      console.error('sintetizarPersonalidad10Bloques: Anthropic respondió', respuesta.status, JSON.stringify(datos).slice(0, 500));
+      return { _error: `Anthropic respondió ${respuesta.status}` };
+    }
+    let texto = (datos.content?.[0]?.text || '{}').trim();
+    texto = texto.replace(/^```(json)?/i, '').replace(/```$/, '').trim();
+    const inicio = texto.indexOf('{');
+    const fin = texto.lastIndexOf('}');
+    if (inicio !== -1 && fin !== -1) texto = texto.slice(inicio, fin + 1);
+    return JSON.parse(texto);
+  } catch (e) {
+    console.error('sintetizarPersonalidad10Bloques falló:', e.message);
+    return { _error: e.message };
+  }
+}
+
 const astrologyApi = axios.create({
   baseURL: process.env.ASTROLOGY_API_BASE_URL,
   timeout: 45000, // 45s — suficiente incluso para cálculos pesados (astrocartografía), pero sigue evitando que la app se quede colgada para siempre
@@ -491,11 +551,14 @@ app.post('/resumen-natal', requireLogin, async (req, res) => {
 
     await traducirInterpretacionesEnObjeto(respuesta.data);
 
+    const sintesis10 = await sintetizarPersonalidad10Bloques(respuesta.data?.data?.interpretations || []);
+    const reporteFinal = { ...respuesta.data, sintesis_10: sintesis10 };
+
     if (cartaExistente?.id) {
-      await req.supabase.from('natal_charts').update({ resumen_cache: respuesta.data }).eq('id', cartaExistente.id);
+      await req.supabase.from('natal_charts').update({ resumen_cache: reporteFinal }).eq('id', cartaExistente.id);
     }
 
-    res.json({ reporte: respuesta.data, desde_cache: false });
+    res.json({ reporte: reporteFinal, desde_cache: false });
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo generar el resumen.', detalle_tecnico: err?.response?.data || err.message });
