@@ -1726,29 +1726,37 @@ app.post('/transitos-personales', requireLogin, async (req, res) => {
     const cached = cacheGet(cacheKey);
     if (cached) return res.json(cached);
 
-    const en30dias = new Date(hoy.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const desde5dias = new Date(hoy.getTime() - 5 * 24 * 60 * 60 * 1000);
+    const en7dias = new Date(hoy.getTime() + 7 * 24 * 60 * 60 * 1000);
 
     const respuesta = await astrologyApi.post('/analysis/natal-transit-report', {
       subject: birthDataDesdePerfil(perfil),
       transit_time: {
         date_range: {
-          start_date: { year: hoy.getUTCFullYear(), month: hoy.getUTCMonth() + 1, day: hoy.getUTCDate() },
-          end_date: { year: en30dias.getUTCFullYear(), month: en30dias.getUTCMonth() + 1, day: en30dias.getUTCDate() },
+          start_date: { year: desde5dias.getUTCFullYear(), month: desde5dias.getUTCMonth() + 1, day: desde5dias.getUTCDate() },
+          end_date: { year: en7dias.getUTCFullYear(), month: en7dias.getUTCMonth() + 1, day: en7dias.getUTCDate() },
         },
       },
       orb: 5,
-      active_points: ['Sun', 'Moon', 'Mercury', 'Venus', 'Saturn', 'Pluto', 'Neptune', 'Uranus', 'Mean_Lilith', 'Chiron'],
+      active_points: ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Pluto', 'Neptune', 'Uranus'],
       report_options: { tradition: 'psychological', language: 'es' },
     });
 
-    // Ordenar cronológicamente por fecha (el API no garantiza el orden)
+    // Ordenar cronológicamente y quedarnos solo con hoy en adelante (los 7 próximos días)
     const eventosCrudos = respuesta.data?.data?.events || respuesta.data?.events || [];
     const obtenerFecha = (ev) => ev.date_local || ev.date || ev.exact_date || ev.transit_date || null;
-    const eventosOrdenados = [...eventosCrudos].sort((a, b) => {
-      const fa = obtenerFecha(a), fb = obtenerFecha(b);
-      if (!fa || !fb) return 0;
-      return new Date(fa) - new Date(fb);
-    });
+    const hoyStr = hoy.toISOString().slice(0, 10);
+    const en7diasStr = en7dias.toISOString().slice(0, 10);
+    const eventosOrdenados = eventosCrudos
+      .filter(ev => {
+        const f = obtenerFecha(ev);
+        return f && f.slice(0, 10) >= hoyStr && f.slice(0, 10) <= en7diasStr;
+      })
+      .sort((a, b) => {
+        const fa = obtenerFecha(a), fb = obtenerFecha(b);
+        if (!fa || !fb) return 0;
+        return new Date(fa) - new Date(fb);
+      });
 
     // Inyectar los eventos ordenados de vuelta en la respuesta
     const datosLimpios = { ...respuesta.data };
