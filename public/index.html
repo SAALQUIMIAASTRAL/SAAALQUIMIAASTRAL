@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v138-recarga-al-crear-carta -->
+<!-- VERSION-APP: v141-personas-en-su-pestana -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -678,7 +678,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v138-recarga-al-crear-carta</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v141-personas-en-su-pestana</div>
         </div>
 
         <div class="topbar">
@@ -705,32 +705,6 @@
           </div>
 
           <div id="evento-astrologico-banner"></div>
-
-          <div class="section" data-tab="carta">
-            <h2>Tus cartas</h2>
-            <div class="desc">Calcula hasta 8 cartas astrales: la tuya, tu pareja, tu familia o tus amigas.</div>
-            <div class="charts-scroll" id="cartas-carousel">
-              <div class="chart-chip add" onclick="mostrarFormularioCarta()"><div class="circ">+</div><div class="lbl">Agregar</div></div>
-            </div>
-            <div class="charts-count" id="cartas-count">Cargando...</div>
-            <div id="carta-otro-detalle" style="margin-top:14px;"></div>
-
-            <div class="calc-form" id="form-nueva-carta" style="display:none;margin-top:14px;">
-              <label>Nombre<input type="text" id="nc-nombre"></label>
-              <div class="calc-row">
-                <label>Fecha de nacimiento<input type="date" id="nc-fecha"></label>
-                <label>Hora<input type="time" id="nc-hora" value="12:00"></label>
-              </div>
-              <label>Ciudad de nacimiento<input type="text" id="nc-ciudad" oninput="buscarCiudadEnVivo('nc')" autocomplete="off">
-                <input type="hidden" id="nc-lat">
-                <input type="hidden" id="nc-lng">
-                <div id="nc-ciudad-sugerencias" style="position:relative;z-index:5;"></div>
-              </label>
-              <label>País<select id="nc-pais" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;"><option value="">Selecciona el país</option></select></label>
-              <button class="btn-primary" onclick="guardarNuevaCarta()">Calcular y guardar</button>
-              <div id="nc-resultado"></div>
-            </div>
-          </div>
 
           <div class="section" data-tab="hoy" id="seccion-carta-natal">
             <h2>Tu carta natal</h2>
@@ -818,6 +792,32 @@
             <div class="desc">Qué estrellas fijas importantes tocan tu carta natal.</div>
             <button class="btn-primary" onclick="verEstrellasFijas()">Ver mis estrellas fijas</button>
             <div id="estrellas-resultado" style="margin-top:14px;"></div>
+          </div>
+
+          <div class="section" data-tab="personas">
+            <h2>Tus personas</h2>
+            <div class="desc">Calcula hasta 8 cartas astrales: la tuya, tu pareja, tu familia o tus amigas.</div>
+            <div class="charts-scroll" id="cartas-carousel">
+              <div class="chart-chip add" onclick="mostrarFormularioCarta()"><div class="circ">+</div><div class="lbl">Agregar</div></div>
+            </div>
+            <div class="charts-count" id="cartas-count">Cargando...</div>
+            <div id="carta-otro-detalle" style="margin-top:14px;"></div>
+
+            <div class="calc-form" id="form-nueva-carta" style="display:none;margin-top:14px;">
+              <label>Nombre<input type="text" id="nc-nombre"></label>
+              <div class="calc-row">
+                <label>Fecha de nacimiento<input type="date" id="nc-fecha"></label>
+                <label>Hora<input type="time" id="nc-hora" value="12:00"></label>
+              </div>
+              <label>Ciudad de nacimiento<input type="text" id="nc-ciudad" oninput="buscarCiudadEnVivo('nc')" autocomplete="off">
+                <input type="hidden" id="nc-lat">
+                <input type="hidden" id="nc-lng">
+                <div id="nc-ciudad-sugerencias" style="position:relative;z-index:5;"></div>
+              </label>
+              <label>País<select id="nc-pais" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;"><option value="">Selecciona el país</option></select></label>
+              <button class="btn-primary" onclick="guardarNuevaCarta()">Calcular y guardar</button>
+              <div id="nc-resultado"></div>
+            </div>
           </div>
 
           <div class="section" data-tab="personas">
@@ -1638,7 +1638,7 @@
 
   async function cargarCartasGuardadas() {
     try {
-      const r = await fetchAuth('/otras-cartas', { headers: {} });
+      const r = await fetchAuth(`/otras-cartas?_t=${Date.now()}`, { headers: {}, cache: 'no-store' });
       if (!r.ok) {
         console.error('cargarCartasGuardadas: respuesta no OK', r.status);
         const carousel = document.getElementById('cartas-carousel');
@@ -1648,8 +1648,11 @@
       const data = await r.json();
       const carousel = document.getElementById('cartas-carousel');
       const chipsHtml = (data.cartas || []).map(c => `
-        <div class="chart-chip" onclick="verDetalleOtraCarta('${c.id}', '${(c.nombre || '').replace(/'/g, '')}')" style="cursor:pointer;">
-          <div class="circ">${(c.nombre || '?')[0].toUpperCase()}</div><div class="lbl">${c.nombre}</div>
+        <div class="chart-chip" style="cursor:pointer; position:relative;">
+          <button onclick="event.stopPropagation(); eliminarCartaOtro('${c.id}', '${(c.nombre || '').replace(/'/g, '')}')" style="position:absolute; top:-4px; right:6px; background:var(--danger,#a5442f); color:#fff; border:none; border-radius:50%; width:18px; height:18px; font-size:11px; line-height:1; cursor:pointer; z-index:2;">✕</button>
+          <div onclick="verDetalleOtraCarta('${c.id}', '${(c.nombre || '').replace(/'/g, '')}')">
+            <div class="circ">${(c.nombre || '?')[0].toUpperCase()}</div><div class="lbl">${c.nombre}</div>
+          </div>
         </div>
       `).join('');
       carousel.innerHTML = chipsHtml + '<div class="chart-chip add" onclick="mostrarFormularioCarta()"><div class="circ">+</div><div class="lbl">Agregar</div></div>';
@@ -1669,6 +1672,22 @@
 
   const _otrasCartasCache = {};
   let _editandoCartaId = null;
+
+  async function eliminarCartaOtro(id, nombre) {
+    if (!confirm(`¿Eliminar a ${nombre}? Esto borra su carta y no se puede deshacer.`)) return;
+    try {
+      const r = await fetchAuth(`/otras-cartas/${id}`, { method: 'DELETE', headers: {} });
+      if (!r.ok) {
+        const d = await r.json().catch(() => ({}));
+        alert('No se pudo eliminar: ' + (d.error || r.status));
+        return;
+      }
+      // Recarga completa para garantizar que la lista quede correcta
+      window.location.reload();
+    } catch (e) {
+      alert('No se pudo eliminar: ' + e.message);
+    }
+  }
 
   function editarOtraCarta(id) {
     const c = _otrasCartasCache[id];
