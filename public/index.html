@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v137-compuesta-capas -->
+<!-- VERSION-APP: v138-recarga-al-crear-carta -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -678,7 +678,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v137-compuesta-capas</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v138-recarga-al-crear-carta</div>
         </div>
 
         <div class="topbar">
@@ -1743,17 +1743,18 @@
           });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || 'No se pudo guardar.');
-      resultado.innerHTML = '<div class="disclaimer">¡Guardada! 🎉</div>';
+      resultado.innerHTML = '<div class="disclaimer">¡Guardada! 🎉 Actualizando la lista...</div>';
       document.getElementById('form-nueva-carta').style.display = 'none';
       const eraEdicion = !!_editandoCartaId;
-      const idParaAbrir = data.carta?.id || _editandoCartaId;
-      const nombreParaAbrir = data.carta?.nombre || cuerpo.nombre;
       _editandoCartaId = null;
-      await cargarCartasGuardadas();
-      if (eraEdicion && idParaAbrir) {
-        verDetalleOtraCarta(idParaAbrir, nombreParaAbrir);
+      if (eraEdicion) {
+        // Al editar sí funciona bien reabrir el detalle sin recargar toda la página
+        await cargarCartasGuardadas();
+        verDetalleOtraCarta(data.carta?.id, data.carta?.nombre || cuerpo.nombre);
       } else {
-        document.getElementById('carta-otro-detalle').innerHTML = '';
+        // Al crear una persona nueva: recarga completa para garantizar que la lista
+        // se vea correcta sin depender de la actualización en vivo (que ha fallado antes)
+        setTimeout(() => { window.location.reload(); }, 600);
       }
     } catch (err) {
       resultado.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
