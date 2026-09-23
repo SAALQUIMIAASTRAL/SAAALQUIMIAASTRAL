@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v145-corrige-texto-cortado -->
+<!-- VERSION-APP: v146-calendario-lunar-mensual -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -678,7 +678,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v145-corrige-texto-cortado</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v146-calendario-lunar-mensual</div>
         </div>
 
         <div class="topbar">
@@ -874,8 +874,8 @@
               <div class="phase-chip"><div class="esfera-mini" style="background:radial-gradient(circle at 35% 30%, #fdfaf3, #c9c4b5 70%);"></div><div class="l">Llena</div><div class="k">Culminar</div></div>
               <div class="phase-chip"><div class="esfera-mini" style="background:linear-gradient(90deg, #e8e4d8 50%, #1b1730 50%);"></div><div class="l">Menguante</div><div class="k">Soltar</div></div>
             </div>
-            <div class="desc" style="margin-top:16px;margin-bottom:8px;">Próximos 7 días</div>
-            <div class="week-strip" id="semana-lunar"></div>
+            <div class="desc" style="margin-top:16px;margin-bottom:8px;">Calendario lunar del mes</div>
+            <div id="calendario-lunar-mes"></div>
           </div>
 
           <div class="section" data-tab="ciclos">
@@ -3034,33 +3034,90 @@
     renderizarSemanaLunar();
   }
 
-  function faseLunarEmoji(fecha) {
-    const lunaNuevaRef = Date.UTC(2000, 0, 6, 18, 14, 0);
-    const cicloSinodico = 29.530588853;
-    const dias = (fecha.getTime() - lunaNuevaRef) / 86400000;
-    const posicion = (((dias % cicloSinodico) + cicloSinodico) % cicloSinodico) / cicloSinodico;
-    if (posicion < 0.0625 || posicion >= 0.9375) return '🌑';
-    if (posicion < 0.1875) return '🌒';
-    if (posicion < 0.3125) return '🌓';
-    if (posicion < 0.4375) return '🌔';
-    if (posicion < 0.5625) return '🌕';
-    if (posicion < 0.6875) return '🌖';
-    if (posicion < 0.8125) return '🌗';
-    return '🌘';
+  const FASE_EMOJI = {
+    'New Moon': '🌑', 'Waxing Crescent': '🌒', 'First Quarter': '🌓', 'Waxing Gibbous': '🌔',
+    'Full Moon': '🌕', 'Waning Gibbous': '🌖', 'Last Quarter': '🌗', 'Waning Crescent': '🌘',
+  };
+  const NOMBRES_MES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  let _calMesActual = new Date().getUTCMonth() + 1;
+  let _calAnioActual = new Date().getUTCFullYear();
+  let _calDiaSeleccionado = null;
+
+  async function renderizarSemanaLunar(mes, anio) {
+    const contenedor = document.getElementById('calendario-lunar-mes');
+    if (!contenedor) return;
+    mes = mes || _calMesActual;
+    anio = anio || _calAnioActual;
+    _calMesActual = mes;
+    _calAnioActual = anio;
+    contenedor.innerHTML = '<div class="disclaimer">Calculando el mes...</div>';
+    try {
+      const r = await fetchAuth('/calendario-lunar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mes, anio }),
+      });
+      const data = await r.json();
+      if (!r.ok) { contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo cargar el calendario.'}</div>`; return; }
+
+      const porDia = {};
+      (data.detalle_dias || []).forEach(d => { porDia[d.dia] = d; });
+
+      const hoy = new Date();
+      const esMesActualReal = hoy.getUTCFullYear() === anio && (hoy.getUTCMonth() + 1) === mes;
+      const primerDiaSemana = new Date(Date.UTC(anio, mes - 1, 1)).getUTCDay(); // 0=Dom
+      const diasEnMes = new Date(Date.UTC(anio, mes, 0)).getUTCDate();
+
+      let celdas = '';
+      for (let i = 0; i < primerDiaSemana; i++) celdas += `<div class="cal-dia vacio"></div>`;
+      for (let dia = 1; dia <= diasEnMes; dia++) {
+        const info = porDia[dia];
+        const emoji = FASE_EMOJI[info?.fase] || '🌙';
+        const esHoy = esMesActualReal && dia === hoy.getUTCDate();
+        celdas += `
+          <div class="cal-dia${esHoy ? ' hoy' : ''}" onclick="mostrarDetalleDiaLunar(${dia}, '${info?.signo || ''}', '${info?.fase || ''}')" style="cursor:pointer;text-align:center;padding:6px 2px;border-radius:8px;${esHoy ? 'background:var(--marigold-soft);border:1.5px solid var(--marigold);' : ''}">
+            <div style="font-size:10.5px;color:var(--ink-dim);">${dia}</div>
+            <div style="font-size:16px;">${emoji}</div>
+          </div>
+        `;
+      }
+
+      contenedor.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <button onclick="cambiarMesCalendarioLunar(-1)" style="background:none;border:1px solid var(--line);border-radius:100px;width:30px;height:30px;color:var(--plum);cursor:pointer;">‹</button>
+          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);">${NOMBRES_MES[mes - 1]} ${anio}</div>
+          <button onclick="cambiarMesCalendarioLunar(1)" style="background:none;border:1px solid var(--line);border-radius:100px;width:30px;height:30px;color:var(--plum);cursor:pointer;">›</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px;">
+          ${['D','L','M','M','J','V','S'].map(d => `<div style="text-align:center;font-size:10px;color:var(--ink-dim);font-weight:600;">${d}</div>`).join('')}
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;">${celdas}</div>
+        <div id="cal-lunar-detalle-dia" style="margin-top:12px;"></div>
+      `;
+    } catch (e) {
+      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">No se pudo cargar el calendario: ${e.message}</div>`;
+    }
   }
 
-  function renderizarSemanaLunar() {
-    const contenedor = document.getElementById('semana-lunar');
+  function cambiarMesCalendarioLunar(delta) {
+    let mes = _calMesActual + delta;
+    let anio = _calAnioActual;
+    if (mes > 12) { mes = 1; anio++; }
+    if (mes < 1) { mes = 12; anio--; }
+    renderizarSemanaLunar(mes, anio);
+  }
+
+  function mostrarDetalleDiaLunar(dia, signoAbrev, fase) {
+    const contenedor = document.getElementById('cal-lunar-detalle-dia');
     if (!contenedor) return;
-    const NOMBRES_DIA = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-    const hoy = new Date();
-    let html = '';
-    for (let i = 0; i < 7; i++) {
-      const dia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + i);
-      const esHoy = i === 0;
-      html += `<div class="wd" style="${esHoy ? 'font-weight:700;' : ''}"><div class="n">${esHoy ? 'Hoy' : NOMBRES_DIA[dia.getDay()]}</div><div class="m">${faseLunarEmoji(dia)}</div></div>`;
-    }
-    contenedor.innerHTML = html;
+    const emoji = FASE_EMOJI[fase] || '🌙';
+    const faseEs = { 'New Moon':'Luna Nueva','Waxing Crescent':'Creciente','First Quarter':'Cuarto Creciente','Waxing Gibbous':'Gibosa Creciente','Full Moon':'Luna Llena','Waning Gibbous':'Gibosa Menguante','Last Quarter':'Cuarto Menguante','Waning Crescent':'Menguante' }[fase] || fase || 'Sin datos';
+    contenedor.innerHTML = `
+      <div class="card-lectura">
+        <div class="card-titulo">${_calMesActual ? '' : ''}${dia} de ${NOMBRES_MES[_calMesActual - 1]}</div>
+        <div class="card-cuerpo">${emoji} ${faseEs}${signoAbrev ? ` en ${signoEs(signoAbrev)}` : ''}</div>
+      </div>
+    `;
   }
 
   const ICONO_TIPO_EVENTO = { equinoccio: '🍂', eclipse: '🌑', cambio_planeta: '🪐', general: '✨' };
