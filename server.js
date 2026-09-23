@@ -1379,8 +1379,8 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
   try {
     const perfil = await leerPerfil(req);
     const hoy = new Date();
-    const anio = hoy.getUTCFullYear();
-    const mes = hoy.getUTCMonth() + 1;
+    const anio = parseInt(req.body?.anio) || hoy.getUTCFullYear();
+    const mes = parseInt(req.body?.mes) || (hoy.getUTCMonth() + 1);
     const diasEnMes = new Date(Date.UTC(anio, mes, 0)).getUTCDate();
 
     // Caché por usuario + mes/año — este cálculo cuesta ~32 créditos de API, no debe repetirse en cada clic
