@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v142-una-sola-forma-de-agregar -->
+<!-- VERSION-APP: v145-corrige-texto-cortado -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -678,7 +678,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v142-una-sola-forma-de-agregar</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v145-corrige-texto-cortado</div>
         </div>
 
         <div class="topbar">
@@ -3444,7 +3444,7 @@
                   <span style="font-size:13px;color:#2D1B4E;font-weight:500;">${nombre}${p.retrograde ? ' <span style="color:#a5442f;font-size:10.5px;font-weight:700;" title="Retrógrado">R</span>' : ''}</span>
                 </span>
                 <span style="display:flex;align-items:center;gap:7px;">
-                  <span style="width:12px;height:12px;flex:none;border-radius:50%;background:${colorTextoSigno(p.sign)};"></span>
+                  <span style="font-size:13px;color:${colorTextoSigno(p.sign)};">${glifoSigno(p.sign)}</span>
                   <span style="font-size:12.5px;font-weight:600;color:var(--ink-dim);">${gradoStr}</span>
                   <span style="font-size:12.5px;font-weight:700;color:${colorTextoSigno(p.sign)};">${signoEs(p.sign)}</span>
                 </span>
@@ -3721,18 +3721,49 @@
         throw new Error(data.error || 'No se pudo calcular.');
       }
       const _bcSin = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('sinastria-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
-      contenedor.innerHTML = _bcSin + renderizarSinastriaSimple(data.reporte);
+      const nombreOtra = document.getElementById('sin-carta-guardada').selectedOptions[0]?.textContent || 'esta persona';
+      contenedor.innerHTML = _bcSin + renderizarSinastriaSimple(data.reporte, nombreOtra);
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }
   }
 
   const VALENCIA_ES = {
-    harmonious: { emoji: '💚', label: 'Fluye fácil', frase: 'esta combinación se siente natural, sin mucho esfuerzo.' },
-    intense: { emoji: '🔥', label: 'Intenso', frase: 'aquí hay mucha energía — puede sentirse como atracción fuerte o como roce, según cómo se maneje.' },
-    mixed: { emoji: '⚡', label: 'Reto y crecimiento', frase: 'no es fácil, pero trabajado con madurez, ayuda a crecer a ambas.' },
+    harmonious: { emoji: '💚', label: 'Fluye fácil' },
+    intense: { emoji: '🔥', label: 'Intenso' },
+    mixed: { emoji: '⚡', label: 'Reto y crecimiento' },
   };
-  function renderizarSinastriaSimple(reporte) {
+  // Frases variadas por combinación de aspecto + valencia, para no repetir el mismo texto en cada conexión
+  const FRASE_POR_ASPECTO = {
+    'conjunction_harmonious': 'estos dos planetas se funden en una sola energía que fluye sin esfuerzo entre ustedes.',
+    'conjunction_intense': 'hay una fusión muy fuerte aquí — se sienten como una sola fuerza, para bien y a veces demasiado intensa.',
+    'conjunction_mixed': 'estas energías se mezclan de forma compleja; toma tiempo entender cómo conviven.',
+    'trine_harmonious': 'esta combinación se siente natural, sin mucho esfuerzo — fluye casi automáticamente.',
+    'trine_intense': 'hay una corriente fuerte de apoyo mutuo aquí, casi sin fricción.',
+    'sextile_harmonious': 'se abre una oportunidad fácil de aprovechar si ambas le ponen algo de intención.',
+    'sextile_mixed': 'hay potencial aquí, pero requiere que ambas lo activen conscientemente.',
+    'square_intense': 'aquí hay mucha energía — puede sentirse como atracción fuerte o como roce, según cómo se maneje.',
+    'square_mixed': 'genera fricción productiva: no es cómodo, pero puede empujar a ambas a crecer.',
+    'opposition_intense': 'hay un tira y afloja marcado — cada quien jala para su lado, y eso puede generar chispa o choque.',
+    'opposition_mixed': 'son como espejos que se atraen y confrontan a la vez; requiere equilibrio consciente.',
+  };
+  function fraseConexion(aspecto, valencia) {
+    return FRASE_POR_ASPECTO[`${aspecto}_${valencia}`]
+      || FRASE_POR_ASPECTO[`${aspecto}_mixed`]
+      || (valencia === 'harmonious' ? 'esta combinación se siente natural, sin mucho esfuerzo.'
+        : valencia === 'intense' ? 'aquí hay mucha energía — puede sentirse como atracción fuerte o como roce, según cómo se maneje.'
+        : 'no es fácil, pero trabajado con madurez, ayuda a crecer a ambas.');
+  }
+  function completarTextoCortado(texto, nombreOtra) {
+    if (!texto) return texto;
+    // Repara patrones donde el texto termina abruptamente después de "tú" (falta el nombre de la otra persona)
+    return texto
+      .replace(/\bentre\s+tú\.\s*/gi, `entre tú y ${nombreOtra}. `)
+      .replace(/\bentre\s+tú\s+y\s*\.\s*/gi, `entre tú y ${nombreOtra}. `)
+      .replace(/\by\s+tú\.\s*/gi, `y tú con ${nombreOtra}. `);
+  }
+  function renderizarSinastriaSimple(reporte, nombreOtra) {
+    nombreOtra = nombreOtra || 'esta persona';
     const d = reporte?.data || reporte || {};
     const score = d.overall_compatibility_score;
     const conexiones = (d.key_connections || []).slice(0, 10);
@@ -3750,13 +3781,22 @@
 
     if (conexiones.length) {
       html += `<div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin-bottom:8px;">Sus conexiones más importantes</div>`;
-      html += conexiones.map(c => {
-        const v = VALENCIA_ES[c.valence] || VALENCIA_ES.mixed;
+      // Agrupar las conexiones que comparten el mismo comentario (mismo aspecto+valencia) para no repetir texto
+      const grupos = new Map();
+      conexiones.forEach(c => {
+        const frase = fraseConexion(c.aspect, c.valence);
+        const clave = frase; // agrupamos por texto final, no solo por aspecto+valencia
+        if (!grupos.has(clave)) grupos.set(clave, { frase, valencia: c.valence, items: [] });
+        grupos.get(clave).items.push(c);
+      });
+      html += Array.from(grupos.values()).map(g => {
+        const v = VALENCIA_ES[g.valencia] || VALENCIA_ES.mixed;
+        const titulo = g.items.map(c => `${nombrePlanetaEs(c.p1)} ${aspectoEs(c.aspect)} ${nombrePlanetaEs(c.p2)}`).join(' · ');
         return `
           <div class="card-lectura" style="margin-bottom:8px;">
-            <div class="card-titulo" style="font-size:13px;">${nombrePlanetaEs(c.p1)} ${aspectoEs(c.aspect)} ${nombrePlanetaEs(c.p2)}</div>
+            <div class="card-titulo" style="font-size:13px;">${titulo}</div>
             <div style="font-size:11px;color:var(--marigold-dark);margin:2px 0 4px;">${v.emoji} ${v.label}</div>
-            <div class="card-cuerpo" style="color:var(--plum);">${v.frase}</div>
+            <div class="card-cuerpo" style="color:var(--plum);">${g.frase}</div>
           </div>
         `;
       }).join('');
@@ -3770,7 +3810,7 @@
             <div class="card-titulo" style="font-size:13px;">${a.area.replace(/\s*---\s*$/, '').trim()}</div>
             <div style="font-size:12px;font-weight:700;color:var(--marigold-dark);">${Math.round((a.compatibility_score || 0) * 100)}%</div>
           </div>
-          <div class="card-cuerpo" style="color:var(--ink-dim);">${a.description || ''}</div>
+          <div class="card-cuerpo" style="color:var(--ink-dim);">${completarTextoCortado(a.description, nombreOtra) || ''}</div>
         </div>
       `).join('');
     }
