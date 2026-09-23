@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v129-cerrar-biblioteca-consistente -->
+<!-- VERSION-APP: v133-personalidad-10-bloques -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -678,7 +678,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v129-cerrar-biblioteca-consistente</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v133-personalidad-10-bloques</div>
         </div>
 
         <div class="topbar">
@@ -1072,21 +1072,21 @@
             <div style="display:flex;gap:6px;margin-bottom:14px;" id="selector-plan">
               <div class="chip-plan" data-plan="mensual" onclick="elegirPlanSuscripcion('mensual')" style="flex:1;text-align:center;padding:9px 4px;border-radius:10px;cursor:pointer;background:rgba(255,255,255,0.22);border:1.5px solid #fff;">
                 <div style="font-size:11px;font-weight:600;">Mensual</div>
-                <div style="font-size:14px;font-weight:700;">$8.88</div>
+                <div style="font-size:14px;font-weight:700;">$4.99</div>
               </div>
               <div class="chip-plan" data-plan="semestral" onclick="elegirPlanSuscripcion('semestral')" style="flex:1;text-align:center;padding:9px 4px;border-radius:10px;cursor:pointer;background:rgba(255,255,255,0.08);border:1.5px solid transparent;">
                 <div style="font-size:11px;font-weight:600;">6 meses</div>
-                <div style="font-size:14px;font-weight:700;">$14.99</div>
+                <div style="font-size:14px;font-weight:700;">$25.99</div>
               </div>
               <div class="chip-plan" data-plan="anual" onclick="elegirPlanSuscripcion('anual')" style="flex:1;text-align:center;padding:9px 4px;border-radius:10px;cursor:pointer;background:rgba(255,255,255,0.08);border:1.5px solid transparent;position:relative;">
                 <div style="position:absolute;top:-9px;right:2px;background:var(--marigold);color:#fff;font-size:8.5px;font-weight:700;padding:2px 6px;border-radius:100px;">MEJOR</div>
                 <div style="font-size:11px;font-weight:600;">Anual</div>
-                <div style="font-size:14px;font-weight:700;">$29.99</div>
+                <div style="font-size:14px;font-weight:700;">$45.99</div>
               </div>
             </div>
             <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
               <div>
-                <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:#fff;line-height:1;" id="precio-plan-elegido">$8.88<span style="font-size:12px;color:var(--band-text-dim);font-family:'Work Sans',sans-serif;"> USD/mes</span></div>
+                <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:#fff;line-height:1;" id="precio-plan-elegido">$4.99<span style="font-size:12px;color:var(--band-text-dim);font-family:'Work Sans',sans-serif;"> USD/mes</span></div>
                 <div style="font-size:10.5px;color:var(--band-text-dim);">Cancela cuando quieras</div>
               </div>
               <button onclick="accionSuscribirse()" id="btn-suscribirse" style="background:var(--marigold);color:#fff;border:none;border-radius:100px;padding:11px 20px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;box-shadow:0 4px 12px rgba(201,168,76,0.4);">Suscribirme →</button>
@@ -3334,7 +3334,7 @@
   }
 
   let _planElegido = 'mensual';
-  const _PRECIOS_PLAN = { mensual: '$8.88<span style="font-size:12px;color:var(--band-text-dim);font-family:\'Work Sans\',sans-serif;"> USD/mes</span>', semestral: '$14.99<span style="font-size:12px;color:var(--band-text-dim);font-family:\'Work Sans\',sans-serif;"> USD/6 meses</span>', anual: '$29.99<span style="font-size:12px;color:var(--band-text-dim);font-family:\'Work Sans\',sans-serif;"> USD/año</span>' };
+  const _PRECIOS_PLAN = { mensual: '$4.99<span style="font-size:12px;color:var(--band-text-dim);font-family:\'Work Sans\',sans-serif;"> USD/mes</span>', semestral: '$25.99<span style="font-size:12px;color:var(--band-text-dim);font-family:\'Work Sans\',sans-serif;"> USD/6 meses</span>', anual: '$45.99<span style="font-size:12px;color:var(--band-text-dim);font-family:\'Work Sans\',sans-serif;"> USD/año</span>' };
   function elegirPlanSuscripcion(plan) {
     _planElegido = plan;
     document.querySelectorAll('#selector-plan .chip-plan').forEach(el => {
@@ -3713,10 +3713,64 @@
         throw new Error(data.error || 'No se pudo calcular.');
       }
       const _bcSin = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('sinastria-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
-      contenedor.innerHTML = _bcSin + renderizarInforme(data.reporte, null);
+      contenedor.innerHTML = _bcSin + renderizarSinastriaSimple(data.reporte);
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }
+  }
+
+  const VALENCIA_ES = {
+    harmonious: { emoji: '💚', label: 'Fluye fácil', frase: 'esta combinación se siente natural, sin mucho esfuerzo.' },
+    intense: { emoji: '🔥', label: 'Intenso', frase: 'aquí hay mucha energía — puede sentirse como atracción fuerte o como roce, según cómo se maneje.' },
+    mixed: { emoji: '⚡', label: 'Reto y crecimiento', frase: 'no es fácil, pero trabajado con madurez, ayuda a crecer a ambas.' },
+  };
+  function renderizarSinastriaSimple(reporte) {
+    const d = reporte?.data || reporte || {};
+    const score = d.overall_compatibility_score;
+    const conexiones = (d.key_connections || []).slice(0, 10);
+    const areas = d.life_area_compatibility || [];
+
+    let html = '';
+    if (typeof score === 'number') {
+      html += `
+        <div style="background:linear-gradient(135deg,var(--lilac),var(--plum));border-radius:14px;padding:16px;color:#fff;margin-bottom:14px;text-align:center;">
+          <div style="font-size:11px;opacity:0.85;text-transform:uppercase;letter-spacing:0.5px;">Compatibilidad general</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:700;">${Math.round(score * 100)}%</div>
+        </div>
+      `;
+    }
+
+    if (conexiones.length) {
+      html += `<div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin-bottom:8px;">Sus conexiones más importantes</div>`;
+      html += conexiones.map(c => {
+        const v = VALENCIA_ES[c.valence] || VALENCIA_ES.mixed;
+        return `
+          <div class="card-lectura" style="margin-bottom:8px;">
+            <div class="card-titulo" style="font-size:13px;">${nombrePlanetaEs(c.p1)} ${aspectoEs(c.aspect)} ${nombrePlanetaEs(c.p2)}</div>
+            <div style="font-size:11px;color:var(--marigold-dark);margin:2px 0 4px;">${v.emoji} ${v.label}</div>
+            <div class="card-cuerpo" style="color:var(--plum);">${v.frase}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    if (areas.length) {
+      html += `<div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin:14px 0 8px;">Compatibilidad por área de vida</div>`;
+      html += areas.map(a => `
+        <div class="card-lectura" style="margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <div class="card-titulo" style="font-size:13px;">${a.area.replace(/\s*---\s*$/, '').trim()}</div>
+            <div style="font-size:12px;font-weight:700;color:var(--marigold-dark);">${Math.round((a.compatibility_score || 0) * 100)}%</div>
+          </div>
+          <div class="card-cuerpo" style="color:var(--ink-dim);">${a.description || ''}</div>
+        </div>
+      `).join('');
+    }
+
+    if (!conexiones.length && !areas.length) {
+      html += renderizarInforme(reporte, null);
+    }
+    return html || '<div class="disclaimer">No se pudo mostrar el resultado.</div>';
   }
 
   async function verResumenNatal() {
@@ -3734,8 +3788,35 @@
         return;
       }
       const _cerrar_resumen_natal_ok = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('resumen-natal-contenedor').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
-      const informe = renderizarInforme(data.reporte, null); // sin boton extra
-      contenedor.innerHTML = _cerrar_resumen_natal_ok + informe;
+      const sintesis = data.reporte?.sintesis_10;
+      const CATEGORIAS_UI = [
+        ['mi_esencia', '✨ Mi esencia'], ['mis_emociones', '💧 Mis emociones'],
+        ['como_pienso', '💬 Cómo pienso y me comunico'], ['como_amo', '💗 Cómo amo'],
+        ['como_actuo', '🔥 Cómo actúo'], ['trabajo_vocacion', '💼 Trabajo y vocación'],
+        ['dinero_seguridad', '💰 Dinero y seguridad'], ['mis_relaciones', '🤝 Mis relaciones'],
+        ['mis_fortalezas', '🌟 Mis fortalezas'], ['mis_retos', '🌱 Mis retos y crecimiento'],
+      ];
+      let htmlPersonalidad = _cerrar_resumen_natal_ok;
+      if (sintesis && !sintesis._error) {
+        htmlPersonalidad += CATEGORIAS_UI.filter(([clave]) => sintesis[clave]).map(([clave, titulo]) => `
+          <div class="card-lectura" style="margin-bottom:10px;">
+            <div class="card-titulo">${titulo}</div>
+            <div class="card-cuerpo" style="margin-top:4px;">${sintesis[clave]}</div>
+          </div>
+        `).join('');
+        htmlPersonalidad += `
+          <div style="text-align:center;margin:14px 0;">
+            <button onclick="document.getElementById('base-astrologica-tecnica').style.display = document.getElementById('base-astrologica-tecnica').style.display === 'none' ? 'block' : 'none';" style="background:none;border:1px solid var(--line);border-radius:100px;padding:7px 16px;font-size:12px;color:var(--ink-dim);cursor:pointer;">Ver base astrológica ↓</button>
+          </div>
+          <div id="base-astrologica-tecnica" style="display:none;">
+            ${renderizarInforme(data.reporte, null)}
+          </div>
+        `;
+      } else {
+        // Si la síntesis falló por lo que sea, mostramos igual el detalle técnico completo (no dejamos a la usuaria sin nada)
+        htmlPersonalidad += renderizarInforme(data.reporte, null);
+      }
+      contenedor.innerHTML = htmlPersonalidad;
     } catch (err) {
       const _cerrar_resumen_natal_contenedor = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('resumen-natal-contenedor').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
       contenedor.innerHTML = _cerrar_resumen_natal_contenedor + `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
