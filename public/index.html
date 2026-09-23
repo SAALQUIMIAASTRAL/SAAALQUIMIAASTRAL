@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v141-personas-en-su-pestana -->
+<!-- VERSION-APP: v142-una-sola-forma-de-agregar -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -678,7 +678,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v141-personas-en-su-pestana</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v142-una-sola-forma-de-agregar</div>
         </div>
 
         <div class="topbar">
@@ -826,18 +826,10 @@
             <div class="calc-form">
               <label>¿Con quién?
                 <select id="sin-carta-guardada" onchange="cambiarModoSinastria()" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;">
-                  <option value="">✏️ Escribir datos de una persona nueva</option>
+                  <option value="">Elige a alguien de "Tus personas" arriba ↑</option>
                 </select>
               </label>
-              <div id="sin-campos-nuevos">
-                <label>Nombre de la otra persona<input type="text" id="sin-nombre" placeholder="Ej. David"></label>
-                <div class="calc-row">
-                  <label>Fecha de nacimiento<input type="date" id="sin-fecha"></label>
-                  <label>Hora<input type="time" id="sin-hora" value="12:00"></label>
-                </div>
-                <label>Ciudad de nacimiento<input type="text" id="sin-ciudad" placeholder="Ej. Ciudad de México"></label>
-                <label>País<select id="sin-pais" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;"><option value="">Selecciona el país</option></select></label>
-              </div>
+              <div id="sin-campos-nuevos" style="display:none;"></div>
               <button class="btn-primary" onclick="calcularSinastria()">Ver compatibilidad</button>
               <button class="btn-primary" style="background:var(--lilac);margin-top:8px;" onclick="calcularCartaCompuesta()">Carta compuesta — ¿qué pasa entre nosotros?</button>
               <div id="sinastria-resultado" style="margin-top:14px;"></div>
@@ -1660,7 +1652,7 @@
 
       const selectorSin = document.getElementById('sin-carta-guardada');
       if (selectorSin) {
-        selectorSin.innerHTML = '<option value="">✏️ Escribir datos de una persona nueva</option>' +
+        selectorSin.innerHTML = '<option value="">Elige a alguien de "Tus personas" arriba ↑</option>' +
           (data.cartas || []).map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
       }
     } catch (e) {
@@ -3635,17 +3627,8 @@
     if (idGuardada) {
       cuerpo = { otra_carta_id: idGuardada };
     } else {
-      cuerpo = {
-        nombre: document.getElementById('sin-nombre').value.trim(),
-        fecha_nacimiento: document.getElementById('sin-fecha').value,
-        hora_nacimiento: document.getElementById('sin-hora').value || '12:00',
-        ciudad_nacimiento: document.getElementById('sin-ciudad').value.trim(),
-        pais_codigo: document.getElementById('sin-pais').value,
-      };
-      if (!cuerpo.nombre || !cuerpo.fecha_nacimiento) {
-        contenedor.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Llena los datos de la otra persona primero.</div>';
-        return;
-      }
+      contenedor.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Primero elige a alguien de "Tus personas" arriba, o agrega a esa persona con el botón "+ Agregar".</div>';
+      return;
     }
     contenedor.innerHTML = '<div class="disclaimer">Calculando carta compuesta...</div>';
     try {
@@ -3722,17 +3705,8 @@
     if (idGuardada) {
       cuerpo = { otra_carta_id: idGuardada };
     } else {
-      cuerpo = {
-        nombre: document.getElementById('sin-nombre').value.trim(),
-        fecha_nacimiento: document.getElementById('sin-fecha').value,
-        hora_nacimiento: document.getElementById('sin-hora').value || '12:00',
-        ciudad_nacimiento: document.getElementById('sin-ciudad').value.trim(),
-        pais_codigo: document.getElementById('sin-pais').value,
-      };
-      if (!cuerpo.nombre || !cuerpo.fecha_nacimiento) {
-        contenedor.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Llena al menos nombre y fecha de nacimiento.</div>';
-        return;
-      }
+      contenedor.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Primero elige a alguien de "Tus personas" arriba, o agrega a esa persona con el botón "+ Agregar".</div>';
+      return;
     }
     contenedor.innerHTML = '<div class="disclaimer">Calculando compatibilidad...</div>';
     try {
