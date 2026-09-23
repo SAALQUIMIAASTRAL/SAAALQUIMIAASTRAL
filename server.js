@@ -1301,7 +1301,24 @@ app.get('/otras-cartas', requireLogin, async (req, res) => {
     .select('id, nombre, fecha_nacimiento, ciudad_nacimiento, created_at')
     .order('created_at', { ascending: true });
   if (error) return res.status(400).json({ error: error.message });
-  res.json({ cartas: data || [] });
+
+  // Diagnóstico: comparamos contra el cliente admin (sin RLS) para detectar
+  // si RLS está bloqueando filas que sí existen en la tabla
+  let debug = null;
+  try {
+    const { data: todasAdmin } = await supabase
+      .from('otras_cartas')
+      .select('id, user_id, nombre')
+      .eq('user_id', req.userId);
+    debug = {
+      filas_con_rls: (data || []).length,
+      filas_sin_rls_mismo_user_id: (todasAdmin || []).length,
+      ids_con_rls: (data || []).map(c => c.id),
+      ids_sin_rls: (todasAdmin || []).map(c => c.id),
+    };
+  } catch (eDebug) { debug = { error_debug: eDebug.message }; }
+
+  res.json({ cartas: data || [], debug });
 });
 
 // RUTA: Próximos eclipses y cómo afectan tu carta natal
