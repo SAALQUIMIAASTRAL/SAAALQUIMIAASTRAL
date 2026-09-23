@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v136-conteo-solo-ultimos-10-dias -->
+<!-- VERSION-APP: v137-compuesta-capas -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -678,7 +678,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v136-conteo-solo-ultimos-10-dias</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v137-compuesta-capas</div>
         </div>
 
         <div class="topbar">
@@ -3651,13 +3651,24 @@
         html += renderizarInforme(data.reseña, null);
       }
 
-      // Carta compuesta — posiciones
+      // Carta compuesta — posiciones (detalle técnico, oculto por defecto)
       const cd = data.carta_compuesta?.chart_data || data.carta_compuesta?.data?.chart_data;
+      let htmlTecnico = '';
       if (cd?.planetary_positions?.length) {
-        html += `<div class="etiqueta-seccion" style="margin-top:12px;">Carta compuesta (punto medio)</div>`;
-        html += cd.planetary_positions.map(p => `
+        htmlTecnico += cd.planetary_positions.map(p => `
           <div class="carta-real-row">${nombrePlanetaEs(p.name)} en <b>${signoEs(p.sign)} ${p.degree !== undefined ? Math.floor(p.degree)+'°' : ''}</b>${p.house ? ` <span style="color:var(--ink-dim);font-size:11px;">Casa ${p.house}</span>` : ''}</div>
         `).join('');
+      }
+      if (htmlTecnico) {
+        html += `
+          <div style="text-align:center;margin:14px 0;">
+            <button onclick="document.getElementById('compuesta-base-tecnica').style.display = document.getElementById('compuesta-base-tecnica').style.display === 'none' ? 'block' : 'none';" style="background:none;border:1px solid var(--line);border-radius:100px;padding:7px 16px;font-size:12px;color:var(--ink-dim);cursor:pointer;">Ver base astrológica ↓</button>
+          </div>
+          <div id="compuesta-base-tecnica" style="display:none;">
+            <div class="etiqueta-seccion">Carta compuesta (punto medio)</div>
+            ${htmlTecnico}
+          </div>
+        `;
       }
 
       // Dinámica ahora — qué pasa entre ustedes HOY
