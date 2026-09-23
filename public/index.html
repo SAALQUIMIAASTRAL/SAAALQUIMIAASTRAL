@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v134-saludo-festivo-temporada -->
+<!-- VERSION-APP: v136-conteo-solo-ultimos-10-dias -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -678,7 +678,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v134-saludo-festivo-temporada</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v136-conteo-solo-ultimos-10-dias</div>
         </div>
 
         <div class="topbar">
@@ -1414,25 +1414,17 @@
     const { next, days, hours } = getNextSeasonChange(now);
     const esEquinoccioOSolsticio = ['Aries','Cáncer','Libra','Capricornio'].includes(next.sign);
     const palabra = esEquinoccioOSolsticio ? (next.sign === 'Aries' || next.sign === 'Libra' ? 'equinoccio' : 'solsticio') : 'entrada';
-    let textoFaltante;
+    let textoFaltante = '';
     if (hours < 1) textoFaltante = `¡Es hoy! Faltan ${Math.round(hours * 60)} minutos para el ${palabra}/entrada a ${next.sign} ${next.emoji}`;
     else if (hours < 24) textoFaltante = `¡Es hoy! Faltan ${Math.round(hours)} horas para el ${palabra}/entrada a ${next.sign} ${next.emoji}`;
-    else if (days <= 14) textoFaltante = `Faltan ${days} días para el ${palabra}/entrada a ${next.sign} ${next.emoji}`;
-    else textoFaltante = `Entra ${next.sign} en ${days} días`;
+    else if (days <= 10) textoFaltante = `Faltan ${days} días para el ${palabra}/entrada a ${next.sign} ${next.emoji}`;
+    // si faltan más de 10 días, no mostramos nada del siguiente signo todavía
 
-    // ¿Apenas entramos a este signo? (dentro de las últimas 48 horas) — saludo festivo
-    let horasDesdeInicio = Infinity;
-    for (const c of CAMBIOS_DE_SIGNO_2026) {
-      const inicio = new Date(c.start);
-      if (inicio <= now) horasDesdeInicio = (now - inicio) / 3600000;
-    }
-    const tituloActual = horasDesdeInicio <= 48
-      ? `${current.emoji} ¡Feliz entrada a ${current.sign}! ✨`
-      : `${current.emoji} Temporada de ${current.sign}`;
+    const tituloActual = `${current.emoji} ¡Feliz temporada ${current.sign}! Feliz retorno solar a todos los ${current.sign} ✨`;
 
     el.innerHTML = `
       <span class="now">${tituloActual}</span>
-      <span class="next">${textoFaltante}</span>
+      ${textoFaltante ? `<span class="next">${textoFaltante}</span>` : ''}
     `;
   })();
 
