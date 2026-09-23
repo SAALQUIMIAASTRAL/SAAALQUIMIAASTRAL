@@ -1719,27 +1719,24 @@ app.post('/transitos-personales', requireLogin, async (req, res) => {
           end_date: { year: en30dias.getUTCFullYear(), month: en30dias.getUTCMonth() + 1, day: en30dias.getUTCDate() },
         },
       },
-      orb: 1,
+      orb: 5,
+      active_points: ['Sun', 'Moon', 'Mercury', 'Venus', 'Saturn', 'Pluto', 'Neptune', 'Uranus', 'Mean_Lilith', 'Chiron'],
       report_options: { tradition: 'psychological', language: 'es' },
     });
 
-    // Deduplicar: si el mismo planeta+aspecto+punto aparece varios días seguidos,
-    // solo mostrar el de orbe más pequeño (el más exacto)
-    const eventos = respuesta.data?.data?.events || respuesta.data?.events || [];
-    const vistos = new Map();
-    eventos.forEach(ev => {
-      const clave = `${ev.transiting_planet}-${ev.aspect_type}-${ev.natal_planet || ev.stationed_planet}`;
-      const orbeAbs = Math.abs(ev.orb || 99);
-      if (!vistos.has(clave) || orbeAbs < Math.abs(vistos.get(clave).orb || 99)) {
-        vistos.set(clave, ev);
-      }
+    // Ordenar cronológicamente por fecha (el API no garantiza el orden)
+    const eventosCrudos = respuesta.data?.data?.events || respuesta.data?.events || [];
+    const obtenerFecha = (ev) => ev.date_local || ev.date || ev.exact_date || ev.transit_date || null;
+    const eventosOrdenados = [...eventosCrudos].sort((a, b) => {
+      const fa = obtenerFecha(a), fb = obtenerFecha(b);
+      if (!fa || !fb) return 0;
+      return new Date(fa) - new Date(fb);
     });
-    const eventosUnicos = Array.from(vistos.values());
 
-    // Inyectar los eventos deduplicados de vuelta en la respuesta
+    // Inyectar los eventos ordenados de vuelta en la respuesta
     const datosLimpios = { ...respuesta.data };
-    if (datosLimpios?.data?.events) datosLimpios.data.events = eventosUnicos;
-    else if (datosLimpios?.events) datosLimpios.events = eventosUnicos;
+    if (datosLimpios?.data?.events) datosLimpios.data.events = eventosOrdenados;
+    else if (datosLimpios?.events) datosLimpios.events = eventosOrdenados;
 
     const respuestaTransitos = { transitos: datosLimpios };
     await traducirInterpretacionesEnObjeto(respuestaTransitos);
