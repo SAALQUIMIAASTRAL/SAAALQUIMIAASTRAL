@@ -58,7 +58,7 @@ const hoyStr = () => new Date().toISOString().slice(0, 10);
 const horaStr = () => new Date().toISOString().slice(0, 13);
 
 // Versión del servidor: visítala en /version para saber qué está corriendo en Render
-const VERSION_APP = 'v154-google-play-compliant';
+const VERSION_APP = 'v2.0';
 app.get('/version', (req, res) => res.json({ version: VERSION_APP }));
 // Reportar contenido generado con IA (cumplimiento de Google Play)
 app.post('/reportar-contenido-ia', async (req, res) => {
