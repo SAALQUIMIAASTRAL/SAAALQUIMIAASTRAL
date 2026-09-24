@@ -77,48 +77,96 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 // ---- Conexión a Astrology API ----
 // Traduce una lista de textos al español con Claude (mucho más confiable que reemplazos de palabras sueltas).
 // Si falla, regresa los textos originales sin tronar la sección.
-async function traducirBloque(lista) {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    console.error('traducirBloque: falta ANTHROPIC_API_KEY en las variables de entorno');
-    return { textos: lista, debug: 'Falta la variable de entorno ANTHROPIC_API_KEY en Render.' };
-  }
+// Versión de las reglas de traducción. Si se sube este número, los reportes guardados
+// en Supabase se revisan una vez y se corrigen las palabras que quedaron en inglés.
+const TRADUCCION_VERSION = 2;
+
+// Detector de inglés: palabras comunes que no existen en español + terminaciones típicas
+// (gracious, harmonious, deeply, kindness...). Usa límites Unicode para no confundir acentos.
+const PALABRAS_INGLES = ['the','and','with','your','you','is','are','of','to','for','which','this','that','their','they','through','into','about','between','while','will','may','be','been','being','who','when','where','what','it','its','or','not','but','also','more','most','very','these','those','there','from','by','on','at','in','an'];
+const RE_PALABRAS_INGLES = new RegExp(`(?<!\\p{L})(${PALABRAS_INGLES.join('|')})(?!\\p{L})`, 'iu');
+const RE_SUFIJOS_INGLES = /(?<!\p{L})[a-z]\p{Ll}*(?:ous|ness|ful|ship|ly)(?!\p{L})/u;
+function tieneIngles(texto) {
+  return typeof texto === 'string' && (RE_PALABRAS_INGLES.test(texto) || RE_SUFIJOS_INGLES.test(texto));
+}
+
+const INSTRUCCIONES_TRADUCCION = `Eres una astróloga profesional mexicana que traduce y corrige textos de astrología al español de México.
+Reglas obligatorias:
+1. Los textos pueden llegar en inglés, en español o mezclados. SIEMPRE devuélvelos 100% en español.
+2. No dejes NINGUNA palabra en inglés (por ejemplo, "gracious" debe quedar como "amable" o "encantadora"). La única excepción son nombres propios de personas.
+3. Si un texto ya está en buen español, devuélvelo igual; solo corrige palabras en inglés o frases que suenen a traducción literal.
+4. Español neutro de México/Latinoamérica, tono cálido y profesional, sin modismos de España ("vosotros", "vale", "ordenador").
+5. Usa la terminología astrológica en español: Ascendente, Medio Cielo, Nodo Norte, Nodo Sur, casa, tránsito, aspecto, conjunción, oposición, trígono, cuadratura, sextil, Parte de la Fortuna, retrógrado.
+6. Conserva el sentido original. No inventes información ni agregues comentarios.
+Formato: responde ÚNICAMENTE con un array JSON de strings, en el mismo orden y con la misma cantidad de elementos que recibiste, sin markdown ni explicaciones.`;
+
+// Llama a Claude con una lista de textos y regresa el array traducido (o lanza error)
+async function llamarClaudeTraduccion(lista, avisoExtra = '') {
+  const controlador = new AbortController();
+  const timeoutId = setTimeout(() => controlador.abort(), 40000);
   try {
-    const prompt = `Traduce cada uno de estos textos de astrología al español de México/Latinoamérica, natural y con tono cálido y profesional (no traducción literal palabra por palabra, y sin modismos de España como "vosotros" o "vale"). Responde ÚNICAMENTE con un array JSON de strings, en el mismo orden, sin explicación ni markdown:\n\n${JSON.stringify(lista)}`;
-    const controlador = new AbortController();
-    const timeoutId = setTimeout(() => controlador.abort(), 40000);
     const respuesta = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 8000, messages: [{ role: 'user', content: prompt }] }),
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 8000,
+        temperature: 0.2,
+        system: INSTRUCCIONES_TRADUCCION + (avisoExtra ? `\n\n${avisoExtra}` : ''),
+        messages: [{ role: 'user', content: JSON.stringify(lista) }],
+      }),
       signal: controlador.signal,
     });
-    clearTimeout(timeoutId);
     const datos = await respuesta.json();
-    if (!respuesta.ok) {
-      console.error('traducirBloque: Anthropic respondió', respuesta.status, JSON.stringify(datos).slice(0, 800));
-      return { textos: lista, debug: `Anthropic respondió ${respuesta.status}: ${JSON.stringify(datos).slice(0, 500)}` };
-    }
+    if (!respuesta.ok) throw new Error(`Anthropic respondió ${respuesta.status}: ${JSON.stringify(datos).slice(0, 500)}`);
     let texto = (datos.content?.[0]?.text || '[]').trim();
     texto = texto.replace(/^```(json)?/i, '').replace(/```$/, '').trim();
     const inicio = texto.indexOf('[');
     const fin = texto.lastIndexOf(']');
     if (inicio !== -1 && fin !== -1 && fin > inicio) texto = texto.slice(inicio, fin + 1);
     let traducidos;
-    try {
-      traducidos = JSON.parse(texto);
-    } catch (eParse) {
-      console.error('traducirBloque: no se pudo parsear. Texto crudo:', texto.slice(0, 800));
-      return { textos: lista, debug: `No se pudo parsear como JSON. Texto crudo: ${texto.slice(0, 500)}` };
-    }
+    try { traducidos = JSON.parse(texto); }
+    catch (eParse) { throw new Error(`No se pudo parsear como JSON. Texto crudo: ${texto.slice(0, 500)}`); }
     if (!Array.isArray(traducidos) || traducidos.length !== lista.length) {
-      console.error('traducirBloque: tamaño no coincide. Esperado', lista.length, 'recibido', Array.isArray(traducidos) ? traducidos.length : typeof traducidos);
-      return { textos: lista, debug: `Array no coincide en tamaño. Esperado ${lista.length}, recibido ${Array.isArray(traducidos) ? traducidos.length : typeof traducidos}` };
+      throw new Error(`Array no coincide en tamaño. Esperado ${lista.length}, recibido ${Array.isArray(traducidos) ? traducidos.length : typeof traducidos}`);
     }
-    return { textos: traducidos, debug: null };
+    return traducidos;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+// Traduce un bloque de textos. Después revisa si quedó alguna palabra en inglés y, si es así,
+// manda SOLO esos textos a una segunda pasada de corrección. Si algo falla, regresa los textos
+// originales sin tronar la sección.
+async function traducirBloque(lista) {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    console.error('traducirBloque: falta ANTHROPIC_API_KEY en las variables de entorno');
+    return { textos: lista, debug: 'Falta la variable de entorno ANTHROPIC_API_KEY en Render.' };
+  }
+  let traducidos;
+  try {
+    traducidos = await llamarClaudeTraduccion(lista);
   } catch (e) {
     console.error('traducirBloque falló:', e.message);
-    return { textos: lista, debug: 'Excepción: ' + e.message };
+    return { textos: lista, debug: e.message };
   }
+  // Segunda pasada: solo los textos que todavía traen inglés
+  const pendientes = traducidos.map((t, i) => ({ t, i })).filter(x => tieneIngles(x.t));
+  if (pendientes.length) {
+    try {
+      const corregidos = await llamarClaudeTraduccion(
+        pendientes.map(x => x.t),
+        'ATENCIÓN: estos textos todavía contienen palabras en inglés. Reescríbelos completamente en español natural, sin dejar ninguna palabra en inglés.'
+      );
+      pendientes.forEach((x, k) => { if (corregidos[k]) traducidos[x.i] = corregidos[k]; });
+      const siguenMal = traducidos.filter(tieneIngles).length;
+      if (siguenMal) console.warn(`traducirBloque: ${siguenMal} texto(s) aún parecen tener inglés tras la corrección`);
+    } catch (e) {
+      console.error('traducirBloque (segunda pasada) falló:', e.message);
+    }
+  }
+  return { textos: traducidos, debug: null };
 }
 
 // Traduce una lista completa dividiéndola en bloques de 25 (respuestas grandes como
@@ -139,23 +187,35 @@ async function traducirTextosConIA(textos) {
 // summary, advice, judgment) en cualquier nivel anidado de una respuesta, y lo traduce
 // con IA en el mismo lugar. Así no dependemos de conocer la forma exacta de cada endpoint.
 const CAMPOS_INTERPRETATIVOS = ['interpretation', 'description', 'meaning', 'summary', 'advice', 'judgment', 'answer', 'text', 'narrative', 'analysis'];
-async function traducirInterpretacionesEnObjeto(raiz) {
+async function traducirInterpretacionesEnObjeto(raiz, filtro = null) {
   const objetos = [];
   function buscar(obj) {
     if (!obj || typeof obj !== 'object') return;
     if (Array.isArray(obj)) { obj.forEach(buscar); return; }
     for (const campo of CAMPOS_INTERPRETATIVOS) {
-      if (typeof obj[campo] === 'string' && obj[campo].trim().length > 3) objetos.push({ obj, campo });
+      const valor = obj[campo];
+      if (typeof valor === 'string' && valor.trim().length > 3 && (!filtro || filtro(valor))) objetos.push({ obj, campo });
     }
     for (const key of Object.keys(obj)) {
       if (obj[key] && typeof obj[key] === 'object') buscar(obj[key]);
     }
   }
   buscar(raiz);
-  if (!objetos.length) return 0;
-  const { textos: traducidos } = await traducirTextosConIA(objetos.map(o => o.obj[o.campo]));
+  if (!objetos.length) return { total: 0, debug: null };
+  const { textos: traducidos, debug } = await traducirTextosConIA(objetos.map(o => o.obj[o.campo]));
   objetos.forEach((o, i) => { if (traducidos[i]) o.obj[o.campo] = traducidos[i]; });
-  return objetos.length;
+  return { total: objetos.length, debug };
+}
+
+// Reportes guardados en Supabase con reglas de traducción viejas: corrige SOLO los textos
+// que traen inglés (sin volver a gastar créditos de Astrology API) y marca la versión nueva.
+// Regresa true si hay que guardar el reporte actualizado.
+async function actualizarTraduccionDeCache(reporte) {
+  if (!reporte || typeof reporte !== 'object' || reporte._trad_v === TRADUCCION_VERSION) return false;
+  const { debug } = await traducirInterpretacionesEnObjeto(reporte, tieneIngles);
+  if (debug) return false; // si Claude falló, no marcamos versión para reintentar la próxima vez
+  reporte._trad_v = TRADUCCION_VERSION;
+  return true;
 }
 
 // Toma los 40-70 fragmentos técnicos crudos de la carta natal (planeta+signo, planeta+casa,
@@ -578,7 +638,11 @@ app.post('/resumen-natal', requireLogin, async (req, res) => {
       .maybeSingle();
 
     if (cartaExistente?.resumen_cache && !req.body?.forzar) {
-      return res.json({ reporte: cartaExistente.resumen_cache, desde_cache: true });
+      const cache = cartaExistente.resumen_cache;
+      if (await actualizarTraduccionDeCache(cache)) {
+        await req.supabase.from('natal_charts').update({ resumen_cache: cache }).eq('id', cartaExistente.id);
+      }
+      return res.json({ reporte: cache, desde_cache: true });
     }
 
     const perfil = await leerPerfil(req);
@@ -592,7 +656,7 @@ app.post('/resumen-natal', requireLogin, async (req, res) => {
     await traducirInterpretacionesEnObjeto(respuesta.data);
 
     const sintesis10 = await sintetizarPersonalidad10Bloques(respuesta.data?.data?.interpretations || []);
-    const reporteFinal = { ...respuesta.data, sintesis_10: sintesis10 };
+    const reporteFinal = { ...respuesta.data, sintesis_10: sintesis10, _trad_v: TRADUCCION_VERSION };
 
     if (cartaExistente?.id) {
       await req.supabase.from('natal_charts').update({ resumen_cache: reporteFinal }).eq('id', cartaExistente.id);
@@ -1120,7 +1184,11 @@ app.post('/sinastria', requireLogin, async (req, res) => {
 
       // ¿Ya calculamos esta sinastría antes? Si sí, la regresamos sin gastar créditos
       if (persona.sinastria_cache) {
-        return res.json({ reporte: persona.sinastria_cache, desde_cache: true });
+        const cache = persona.sinastria_cache;
+        if (await actualizarTraduccionDeCache(cache)) {
+          await req.supabase.from('otras_cartas').update({ sinastria_cache: cache }).eq('id', persona.id);
+        }
+        return res.json({ reporte: cache, desde_cache: true });
       }
       datosOtraPersona = birthDataDesdePerfil(persona, persona.nombre);
     } else {
@@ -1155,6 +1223,7 @@ app.post('/sinastria', requireLogin, async (req, res) => {
       objetosConInterpretacion.forEach((o, i) => { if (traducidos[i]) o.interpretation = traducidos[i]; });
     }
 
+    if (respuesta.data && typeof respuesta.data === 'object') respuesta.data._trad_v = TRADUCCION_VERSION;
     if (personaGuardada) {
       await req.supabase.from('otras_cartas').update({ sinastria_cache: respuesta.data }).eq('id', personaGuardada.id);
     }
@@ -1205,7 +1274,11 @@ app.post('/otras-cartas/:id/resumen', requireLogin, async (req, res) => {
     if (error || !persona) return res.status(400).json({ error: 'No se encontró esa carta.' });
 
     if (persona.resumen_cache) {
-      return res.json({ reporte: persona.resumen_cache, desde_cache: true });
+      const cache = persona.resumen_cache;
+      if (await actualizarTraduccionDeCache(cache)) {
+        await req.supabase.from('otras_cartas').update({ resumen_cache: cache }).eq('id', persona.id);
+      }
+      return res.json({ reporte: cache, desde_cache: true });
     }
 
     const respuesta = await astrologyApi.post('/analysis/natal-report', {
@@ -1213,6 +1286,8 @@ app.post('/otras-cartas/:id/resumen', requireLogin, async (req, res) => {
       report_options: { tradition: 'psychological', language: 'es' },
     });
 
+    await traducirInterpretacionesEnObjeto(respuesta.data);
+    if (respuesta.data && typeof respuesta.data === 'object') respuesta.data._trad_v = TRADUCCION_VERSION;
     await req.supabase.from('otras_cartas').update({ resumen_cache: respuesta.data }).eq('id', persona.id);
 
     res.json({ reporte: respuesta.data, desde_cache: false });
