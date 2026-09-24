@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v151-recuperar-contrasena -->
+<!-- VERSION-APP: v153-pagos-plataforma-traducciones -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -708,7 +708,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v151-recuperar-contrasena</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v153-pagos-plataforma-traducciones</div>
         </div>
 
         <div class="topbar">
@@ -2964,6 +2964,7 @@
     if (!document.getElementById('registro-acepta-terminos').checked) {
       return mostrarErrorEn('registro-error', 'Debes aceptar los Términos y Condiciones y el Aviso de Privacidad para continuar.');
     }
+    limpiarSesionLocal(); // candado: ninguna sesión vieja sobrevive al crear una cuenta nueva
     const r = await fetch('/auth/registro', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
@@ -2978,13 +2979,7 @@
     });
     const dataLogin = await rLogin.json();
     if (rLogin.ok && dataLogin.sesion) {
-      SESION.token = dataLogin.sesion.access_token;
-      SESION.refresh = dataLogin.sesion.refresh_token || null;
-      SESION.email = email;
-      localStorage.setItem('saa_token', SESION.token);
-      if (SESION.refresh) localStorage.setItem('saa_refresh', SESION.refresh);
-      localStorage.setItem('saa_email', email);
-      await revisarPerfilYArrancar();
+      guardarSesionYReiniciar(dataLogin.sesion.access_token, dataLogin.sesion.refresh_token || null, email);
     } else {
       document.getElementById('login-email').value = email;
       mostrarPantalla('login');
@@ -2996,6 +2991,7 @@
     ocultarErrorEn('login-error');
     const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-pass').value;
+    limpiarSesionLocal(); // candado: se descarta cualquier sesión anterior antes de entrar
     const r = await fetch('/auth/login', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
@@ -3008,13 +3004,7 @@
         : (crudo || 'Correo o contraseña incorrectos.');
       return mostrarErrorEn('login-error', mensaje);
     }
-    SESION.token = data.sesion.access_token;
-    SESION.email = data.usuario?.email || email;
-    SESION.refresh = data.sesion.refresh_token || null;
-    localStorage.setItem('saa_token', SESION.token);
-    if (SESION.refresh) localStorage.setItem('saa_refresh', SESION.refresh);
-    if (SESION.email) localStorage.setItem('saa_email', SESION.email);
-    await revisarPerfilYArrancar();
+    guardarSesionYReiniciar(data.sesion.access_token, data.sesion.refresh_token || null, data.usuario?.email || email);
   }
 
   let _timerBusquedaCiudad = null;
@@ -3087,11 +3077,26 @@
     entrarALaApp(data.perfil);
   }
 
-  function cerrarSesion() {
+  // ---- Candado de sesión ----
+  // Borra por completo la sesión guardada (token, correo, estado de suscripción) para que
+  // nunca se mezclen datos de una cuenta anterior con la nueva.
+  function limpiarSesionLocal() {
     localStorage.removeItem('saa_token');
     localStorage.removeItem('saa_refresh');
     localStorage.removeItem('saa_email');
-    SESION = { token: null, nombre: null };
+    SESION = { token: null, refresh: null, email: null, nombre: null, suscripcion: null };
+  }
+  // Guarda la sesión nueva y recarga la app desde cero: así se borra de la memoria cualquier
+  // carta, nombre o dato de la cuenta anterior, y todo se carga limpio para la cuenta nueva.
+  function guardarSesionYReiniciar(token, refresh, email) {
+    localStorage.setItem('saa_token', token);
+    if (refresh) localStorage.setItem('saa_refresh', refresh);
+    if (email) localStorage.setItem('saa_email', email);
+    window.location.reload();
+  }
+
+  function cerrarSesion() {
+    limpiarSesionLocal();
     mostrarPantalla('login');
   }
 
