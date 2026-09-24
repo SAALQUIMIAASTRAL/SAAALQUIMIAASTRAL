@@ -324,6 +324,46 @@ app.post('/auth/refresh', async (req, res) => {
 });
 
 // ============================================================
+// RUTA: Solicitar recuperación de contraseña (envía correo con link)
+// ============================================================
+app.post('/auth/olvide-password', async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'Falta el correo.' });
+  const urlBase = process.env.APP_PUBLIC_URL || `${req.protocol}://${req.get('host')}`;
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${urlBase}/restablecer.html`,
+  });
+  // Por seguridad, siempre respondemos "ok" aunque el correo no exista (evita revelar qué correos están registrados)
+  if (error) console.error('Error al enviar correo de recuperación:', error.message);
+  res.json({ mensaje: 'Si ese correo está registrado, te enviamos un enlace para restablecer tu contraseña.' });
+});
+
+// ============================================================
+// RUTA: Completar el restablecimiento con el token que llega en el link del correo
+// ============================================================
+app.post('/auth/restablecer-password', async (req, res) => {
+  const { access_token, nueva_password } = req.body;
+  if (!access_token || !nueva_password) return res.status(400).json({ error: 'Faltan datos.' });
+  if (nueva_password.length < 6) return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres.' });
+  try {
+    const r = await fetch(`${process.env.SUPABASE_URL}/auth/v1/user`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': process.env.SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${access_token}`,
+      },
+      body: JSON.stringify({ password: nueva_password }),
+    });
+    const data = await r.json();
+    if (!r.ok) return res.status(400).json({ error: data.msg || data.error_description || 'No se pudo actualizar la contraseña. El enlace puede haber expirado.' });
+    res.json({ mensaje: 'Contraseña actualizada correctamente.' });
+  } catch (e) {
+    res.status(500).json({ error: 'Error al actualizar la contraseña.' });
+  }
+});
+
+// ============================================================
 // RUTA: Buscar ciudad con coordenadas reales (evita fallos silenciosos
 // cuando el nombre de la ciudad no coincide exacto con lo que la API de
 // astrología reconoce por su cuenta)
