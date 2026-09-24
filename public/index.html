@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v150-traduccion-transitos-corregida -->
+<!-- VERSION-APP: v151-recuperar-contrasena -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -494,8 +494,19 @@
           <div class="auth-error" id="login-error"></div>
           <div class="auth-field"><label>Correo</label><input type="email" id="login-email"></div>
           <div class="auth-field"><label>Contraseña</label><input type="password" id="login-pass"></div>
+          <div style="text-align:right;margin:-8px 0 14px;"><a onclick="mostrarPantalla('olvide')" style="font-size:12px;color:var(--ink-dim);cursor:pointer;text-decoration:underline;">¿Olvidaste tu contraseña?</a></div>
           <button class="btn-primary" onclick="accionLogin()">Entrar</button>
           <div class="auth-switch">¿Aún no tienes cuenta? <a onclick="mostrarPantalla('registro')">Regístrate gratis</a></div>
+        </div>
+
+        <!-- Pantalla de OLVIDÉ MI CONTRASEÑA -->
+        <div class="auth-overlay" id="pantalla-olvide">
+          <h1 style="text-align:center;">Recuperar contraseña</h1>
+          <div class="sub" style="text-align:center;margin-bottom:20px;">Te mandamos un enlace a tu correo para crear una nueva.</div>
+          <div class="auth-error" id="olvide-error"></div>
+          <div class="auth-field"><label>Correo</label><input type="email" id="olvide-email"></div>
+          <button class="btn-primary" onclick="pedirRecuperacion()">Enviar enlace</button>
+          <div class="auth-switch"><a onclick="mostrarPantalla('login')">← Regresar a iniciar sesión</a></div>
         </div>
 
 
@@ -678,7 +689,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v150-traduccion-transitos-corregida</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v151-recuperar-contrasena</div>
         </div>
 
         <div class="topbar">
@@ -2873,6 +2884,25 @@
   function mostrarPantalla(nombre) {
     document.querySelectorAll('.auth-overlay').forEach(el => el.classList.remove('show'));
     if (nombre) document.getElementById('pantalla-' + nombre).classList.add('show');
+  }
+
+  async function pedirRecuperacion() {
+    ocultarErrorEn('olvide-error');
+    const email = document.getElementById('olvide-email').value.trim();
+    if (!email) { mostrarErrorEn('olvide-error', 'Escribe tu correo primero.'); return; }
+    try {
+      const r = await fetch('/auth/olvide-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await r.json();
+      if (!r.ok) { mostrarErrorEn('olvide-error', data.error || 'No se pudo procesar la solicitud.'); return; }
+      alert('Si ese correo está registrado, te llegará un enlace para crear una nueva contraseña. Revisa también spam.');
+      mostrarPantalla('login');
+    } catch (e) {
+      mostrarErrorEn('olvide-error', 'Error de conexión: ' + e.message);
+    }
   }
 
   function mostrarErrorEn(id, mensaje) {
