@@ -57,8 +57,12 @@ const TTL = {
 const hoyStr = () => new Date().toISOString().slice(0, 10);
 const horaStr = () => new Date().toISOString().slice(0, 13);
 
+// Versión del servidor: visítala en /version para saber qué está corriendo en Render
+const VERSION_APP = 'v153-pagos-plataforma-traducciones';
+app.get('/version', (req, res) => res.json({ version: VERSION_APP }));
+
 app.get('/', (req, res) => {
-  res.json({ estado: 'Sam Alquimia Astral backend funcionando ✅', prueba: '/probar.html' });
+  res.json({ estado: 'Sam Alquimia Astral backend funcionando ✅', version: VERSION_APP, prueba: '/probar.html' });
 });
 
 // ---- Conexión a Supabase ----
