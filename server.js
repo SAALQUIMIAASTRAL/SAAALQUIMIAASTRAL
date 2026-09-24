@@ -58,8 +58,30 @@ const hoyStr = () => new Date().toISOString().slice(0, 10);
 const horaStr = () => new Date().toISOString().slice(0, 13);
 
 // Versión del servidor: visítala en /version para saber qué está corriendo en Render
-const VERSION_APP = 'v153-pagos-plataforma-traducciones';
+const VERSION_APP = 'v154-google-play-compliant';
 app.get('/version', (req, res) => res.json({ version: VERSION_APP }));
+// Reportar contenido generado con IA (cumplimiento de Google Play)
+app.post('/reportar-contenido-ia', async (req, res) => {
+  if (!req.userId) return res.status(401).json({ error: 'No autenticado' });
+  const { tipo, mensaje } = req.body;
+  if (!tipo || !mensaje) return res.status(400).json({ error: 'Faltan datos' });
+  
+  try {
+    // Guardar en tabla 'ia_feedback' de Supabase (se crea si no existe)
+    const { error } = await req.supabase.from('ia_feedback').insert([{
+      user_id: req.userId,
+      report_type: tipo,
+      message: mensaje,
+      app_version: VERSION_APP,
+      created_at: new Date().toISOString()
+    }]);
+    if (error) throw error;
+    res.json({ ok: true, msg: 'Reporte registrado' });
+  } catch (e) {
+    console.error('Error al guardar reporte de IA:', e.message);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
 
 app.get('/', (req, res) => {
   res.json({ estado: 'Sam Alquimia Astral backend funcionando ✅', version: VERSION_APP, prueba: '/probar.html' });
