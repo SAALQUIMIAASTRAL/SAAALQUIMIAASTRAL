@@ -1738,8 +1738,11 @@ app.post('/transitos-personales', requireLogin, async (req, res) => {
         },
       },
       orb: 5,
-      active_points: ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Pluto', 'Neptune', 'Uranus'],
-      report_options: { tradition: 'psychological', language: 'es' },
+      options: {
+        active_points: ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Pluto', 'Neptune', 'Uranus'],
+        tradition: 'psychological',
+        language: 'es',
+      },
     });
 
     // Ordenar cronológicamente y quedarnos solo con hoy en adelante (los 7 próximos días)
