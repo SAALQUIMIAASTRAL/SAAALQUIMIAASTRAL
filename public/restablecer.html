@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crear nueva contraseña — Sam Alquimia Astral</title>
+<style>
+  body { font-family: 'Georgia', serif; max-width: 420px; margin: 60px auto; padding: 24px; color: #2D1B4E; background: #FAF6F0; }
+  h1 { font-size: 20px; color: #3D2460; text-align: center; }
+  p { font-size: 13px; color: #6b5a80; text-align: center; }
+  label { font-size: 13px; display: block; margin: 16px 0 4px; }
+  input { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1px solid #D9C6EE; font-size: 14px; }
+  button { width: 100%; margin-top: 18px; padding: 12px; border: none; border-radius: 100px; background: #3D2460; color: #fff; font-size: 14px; cursor: pointer; }
+  .msg { font-size: 13px; text-align: center; margin-top: 14px; }
+  .error { color: #a5442f; }
+  .exito { color: #2c7a4b; }
+</style>
+</head>
+<body>
+  <h1>🌙 Crea tu nueva contraseña</h1>
+  <p>Escribe tu nueva contraseña para tu cuenta de Sam Alquimia Astral.</p>
+
+  <div id="formulario">
+    <label>Nueva contraseña</label>
+    <input type="password" id="nueva-password" placeholder="Mínimo 6 caracteres">
+    <button onclick="restablecer()">Guardar nueva contraseña</button>
+  </div>
+  <div class="msg" id="mensaje"></div>
+
+  <script>
+    // Supabase manda el token en el fragmento de la URL: #access_token=...&type=recovery
+    function obtenerAccessToken() {
+      const hash = window.location.hash.substring(1);
+      const params = new URLSearchParams(hash);
+      return params.get('access_token');
+    }
+
+    async function restablecer() {
+      const msg = document.getElementById('mensaje');
+      const access_token = obtenerAccessToken();
+      const nueva_password = document.getElementById('nueva-password').value;
+
+      if (!access_token) {
+        msg.textContent = 'Este enlace no es válido o ya expiró. Solicita uno nuevo desde la app.';
+        msg.className = 'msg error';
+        return;
+      }
+      if (!nueva_password || nueva_password.length < 6) {
+        msg.textContent = 'La contraseña debe tener al menos 6 caracteres.';
+        msg.className = 'msg error';
+        return;
+      }
+
+      try {
+        const r = await fetch('/auth/restablecer-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ access_token, nueva_password }),
+        });
+        const data = await r.json();
+        if (!r.ok) {
+          msg.textContent = data.error || 'No se pudo actualizar la contraseña.';
+          msg.className = 'msg error';
+          return;
+        }
+        document.getElementById('formulario').style.display = 'none';
+        msg.textContent = '✅ ¡Contraseña actualizada! Ya puedes regresar a la app e iniciar sesión con tu nueva contraseña.';
+        msg.className = 'msg exito';
+      } catch (e) {
+        msg.textContent = 'Error de conexión: ' + e.message;
+        msg.className = 'msg error';
+      }
+    }
+  </script>
+</body>
+</html>
