@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v153-pagos-plataforma-traducciones -->
+<!-- VERSION-APP: v154-google-play-compliant -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -708,7 +708,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v153-pagos-plataforma-traducciones</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v154-google-play-compliant</div>
         </div>
 
         <div class="topbar">
@@ -1152,7 +1152,7 @@
 
         </div>
 
-        <button class="install-btn" id="install-btn" style="display:none;">⬇ Instalar app<span class="cerrar-instalar" id="cerrar-instalar" onclick="event.stopPropagation(); cerrarBannerInstalar();">✕</span></button>
+        <button class="install-btn solo-web" id="install-btn" style="display:none;">⬇ Instalar app<span class="cerrar-instalar" id="cerrar-instalar" onclick="event.stopPropagation(); cerrarBannerInstalar();">✕</span></button>
 
         <div class="bottomnav">
           <div class="it active" data-boton-tab="hoy" onclick="cambiarPestana('hoy')"><div class="g">☀️</div>Hoy</div>
@@ -4571,6 +4571,18 @@
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('service-worker.js').catch(() => {});
     });
+  }
+
+  async function reportarContenidoIA(tipoReporte) {
+    const msg=prompt('Cuéntanos qué fue ofensivo, incorrecto o inapropiado:\n(Por ejemplo: "Contenido discriminatorio", "Lenguaje inapropiado")','');
+    if(!msg||!msg.trim())return;
+    try{
+      const res=await fetch('/reportar-contenido-ia',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tipo:tipoReporte,mensaje:msg.trim(),fecha:new Date().toISOString()})});
+      const d=await res.json();
+      alert(d.ok?'✅ Reporte registrado. Gracias por ayudarnos a mejorar.':'No pudimos procesar tu reporte.');
+    }catch(e){
+      alert('Error al enviar reporte. Verifica tu conexión.');
+    }
   }
 </script>
 </body>
