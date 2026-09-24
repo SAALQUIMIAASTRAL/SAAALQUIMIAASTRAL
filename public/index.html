@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v146-calendario-lunar-mensual -->
+<!-- VERSION-APP: v148-transitos-personales-agrupados -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -678,7 +678,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v146-calendario-lunar-mensual</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v148-transitos-personales-agrupados</div>
         </div>
 
         <div class="topbar">
@@ -979,13 +979,17 @@
             <h2>📚 Biblioteca astrológica</h2>
             <div class="desc">Artículos, textos y referencias para profundizar en tu carta.</div>
 
+            <div id="bib-cerrar-todo" style="display:none;text-align:right;margin-bottom:10px;">
+              <button onclick="cerrarBibliotecaCompleta()" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar biblioteca ✕</button>
+            </div>
+
             <!-- Filtro por categoría -->
             <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;" id="bib-categorias">
               <button onclick="cargarBiblioteca()" style="background:var(--marigold-soft);border:1px solid var(--marigold);border-radius:100px;padding:5px 12px;font-size:11.5px;color:var(--plum);cursor:pointer;">Todos</button>
             </div>
 
             <div id="bib-lista"><div class="disclaimer">Toca "Cargar" para ver los artículos disponibles.</div></div>
-            <button class="btn-outline" style="width:100%;margin-top:10px;" onclick="cargarBiblioteca()">Cargar biblioteca</button>
+            <button class="btn-outline" id="bib-btn-cargar" style="width:100%;margin-top:10px;" onclick="cargarBiblioteca()">Cargar biblioteca</button>
 
             <!-- Lector de artículo -->
             <div id="bib-lector" style="display:none;margin-top:14px;">
@@ -2553,6 +2557,12 @@
         </div>
       `).join('');
 
+      // Ya hay contenido cargado: mostrar el botón de cerrar toda la sección, ocultar "Cargar biblioteca"
+      const cerrarTodo = document.getElementById('bib-cerrar-todo');
+      if (cerrarTodo) cerrarTodo.style.display = 'block';
+      const btnCargar = document.getElementById('bib-btn-cargar');
+      if (btnCargar) btnCargar.style.display = 'none';
+
       // Mostrar panel de admin si es Samantha
       if (SESION.email === ADMIN_EMAIL_APP) {
         const adminDiv = document.getElementById('bib-admin');
@@ -2584,6 +2594,18 @@
   function cerrarArticulo() {
     document.getElementById('bib-lector').style.display = 'none';
     document.getElementById('bib-lista').style.display = 'block';
+  }
+
+  function cerrarBibliotecaCompleta() {
+    document.getElementById('bib-lista').innerHTML = '<div class="disclaimer">Toca "Cargar" para ver los artículos disponibles.</div>';
+    document.getElementById('bib-lista').style.display = 'block';
+    document.getElementById('bib-lector').style.display = 'none';
+    const cerrarTodo = document.getElementById('bib-cerrar-todo');
+    if (cerrarTodo) cerrarTodo.style.display = 'none';
+    const btnCargar = document.getElementById('bib-btn-cargar');
+    if (btnCargar) btnCargar.style.display = 'block';
+    const catDiv = document.getElementById('bib-categorias');
+    if (catDiv) catDiv.innerHTML = '<button onclick="cargarBiblioteca()" style="background:var(--marigold-soft);border:1px solid var(--marigold);border-radius:100px;padding:5px 12px;font-size:11.5px;color:var(--plum);cursor:pointer;">Todos</button>';
   }
 
   async function guardarArticulo() {
@@ -3517,6 +3539,54 @@
     }
   }
 
+  function renderizarTransitosPersonales(reporte) {
+    const eventos = reporte?.data?.events || reporte?.events || [];
+    if (!eventos.length) return '<div class="disclaimer">No se encontraron tránsitos activos en este período.</div>';
+
+    // Agrupar por fecha
+    const porDia = new Map();
+    eventos.forEach(ev => {
+      const fecha = ev.date;
+      if (!fecha) return;
+      if (!porDia.has(fecha)) porDia.set(fecha, []);
+      porDia.get(fecha).push(ev);
+    });
+
+    // Ordenar las fechas cronológicamente
+    const fechasOrdenadas = Array.from(porDia.keys()).sort();
+
+    const NOMBRES_MES_CORTO = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    const formatearFecha = (f) => {
+      const [a, m, d] = f.split('-').map(Number);
+      return `${d} de ${NOMBRES_MES_CORTO[m - 1]} de ${a}`;
+    };
+
+    let html = '';
+    fechasOrdenadas.forEach(fecha => {
+      // De todos los aspectos de ese día, quedarnos solo con los 3 más relevantes (orbe más pequeño = más exacto)
+      const delDia = porDia.get(fecha)
+        .slice()
+        .sort((a, b) => Math.abs(a.orb ?? 99) - Math.abs(b.orb ?? 99))
+        .slice(0, 3);
+
+      html += `<div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14px;color:var(--marigold-dark);margin:14px 0 6px;">${formatearFecha(fecha)}</div>`;
+      html += delDia.map(ev => {
+        const p1 = nombrePlanetaEs(ev.transiting_planet);
+        const p2 = nombrePlanetaEs(ev.stationed_planet);
+        const asp = aspectoEs(ev.aspect_type);
+        // Usamos solo la primera oración de la interpretación (la parte relevante al aspecto del día, sin repetir el bloque genérico del final)
+        const interp = (ev.interpretation || '').split(/(?<=[.!?])\s+/).slice(0, 2).join(' ');
+        return `
+          <div class="card-lectura" style="margin-bottom:8px;">
+            <div class="card-titulo" style="font-size:13px;">${p1} ${asp} ${p2}</div>
+            <div class="card-cuerpo" style="color:var(--plum);margin-top:4px;">${interp}</div>
+          </div>
+        `;
+      }).join('');
+    });
+    return html;
+  }
+
   async function verTransitosReales() {
     const contenedor = document.getElementById('transitos-resultado');
     contenedor.innerHTML = '<div class="disclaimer">Calculando tus tránsitos...</div>';
@@ -3528,7 +3598,7 @@
         throw new Error(data.error || 'No se pudo calcular.');
       }
       const _cerrar_transitos_ok = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('transitos-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
-      contenedor.innerHTML = _cerrar_transitos_ok + renderizarInforme(data.transitos, 'transitos-resultado');
+      contenedor.innerHTML = _cerrar_transitos_ok + renderizarTransitosPersonales(data.transitos);
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }
