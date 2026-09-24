@@ -85,7 +85,7 @@ async function traducirBloque(lista) {
   try {
     const prompt = `Traduce cada uno de estos textos de astrología al español de México/Latinoamérica, natural y con tono cálido y profesional (no traducción literal palabra por palabra, y sin modismos de España como "vosotros" o "vale"). Responde ÚNICAMENTE con un array JSON de strings, en el mismo orden, sin explicación ni markdown:\n\n${JSON.stringify(lista)}`;
     const controlador = new AbortController();
-    const timeoutId = setTimeout(() => controlador.abort(), 25000);
+    const timeoutId = setTimeout(() => controlador.abort(), 40000);
     const respuesta = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
@@ -126,7 +126,7 @@ async function traducirBloque(lista) {
 async function traducirTextosConIA(textos) {
   const lista = (textos || []).filter(t => t && typeof t === 'string');
   if (!lista.length) return { textos: [], debug: 'sin textos que traducir' };
-  const TAMANO_BLOQUE = 25;
+  const TAMANO_BLOQUE = 12;
   const bloques = [];
   for (let i = 0; i < lista.length; i += TAMANO_BLOQUE) bloques.push(lista.slice(i, i + TAMANO_BLOQUE));
   const resultados = await Promise.all(bloques.map(traducirBloque));
@@ -1740,9 +1740,9 @@ app.post('/transitos-personales', requireLogin, async (req, res) => {
       orb: 5,
       options: {
         active_points: ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Pluto', 'Neptune', 'Uranus'],
-        tradition: 'psychological',
-        language: 'es',
+        fixed_stars: { language: 'es' },
       },
+      report_options: { tradition: 'psychological', language: 'es' },
     });
 
     // Ordenar cronológicamente y quedarnos solo con hoy en adelante (los 7 próximos días)
