@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v2.0 -->
+<!-- VERSION-APP: v152-candado-sesion-registro -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -431,26 +431,7 @@
     margin:12px 0 6px;padding-bottom:4px;
     border-bottom:1px solid var(--marigold-soft);
   }
-
-  /* ---- Pagos según plataforma: en la app Android no se muestra nada de Stripe ---- */
-  html.app-nativa .solo-web { display: none !important; }
-  .solo-app { display: none; }
-  html.app-nativa .solo-app { display: block; }
 </style>
-<script>
-  // ¿Estamos dentro de la app instalada desde Google Play (Capacitor) o en el navegador?
-  function esAppNativa() {
-    try {
-      if (window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform()) return true;
-    } catch (e) {}
-    return /AlquimiaAstralApp/.test(navigator.userAgent || '');
-  }
-  function marcarPlataforma() {
-    if (esAppNativa()) document.documentElement.classList.add('app-nativa');
-  }
-  marcarPlataforma();
-  document.addEventListener('DOMContentLoaded', marcarPlataforma);
-</script>
 </head>
 <body>
 
@@ -481,11 +462,6 @@
               <div style="font-size:12px;font-weight:600;color:var(--plum);">Luna personal</div>
               <div style="font-size:10.5px;color:var(--ink-dim);">Actualizada cada día</div>
             </div>
-            <div style="background:var(--lilac-soft);border-radius:12px;padding:12px;text-align:center;">
-              <div style="font-size:22px;margin-bottom:4px;">🤖</div>
-              <div style="font-size:12px;font-weight:600;color:var(--plum);">Asistente IA</div>
-              <div style="font-size:10.5px;color:var(--ink-dim);">Pregúntale a tu carta</div>
-            </div>
             <div style="background:var(--marigold-soft);border-radius:12px;padding:12px;text-align:center;">
               <div style="font-size:22px;margin-bottom:4px;">♡</div>
               <div style="font-size:12px;font-weight:600;color:var(--plum);">Sinastría</div>
@@ -494,7 +470,7 @@
           </div>
 
           <!-- Precio -->
-          <div class="solo-web" style="text-align:center;font-size:12px;color:var(--ink-dim);margin-bottom:16px;">
+          <div style="text-align:center;font-size:12px;color:var(--ink-dim);margin-bottom:16px;">
             Todo por <b style="color:var(--marigold-dark);">$4.99 USD/mes</b> · Cancela cuando quieras
           </div>
 
@@ -550,23 +526,23 @@
           <div id="legal-contenido" style="font-size:12.5px;color:var(--plum);line-height:1.7;max-height:65vh;overflow-y:auto;padding-right:4px;">
             <h2 style="font-size:16px;">Aviso de Privacidad</h2>
             <p><b>1. Responsable del tratamiento.</b> Samantha Jossely Hernández Rivas, Persona Física con Actividad Empresarial (México), domicilio en Calle 110 y 111 Amavita Caucel, 53Q, C.P. 97305, Mérida, Yucatán, México. Contacto: soporte@samalquimiaastral.com.</p>
-            <p><b>2. Datos que recolectamos.</b> Nombre de usuario y correo electrónico; fecha, hora y ciudad/país de nacimiento; cookies e identificadores de dispositivo; información de pago procesada de forma independiente por el proveedor de pagos —Google Play en la app para Android o Stripe en el sitio web— (nunca almacenamos datos de tarjetas).</p>
-            <p><b>3. Para qué los usamos.</b> Registrar tu cuenta; calcular tu Carta Natal, tránsitos, horóscopos y demás análisis; procesar tus solicitudes mediante modelos de Inteligencia Artificial (Anthropic Claude) de forma cifrada y segura; enviarte reportes a tu correo; gestionar cobros y suscripciones a través de Google Play o Stripe, según dónde contrates. Opcionalmente, y solo si lo autorizas, enviarte promociones y novedades (puedes cancelar cuando quieras).</p>
+            <p><b>2. Datos que recolectamos.</b> Nombre de usuario y correo electrónico; fecha, hora y ciudad/país de nacimiento; cookies e identificadores de dispositivo; información de pago procesada de forma independiente por Stripe (nunca almacenamos datos de tarjetas).</p>
+            <p><b>3. Para qué los usamos.</b> Registrar tu cuenta; calcular tu Carta Natal, tránsitos, horóscopos y demás análisis; procesar tus solicitudes mediante modelos de Inteligencia Artificial (Anthropic Claude) de forma cifrada y segura; enviarte reportes a tu correo; gestionar cobros y suscripciones vía Stripe. Opcionalmente, y solo si lo autorizas, enviarte promociones y novedades (puedes cancelar cuando quieras).</p>
             <p><b>4. Transferencia de datos y procesamiento con IA.</b> Para generar tus reportes, las posiciones planetarias (nunca tu nombre ni tu correo) se envían de forma cifrada a proveedores de Inteligencia Artificial (Anthropic) únicamente con fines de procesamiento técnico. Nunca vendemos, rentamos ni compartimos tus datos con terceros para fines comerciales o publicitarios.</p>
             <p><b>5. Tus derechos (LATAM):</b></p>
             <p><b>México (LFPDPPP):</b> Tienes derecho a Acceder, Rectificar, Cancelar u Oponerte (Derechos ARCO), incluida la eliminación definitiva de tu cuenta y datos de nacimiento. Escribe a soporte@samalquimiaastral.com; respondemos en máximo 20 días hábiles.</p>
             <p><b>Colombia (Ley 1581 de 2012):</b> Al marcar "Acepto" otorgas autorización previa, expresa e informada para recolectar, almacenar y usar tus datos según esta política.</p>
             <p><b>Perú (Ley N° 29733):</b> Tus datos se incorporan a nuestro banco de datos de usuarios, administrado con seguridad y confidencialidad conforme a la ley peruana.</p>
-            <p><b>Argentina (Ley N° 25.326):</b> Tienes derecho de acceso gratuito a tus datos cada seis meses. Tus datos se transfieren internacionalmente a servidores seguros para el funcionamiento de la app y el procesamiento de pagos.</p>
+            <p><b>Argentina (Ley N° 25.326):</b> Tienes derecho de acceso gratuito a tus datos cada seis meses. Tus datos se transfieren internacionalmente a servidores seguros para el funcionamiento de la app y el pago vía Stripe.</p>
 
             <h2 style="font-size:16px;margin-top:20px;">Términos y Condiciones</h2>
             <p><b>1. Aceptación.</b> Al usar la plataforma o realizar un pago, aceptas estos Términos en su totalidad.</p>
             <p><b>2. Aviso legal crítico.</b> Todas las herramientas, predicciones, horóscopos y análisis se ofrecen exclusivamente con fines de entretenimiento, recreación y autoconocimiento. Nada de lo generado sustituye asesoría médica, psicológica, psiquiátrica, financiera, de inversión o legal. Tú eres responsable de tus propias decisiones.</p>
             <p><b>3. Precios e impuestos.</b> Los precios se muestran en USD o su equivalente local. Conforme a las leyes de protección al consumidor de México (PROFECO) y Latinoamérica, los precios finales ya incluyen IVA o impuestos digitales locales aplicables.</p>
-            <p><b>4. Suscripciones y pagos.</b> Los cobros se procesan de forma segura a través de la plataforma donde contratas: Google Play (app para Android) o Stripe (sitio web). Al contratar un plan Mensual, Semestral o Anual, autorizas cargos automáticos recurrentes al inicio de cada periodo, hasta que canceles.</p>
-            <p><b>5. Cancelaciones y reembolsos.</b> Puedes cancelar tu suscripción cuando quieras, sin penalización, desde tu perfil en el sitio web o, si contrataste en la app para Android, desde Google Play → Pagos y suscripciones — seguirás con acceso premium hasta que termine el periodo ya pagado. No se hacen reembolsos de reportes digitales (como la Revolución Solar) una vez generados y enviados, por tratarse de bienes digitales de entrega inmediata.</p>
+            <p><b>4. Suscripciones y pagos (Stripe).</b> Los cobros se procesan de forma externa y segura vía Stripe. Al contratar un plan Mensual, Semestral o Anual, autorizas cargos automáticos recurrentes al inicio de cada periodo, hasta que canceles.</p>
+            <p><b>5. Cancelaciones y reembolsos.</b> Puedes cancelar tu suscripción cuando quieras, sin penalización, desde tu perfil — seguirás con acceso premium hasta que termine el periodo ya pagado. No se hacen reembolsos de reportes digitales (como la Revolución Solar) una vez generados y enviados, por tratarse de bienes digitales de entrega inmediata.</p>
             <p><b>6. Jurisdicción.</b> Estos Términos se rigen por las leyes de los Estados Unidos Mexicanos; cualquier controversia se somete a los tribunales de Mérida, Yucatán, México.</p>
-            <p style="color:var(--ink-dim);font-size:11px;margin-top:16px;">Última actualización: 24 de septiembre de 2026.</p>
+            <p style="color:var(--ink-dim);font-size:11px;margin-top:16px;">Última actualización: 22 de septiembre de 2026.</p>
           </div>
         </div>
 
@@ -661,8 +637,8 @@
 
           <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:6px;">Suscripción</div>
           <div id="perfil-estado-sub" style="font-size:12.5px;font-weight:600;margin-bottom:10px;"></div>
-          <button class="btn-primary solo-web" style="background:var(--lilac);margin-bottom:10px;" onclick="abrirPortalPago()">Gestionar mi suscripción / método de pago</button>
-          <div id="perfil-portal-error" class="solo-web" style="font-size:12px;color:#a5442f;margin-bottom:16px;"></div>
+          <button class="btn-primary" style="background:var(--lilac);margin-bottom:10px;" onclick="abrirPortalPago()">Gestionar mi suscripción / método de pago</button>
+          <div id="perfil-portal-error" style="font-size:12px;color:#a5442f;margin-bottom:16px;"></div>
 
           <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:8px;">Idioma</div>
           <select style="width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-family:'Work Sans',sans-serif;font-size:13.5px;color:var(--plum);background:#fff;margin-bottom:8px;">
@@ -708,7 +684,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v2.0</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v152-candado-sesion-registro</div>
         </div>
 
         <div class="topbar">
@@ -1082,20 +1058,14 @@
             </div>
           </div>
 
-          <div class="section" data-tab="alquimia" style="opacity:0.6;">
-            <h2>🤖 Asistente IA</h2>
-            <div class="desc">Próximamente — pregúntale a tu carta cualquier cosa.</div>
-            <button class="btn-primary" disabled style="opacity:0.5;">Próximamente</button>
-          </div>
-
           <div style="background:linear-gradient(160deg,var(--plum),var(--blush-2));border-radius:16px;padding:20px 18px;color:#fff;margin:12px 16px;box-shadow:0 6px 20px rgba(45,27,78,0.35);" id="tarjeta-suscripcion" data-tab="alquimia">
             <div style="font-size:11px;color:var(--band-text-dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">✦ Alquimia Astral Premium</div>
             <h2 style="color:#fff;font-size:20px;margin-bottom:8px;border:none;padding:0;font-family:'Cormorant Garamond',serif;">Acceso completo a tu cielo</h2>
             <div style="font-size:12px;color:var(--band-text-dim);margin-bottom:14px;line-height:1.6;">
               ✓ Carta natal completa · ✓ Astrocartografía · ✓ Ciclo lunar personalizado<br>
-              ✓ Hasta 8 cartas guardadas · ✓ Asistente IA · ✓ Diario astrológico
+              ✓ Hasta 8 cartas guardadas · ✓ Diario astrológico
             </div>
-            <div class="solo-web" style="display:flex;gap:6px;margin-bottom:14px;" id="selector-plan">
+            <div style="display:flex;gap:6px;margin-bottom:14px;" id="selector-plan">
               <div class="chip-plan" data-plan="mensual" onclick="elegirPlanSuscripcion('mensual')" style="flex:1;text-align:center;padding:9px 4px;border-radius:10px;cursor:pointer;background:rgba(255,255,255,0.22);border:1.5px solid #fff;">
                 <div style="font-size:11px;font-weight:600;">Mensual</div>
                 <div style="font-size:14px;font-weight:700;">$4.99</div>
@@ -1110,10 +1080,7 @@
                 <div style="font-size:14px;font-weight:700;">$45.99</div>
               </div>
             </div>
-            <div class="solo-app" style="background:rgba(255,255,255,0.12);border-radius:12px;padding:12px 14px;font-size:12.5px;line-height:1.5;color:#fff;">
-              ✨ <b>Muy pronto</b> podrás activar Premium directamente desde la app.
-            </div>
-            <div class="solo-web" style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
               <div>
                 <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:#fff;line-height:1;" id="precio-plan-elegido">$4.99<span style="font-size:12px;color:var(--band-text-dim);font-family:'Work Sans',sans-serif;"> USD/mes</span></div>
                 <div style="font-size:10.5px;color:var(--band-text-dim);">Cancela cuando quieras</div>
@@ -1139,10 +1106,6 @@
                 <div class="icon"><svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="10" stroke="#fff" stroke-width="1.6"/><ellipse cx="16" cy="16" rx="10" ry="4.2" stroke="#fff" stroke-width="1.2" opacity="0.8"/><ellipse cx="16" cy="16" rx="4.2" ry="10" stroke="#fff" stroke-width="1.2" opacity="0.8"/><circle cx="20" cy="11" r="1.8" fill="#c9793f"/></svg></div>
                 <div class="tt-text">Astrocartografía<span>Tu mapa de reubicación</span></div>
               </div>
-              <div class="tool-tile t3" onclick="mostrarProximamente('Asistente IA')" style="cursor:pointer;opacity:0.5;">
-                <div class="icon"><svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="7" fill="#fff" opacity="0.15"/><circle cx="16" cy="16" r="7" stroke="#fff" stroke-width="1.4"/><path d="M16 6l1 3-1 3-1-3z" fill="#fff"/><path d="M25 12l-2.5 1.5L25 15l1-1.5z" fill="#fff"/><path d="M7 12l2.5 1.5L7 15l-1-1.5z" fill="#fff"/></svg></div>
-                <div class="tt-text">Asistente IA<span>Pregúntale a tu carta</span></div>
-              </div>
               <div class="tool-tile t4" onclick="cambiarPestana('ciclos')" style="cursor:pointer;">
                 <div class="icon"><svg viewBox="0 0 32 32" fill="none"><path d="M16 10c-2.5-1.6-5.5-2-8.5-1.3V21c3-.7 6 -.3 8.5 1.3 2.5-1.6 5.5-2 8.5-1.3V8.7c-3-.7-6-.3-8.5 1.3z" stroke="#fff" stroke-width="1.4" fill="rgba(255,255,255,0.08)"/><line x1="16" y1="10" x2="16" y2="22.3" stroke="#fff" stroke-width="1.2"/></svg></div>
                 <div class="tt-text">Diario personal<span>Tu día y el cielo</span></div>
@@ -1152,7 +1115,7 @@
 
         </div>
 
-        <button class="install-btn solo-web" id="install-btn" style="display:none;">⬇ Instalar app<span class="cerrar-instalar" id="cerrar-instalar" onclick="event.stopPropagation(); cerrarBannerInstalar();">✕</span></button>
+        <button class="install-btn" id="install-btn" style="display:none;">⬇ Instalar app<span class="cerrar-instalar" id="cerrar-instalar" onclick="event.stopPropagation(); cerrarBannerInstalar();">✕</span></button>
 
         <div class="bottomnav">
           <div class="it active" data-boton-tab="hoy" onclick="cambiarPestana('hoy')"><div class="g">☀️</div>Hoy</div>
@@ -1523,11 +1486,11 @@
   // fetchAuth: igual que fetch() pero con renovación automática de token
   async function fetchAuth(url, opciones = {}) {
     const headers = { ...(opciones.headers || {}), Authorization: 'Bearer ' + SESION.token };
-    let r = await fetch(url, { ...opciones, headers });
+    let r = await fetch('https://saaalquimiaastral.onrender.com' + url, { ...opciones, headers });
 
     if (r.status === 401 && SESION.refresh) {
       try {
-        const rr = await fetch('/auth/refresh', {
+        const rr = await fetch('https://saaalquimiaastral.onrender.com/auth/refresh', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ refresh_token: SESION.refresh }),
         });
@@ -2891,7 +2854,6 @@
   }
 
   async function abrirPortalPago() {
-    if (esAppNativa()) return; // En la app Android los pagos van por Google Play
     const errorEl = document.getElementById('perfil-portal-error');
     errorEl.textContent = '';
     try {
@@ -2914,7 +2876,7 @@
     const email = document.getElementById('olvide-email').value.trim();
     if (!email) { mostrarErrorEn('olvide-error', 'Escribe tu correo primero.'); return; }
     try {
-      const r = await fetch('/auth/olvide-password', {
+      const r = await fetch('https://saaalquimiaastral.onrender.com/auth/olvide-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -2964,8 +2926,11 @@
     if (!document.getElementById('registro-acepta-terminos').checked) {
       return mostrarErrorEn('registro-error', 'Debes aceptar los Términos y Condiciones y el Aviso de Privacidad para continuar.');
     }
-    limpiarSesionLocal(); // candado: ninguna sesión vieja sobrevive al crear una cuenta nueva
-    const r = await fetch('/auth/registro', {
+    // Candado de seguridad: si ya había una sesión activa en este navegador, la limpiamos
+    // ANTES de registrar la cuenta nueva, para que nunca se mezclen datos de dos cuentas.
+    SESION.token = null; SESION.refresh = null; SESION.email = null;
+    localStorage.removeItem('saa_token'); localStorage.removeItem('saa_refresh'); localStorage.removeItem('saa_email');
+    const r = await fetch('https://saaalquimiaastral.onrender.com/auth/registro', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
@@ -2973,13 +2938,19 @@
     if (!r.ok) return mostrarErrorEn('registro-error', data.error || 'No se pudo crear la cuenta.');
 
     // Login automático después de registrarse
-    const rLogin = await fetch('/auth/login', {
+    const rLogin = await fetch('https://saaalquimiaastral.onrender.com/auth/login', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
     const dataLogin = await rLogin.json();
     if (rLogin.ok && dataLogin.sesion) {
-      guardarSesionYReiniciar(dataLogin.sesion.access_token, dataLogin.sesion.refresh_token || null, email);
+      SESION.token = dataLogin.sesion.access_token;
+      SESION.refresh = dataLogin.sesion.refresh_token || null;
+      SESION.email = email;
+      localStorage.setItem('saa_token', SESION.token);
+      if (SESION.refresh) localStorage.setItem('saa_refresh', SESION.refresh);
+      localStorage.setItem('saa_email', email);
+      await revisarPerfilYArrancar();
     } else {
       document.getElementById('login-email').value = email;
       mostrarPantalla('login');
@@ -2991,8 +2962,7 @@
     ocultarErrorEn('login-error');
     const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-pass').value;
-    limpiarSesionLocal(); // candado: se descarta cualquier sesión anterior antes de entrar
-    const r = await fetch('/auth/login', {
+    const r = await fetch('https://saaalquimiaastral.onrender.com/auth/login', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
@@ -3004,7 +2974,13 @@
         : (crudo || 'Correo o contraseña incorrectos.');
       return mostrarErrorEn('login-error', mensaje);
     }
-    guardarSesionYReiniciar(data.sesion.access_token, data.sesion.refresh_token || null, data.usuario?.email || email);
+    SESION.token = data.sesion.access_token;
+    SESION.email = data.usuario?.email || email;
+    SESION.refresh = data.sesion.refresh_token || null;
+    localStorage.setItem('saa_token', SESION.token);
+    if (SESION.refresh) localStorage.setItem('saa_refresh', SESION.refresh);
+    if (SESION.email) localStorage.setItem('saa_email', SESION.email);
+    await revisarPerfilYArrancar();
   }
 
   let _timerBusquedaCiudad = null;
@@ -3019,7 +2995,7 @@
     if (texto.length < 3) { contenedor.innerHTML = ''; return; }
     _timerBusquedaCiudad = setTimeout(async () => {
       try {
-        const r = await fetch('/buscar-ciudad?q=' + encodeURIComponent(texto));
+        const r = await fetch('https://saaalquimiaastral.onrender.com/buscar-ciudad?q=' + encodeURIComponent(texto));
         const data = await r.json();
         const resultados = data.resultados || [];
         if (!resultados.length) { contenedor.innerHTML = ''; return; }
@@ -3077,26 +3053,11 @@
     entrarALaApp(data.perfil);
   }
 
-  // ---- Candado de sesión ----
-  // Borra por completo la sesión guardada (token, correo, estado de suscripción) para que
-  // nunca se mezclen datos de una cuenta anterior con la nueva.
-  function limpiarSesionLocal() {
+  function cerrarSesion() {
     localStorage.removeItem('saa_token');
     localStorage.removeItem('saa_refresh');
     localStorage.removeItem('saa_email');
-    SESION = { token: null, refresh: null, email: null, nombre: null, suscripcion: null };
-  }
-  // Guarda la sesión nueva y recarga la app desde cero: así se borra de la memoria cualquier
-  // carta, nombre o dato de la cuenta anterior, y todo se carga limpio para la cuenta nueva.
-  function guardarSesionYReiniciar(token, refresh, email) {
-    localStorage.setItem('saa_token', token);
-    if (refresh) localStorage.setItem('saa_refresh', refresh);
-    if (email) localStorage.setItem('saa_email', email);
-    window.location.reload();
-  }
-
-  function cerrarSesion() {
-    limpiarSesionLocal();
+    SESION = { token: null, nombre: null };
     mostrarPantalla('login');
   }
 
@@ -3271,7 +3232,7 @@
     let r = await fetchAuth('/perfil', { headers: {} });
     if (r.status === 401 && SESION.refresh) {
       try {
-        const rr = await fetch('/auth/refresh', {
+        const rr = await fetch('https://saaalquimiaastral.onrender.com/auth/refresh', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ refresh_token: SESION.refresh }),
         });
@@ -3498,7 +3459,6 @@
   }
 
   async function accionSuscribirse() {
-    if (esAppNativa()) return; // En la app Android los pagos van por Google Play
     const boton = document.getElementById('btn-suscribirse');
     boton.textContent = 'Un momento...';
     boton.disabled = true;
@@ -4571,18 +4531,6 @@
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('service-worker.js').catch(() => {});
     });
-  }
-
-  async function reportarContenidoIA(tipoReporte) {
-    const msg=prompt('Cuéntanos qué fue ofensivo, incorrecto o inapropiado:\n(Por ejemplo: "Contenido discriminatorio", "Lenguaje inapropiado")','');
-    if(!msg||!msg.trim())return;
-    try{
-      const res=await fetch('/reportar-contenido-ia',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tipo:tipoReporte,mensaje:msg.trim(),fecha:new Date().toISOString()})});
-      const d=await res.json();
-      alert(d.ok?'✅ Reporte registrado. Gracias por ayudarnos a mejorar.':'No pudimos procesar tu reporte.');
-    }catch(e){
-      alert('Error al enviar reporte. Verifica tu conexión.');
-    }
   }
 </script>
 </body>
