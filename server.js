@@ -31,6 +31,16 @@ function cacheHash(...partes) {
   return crypto.createHash('md5').update(partes.join('|')).digest('hex').slice(0, 12);
 }
 
+// Corrige la fase lunar cuando queda inconsistente con el % de iluminación
+// (la API a veces ya marca "menguante"/"creciente" por ángulo mientras la luz
+// sigue casi al 100% o casi al 0%, lo cual se lee como contradicción en la app).
+function faseCoherente(fase, iluminacionPct) {
+  if (iluminacionPct === undefined || iluminacionPct === null) return fase;
+  if (iluminacionPct >= 97) return 'Full Moon';
+  if (iluminacionPct <= 3) return 'New Moon';
+  return fase;
+}
+
 // Limpieza automática cada 10 min — evita fugas de memoria
 setInterval(() => {
   const ahora = Date.now();
@@ -830,7 +840,7 @@ app.post('/home-summary', requireLogin, async (req, res) => {
     }
 
     const resumen = {
-      luna: luna ? { signo: luna.moon_sign, fase: luna.moon_phase, iluminacion: Math.round(luna.moon_illumination), dia_lunar: luna.moon_day } : null,
+      luna: luna ? { signo: luna.moon_sign, fase: faseCoherente(luna.moon_phase, luna.moon_illumination), iluminacion: Math.round(luna.moon_illumination), dia_lunar: luna.moon_day } : null,
       dia_personal: diaPersonal,
       anio_personal: anioPersonal,
       transito_principal: transitoPrincipal,
@@ -1441,7 +1451,7 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
             report_options: { language: 'es' },
           });
           const m = r.data?.data?.lunar_metrics;
-          return { dia, signo: m?.moon_sign, fase: m?.moon_phase };
+          return { dia, signo: m?.moon_sign, fase: faseCoherente(m?.moon_phase, m?.moon_illumination) };
         } catch (e) {
           return { dia, signo: null, fase: null };
         }
