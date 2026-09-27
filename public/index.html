@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v157-tarjetas-bienvenida-empaticas -->
+<!-- VERSION-APP: v158-fusion-native-backend-login -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1507,6 +1507,9 @@
   // ======================================================
   // Conexión real con el servidor (login, perfil, carta natal)
   // ======================================================
+  const BACKEND = 'https://saaalquimiaastral.onrender.com';
+  const apiUrl = (url) => /^https?:\/\//i.test(url) ? url : BACKEND + url;
+
   let SESION = {
     token: localStorage.getItem('saa_token') || null,
     refresh: localStorage.getItem('saa_refresh') || null,
@@ -1517,11 +1520,11 @@
   // fetchAuth: igual que fetch() pero con renovación automática de token
   async function fetchAuth(url, opciones = {}) {
     const headers = { ...(opciones.headers || {}), Authorization: 'Bearer ' + SESION.token };
-    let r = await fetch(url, { ...opciones, headers });
+    let r = await fetch(apiUrl(url), { ...opciones, headers });
 
     if (r.status === 401 && SESION.refresh) {
       try {
-        const rr = await fetch('/auth/refresh', {
+        const rr = await fetch(BACKEND + '/auth/refresh', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ refresh_token: SESION.refresh }),
         });
@@ -1533,7 +1536,7 @@
           if (SESION.refresh) localStorage.setItem('saa_refresh', SESION.refresh);
           // Reintenta con el token nuevo
           const headers2 = { ...(opciones.headers || {}), Authorization: 'Bearer ' + SESION.token };
-          r = await fetch(url, { ...opciones, headers: headers2 });
+          r = await fetch(apiUrl(url), { ...opciones, headers: headers2 });
         }
       } catch (e) { /* si falla, devuelve el 401 original */ }
     }
@@ -2908,7 +2911,7 @@
     const email = document.getElementById('olvide-email').value.trim();
     if (!email) { mostrarErrorEn('olvide-error', 'Escribe tu correo primero.'); return; }
     try {
-      const r = await fetch('/auth/olvide-password', {
+      const r = await fetch(BACKEND + '/auth/olvide-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -2962,7 +2965,7 @@
     // ANTES de registrar la cuenta nueva, para que nunca se mezclen datos de dos cuentas.
     SESION.token = null; SESION.refresh = null; SESION.email = null;
     localStorage.removeItem('saa_token'); localStorage.removeItem('saa_refresh'); localStorage.removeItem('saa_email');
-    const r = await fetch('/auth/registro', {
+    const r = await fetch(BACKEND + '/auth/registro', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
@@ -2970,7 +2973,7 @@
     if (!r.ok) return mostrarErrorEn('registro-error', data.error || 'No se pudo crear la cuenta.');
 
     // Login automático después de registrarse
-    const rLogin = await fetch('/auth/login', {
+    const rLogin = await fetch(BACKEND + '/auth/login', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
@@ -2994,7 +2997,7 @@
     ocultarErrorEn('login-error');
     const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-pass').value;
-    const r = await fetch('/auth/login', {
+    const r = await fetch(BACKEND + '/auth/login', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
@@ -3027,7 +3030,7 @@
     if (texto.length < 3) { contenedor.innerHTML = ''; return; }
     _timerBusquedaCiudad = setTimeout(async () => {
       try {
-        const r = await fetch('/buscar-ciudad?q=' + encodeURIComponent(texto));
+        const r = await fetch(BACKEND + '/buscar-ciudad?q=' + encodeURIComponent(texto));
         const data = await r.json();
         const resultados = data.resultados || [];
         if (!resultados.length) { contenedor.innerHTML = ''; return; }
@@ -3264,7 +3267,7 @@
     let r = await fetchAuth('/perfil', { headers: {} });
     if (r.status === 401 && SESION.refresh) {
       try {
-        const rr = await fetch('/auth/refresh', {
+        const rr = await fetch(BACKEND + '/auth/refresh', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ refresh_token: SESION.refresh }),
         });
