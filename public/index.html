@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v167-cambiar-contrasena-logueada -->
+<!-- VERSION-APP: v169-normalizar-correo -->
 <!-- CONSOLIDADO: incluye v159 (reintento carta natal) + v160 (11 puntos: sesión, mensajes, contraseñas, JSON seguro, correo único, safe area, zoom mapa, agrupación ciudades) + v161 (posición del ojo) + v162 (frases variadas ACG) + v163 (diversidad de planetas en ciudades) + v164 (texto luna de hoy) + v165 (diario oculto por defecto) -->
 
 <link rel="manifest" href="manifest.json">
@@ -477,44 +477,21 @@
 
         <!-- Pantalla de BIENVENIDA -->
         <div class="auth-overlay show" id="pantalla-bienvenida">
-          <!-- Hero visual -->
-          <div style="text-align:center;margin-bottom:20px;padding:24px 0 16px;">
+          <!-- Hero simple: sin tarjetas promocionales, sin precio, sin banners de instalación -->
+          <div style="text-align:center;margin-bottom:32px;padding:40px 0 16px;">
             <div style="font-size:52px;line-height:1;margin-bottom:8px;">🔮</div>
             <h1 style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:var(--plum);margin:0 0 6px;">Sam Alquimia Astral</h1>
             <div style="font-size:13px;color:var(--ink-dim);line-height:1.5;">Tu carta natal, tu luna y tus tránsitos<br>personalizados — siempre contigo</div>
           </div>
 
-          <!-- Beneficios visuales -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;">
-            <div style="background:var(--marigold-soft);border-radius:12px;padding:12px;text-align:center;">
-              <div style="font-size:22px;margin-bottom:4px;">✦</div>
-              <div style="font-size:12px;font-weight:600;color:var(--plum);">¿Quién eres de verdad?</div>
-              <div style="font-size:10.5px;color:var(--ink-dim);">Tu carta natal, con cálculos reales</div>
-            </div>
-            <div style="background:var(--lilac-soft);border-radius:12px;padding:12px;text-align:center;">
-              <div style="font-size:22px;margin-bottom:4px;">🌙</div>
-              <div style="font-size:12px;font-weight:600;color:var(--plum);">¿Por qué te sientes así hoy?</div>
-              <div style="font-size:10.5px;color:var(--ink-dim);">Tu luna personal, actualizada cada día</div>
-            </div>
-            <div style="background:var(--lilac-soft);border-radius:12px;padding:12px;text-align:center;">
-              <div style="font-size:22px;margin-bottom:4px;">🗺️</div>
-              <div style="font-size:12px;font-weight:600;color:var(--plum);">¿Migraste?</div>
-              <div style="font-size:10.5px;color:var(--ink-dim);">Descubre cómo te va en el país donde vives ahora</div>
-            </div>
-            <div style="background:var(--marigold-soft);border-radius:12px;padding:12px;text-align:center;">
-              <div style="font-size:22px;margin-bottom:4px;">♡</div>
-              <div style="font-size:12px;font-weight:600;color:var(--plum);">¿Son compatibles de verdad?</div>
-              <div style="font-size:10.5px;color:var(--ink-dim);">Compara tu carta con la de esa persona</div>
-            </div>
-          </div>
-
-          <!-- Precio -->
-          <div style="text-align:center;font-size:12px;color:var(--ink-dim);margin-bottom:16px;">
-            Todo por <b style="color:var(--marigold-dark);">$4.99 USD/mes</b> · Cancela cuando quieras
-          </div>
-
-          <button class="btn-primary" onclick="mostrarPantalla('registro')">Empezar ahora — es gratis</button>
+          <button class="btn-primary" onclick="mostrarPantalla('registro')">Crear mi cuenta</button>
           <button class="btn-outline" style="margin-top:10px;" onclick="mostrarPantalla('login')">Ya tengo cuenta</button>
+
+          <div style="text-align:center;margin-top:20px;font-size:11px;color:var(--ink-dim);">
+            <a onclick="event.preventDefault();mostrarLegal('privacidad')" style="color:var(--ink-dim);cursor:pointer;text-decoration:underline;">Privacidad</a>
+            &nbsp;·&nbsp;
+            <a onclick="event.preventDefault();mostrarLegal('terminos')" style="color:var(--ink-dim);cursor:pointer;text-decoration:underline;">Términos</a>
+          </div>
         </div>
 
         <!-- Pantalla de LOGIN -->
@@ -3265,10 +3242,28 @@
     renderizarSemanaLunar();
   }
 
-  const FASE_EMOJI = {
-    'New Moon': '🌑', 'Waxing Crescent': '🌒', 'First Quarter': '🌓', 'Waxing Gibbous': '🌔',
-    'Full Moon': '🌕', 'Waning Gibbous': '🌖', 'Last Quarter': '🌗', 'Waning Crescent': '🌘',
-  };
+  // Punto 13: ícono de luna propio (SVG), en vez de emoji del sistema operativo —
+  // el emoji de luna se ve muy distinto entre iOS y Android (y a veces ni existe en Android
+  // más viejo), así que dibujamos nosotras mismas la fase con los colores de la marca.
+  let _svgLunaContador = 0;
+  const PCT_POR_FASE = { 'New Moon':0, 'Waxing Crescent':25, 'First Quarter':50, 'Waxing Gibbous':75, 'Full Moon':100, 'Waning Gibbous':75, 'Last Quarter':50, 'Waning Crescent':25 };
+  function svgLuna(faseNombre, tam) {
+    tam = tam || 18;
+    const creciente = (faseNombre || '').includes('Waxing') || faseNombre === 'New Moon';
+    const pct = PCT_POR_FASE[faseNombre] ?? 50;
+    const r = tam / 2 - 1;
+    const offset = pct >= 100 ? 0 : r * 2 * (1 - pct / 100) * (creciente ? -1 : 1);
+    const id = 'lunaclip' + (_svgLunaContador++);
+    return `<svg width="${tam}" height="${tam}" viewBox="0 0 ${tam} ${tam}" style="vertical-align:middle;display:inline-block;">
+      <circle cx="${tam/2}" cy="${tam/2}" r="${r}" fill="#2D1B4E"/>
+      <clipPath id="${id}"><circle cx="${tam/2}" cy="${tam/2}" r="${r}"/></clipPath>
+      <g clip-path="url(#${id})"><circle cx="${tam/2 + offset}" cy="${tam/2}" r="${r}" fill="#F4C95D"/></g>
+      <circle cx="${tam/2}" cy="${tam/2}" r="${r}" fill="none" stroke="#F4C95D" stroke-width="0.6" opacity="0.4"/>
+    </svg>`;
+  }
+  // Compatibilidad: FASE_EMOJI.fase ahora devuelve el SVG en vez de un carácter emoji,
+  // para no tener que cambiar cada lugar donde ya se usaba FASE_EMOJI[...]
+  const FASE_EMOJI = new Proxy({}, { get: (_, fase) => svgLuna(fase) });
   const NOMBRES_MES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   let _calMesActual = new Date().getUTCMonth() + 1;
   let _calAnioActual = new Date().getUTCFullYear();
@@ -3484,6 +3479,11 @@
     SESION.suscripcion = data.suscripcion || 'ninguna';
     if (!data.perfil || !data.perfil.ciudad_nacimiento) {
       mostrarPantalla('perfil');
+      // Prellena el nombre con el que ya dio al registrarse, para no pedirlo dos veces
+      if (data.nombre_sugerido) {
+        const campoNombre = document.getElementById('perfil-nombre');
+        if (campoNombre && !campoNombre.value) campoNombre.value = data.nombre_sugerido;
+      }
     } else {
       entrarALaApp(data.perfil);
     }
@@ -4381,18 +4381,18 @@
       }
       // Consejo práctico según la fase lunar
       const CONSEJOS_FASE = {
-        'New Moon':'🌑 Luna Nueva — siembra intenciones. Ideal para iniciar proyectos y hacer listas de deseos.',
-        'Waxing Crescent':'🌒 Luna Creciente — construye impulso. Toma acción sobre lo que iniciaste.',
-        'First Quarter':'🌓 Cuarto Creciente — supera obstáculos. Empuja con decisión.',
-        'Waxing Gibbous':'🌔 Gibosa Creciente — refina y ajusta antes de la Luna Llena.',
-        'Full Moon':'🌕 Luna Llena — máxima energía. Lo que sembraste se hace visible. Celebra y suelta.',
-        'Waning Gibbous':'🌖 Gibosa Menguante — comparte lo aprendido en este ciclo.',
-        'Last Quarter':'🌗 Cuarto Menguante — suelta y cierra. Haz espacio para lo nuevo.',
-        'Waning Crescent':'🌘 Luna Menguante — descansa y reflexiona. Pronto empieza un ciclo nuevo.',
+        'New Moon':'Luna Nueva — siembra intenciones. Ideal para iniciar proyectos y hacer listas de deseos.',
+        'Waxing Crescent':'Luna Creciente — construye impulso. Toma acción sobre lo que iniciaste.',
+        'First Quarter':'Cuarto Creciente — supera obstáculos. Empuja con decisión.',
+        'Waxing Gibbous':'Gibosa Creciente — refina y ajusta antes de la Luna Llena.',
+        'Full Moon':'Luna Llena — máxima energía. Lo que sembraste se hace visible. Celebra y suelta.',
+        'Waning Gibbous':'Gibosa Menguante — comparte lo aprendido en este ciclo.',
+        'Last Quarter':'Cuarto Menguante — suelta y cierra. Haz espacio para lo nuevo.',
+        'Waning Crescent':'Luna Menguante — descansa y reflexiona. Pronto empieza un ciclo nuevo.',
       };
       const faseLunaHoy = data.luna?.data?.lunar_metrics?.moon_phase || '';
       const consejoDia = CONSEJOS_FASE[faseLunaHoy] || '';
-      const consejoHtml = consejoDia ? `<div style="background:linear-gradient(135deg,var(--blush-2),var(--blush-1));border-radius:12px;padding:12px 14px;color:#fff;margin-bottom:10px;font-size:12.5px;line-height:1.6;">${consejoDia}</div>` : '';
+      const consejoHtml = consejoDia ? `<div style="background:linear-gradient(135deg,var(--blush-2),var(--blush-1));border-radius:12px;padding:12px 14px;color:#fff;margin-bottom:10px;font-size:12.5px;line-height:1.6;display:flex;align-items:center;gap:8px;">${svgLuna(faseLunaHoy, 22)}<span>${consejoDia}</span></div>` : '';
       contenedor.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('luna-cruda').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>` + consejoHtml + resumenHtml + renderizarInforme(data.luna, null);
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
@@ -4739,11 +4739,13 @@
     let escala = 1, x = 0, y = 0;
     let ultimaDistancia = null;
     let ultimoX = null, ultimoY = null;
-    let arrastrando = false;
+    let arrastrandoUnDedo = false;
+    let arrastrandoMouse = false;
 
     contenedor.style.transformOrigin = '0 0';
     contenedor.style.touchAction = 'none';
     contenedor.style.cursor = 'grab';
+    contenedor.style.willChange = 'transform';
 
     function aplicar() {
       contenedor.style.transform = `translate(${x}px, ${y}px) scale(${escala})`;
@@ -4752,57 +4754,85 @@
       const dx = t0.clientX - t1.clientX, dy = t0.clientY - t1.clientY;
       return Math.sqrt(dx * dx + dy * dy);
     }
+    function puntoMedio(t0, t1) {
+      return { x: (t0.clientX + t1.clientX) / 2, y: (t0.clientY + t1.clientY) / 2 };
+    }
 
-    contenedor.onpointerdown = (e) => {
-      arrastrando = true;
+    // --- TODO el manejo táctil (móvil) va por Touch Events, nunca mezclado con Pointer Events ---
+    contenedor.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        arrastrandoUnDedo = true;
+        ultimoX = e.touches[0].clientX;
+        ultimoY = e.touches[0].clientY;
+      } else if (e.touches.length === 2) {
+        arrastrandoUnDedo = false;
+        ultimaDistancia = distanciaEntre(e.touches[0], e.touches[1]);
+      }
+    }, { passive: true });
+
+    contenedor.addEventListener('touchmove', (e) => {
+      if (e.touches.length === 1 && arrastrandoUnDedo) {
+        e.preventDefault();
+        const dx = e.touches[0].clientX - ultimoX;
+        const dy = e.touches[0].clientY - ultimoY;
+        x += dx; y += dy;
+        ultimoX = e.touches[0].clientX;
+        ultimoY = e.touches[0].clientY;
+        aplicar();
+      } else if (e.touches.length === 2 && ultimaDistancia) {
+        e.preventDefault();
+        const nueva = distanciaEntre(e.touches[0], e.touches[1]);
+        const factor = nueva / ultimaDistancia;
+        const escalaAnterior = escala;
+        escala = Math.max(1, Math.min(5, escala * factor));
+        // Ajusta la posición para que el zoom se sienta centrado en el punto entre los dos dedos
+        const centro = puntoMedio(e.touches[0], e.touches[1]);
+        const rel = escala / escalaAnterior;
+        x = centro.x - (centro.x - x) * rel;
+        y = centro.y - (centro.y - y) * rel;
+        ultimaDistancia = nueva;
+        aplicar();
+      }
+    }, { passive: false });
+
+    contenedor.addEventListener('touchend', (e) => {
+      arrastrandoUnDedo = false;
+      ultimaDistancia = null;
+      if (e.touches.length === 1) {
+        arrastrandoUnDedo = true;
+        ultimoX = e.touches[0].clientX;
+        ultimoY = e.touches[0].clientY;
+      }
+    }, { passive: true });
+
+    // --- Arrastre y rueda con MOUSE, para pruebas en escritorio (eventos distintos a touch, no chocan) ---
+    contenedor.addEventListener('mousedown', (e) => {
+      arrastrandoMouse = true;
       ultimoX = e.clientX; ultimoY = e.clientY;
-      contenedor.setPointerCapture(e.pointerId);
       contenedor.style.cursor = 'grabbing';
-    };
-    contenedor.onpointermove = (e) => {
-      if (!arrastrando) return;
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (!arrastrandoMouse) return;
       x += e.clientX - ultimoX;
       y += e.clientY - ultimoY;
       ultimoX = e.clientX; ultimoY = e.clientY;
       aplicar();
-    };
-    contenedor.onpointerup = contenedor.onpointercancel = () => {
-      arrastrando = false;
+    });
+    window.addEventListener('mouseup', () => {
+      arrastrandoMouse = false;
       contenedor.style.cursor = 'grab';
-    };
-
-    // Pellizco con dos dedos (touch nativo, más confiable que Pointer Events para multitouch)
-    contenedor.ontouchstart = (e) => {
-      if (e.touches.length === 2) {
-        ultimaDistancia = distanciaEntre(e.touches[0], e.touches[1]);
-      }
-    };
-    contenedor.ontouchmove = (e) => {
-      if (e.touches.length === 2 && ultimaDistancia) {
-        e.preventDefault();
-        const nueva = distanciaEntre(e.touches[0], e.touches[1]);
-        const factor = nueva / ultimaDistancia;
-        escala = Math.max(1, Math.min(5, escala * factor));
-        ultimaDistancia = nueva;
-        aplicar();
-      }
-    };
-    contenedor.ontouchend = (e) => {
-      if (e.touches.length < 2) ultimaDistancia = null;
-    };
-
-    // Doble toque/clic para restablecer la vista
-    contenedor.ondblclick = () => {
-      escala = 1; x = 0; y = 0;
-      aplicar();
-    };
-
-    // Rueda del mouse (para pruebas en escritorio)
-    contenedor.onwheel = (e) => {
+    });
+    contenedor.addEventListener('wheel', (e) => {
       e.preventDefault();
       escala = Math.max(1, Math.min(5, escala - e.deltaY * 0.001));
       aplicar();
-    };
+    }, { passive: false });
+
+    // Doble toque/clic para restablecer la vista
+    contenedor.addEventListener('dblclick', () => {
+      escala = 1; x = 0; y = 0;
+      aplicar();
+    });
   }
 
   async function actualizarBandaConCartaReal(reintentos = 2) {
