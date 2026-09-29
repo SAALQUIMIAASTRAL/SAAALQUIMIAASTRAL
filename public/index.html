@@ -4,7 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v159-reintento-carta-natal-en-frio -->
+<!-- VERSION-APP: v167-cambiar-contrasena-logueada -->
+<!-- CONSOLIDADO: incluye v159 (reintento carta natal) + v160 (11 puntos: sesión, mensajes, contraseñas, JSON seguro, correo único, safe area, zoom mapa, agrupación ciudades) + v161 (posición del ojo) + v162 (frases variadas ACG) + v163 (diversidad de planetas en ciudades) + v164 (texto luna de hoy) + v165 (diario oculto por defecto) -->
+
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -547,6 +549,7 @@
           <h1>✦ Crea tu cuenta</h1>
           <div class="sub">Empieza gratis, descubre tu cielo hoy</div>
           <div class="auth-error" id="registro-error"></div>
+          <div class="auth-field"><label>Tu nombre</label><input type="text" id="registro-nombre" placeholder="¿Cómo te llamas?"></div>
           <div class="auth-field"><label>Correo</label><input type="email" id="registro-email"></div>
           <div class="auth-field campo-pass"><label>Contraseña</label><input type="password" id="registro-pass" placeholder="Mínimo 6 caracteres"><button type="button" class="ojo-toggle" onclick="alternarOjo('registro-pass', this)">👁</button></div>
           <div class="auth-field campo-pass"><label>Confirmar contraseña</label><input type="password" id="registro-pass2" placeholder="Repite tu contraseña"><button type="button" class="ojo-toggle" onclick="alternarOjo('registro-pass2', this)">👁</button></div>
@@ -672,6 +675,15 @@
           </div>
           <div id="editar-datos-msg" style="font-size:12px;margin-bottom:16px;"></div>
 
+          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:6px;">Contraseña</div>
+          <span onclick="document.getElementById('cambiar-pass-form').style.display = document.getElementById('cambiar-pass-form').style.display === 'none' ? 'block' : 'none';" style="cursor:pointer;font-size:13px;font-weight:600;color:var(--marigold-dark);display:inline-block;margin-bottom:10px;">🔒 Cambiar mi contraseña</span>
+          <div id="cambiar-pass-form" style="display:none;margin-bottom:16px;">
+            <div class="auth-error" id="cambiar-pass-error"></div>
+            <div class="auth-field campo-pass"><label>Contraseña actual</label><input type="password" id="cambiar-pass-actual"><button type="button" class="ojo-toggle" onclick="alternarOjo('cambiar-pass-actual', this)">👁</button></div>
+            <div class="auth-field campo-pass"><label>Nueva contraseña</label><input type="password" id="cambiar-pass-nueva" placeholder="Mínimo 6 caracteres"><button type="button" class="ojo-toggle" onclick="alternarOjo('cambiar-pass-nueva', this)">👁</button></div>
+            <div class="auth-field campo-pass"><label>Confirmar nueva contraseña</label><input type="password" id="cambiar-pass-confirmar" placeholder="Repite la nueva contraseña"><button type="button" class="ojo-toggle" onclick="alternarOjo('cambiar-pass-confirmar', this)">👁</button></div>
+            <button class="btn-primary" onclick="accionCambiarPassword()">Guardar nueva contraseña</button>
+          </div>
 
           <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:6px;">Suscripción</div>
           <div id="perfil-estado-sub" style="font-size:12.5px;font-weight:600;margin-bottom:10px;"></div>
@@ -749,6 +761,7 @@
           </div>
 
           <div id="evento-astrologico-banner"></div>
+          <div id="eventos-especiales-dia" data-tab="hoy" style="padding:0 16px;"></div>
 
           <div class="section" data-tab="hoy" id="seccion-carta-natal">
             <h2>Tu carta natal</h2>
@@ -793,7 +806,7 @@
             <button class="btn-primary" onclick="guardarDiario()">Guardar en mi diario</button>
             <div id="diario-msg" style="margin-top:8px;font-size:12px;"></div>
             <div id="diario-lista" style="margin-top:14px;"></div>
-            <button class="btn-outline" style="width:100%;margin-top:8px;" onclick="cargarDiario()">Ver entradas anteriores</button>
+            <button class="btn-outline" style="width:100%;margin-top:8px;" id="diario-btn-ver" onclick="alternarEntradasDiario()">Ver entradas anteriores</button>
           </div>
 
           <div class="section" data-tab="ciclos">
@@ -895,7 +908,7 @@
             <h2>Ciclo lunar</h2>
             <div class="desc" id="luna-intro">Qué significa cada fase y cómo aprovecharla.</div>
 
-            <button class="btn-primary" style="margin-bottom:14px;" onclick="cargarLunaReal()">Ver mi luna de hoy</button>
+            <button class="btn-primary" style="margin-bottom:14px;" onclick="cargarLunaReal()">Ver la luna de hoy en el cielo</button>
             <div id="luna-cruda" style="margin-bottom:14px;"></div>
 
             <button class="btn-ghost-round" style="margin-bottom:14px;" onclick="verLunaVacia()">🌑 ¿Hay Luna Vacía de Curso hoy?</button>
@@ -1286,28 +1299,61 @@
           const p = SIGNIFICADO_PLANETA_ACG[planetasEncontrados[0]];
           return `Aquí se activa tu energía de ${p.energia} — ${p.consejo}.`;
         }
-        const consejos = planetasEncontrados.map(p => SIGNIFICADO_PLANETA_ACG[p].consejo);
-        return `Combina ${planetasEncontrados.map(p => SIGNIFICADO_PLANETA_ACG[p].energia).join(' con ')}. ${consejos[0].charAt(0).toUpperCase() + consejos[0].slice(1)}, y también ${consejos[1]}.`;
+        const p1 = SIGNIFICADO_PLANETA_ACG[planetasEncontrados[0]];
+        const p2 = SIGNIFICADO_PLANETA_ACG[planetasEncontrados[1]];
+        const consejo2Cap = p2.consejo.charAt(0).toUpperCase() + p2.consejo.slice(1);
+        // Varias formas de redactar la misma combinación — se elige una según los planetas
+        // exactos (siempre la misma para esa combinación, pero distinta entre combinaciones),
+        // para que no todas las frases empiecen igual solo por compartir un planeta.
+        const plantillas = [
+          `Aquí se mezclan dos energías: ${p1.energia}, y ${p2.energia}. Por un lado, ${p1.consejo}; por otro, ${p2.consejo}.`,
+          `Esta zona activa tu ${p1.energia} junto con tu ${p2.energia}. ${consejo2Cap}, sin dejar de lado que ${p1.consejo}.`,
+          `Una combinación potente: ${p1.energia} de la mano de ${p2.energia}. ${p1.consejo.charAt(0).toUpperCase() + p1.consejo.slice(1)}, y también ${p2.consejo}.`,
+          `Sientes aquí tanto ${p1.energia} como ${p2.energia} — ${p2.consejo}, mientras que ${p1.consejo}.`,
+        ];
+        // Índice determinístico basado en los nombres de los planetas (misma combinación → misma frase siempre)
+        const semilla = (planetasEncontrados[0] + planetasEncontrados[1]).split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+        return plantillas[semilla % plantillas.length];
       }
 
       let htmlLineas = '';
 
-      // Ciudades destacadas (lo más concreto y útil)
-      const ciudadesBuenas = (data.ciudades || []).filter(c => c.in_power_zone).sort((a, b) => (b.power_zone_strength || 0) - (a.power_zone_strength || 0)).slice(0, 6);
-      if (ciudadesBuenas.length) {
+      // Ciudades destacadas (lo más concreto y útil) — priorizando VARIEDAD de planetas/líneas,
+      // no solo la fuerza cruda (si no, la Luna puede dominar las 6 por ser la más fuerte siempre).
+      const todasEnZona = (data.ciudades || []).filter(c => c.in_power_zone);
+      function planetaPrincipal(closestLine) {
+        if (!closestLine) return null;
+        return Object.keys(SIGNIFICADO_PLANETA_ACG).find(p => closestLine.includes(p)) || null;
+      }
+      // Agrupar primero por línea exacta (para no repetir texto entre ciudades idénticas)
+      const gruposPorLinea = new Map();
+      todasEnZona.forEach(c => {
+        const clave = c.closest_line || '—';
+        if (!gruposPorLinea.has(clave)) gruposPorLinea.set(clave, { closest_line: c.closest_line, ciudades: [], fuerza: 0 });
+        const g = gruposPorLinea.get(clave);
+        g.ciudades.push(`${c.name}, ${c.country}`);
+        g.fuerza = Math.max(g.fuerza, c.power_zone_strength || 0);
+      });
+      const gruposOrdenados = Array.from(gruposPorLinea.values()).sort((a, b) => b.fuerza - a.fuerza);
+      // De esos grupos, tomar el más fuerte de CADA planeta distinto primero (diversidad),
+      // y solo si sobran espacios (hasta 6), completar con los siguientes por fuerza aunque repitan planeta.
+      const vistoPlaneta = new Set();
+      const diversos = [];
+      const sobrantes = [];
+      gruposOrdenados.forEach(g => {
+        const planeta = planetaPrincipal(g.closest_line);
+        if (planeta && !vistoPlaneta.has(planeta)) {
+          vistoPlaneta.add(planeta);
+          diversos.push(g);
+        } else {
+          sobrantes.push(g);
+        }
+      });
+      const gruposFinales = [...diversos, ...sobrantes].slice(0, 6);
+
+      if (gruposFinales.length) {
         htmlLineas += `<div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin-bottom:8px;">📍 Ciudades donde tu energía se activa más</div>`;
-
-        // Agrupar ciudades que comparten EXACTAMENTE la misma línea/interpretación —
-        // así evitamos repetir el mismo texto ciudad por ciudad. Solo se separan cuando
-        // el cálculo real (closest_line) es distinto, nunca inventamos diferencias.
-        const grupos = new Map();
-        ciudadesBuenas.forEach(c => {
-          const clave = c.closest_line || '—';
-          if (!grupos.has(clave)) grupos.set(clave, { closest_line: c.closest_line, ciudades: [] });
-          grupos.get(clave).ciudades.push(`${c.name}, ${c.country}`);
-        });
-
-        htmlLineas += Array.from(grupos.values()).map(g => {
+        htmlLineas += gruposFinales.map(g => {
           const ayuda = ayudaEspecificaCiudad(g.closest_line);
           return `
           <div class="card-lectura">
@@ -2478,8 +2524,20 @@
       document.getElementById('diario-animo-val').value = '';
       document.querySelectorAll('#diario-animo-btns button').forEach(b => b.style.background = 'var(--marigold-soft)');
       msg.textContent = '✓ Guardado en tu diario.'; msg.style.color = 'var(--armonia)';
-      await cargarDiario();
     } catch (e) { msg.textContent = e.message; msg.style.color = '#a5442f'; }
+  }
+
+  async function alternarEntradasDiario() {
+    const lista = document.getElementById('diario-lista');
+    const boton = document.getElementById('diario-btn-ver');
+    const visible = lista.innerHTML.trim() !== '';
+    if (visible) {
+      lista.innerHTML = '';
+      boton.textContent = 'Ver entradas anteriores';
+    } else {
+      boton.textContent = 'Ocultar entradas';
+      await cargarDiario();
+    }
   }
 
   async function cargarDiario() {
@@ -3017,9 +3075,13 @@
 
   async function accionRegistro() {
     ocultarErrorEn('registro-error');
+    const nombre = document.getElementById('registro-nombre').value.trim();
     const email = document.getElementById('registro-email').value.trim();
     const password = document.getElementById('registro-pass').value;
     const password2 = document.getElementById('registro-pass2').value;
+    if (!nombre) {
+      return mostrarErrorEn('registro-error', 'Escribe tu nombre.');
+    }
     if (!email || password.length < 6) {
       return mostrarErrorEn('registro-error', 'Escribe un correo válido y una contraseña de al menos 6 caracteres.');
     }
@@ -3035,7 +3097,7 @@
     localStorage.removeItem('saa_token'); localStorage.removeItem('saa_refresh'); localStorage.removeItem('saa_email');
     const r = await fetch(BACKEND + '/auth/registro', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, nombre }),
     });
     const data = await leerJsonSeguro(r);
     if (!r.ok) return mostrarErrorEn('registro-error', data.error || 'No se pudo crear la cuenta.');
@@ -3129,6 +3191,31 @@
     }
   }
 
+
+  async function accionCambiarPassword() {
+    ocultarErrorEn('cambiar-pass-error');
+    const password_actual = document.getElementById('cambiar-pass-actual').value;
+    const nueva_password = document.getElementById('cambiar-pass-nueva').value;
+    const confirmar = document.getElementById('cambiar-pass-confirmar').value;
+    if (!password_actual) return mostrarErrorEn('cambiar-pass-error', 'Escribe tu contraseña actual.');
+    if (nueva_password.length < 6) return mostrarErrorEn('cambiar-pass-error', 'La nueva contraseña debe tener al menos 6 caracteres.');
+    if (nueva_password !== confirmar) return mostrarErrorEn('cambiar-pass-error', 'Las contraseñas nuevas no coinciden.');
+    try {
+      const r = await fetchAuth('/auth/cambiar-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password_actual, nueva_password }),
+      });
+      const data = await leerJsonSeguro(r);
+      if (!r.ok) return mostrarErrorEn('cambiar-pass-error', data.error || 'No se pudo cambiar la contraseña.');
+      mostrarMensaje('cambiar-pass-error', '✔ Contraseña actualizada correctamente.', 'verde');
+      document.getElementById('cambiar-pass-actual').value = '';
+      document.getElementById('cambiar-pass-nueva').value = '';
+      document.getElementById('cambiar-pass-confirmar').value = '';
+    } catch (e) {
+      mostrarErrorEn('cambiar-pass-error', 'Error de conexión: ' + e.message);
+    }
+  }
 
   async function accionGuardarPerfil() {
     ocultarErrorEn('perfil-error');
@@ -3324,6 +3411,22 @@
         const TEMAS_DIA_CORTO = { 1:'Día de inicios y decisiones propias', 2:'Día de cooperación y espera', 3:'Día de expresión y creatividad', 4:'Día de trabajo y disciplina', 5:'Día de cambios y movimiento', 6:'Día de cuidado y relaciones', 7:'Día de reflexión e intuición', 8:'Día de poder y decisiones importantes', 9:'Día de cierre y soltar', 11:'Día de intuición elevada', 22:'Día de grandes proyectos' };
         const tema = TEMAS_DIA_CORTO[data.dia_personal];
         if (tema && fraseEl) fraseEl.textContent = `Día personal ${data.dia_personal} · ${tema}`;
+      }
+
+      // Eventos especiales del día: un planeta que cambió de signo o empezó/terminó retrógrado
+      const contenedorEventos = document.getElementById('eventos-especiales-dia');
+      if (contenedorEventos) {
+        if (data.eventos_especiales && data.eventos_especiales.length) {
+          const ICONO_EVENTO = { ingreso: '➡️', retrogrado_inicio: '⏪', retrogrado_fin: '⏩' };
+          contenedorEventos.innerHTML = data.eventos_especiales.map(ev => `
+            <div class="tarjeta-lectura neutral" style="margin-bottom:8px;">
+              <div class="titulo">${ICONO_EVENTO[ev.tipo] || '✨'} ${ev.planeta} — hoy es un día especial</div>
+              <div class="cuerpo">${ev.texto}</div>
+            </div>
+          `).join('');
+        } else {
+          contenedorEventos.innerHTML = '';
+        }
       }
     } catch (e) { /* silencioso */ }
   }
