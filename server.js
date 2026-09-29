@@ -31,6 +31,8 @@ function cacheHash(...partes) {
   return crypto.createHash('md5').update(partes.join('|')).digest('hex').slice(0, 12);
 }
 
+const NOMBRES_MES_LARGO = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
 // Corrige la fase lunar cuando queda inconsistente con el % de iluminación
 // (la API a veces ya marca "menguante"/"creciente" por ángulo mientras la luz
 // sigue casi al 100% o casi al 0%, lo cual se lee como contradicción en la app).
@@ -1648,11 +1650,140 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
       diasPoderError = 'La respuesta no tuvo el campo "events" esperado. Estructura recibida: ' + JSON.stringify(Object.keys(transitosMes?.data || {}));
     }
 
+    // ============================================================
+    // "TU MES ASTROLÓGICO" — reutiliza eventosMes y resultados (ya obtenidos arriba,
+    // sin llamadas nuevas a la API) para armar: eventos destacados, lunaciones,
+    // retrógrados, áreas de vida más activas, y un relato narrativo con IA basado
+    // ÚNICAMENTE en los datos reales calculados (nunca inventa fechas/signos/aspectos).
+    // ============================================================
+    const AREA_POR_CASA = {
+      1: 'tu identidad y cómo te muestras al mundo', 2: 'dinero y recursos materiales',
+      3: 'comunicación, aprendizaje y el entorno cercano', 4: 'hogar, familia y raíces',
+      5: 'creatividad, romance y disfrute', 6: 'trabajo diario y salud',
+      7: 'relaciones y sociedades', 8: 'transformación, intimidad y recursos compartidos',
+      9: 'crecimiento, viajes y visión de vida', 10: 'carrera e imagen pública',
+      11: 'comunidad, amistades y proyectos a futuro', 12: 'descanso, espiritualidad y lo oculto',
+    };
+    let eventosDestacadosMes = [];
+    let lunacionesMes = { luna_nueva: [], luna_llena: [] };
+    let retrogradosMes = [];
+    let areasMes = [];
+    let relatoMes = null;
+
+    if (Array.isArray(eventosMes)) {
+      // Eventos mayores: aspectos exactos (orbe pequeño) a puntos natales importantes
+      const PUNTOS_NATALES_CLAVE = ['Sun', 'Moon', 'Ascendant', 'Medium_Coeli', 'Midheaven', 'MC'];
+      const vistos = new Set();
+      eventosMes.forEach(ev => {
+        const orbeAbs = Math.abs(ev.orb ?? 99);
+        if (orbeAbs > 1.5) return; // solo lo más exacto/significativo del mes
+        const fechaCruda = ev.date || ev.exact_date || ev.timestamp || ev.start_date || ev.datetime;
+        let fechaISO = null;
+        if (typeof fechaCruda === 'object' && fechaCruda.day) fechaISO = `${fechaCruda.year}-${String(fechaCruda.month).padStart(2,'0')}-${String(fechaCruda.day).padStart(2,'0')}`;
+        else { const d = new Date(fechaCruda); if (!isNaN(d)) fechaISO = d.toISOString().slice(0, 10); }
+        if (!fechaISO) return;
+        const clave = `${fechaISO}|${ev.transiting_planet}|${ev.aspect_type}|${ev.stationed_planet}`;
+        if (vistos.has(clave)) return;
+        vistos.add(clave);
+        eventosDestacadosMes.push({
+          fecha: fechaISO,
+          planeta_transito: NOMBRE_ES[ev.transiting_planet] || ev.transiting_planet,
+          aspecto: ASPECTO_ES[(ev.aspect_type || '').toLowerCase()] || ev.aspect_type,
+          punto_natal: NOMBRE_ES[ev.stationed_planet] || ev.stationed_planet,
+          casa_natal: ev.natal_house || null,
+          area: ev.natal_house ? AREA_POR_CASA[ev.natal_house] : null,
+          clave_para_puntos: PUNTOS_NATALES_CLAVE.includes(ev.stationed_planet),
+        });
+      });
+      eventosDestacadosMes.sort((a, b) => a.fecha.localeCompare(b.fecha));
+
+      // Retrógrados/directos: detecta cambio de signo de velocidad por planeta a lo largo del mes
+      const velocidadPorPlaneta = {};
+      eventosMes.forEach(ev => {
+        if (typeof ev.transiting_speed !== 'number' || !ev.transiting_planet) return;
+        const fechaCruda = ev.date || ev.exact_date;
+        const d = new Date(typeof fechaCruda === 'object' ? `${fechaCruda.year}-${fechaCruda.month}-${fechaCruda.day}` : fechaCruda);
+        if (isNaN(d)) return;
+        const key = ev.transiting_planet;
+        velocidadPorPlaneta[key] = velocidadPorPlaneta[key] || [];
+        velocidadPorPlaneta[key].push({ fecha: d.toISOString().slice(0, 10), speed: ev.transiting_speed });
+      });
+      Object.entries(velocidadPorPlaneta).forEach(([planeta, puntos]) => {
+        puntos.sort((a, b) => a.fecha.localeCompare(b.fecha));
+        for (let i = 1; i < puntos.length; i++) {
+          const antes = puntos[i - 1].speed, ahora = puntos[i].speed;
+          if (antes > 0 && ahora < 0) retrogradosMes.push({ planeta: NOMBRE_ES[planeta] || planeta, fecha: puntos[i].fecha, tipo: 'se_vuelve_retrogrado' });
+          if (antes < 0 && ahora > 0) retrogradosMes.push({ planeta: NOMBRE_ES[planeta] || planeta, fecha: puntos[i].fecha, tipo: 'vuelve_directo' });
+        }
+      });
+      // Dedupe simple (evita marcar el mismo día repetido por múltiples eventos del mismo planeta)
+      retrogradosMes = retrogradosMes.filter((r, i, arr) => arr.findIndex(x => x.planeta === r.planeta && x.tipo === r.tipo) === i);
+
+      // Áreas de vida más activas del mes (top 3, solo si hay datos — nunca todas por obligación)
+      const conteoAreas = {};
+      eventosDestacadosMes.forEach(e => { if (e.area) conteoAreas[e.area] = (conteoAreas[e.area] || 0) + 1; });
+      areasMes = Object.entries(conteoAreas).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([area]) => area);
+    }
+
+    // Lunaciones del mes (luna nueva / luna llena), tomadas del detalle día a día ya calculado
+    resultados.forEach(d => {
+      if (d.fase === 'New Moon') lunacionesMes.luna_nueva.push(d.dia);
+      if (d.fase === 'Full Moon') lunacionesMes.luna_llena.push(d.dia);
+    });
+
+    // Relato del mes con IA — SOLO redacta con los hechos reales de arriba, nunca inventa datos.
+    // Se guarda en caché junto con el resto (una vez por usuaria por mes).
+    if (process.env.ANTHROPIC_API_KEY && (eventosDestacadosMes.length || lunacionesMes.luna_nueva.length || lunacionesMes.luna_llena.length)) {
+      try {
+        const hechos = [
+          ...eventosDestacadosMes.slice(0, 12).map(e => `Día ${e.fecha.slice(-2)}: ${e.planeta_transito} en ${e.aspecto} con tu ${e.punto_natal} natal${e.area ? ` (afecta ${e.area})` : ''}.`),
+          ...lunacionesMes.luna_nueva.map(d => `Día ${d}: Luna Nueva.`),
+          ...lunacionesMes.luna_llena.map(d => `Día ${d}: Luna Llena.`),
+          ...retrogradosMes.map(r => `Día ${r.fecha.slice(-2)}: ${r.planeta} ${r.tipo === 'se_vuelve_retrogrado' ? 'se vuelve retrógrado' : 'retoma movimiento directo'}.`),
+        ].join('\n');
+
+        const prompt = `Eres una astróloga profesional escribiendo el relato del mes de ${NOMBRES_MES_LARGO[mes-1] || mes} para una persona, en español de México/Latinoamérica, con tono cálido, claro y concreto — NUNCA genérico ni con frases vacías tipo "confía en el universo" o "se vienen cambios".
+
+Estos son los ÚNICOS hechos astrológicos reales de este mes que puedes usar (no inventes fechas, signos, aspectos ni eventos que no estén aquí):
+
+${hechos}
+
+Escribe un relato narrativo de 3 párrafos cortos siguiendo esta estructura:
+1. "El mes comienza con..." (primeros 10 días)
+2. "A mitad de mes..." (días 11-20)
+3. "Hacia el final del mes..." (días 21 en adelante)
+
+Si algún tercio del mes no tiene eventos listados arriba, dilo brevemente como un tramo más tranquilo, sin inventar nada. Máximo 180 palabras en total. Responde SOLO con el texto del relato, sin título ni markdown.`;
+
+        const controlador = new AbortController();
+        const timeoutId = setTimeout(() => controlador.abort(), 30000);
+        const respuestaIA = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
+          body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 700, messages: [{ role: 'user', content: prompt }] }),
+          signal: controlador.signal,
+        });
+        clearTimeout(timeoutId);
+        const datosIA = await respuestaIA.json();
+        if (respuestaIA.ok) relatoMes = (datosIA.content?.[0]?.text || '').trim();
+      } catch (e) {
+        console.error('relato_mes falló:', e.message);
+      }
+    }
+
     const respuestaCalendario = {
       mes, anio, calendario, detalle_dias: resultados, mercurio_retrogrado: mercurioRetrogrado,
       dias_poder_personal: diasPoderPersonal,
       dias_poder_personal_error: diasPoderError,
       dias_poder_personal_diagnostico: diasPoderDiagnostico,
+      // Campos nuevos de "Tu mes astrológico" (puntos 14-17) — no afectan nada de lo anterior
+      mes_astrologico: {
+        eventos_destacados: eventosDestacadosMes,
+        lunaciones: lunacionesMes,
+        retrogrados: retrogradosMes,
+        areas_destacadas: areasMes,
+        relato: relatoMes,
+      },
     };
     cacheSet(cacheKey, respuestaCalendario, TTL.CALENDARIO_LUNAR);
     res.json(respuestaCalendario);
