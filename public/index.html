@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v177-precios-en-mi-cuenta -->
+<!-- VERSION-APP: v181-iconos-color-por-planeta -->
 <!-- CONSOLIDADO: incluye v159 (reintento carta natal) + v160 (11 puntos: sesión, mensajes, contraseñas, JSON seguro, correo único, safe area, zoom mapa, agrupación ciudades) + v161 (posición del ojo) + v162 (frases variadas ACG) + v163 (diversidad de planetas en ciudades) + v164 (texto luna de hoy) + v165 (diario oculto por defecto) -->
 
 <link rel="manifest" href="manifest.json">
@@ -2513,6 +2513,70 @@
     } catch (e) { msg.textContent = e.message; msg.style.color = '#a5442f'; }
   }
 
+  const TEMA_SIGNO_LUNACION = {
+    Aries:'nuevos comienzos e impulso personal', Tauro:'estabilidad, cuerpo y recursos propios', Géminis:'comunicación e ideas nuevas',
+    Cáncer:'hogar, familia y emociones', Leo:'creatividad, autoexpresión y reconocimiento', Virgo:'orden, salud y rutinas',
+    Libra:'relaciones, equilibrio y justicia', Escorpio:'transformación e intimidad', Sagitario:'expansión, viajes y sentido de vida',
+    Capricornio:'metas, disciplina y carrera', Acuario:'comunidad, innovación e independencia', Piscis:'espiritualidad, sueños y sensibilidad',
+  };
+  const TEMA_PLANETA_INGRESO = {
+    Sol:'tu identidad y vitalidad', Luna:'tus emociones', Mercurio:'tu forma de pensar y comunicarte', Venus:'el amor y los valores',
+    Marte:'la acción y el impulso', Júpiter:'el crecimiento y la expansión', Saturno:'la estructura y el compromiso',
+    Urano:'los cambios repentinos', Neptuno:'la sensibilidad y la intuición', Plutón:'la transformación profunda',
+    'Nodo Norte':'tu dirección kármica', 'Nodo Sur':'los patrones que sueltas', Lilith:'tu autenticidad más cruda',
+  };
+
+  const ICONO_PLANETA_MES = {
+    'Sol': { g: '☉', c: '#D9A441' }, 'Luna': { g: '☽', c: '#8B7BB8' }, 'Mercurio': { g: '☿', c: '#6FA3A0' },
+    'Venus': { g: '♀', c: '#D98A9E' }, 'Marte': { g: '♂', c: '#C1553B' }, 'Júpiter': { g: '♃', c: '#D9822B' },
+    'Saturno': { g: '♄', c: '#7A6A53' }, 'Urano': { g: '♅', c: '#4FA3A8' }, 'Neptuno': { g: '♆', c: '#4A6FA5' },
+    'Plutón': { g: '♇', c: '#5C4A6E' }, 'Nodo Norte': { g: '☊', c: '#8B7BB8' }, 'Nodo Sur': { g: '☋', c: '#8B7BB8' },
+    'Lilith': { g: '⚸', c: '#3D2460' }, 'Quirón': { g: '⚷', c: '#6FA37A' },
+  };
+  function iconoCirculoPlaneta(nombrePlaneta, tam) {
+    tam = tam || 34;
+    const info = ICONO_PLANETA_MES[nombrePlaneta] || { g: '✦', c: 'var(--marigold)' };
+    const fontSize = Math.round(tam * 0.47);
+    return `<div style="flex:none;width:${tam}px;height:${tam}px;border-radius:50%;background:${info.c};color:#fff;display:flex;align-items:center;justify-content:center;font-size:${fontSize}px;">${info.g}</div>`;
+  }
+
+  // tema (opcional): texto corto tipo "Armonía y libertad" mostrado debajo del título, como en la referencia visual
+  function acordeonItemMes(id, tituloHtml, cuerpoHtml, abierto, opciones) {
+    opciones = opciones || {};
+    const icono = opciones.planeta ? iconoCirculoPlaneta(opciones.planeta) : '';
+    const temaHtml = opciones.tema ? `<div style="font-size:11px;color:var(--ink-dim);margin-top:1px;">${opciones.tema}</div>` : '';
+    return `
+      <div class="acordeon-mes-item" style="border:1px solid var(--line);border-radius:12px;margin-bottom:8px;overflow:hidden;">
+        <div onclick="toggleAcordeonMes('${id}')" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;background:${abierto ? 'var(--marigold-soft)' : '#fff'};">
+          <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">
+            ${icono}
+            <div style="min-width:0;">
+              <div style="font-size:13px;font-weight:600;color:var(--plum);">${tituloHtml}</div>
+              ${temaHtml}
+            </div>
+          </div>
+          <div id="icono-${id}" style="font-size:12px;color:var(--ink-dim);flex:none;">${abierto ? '▲' : '▼'}</div>
+        </div>
+        <div id="cuerpo-${id}" style="display:${abierto ? 'block' : 'none'};padding:12px 14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--plum);line-height:1.6;">
+          ${cuerpoHtml}
+        </div>
+      </div>`;
+  }
+
+  function toggleAcordeonMes(id) {
+    const cuerpo = document.getElementById('cuerpo-' + id);
+    const icono = document.getElementById('icono-' + id);
+    if (!cuerpo) return;
+    const yaAbierto = cuerpo.style.display === 'block';
+    // Solo un bloque de PRIMER NIVEL abierto a la vez (los sub-eventos dentro sí pueden convivir)
+    if (id.startsWith('nivel1-')) {
+      document.querySelectorAll('[id^="cuerpo-nivel1-"]').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('[id^="icono-nivel1-"]').forEach(el => el.textContent = '▼');
+    }
+    cuerpo.style.display = yaAbierto ? 'none' : 'block';
+    icono.textContent = yaAbierto ? '▼' : '▲';
+  }
+
   async function cargarMesAstrologico() {
     const contenedor = document.getElementById('mes-astrologico-contenido');
     contenedor.innerHTML = '<div class="disclaimer">Calculando tu mes… puede tardar un momento.</div>';
@@ -2526,49 +2590,85 @@
       if (!r.ok) { contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular tu mes.'}</div>`; return; }
 
       const m = data.mes_astrologico || {};
-      let html = '';
+      const lunaciones = m.lunaciones || { luna_nueva: [], luna_llena: [] };
+      const ingresos = m.ingresos || [];
+      const retrogrados = m.retrogrados || [];
+      const eventosPersonales = m.eventos_destacados || [];
+      const areas = m.areas_destacadas || [];
 
-      if (m.relato) {
-        html += `<div class="card-lectura" style="margin-bottom:12px;"><div class="card-titulo">El relato de ${NOMBRES_MES[_calMesActual - 1]}</div><div class="card-cuerpo" style="white-space:pre-line;">${m.relato}</div></div>`;
-      }
+      // Resumen breve visible de entrada, sin acordeón
+      let html = `<div style="text-align:center;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:17px;color:var(--plum);margin-bottom:4px;">Tu mes astrológico — ${NOMBRES_MES[_calMesActual - 1]}</div>`;
+      const totalEventos = ingresos.length + retrogrados.length + eventosPersonales.length + lunaciones.luna_nueva.length + lunaciones.luna_llena.length;
+      html += `<div class="disclaimer" style="text-align:center;margin-bottom:14px;">${totalEventos ? `${totalEventos} momentos clave este mes — toca cada bloque para explorarlos.` : 'Un mes sin grandes eventos mayores — buen momento para lo cotidiano.'}</div>`;
 
-      if (m.areas_destacadas && m.areas_destacadas.length) {
-        html += `<div style="margin-bottom:12px;"><div class="desc" style="margin-bottom:6px;">Áreas más activas este mes</div>` +
-          m.areas_destacadas.map(a => `<span style="display:inline-block;background:var(--marigold-soft);color:var(--plum);border-radius:100px;padding:5px 12px;font-size:11.5px;margin:0 6px 6px 0;">${a}</span>`).join('') +
-          `</div>`;
-      }
+      // 1) Panorama del mes
+      html += acordeonItemMes('nivel1-panorama', '🔮 Panorama del mes', m.relato ? `<div style="white-space:pre-line;">${m.relato}</div>` : 'Sin relato disponible este mes.', true);
 
-      if (m.lunaciones && (m.lunaciones.luna_nueva.length || m.lunaciones.luna_llena.length)) {
-        html += `<div class="card-lectura neutral" style="margin-bottom:10px;">
-          <div class="card-titulo">🌙 Lunaciones del mes</div>
-          <div class="card-cuerpo">
-            ${m.lunaciones.luna_nueva.map(d => `Luna Nueva el día ${d}`).join(' · ')}
-            ${m.lunaciones.luna_nueva.length && m.lunaciones.luna_llena.length ? ' · ' : ''}
-            ${m.lunaciones.luna_llena.map(d => `Luna Llena el día ${d}`).join(' · ')}
-          </div>
-        </div>`;
-      }
+      // 2) Calendario astrológico — fechas cortas, deduplicadas, sin abrir detalle
+      const fechasCalendario = [
+        ...ingresos.map(i => ({ fecha: i.fecha, planeta: i.planeta, texto: `${i.planeta} entra en ${i.signo_nuevo}` })),
+        ...lunaciones.luna_nueva.map(l => ({ fecha: `${_calAnioActual}-${String(_calMesActual).padStart(2,'0')}-${String(l.dia).padStart(2,'0')}`, planeta: 'Luna', texto: `Luna Nueva${l.signo ? ` en ${l.signo}` : ''}` })),
+        ...lunaciones.luna_llena.map(l => ({ fecha: `${_calAnioActual}-${String(_calMesActual).padStart(2,'0')}-${String(l.dia).padStart(2,'0')}`, planeta: 'Luna', texto: `Luna Llena${l.signo ? ` en ${l.signo}` : ''}` })),
+        ...retrogrados.map(r => ({ fecha: r.fecha, planeta: r.planeta, texto: `${r.planeta} ${r.tipo === 'se_vuelve_retrogrado' ? 'se vuelve retrógrado' : 'retoma movimiento directo'}` })),
+      ].sort((a, b) => a.fecha.localeCompare(b.fecha));
+      const cuerpoCalendario = fechasCalendario.length
+        ? `<div style="display:flex;flex-wrap:wrap;gap:8px;">${fechasCalendario.map(f => `
+            <div style="background:var(--marigold-soft);border-radius:10px;padding:8px 10px 8px;min-width:88px;text-align:center;">
+              <div style="display:flex;justify-content:center;margin-bottom:4px;">${iconoCirculoPlaneta(f.planeta, 24)}</div>
+              <div style="font-size:10.5px;font-weight:700;color:var(--marigold-dark);">${f.fecha.slice(-2)} ${NOMBRES_MES[_calMesActual-1].slice(0,3).toUpperCase()}</div>
+              <div style="font-size:10.5px;color:var(--plum);margin-top:2px;">${f.texto}</div>
+            </div>`).join('')}</div>`
+        : '<div class="disclaimer">No hay fechas mayores detectadas este mes.</div>';
+      html += acordeonItemMes('nivel1-calendario', '📅 Calendario astrológico', cuerpoCalendario, false);
 
-      if (m.retrogrados && m.retrogrados.length) {
-        html += m.retrogrados.map(r => `
-          <div class="card-lectura tension" style="margin-bottom:8px;">
-            <div class="card-titulo">${r.tipo === 'se_vuelve_retrogrado' ? '⏪' : '⏩'} ${r.planeta}</div>
-            <div class="card-cuerpo">${r.tipo === 'se_vuelve_retrogrado' ? `Se vuelve retrógrado el día ${r.fecha.slice(-2)}.` : `Retoma movimiento directo el día ${r.fecha.slice(-2)}.`}</div>
-          </div>
-        `).join('');
-      }
+      // 3) Eventos clave — ingresos y retrógrados, cada uno expandible individualmente
+      const eventosClave = [
+        ...ingresos.map(i => ({ id: `ing-${i.fecha}-${i.planeta}`, planeta: i.planeta, tema: `Entra a ${i.signo_nuevo}`,
+          titulo: `${i.planeta} entra en ${i.signo_nuevo} — ${i.fecha.slice(-2)} ${NOMBRES_MES[_calMesActual-1].slice(0,3)}`,
+          detalle: `<b>Qué significa:</b> ${i.planeta} activa ahora ${TEMA_PLANETA_INGRESO[i.planeta] || 'esta área de tu vida'} con el estilo de ${i.signo_nuevo}.<br><b>Cómo aprovecharlo:</b> Observa cómo cambia tu forma de vivir ${TEMA_PLANETA_INGRESO[i.planeta] || 'esto'} en las próximas semanas.` })),
+        ...retrogrados.map(r => ({ id: `retro-${r.fecha}-${r.planeta}`, planeta: r.planeta, tema: r.tipo === 'se_vuelve_retrogrado' ? 'Retrógrado' : 'Directo',
+          titulo: `${r.planeta} ${r.tipo === 'se_vuelve_retrogrado' ? 'retrógrado' : 'directo'} — ${r.fecha.slice(-2)} ${NOMBRES_MES[_calMesActual-1].slice(0,3)}`,
+          detalle: `<b>Qué activa:</b> ${r.tipo === 'se_vuelve_retrogrado' ? 'Momento de revisar, repensar y no forzar decisiones grandes relacionadas con ' + (TEMA_PLANETA_INGRESO[r.planeta] || r.planeta) + '.' : 'Lo que estuvo detenido puede retomar su curso normal.'}${r.duracion_tipica ? `<br><b>Duración típica:</b> ${r.duracion_tipica}.` : ''}` })),
+      ].slice(0, 10);
+      const cuerpoEventosClave = eventosClave.length
+        ? eventosClave.map(ev => acordeonItemMes(ev.id, ev.titulo, ev.detalle, false, { planeta: ev.planeta, tema: ev.tema })).join('')
+        : '<div class="disclaimer">Sin eventos generales mayores detectados este mes.</div>';
+      html += acordeonItemMes('nivel1-eventosclave', '⭐ Eventos clave', cuerpoEventosClave, false);
 
-      if (m.eventos_destacados && m.eventos_destacados.length) {
-        html += `<div class="desc" style="margin:14px 0 8px;">Eventos destacados del mes</div>`;
-        html += m.eventos_destacados.map(e => `
-          <div class="card-lectura" style="margin-bottom:8px;">
-            <div class="card-titulo" style="font-size:13px;">Día ${e.fecha.slice(-2)} — ${e.planeta_transito} ${e.aspecto} tu ${e.punto_natal} natal</div>
-            ${e.area ? `<div class="card-etiqueta">Afecta: ${e.area}</div>` : ''}
-          </div>
-        `).join('');
-      }
+      // 4) Cómo te afecta a ti — tránsitos personales (aspectos a tu carta natal)
+      const cuerpoPersonal = eventosPersonales.length
+        ? eventosPersonales.slice(0, 10).map(e => acordeonItemMes(
+            `pers-${e.fecha}-${e.planeta_transito}-${e.punto_natal}`,
+            `${e.planeta_transito} ${e.aspecto} tu ${e.punto_natal} natal — pico: ${e.fecha.slice(-2)} ${NOMBRES_MES[_calMesActual-1].slice(0,3)}`,
+            `${e.casa_natal ? `<b>Casa afectada:</b> Casa ${e.casa_natal}<br>` : ''}${e.area ? `<b>Área de vida:</b> ${e.area}<br>` : ''}<b>Qué significa:</b> ${e.planeta_transito} entra en contacto directo con tu ${e.punto_natal} natal, activando ${e.area || 'esta parte de tu carta'}.`,
+            false,
+            { planeta: e.planeta_transito, tema: e.area || e.aspecto }
+          )).join('')
+        : '<div class="disclaimer">Sin tránsitos personales mayores este mes.</div>';
+      html += acordeonItemMes('nivel1-personal', '🎯 Cómo te afecta a ti', cuerpoPersonal, false);
 
-      if (!html) html = '<div class="disclaimer">Este mes no tiene eventos astrológicos mayores para ti — un tramo tranquilo.</div>';
+      // 5) Áreas más activas — chips simples
+      const cuerpoAreas = areas.length
+        ? `<div style="display:flex;flex-wrap:wrap;gap:8px;">${areas.map(a => `<span style="display:inline-block;background:var(--marigold-soft);color:var(--plum);border-radius:100px;padding:6px 14px;font-size:12px;">${a}</span>`).join('')}</div>`
+        : '<div class="disclaimer">No hay un área claramente más activa este mes.</div>';
+      html += acordeonItemMes('nivel1-areas', '✨ Áreas más activas', cuerpoAreas, false);
+
+      // 6) Lunaciones — una tarjeta expandible por lunación
+      const todasLunaciones = [
+        ...lunaciones.luna_nueva.map(l => ({ ...l, tipo: 'Luna Nueva' })),
+        ...lunaciones.luna_llena.map(l => ({ ...l, tipo: 'Luna Llena' })),
+      ].sort((a, b) => a.dia - b.dia);
+      const cuerpoLunaciones = todasLunaciones.length
+        ? todasLunaciones.map(l => acordeonItemMes(
+            `luna-${l.dia}-${l.tipo}`,
+            `${l.tipo}${l.signo ? ` en ${l.signo}` : ''} — día ${l.dia}`,
+            `<b>Tema del signo:</b> ${l.signo && TEMA_SIGNO_LUNACION[l.signo] ? TEMA_SIGNO_LUNACION[l.signo] : 'energía propia de este momento lunar'}.<br><b>${l.tipo === 'Luna Nueva' ? 'Qué inicia' : 'Qué cierra'}:</b> ${l.tipo === 'Luna Nueva' ? 'Buen momento para sembrar intenciones en esta área.' : 'Buen momento para soltar y celebrar lo que ya diste.'}<br><b>Recomendación:</b> ${l.tipo === 'Luna Nueva' ? 'Escribe una intención concreta relacionada con este tema.' : 'Haz un cierre consciente de algo relacionado con este tema.'}`,
+            false,
+            { planeta: 'Luna', tema: l.signo && TEMA_SIGNO_LUNACION[l.signo] ? TEMA_SIGNO_LUNACION[l.signo] : l.tipo }
+          )).join('')
+        : '<div class="disclaimer">Sin lunaciones registradas este mes.</div>';
+      html += acordeonItemMes('nivel1-lunaciones', '🌙 Lunaciones del mes', cuerpoLunaciones, false);
+
       contenedor.innerHTML = html;
     } catch (e) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${e.message}</div>`;
