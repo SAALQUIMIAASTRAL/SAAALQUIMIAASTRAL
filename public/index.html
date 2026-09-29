@@ -913,6 +913,13 @@
           </div>
 
           <div class="section" data-tab="ciclos">
+            <h2>📖 Tu mes astrológico</h2>
+            <div class="desc">El relato del mes y lo más importante que trae para ti, según tus tránsitos reales.</div>
+            <div id="mes-astrologico-contenido"><div class="disclaimer">Toca "Ver mi mes" para calcularlo.</div></div>
+            <button class="btn-outline" style="width:100%;margin-top:10px;" onclick="cargarMesAstrologico()">Ver mi mes</button>
+          </div>
+
+          <div class="section" data-tab="ciclos">
             <h2>¿Cuándo hacer cada cosa?</h2>
             <div class="desc">La Luna influye en todo. Aquí las fechas del mes donde la energía favorece cada tipo de acción.</div>
             <button class="btn-primary" style="margin-bottom:10px;" onclick="calcularCalendarioLunar(this)">Ver fechas exactas de este mes</button>
@@ -2504,6 +2511,68 @@
     } catch (e) { msg.textContent = e.message; msg.style.color = '#a5442f'; }
   }
 
+  async function cargarMesAstrologico() {
+    const contenedor = document.getElementById('mes-astrologico-contenido');
+    contenedor.innerHTML = '<div class="disclaimer">Calculando tu mes… puede tardar un momento.</div>';
+    try {
+      const r = await fetchAuth('/calendario-lunar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mes: _calMesActual, anio: _calAnioActual }),
+      });
+      const data = await leerJsonSeguro(r);
+      if (!r.ok) { contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular tu mes.'}</div>`; return; }
+
+      const m = data.mes_astrologico || {};
+      let html = '';
+
+      if (m.relato) {
+        html += `<div class="card-lectura" style="margin-bottom:12px;"><div class="card-titulo">El relato de ${NOMBRES_MES[_calMesActual - 1]}</div><div class="card-cuerpo" style="white-space:pre-line;">${m.relato}</div></div>`;
+      }
+
+      if (m.areas_destacadas && m.areas_destacadas.length) {
+        html += `<div style="margin-bottom:12px;"><div class="desc" style="margin-bottom:6px;">Áreas más activas este mes</div>` +
+          m.areas_destacadas.map(a => `<span style="display:inline-block;background:var(--marigold-soft);color:var(--plum);border-radius:100px;padding:5px 12px;font-size:11.5px;margin:0 6px 6px 0;">${a}</span>`).join('') +
+          `</div>`;
+      }
+
+      if (m.lunaciones && (m.lunaciones.luna_nueva.length || m.lunaciones.luna_llena.length)) {
+        html += `<div class="card-lectura neutral" style="margin-bottom:10px;">
+          <div class="card-titulo">🌙 Lunaciones del mes</div>
+          <div class="card-cuerpo">
+            ${m.lunaciones.luna_nueva.map(d => `Luna Nueva el día ${d}`).join(' · ')}
+            ${m.lunaciones.luna_nueva.length && m.lunaciones.luna_llena.length ? ' · ' : ''}
+            ${m.lunaciones.luna_llena.map(d => `Luna Llena el día ${d}`).join(' · ')}
+          </div>
+        </div>`;
+      }
+
+      if (m.retrogrados && m.retrogrados.length) {
+        html += m.retrogrados.map(r => `
+          <div class="card-lectura tension" style="margin-bottom:8px;">
+            <div class="card-titulo">${r.tipo === 'se_vuelve_retrogrado' ? '⏪' : '⏩'} ${r.planeta}</div>
+            <div class="card-cuerpo">${r.tipo === 'se_vuelve_retrogrado' ? `Se vuelve retrógrado el día ${r.fecha.slice(-2)}.` : `Retoma movimiento directo el día ${r.fecha.slice(-2)}.`}</div>
+          </div>
+        `).join('');
+      }
+
+      if (m.eventos_destacados && m.eventos_destacados.length) {
+        html += `<div class="desc" style="margin:14px 0 8px;">Eventos destacados del mes</div>`;
+        html += m.eventos_destacados.map(e => `
+          <div class="card-lectura" style="margin-bottom:8px;">
+            <div class="card-titulo" style="font-size:13px;">Día ${e.fecha.slice(-2)} — ${e.planeta_transito} ${e.aspecto} tu ${e.punto_natal} natal</div>
+            ${e.area ? `<div class="card-etiqueta">Afecta: ${e.area}</div>` : ''}
+          </div>
+        `).join('');
+      }
+
+      if (!html) html = '<div class="disclaimer">Este mes no tiene eventos astrológicos mayores para ti — un tramo tranquilo.</div>';
+      contenedor.innerHTML = html;
+    } catch (e) {
+      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${e.message}</div>`;
+    }
+  }
+
   async function alternarEntradasDiario() {
     const lista = document.getElementById('diario-lista');
     const boton = document.getElementById('diario-btn-ver');
@@ -3242,28 +3311,13 @@
     renderizarSemanaLunar();
   }
 
-  // Punto 13: ícono de luna propio (SVG), en vez de emoji del sistema operativo —
-  // el emoji de luna se ve muy distinto entre iOS y Android (y a veces ni existe en Android
-  // más viejo), así que dibujamos nosotras mismas la fase con los colores de la marca.
-  let _svgLunaContador = 0;
-  const PCT_POR_FASE = { 'New Moon':0, 'Waxing Crescent':25, 'First Quarter':50, 'Waxing Gibbous':75, 'Full Moon':100, 'Waning Gibbous':75, 'Last Quarter':50, 'Waning Crescent':25 };
-  function svgLuna(faseNombre, tam) {
-    tam = tam || 18;
-    const creciente = (faseNombre || '').includes('Waxing') || faseNombre === 'New Moon';
-    const pct = PCT_POR_FASE[faseNombre] ?? 50;
-    const r = tam / 2 - 1;
-    const offset = pct >= 100 ? 0 : r * 2 * (1 - pct / 100) * (creciente ? -1 : 1);
-    const id = 'lunaclip' + (_svgLunaContador++);
-    return `<svg width="${tam}" height="${tam}" viewBox="0 0 ${tam} ${tam}" style="vertical-align:middle;display:inline-block;">
-      <circle cx="${tam/2}" cy="${tam/2}" r="${r}" fill="#2D1B4E"/>
-      <clipPath id="${id}"><circle cx="${tam/2}" cy="${tam/2}" r="${r}"/></clipPath>
-      <g clip-path="url(#${id})"><circle cx="${tam/2 + offset}" cy="${tam/2}" r="${r}" fill="#F4C95D"/></g>
-      <circle cx="${tam/2}" cy="${tam/2}" r="${r}" fill="none" stroke="#F4C95D" stroke-width="0.6" opacity="0.4"/>
-    </svg>`;
-  }
-  // Compatibilidad: FASE_EMOJI.fase ahora devuelve el SVG en vez de un carácter emoji,
-  // para no tener que cambiar cada lugar donde ya se usaba FASE_EMOJI[...]
-  const FASE_EMOJI = new Proxy({}, { get: (_, fase) => svgLuna(fase) });
+  // Se revirtió el ícono SVG propio de fase lunar: se veía más estático/plano que el
+  // emoji original, que además ya se ve bien en iOS y Android modernos. Volvemos al emoji.
+  const FASE_EMOJI = {
+    'New Moon': '🌑', 'Waxing Crescent': '🌒', 'First Quarter': '🌓', 'Waxing Gibbous': '🌔',
+    'Full Moon': '🌕', 'Waning Gibbous': '🌖', 'Last Quarter': '🌗', 'Waning Crescent': '🌘',
+  };
+  function svgLuna(faseNombre) { return FASE_EMOJI[faseNombre] || '🌙'; }
   const NOMBRES_MES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   let _calMesActual = new Date().getUTCMonth() + 1;
   let _calAnioActual = new Date().getUTCFullYear();
@@ -4735,102 +4789,55 @@
   // Habilita pellizcar-para-zoom (pinch), arrastrar (pan) y doble-toque para restablecer,
   // usando SOLO transform (translate+scale) sobre el contenedor — así el SVG/imagen interna
   // nunca se re-dibuja ni se desalinean las líneas, solo se escala/mueve visualmente.
+  // Solo ACERCAR/ALEJAR (pellizco de dos dedos) — sin arrastre, la imagen no se mueve de lugar,
+  // solo cambia de tamaño centrada en su sitio. Doble toque restablece el tamaño original.
   function activarPanZoom(contenedor) {
-    let escala = 1, x = 0, y = 0;
+    let escala = 1;
     let ultimaDistancia = null;
-    let ultimoX = null, ultimoY = null;
-    let arrastrandoUnDedo = false;
-    let arrastrandoMouse = false;
 
-    contenedor.style.transformOrigin = '0 0';
+    contenedor.style.transformOrigin = 'center center';
     contenedor.style.touchAction = 'none';
-    contenedor.style.cursor = 'grab';
     contenedor.style.willChange = 'transform';
 
     function aplicar() {
-      contenedor.style.transform = `translate(${x}px, ${y}px) scale(${escala})`;
+      contenedor.style.transform = `scale(${escala})`;
     }
     function distanciaEntre(t0, t1) {
       const dx = t0.clientX - t1.clientX, dy = t0.clientY - t1.clientY;
       return Math.sqrt(dx * dx + dy * dy);
     }
-    function puntoMedio(t0, t1) {
-      return { x: (t0.clientX + t1.clientX) / 2, y: (t0.clientY + t1.clientY) / 2 };
-    }
 
-    // --- TODO el manejo táctil (móvil) va por Touch Events, nunca mezclado con Pointer Events ---
     contenedor.addEventListener('touchstart', (e) => {
-      if (e.touches.length === 1) {
-        arrastrandoUnDedo = true;
-        ultimoX = e.touches[0].clientX;
-        ultimoY = e.touches[0].clientY;
-      } else if (e.touches.length === 2) {
-        arrastrandoUnDedo = false;
+      if (e.touches.length === 2) {
         ultimaDistancia = distanciaEntre(e.touches[0], e.touches[1]);
       }
     }, { passive: true });
 
     contenedor.addEventListener('touchmove', (e) => {
-      if (e.touches.length === 1 && arrastrandoUnDedo) {
-        e.preventDefault();
-        const dx = e.touches[0].clientX - ultimoX;
-        const dy = e.touches[0].clientY - ultimoY;
-        x += dx; y += dy;
-        ultimoX = e.touches[0].clientX;
-        ultimoY = e.touches[0].clientY;
-        aplicar();
-      } else if (e.touches.length === 2 && ultimaDistancia) {
+      if (e.touches.length === 2 && ultimaDistancia) {
         e.preventDefault();
         const nueva = distanciaEntre(e.touches[0], e.touches[1]);
         const factor = nueva / ultimaDistancia;
-        const escalaAnterior = escala;
-        escala = Math.max(1, Math.min(5, escala * factor));
-        // Ajusta la posición para que el zoom se sienta centrado en el punto entre los dos dedos
-        const centro = puntoMedio(e.touches[0], e.touches[1]);
-        const rel = escala / escalaAnterior;
-        x = centro.x - (centro.x - x) * rel;
-        y = centro.y - (centro.y - y) * rel;
+        escala = Math.max(1, Math.min(4, escala * factor));
         ultimaDistancia = nueva;
         aplicar();
       }
     }, { passive: false });
 
     contenedor.addEventListener('touchend', (e) => {
-      arrastrandoUnDedo = false;
-      ultimaDistancia = null;
-      if (e.touches.length === 1) {
-        arrastrandoUnDedo = true;
-        ultimoX = e.touches[0].clientX;
-        ultimoY = e.touches[0].clientY;
-      }
+      if (e.touches.length < 2) ultimaDistancia = null;
     }, { passive: true });
 
-    // --- Arrastre y rueda con MOUSE, para pruebas en escritorio (eventos distintos a touch, no chocan) ---
-    contenedor.addEventListener('mousedown', (e) => {
-      arrastrandoMouse = true;
-      ultimoX = e.clientX; ultimoY = e.clientY;
-      contenedor.style.cursor = 'grabbing';
-    });
-    window.addEventListener('mousemove', (e) => {
-      if (!arrastrandoMouse) return;
-      x += e.clientX - ultimoX;
-      y += e.clientY - ultimoY;
-      ultimoX = e.clientX; ultimoY = e.clientY;
-      aplicar();
-    });
-    window.addEventListener('mouseup', () => {
-      arrastrandoMouse = false;
-      contenedor.style.cursor = 'grab';
-    });
+    // Rueda del mouse, solo para pruebas en escritorio
     contenedor.addEventListener('wheel', (e) => {
       e.preventDefault();
-      escala = Math.max(1, Math.min(5, escala - e.deltaY * 0.001));
+      escala = Math.max(1, Math.min(4, escala - e.deltaY * 0.001));
       aplicar();
     }, { passive: false });
 
-    // Doble toque/clic para restablecer la vista
+    // Doble toque/clic para restablecer el tamaño
     contenedor.addEventListener('dblclick', () => {
-      escala = 1; x = 0; y = 0;
+      escala = 1;
       aplicar();
     });
   }
