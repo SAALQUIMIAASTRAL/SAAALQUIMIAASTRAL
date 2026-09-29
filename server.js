@@ -309,7 +309,8 @@ async function leerPerfil(req) {
 // RUTA: Registro de nueva usuaria
 // ============================================================
 app.post('/auth/registro', async (req, res) => {
-  const { email, password, nombre } = req.body;
+  const email = (req.body.email || '').trim().toLowerCase();
+  const { password, nombre } = req.body;
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -334,7 +335,8 @@ app.post('/auth/registro', async (req, res) => {
 // RUTA: Inicio de sesión
 // ============================================================
 app.post('/auth/login', async (req, res) => {
-  const { email, password } = req.body;
+  const email = (req.body.email || '').trim().toLowerCase();
+  const { password } = req.body;
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return res.status(400).json({ error: error.message });
   res.json({ sesion: data.session, usuario: data.user });
@@ -352,7 +354,7 @@ app.post('/auth/refresh', async (req, res) => {
 // RUTA: Solicitar recuperación de contraseña (envía correo con link)
 // ============================================================
 app.post('/auth/olvide-password', async (req, res) => {
-  const { email } = req.body;
+  const email = (req.body.email || '').trim().toLowerCase();
   if (!email) return res.status(400).json({ error: 'Falta el correo.' });
   const urlBase = process.env.APP_PUBLIC_URL || `${req.protocol}://${req.get('host')}`;
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -1934,7 +1936,7 @@ app.post('/suscripcion/iniciar', requireLogin, async (req, res) => {
     // Buscamos si ya existe un customer_id guardado; si no, creamos uno en Stripe
     const { data: subExistente } = await req.supabase
       .from('subscriptions')
-      .select('stripe_customer_id')
+      .select('stripe_customer_id, trial_used')
       .eq('user_id', req.userId)
       .maybeSingle();
 
@@ -1944,10 +1946,14 @@ app.post('/suscripcion/iniciar', requireLogin, async (req, res) => {
       customerId = customer.id;
       await req.supabase.from('subscriptions').upsert({
         user_id: req.userId,
+        provider: 'stripe',
         stripe_customer_id: customerId,
         estado: 'pendiente',
       }, { onConflict: 'user_id' });
     }
+
+    // No dar un segundo periodo de prueba a quien ya lo usó antes (aunque cancele y regrese, o reinstale)
+    const yaUsoTrial = !!subExistente?.trial_used;
 
     const sesionPago = await stripe.checkout.sessions.create({
       mode: 'subscription',
@@ -1955,7 +1961,7 @@ app.post('/suscripcion/iniciar', requireLogin, async (req, res) => {
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
       subscription_data: {
-        trial_period_days: 7,
+        ...(yaUsoTrial ? {} : { trial_period_days: 7 }),
         metadata: { user_id: req.userId, plan },
       },
       success_url: `${req.headers.origin || 'https://tuapp.com'}/pago-exitoso`,
@@ -2273,12 +2279,22 @@ app.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async (r
       case 'checkout.session.completed': {
         const session = evento.data.object;
         const userId = session.metadata?.user_id;
+        const plan = session.metadata?.plan || null;
         if (userId && session.subscription) {
+          // Traemos la suscripción completa de Stripe para saber si tuvo periodo de prueba y sus fechas reales
+          let subStripe = null;
+          try { subStripe = await stripe.subscriptions.retrieve(session.subscription); } catch (e) { /* seguimos con lo que hay */ }
           await sb.from('subscriptions').upsert({
             user_id: userId,
+            provider: 'stripe',
+            product_id: plan,
             stripe_customer_id: session.customer,
             stripe_subscription_id: session.subscription,
+            transaction_id: session.subscription,
             estado: 'activa',
+            start_date: subStripe?.current_period_start ? new Date(subStripe.current_period_start * 1000).toISOString() : new Date().toISOString(),
+            expiration_date: subStripe?.current_period_end ? new Date(subStripe.current_period_end * 1000).toISOString() : null,
+            trial_used: !!subStripe?.trial_end || true,
           }, { onConflict: 'user_id' });
         }
         break;
@@ -2288,7 +2304,10 @@ app.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async (r
         const { data: perfil } = await sb.from('subscriptions').select('user_id').eq('stripe_subscription_id', sub.id).maybeSingle();
         if (perfil) {
           const estado = (sub.status === 'active' || sub.status === 'trialing') ? 'activa' : sub.status === 'past_due' ? 'vencida' : 'cancelada';
-          await sb.from('subscriptions').update({ estado }).eq('stripe_subscription_id', sub.id);
+          await sb.from('subscriptions').update({
+            estado,
+            expiration_date: sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null,
+          }).eq('stripe_subscription_id', sub.id);
         }
         break;
       }
