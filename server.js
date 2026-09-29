@@ -8,6 +8,86 @@ const axios = require('axios');
 const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 
+// ---- Efemérides propias (sin depender de la API externa ni gastar créditos) ----
+// Se usan SOLO para saber en qué signo está cada planeta cada día del mes, y así
+// detectar ingresos (cambios de signo) con precisión astronómica real (algoritmo de
+// Meeus, capítulo 33 — el mismo que usa cualquier software de astrología serio).
+const { julian, planetposition } = require('astronomia');
+const baseAstro = require('astronomia/base');
+const apparentAstro = require('astronomia/apparent');
+const nutationAstro = require('astronomia/nutation');
+const VSOP_MERCURY = require('astronomia/data/vsop87Bmercury').default;
+const VSOP_VENUS = require('astronomia/data/vsop87Bvenus').default;
+const VSOP_EARTH = require('astronomia/data/vsop87Bearth').default;
+const VSOP_MARS = require('astronomia/data/vsop87Bmars').default;
+const VSOP_JUPITER = require('astronomia/data/vsop87Bjupiter').default;
+const VSOP_SATURN = require('astronomia/data/vsop87Bsaturn').default;
+const VSOP_URANUS = require('astronomia/data/vsop87Buranus').default;
+const VSOP_NEPTUNE = require('astronomia/data/vsop87Bneptune').default;
+
+const PLANETAS_VSOP = {
+  Mercurio: VSOP_MERCURY, Venus: VSOP_VENUS, Marte: VSOP_MARS, Júpiter: VSOP_JUPITER,
+  Saturno: VSOP_SATURN, Urano: VSOP_URANUS, Neptuno: VSOP_NEPTUNE,
+};
+const SIGNOS_12 = ['Aries','Tauro','Géminis','Cáncer','Leo','Virgo','Libra','Escorpio','Sagitario','Capricornio','Acuario','Piscis'];
+
+// Longitud eclíptica geocéntrica aparente de un planeta (Meeus cap. 33) — de aquí sale el signo.
+function longitudEclipticaGrados(datosVSOP, jde) {
+  const tierra = new planetposition.Planet(VSOP_EARTH);
+  const planeta = new planetposition.Planet(datosVSOP);
+  const posTierra = tierra.position(jde);
+  const [L0, B0, R0] = [posTierra.lon, posTierra.lat, posTierra.range];
+  const [sB0, cB0] = baseAstro.sincos(B0);
+  const [sL0, cL0] = baseAstro.sincos(L0);
+  let x, y, z;
+  function calcular(tau) {
+    const pos = planeta.position(jde - tau);
+    const [L, B, R] = [pos.lon, pos.lat, pos.range];
+    const [sB, cB] = baseAstro.sincos(B);
+    const [sL, cL] = baseAstro.sincos(L);
+    x = R * cB * cL - R0 * cB0 * cL0;
+    y = R * cB * sL - R0 * cB0 * sL0;
+    z = R * sB - R0 * sB0;
+  }
+  calcular(0);
+  const delta = Math.sqrt(x * x + y * y + z * z);
+  const tau = baseAstro.lightTime(delta);
+  calcular(tau);
+  let lambda = Math.atan2(y, x);
+  const beta = Math.atan2(z, Math.hypot(x, y));
+  const [dLambda, dBeta] = apparentAstro.eclipticAberration(lambda, beta, jde);
+  const fk5 = planetposition.toFK5(lambda + dLambda, beta + dBeta, jde);
+  lambda = fk5.lon;
+  const [dPsi] = nutationAstro.nutation(jde);
+  lambda += dPsi;
+  return ((lambda * 180 / Math.PI) % 360 + 360) % 360;
+}
+function signoDeGrados(grados) {
+  return SIGNOS_12[Math.floor(grados / 30)];
+}
+// Calcula, para un planeta y un mes/año, en qué días (si los hay) cambia de signo.
+// Devuelve como máximo un evento por cambio real detectado (comparando día por día al mediodía UTC).
+function ingresosDelMesPorEfemerides(anio, mes, diasEnMes) {
+  const eventos = [];
+  Object.entries(PLANETAS_VSOP).forEach(([nombrePlaneta, datosVSOP]) => {
+    let signoAnterior = null;
+    for (let dia = 1; dia <= diasEnMes; dia++) {
+      const jde = julian.CalendarGregorianToJD(anio, mes, dia + 0.5); // mediodía UTC
+      const grados = longitudEclipticaGrados(datosVSOP, jde);
+      const signoHoy = signoDeGrados(grados);
+      if (signoAnterior && signoHoy !== signoAnterior) {
+        eventos.push({
+          fecha: `${anio}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`,
+          planeta: nombrePlaneta,
+          signo_nuevo: signoHoy,
+        });
+      }
+      signoAnterior = signoHoy;
+    }
+  });
+  return eventos;
+}
+
 const app = express();
 app.use(cors());
 app.use((req, res, next) => {
@@ -32,6 +112,7 @@ function cacheHash(...partes) {
 }
 
 const NOMBRES_MES_LARGO = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const SIGNOS_ES_INGRESO = { Ari:'Aries', Tau:'Tauro', Gem:'Géminis', Can:'Cáncer', Leo:'Leo', Vir:'Virgo', Lib:'Libra', Sco:'Escorpio', Sag:'Sagitario', Cap:'Capricornio', Aqu:'Acuario', Pis:'Piscis' };
 
 // Corrige la fase lunar cuando queda inconsistente con el % de iluminación
 // (la API a veces ya marca "menguante"/"creciente" por ángulo mientras la luz
@@ -885,7 +966,6 @@ app.post('/home-summary', requireLogin, async (req, res) => {
 
         if (filaAyer?.datos) {
           const NOMBRES_PLANETA_ES = { sun:'Sol', moon:'Luna', mercury:'Mercurio', venus:'Venus', mars:'Marte', jupiter:'Júpiter', saturn:'Saturno', uranus:'Urano', neptune:'Neptuno', pluto:'Plutón' };
-          const SIGNOS_ES_LOCAL = { Ari:'Aries', Tau:'Tauro', Gem:'Géminis', Can:'Cáncer', Leo:'Leo', Vir:'Virgo', Lib:'Libra', Sco:'Escorpio', Sag:'Sagitario', Cap:'Capricornio', Aqu:'Acuario', Pis:'Piscis' };
           Object.keys(NOMBRES_PLANETA_ES).forEach(key => {
             const antes = filaAyer.datos[key];
             const ahora = planetasHoy[key];
@@ -896,7 +976,7 @@ app.post('/home-summary', requireLogin, async (req, res) => {
               eventosEspeciales.push({
                 tipo: 'ingreso',
                 planeta: nombreEs,
-                texto: `${nombreEs} entró hoy a ${SIGNOS_ES_LOCAL[ahora.sign] || ahora.sign}. Es un buen momento para notar cómo cambia la energía de ${nombreEs.toLowerCase()} en tu día a día durante las próximas semanas.`,
+                texto: `${nombreEs} entró hoy a ${SIGNOS_ES_INGRESO[ahora.sign] || ahora.sign}. Es un buen momento para notar cómo cambia la energía de ${nombreEs.toLowerCase()} en tu día a día durante las próximas semanas.`,
               });
             }
             // Cambio de dirección (empezó o terminó retrógrado)
@@ -1595,6 +1675,10 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
       Jupiter: 'Júpiter', Saturn: 'Saturno', Uranus: 'Urano', Neptune: 'Neptuno', Pluto: 'Plutón',
       Medium_Coeli: 'Medio Cielo', Midheaven: 'Medio Cielo', MC: 'Medio Cielo',
       Ascendant: 'Ascendente', Descendant: 'Descendente', Imum_Coeli: 'Fondo de Cielo',
+      Mean_Node: 'Nodo Norte', True_Node: 'Nodo Norte', North_Node: 'Nodo Norte',
+      Mean_South_Node: 'Nodo Sur', True_South_Node: 'Nodo Sur', South_Node: 'Nodo Sur',
+      Mean_Lilith: 'Lilith', True_Lilith: 'Lilith', Lilith: 'Lilith', Black_Moon_Lilith: 'Lilith',
+      Chiron: 'Quirón',
     };
     const ASPECTO_ES = { trine: 'trígono', sextile: 'sextil', conjunction: 'conjunción', square: 'cuadratura', opposition: 'oposición' };
     const BUENO_PARA = {
@@ -1669,6 +1753,15 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
     let retrogradosMes = [];
     let areasMes = [];
     let relatoMes = null;
+    // Ingresos de signo (Venus entra a Escorpio, etc.) — calculados con efemérides propias
+    // (matemática astronómica real, día por día), cubriendo TODO el mes, pasado y futuro,
+    // sin depender de la API externa ni gastar créditos extra.
+    let ingresosMes = [];
+    try {
+      ingresosMes = ingresosDelMesPorEfemerides(anio, mes, diasEnMes);
+    } catch (e) {
+      console.error('No se pudieron calcular ingresos del mes con efemérides:', e.message);
+    }
 
     if (Array.isArray(eventosMes)) {
       // Eventos mayores: aspectos exactos (orbe pequeño) a puntos natales importantes
@@ -1718,6 +1811,16 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
       });
       // Dedupe simple (evita marcar el mismo día repetido por múltiples eventos del mismo planeta)
       retrogradosMes = retrogradosMes.filter((r, i, arr) => arr.findIndex(x => x.planeta === r.planeta && x.tipo === r.tipo) === i);
+      // Duración típica aproximada por planeta (conocimiento astrológico general, no una fecha específica inventada)
+      const DURACION_TIPICA_RETRO = {
+        Mercury: 'unas 3 semanas', Venus: 'unas 6 semanas', Mars: 'unos 2 a 2.5 meses',
+        Jupiter: 'unos 4 meses', Saturn: 'unos 4.5 meses', Uranus: 'unos 5 meses',
+        Neptune: 'unos 5 meses', Pluto: 'unos 5 meses',
+      };
+      retrogradosMes.forEach(r => {
+        const claveOriginal = Object.keys(NOMBRE_ES).find(k => NOMBRE_ES[k] === r.planeta);
+        r.duracion_tipica = DURACION_TIPICA_RETRO[claveOriginal] || null;
+      });
 
       // Áreas de vida más activas del mes (top 3, solo si hay datos — nunca todas por obligación)
       const conteoAreas = {};
@@ -1725,26 +1828,32 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
       areasMes = Object.entries(conteoAreas).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([area]) => area);
     }
 
-    // Lunaciones del mes (luna nueva / luna llena), tomadas del detalle día a día ya calculado
+    // Lunaciones del mes (luna nueva / luna llena) con su signo real, tomadas del detalle día a día ya calculado
+    lunacionesMes = { luna_nueva: [], luna_llena: [] };
     resultados.forEach(d => {
-      if (d.fase === 'New Moon') lunacionesMes.luna_nueva.push(d.dia);
-      if (d.fase === 'Full Moon') lunacionesMes.luna_llena.push(d.dia);
+      const signoEs = d.signo ? (SIGNOS_ES_INGRESO[d.signo] || d.signo) : null;
+      if (d.fase === 'New Moon') lunacionesMes.luna_nueva.push({ dia: d.dia, signo: signoEs });
+      if (d.fase === 'Full Moon') lunacionesMes.luna_llena.push({ dia: d.dia, signo: signoEs });
     });
 
     // Relato del mes con IA — SOLO redacta con los hechos reales de arriba, nunca inventa datos.
     // Se guarda en caché junto con el resto (una vez por usuaria por mes).
-    if (process.env.ANTHROPIC_API_KEY && (eventosDestacadosMes.length || lunacionesMes.luna_nueva.length || lunacionesMes.luna_llena.length)) {
+    const hayAlgoQueContar = eventosDestacadosMes.length || lunacionesMes.luna_nueva.length || lunacionesMes.luna_llena.length || retrogradosMes.length || ingresosMes.length;
+    if (process.env.ANTHROPIC_API_KEY && hayAlgoQueContar) {
       try {
         const hechos = [
-          ...eventosDestacadosMes.slice(0, 12).map(e => `Día ${e.fecha.slice(-2)}: ${e.planeta_transito} en ${e.aspecto} con tu ${e.punto_natal} natal${e.area ? ` (afecta ${e.area})` : ''}.`),
-          ...lunacionesMes.luna_nueva.map(d => `Día ${d}: Luna Nueva.`),
-          ...lunacionesMes.luna_llena.map(d => `Día ${d}: Luna Llena.`),
+          ...eventosDestacadosMes.slice(0, 10).map(e => `Día ${e.fecha.slice(-2)}: ${e.planeta_transito} en ${e.aspecto} con tu ${e.punto_natal} natal${e.area ? ` (afecta ${e.area})` : ''}.`),
+          ...lunacionesMes.luna_nueva.map(l => `Día ${l.dia}: Luna Nueva${l.signo ? ` en ${l.signo}` : ''}.`),
+          ...lunacionesMes.luna_llena.map(l => `Día ${l.dia}: Luna Llena${l.signo ? ` en ${l.signo}` : ''}.`),
           ...retrogradosMes.map(r => `Día ${r.fecha.slice(-2)}: ${r.planeta} ${r.tipo === 'se_vuelve_retrogrado' ? 'se vuelve retrógrado' : 'retoma movimiento directo'}.`),
+          ...ingresosMes.slice(0, 8).map(i => `Día ${i.fecha.slice(-2)}: ${i.planeta} entró a ${i.signo_nuevo}.`),
         ].join('\n');
 
-        const prompt = `Eres una astróloga profesional escribiendo el relato del mes de ${NOMBRES_MES_LARGO[mes-1] || mes} para una persona, en español de México/Latinoamérica, con tono cálido, claro y concreto — NUNCA genérico ni con frases vacías tipo "confía en el universo" o "se vienen cambios".
+        const prompt = `Eres una astróloga profesional escribiendo el relato del mes de ${NOMBRES_MES_LARGO[mes-1] || mes} para alguien SIN conocimientos de astrología, en español de México/Latinoamérica.
 
-Estos son los ÚNICOS hechos astrológicos reales de este mes que puedes usar (no inventes fechas, signos, aspectos ni eventos que no estén aquí):
+Tono: cálido, sencillo, como si le contaras a una amiga qué esperar del mes — NUNCA técnico, NUNCA una lista de fechas leída en voz alta, y NUNCA frases vacías tipo "confía en el universo" o "se vienen cambios".
+
+Estos son los ÚNICOS hechos astrológicos reales de este mes que puedes usar (no inventes fechas, signos, aspectos ni eventos que no estén aquí). No tienes que mencionarlos todos — elige los 3 o 4 más relevantes para el relato y deja el resto fuera, así el texto no se siente como una lista:
 
 ${hechos}
 
@@ -1753,7 +1862,7 @@ Escribe un relato narrativo de 3 párrafos cortos siguiendo esta estructura:
 2. "A mitad de mes..." (días 11-20)
 3. "Hacia el final del mes..." (días 21 en adelante)
 
-Si algún tercio del mes no tiene eventos listados arriba, dilo brevemente como un tramo más tranquilo, sin inventar nada. Máximo 180 palabras en total. Responde SOLO con el texto del relato, sin título ni markdown.`;
+Si algún tercio del mes no tiene eventos relevantes, dilo brevemente como un tramo más tranquilo, sin inventar nada. Máximo 160 palabras en total. Responde SOLO con el texto del relato, sin título ni markdown, sin tecnicismos como "orbe" o "natal_house".`;
 
         const controlador = new AbortController();
         const timeoutId = setTimeout(() => controlador.abort(), 30000);
@@ -1781,6 +1890,7 @@ Si algún tercio del mes no tiene eventos listados arriba, dilo brevemente como 
         eventos_destacados: eventosDestacadosMes,
         lunaciones: lunacionesMes,
         retrogrados: retrogradosMes,
+        ingresos: ingresosMes,
         areas_destacadas: areasMes,
         relato: relatoMes,
       },
