@@ -311,7 +311,18 @@ async function leerPerfil(req) {
 app.post('/auth/registro', async (req, res) => {
   const { email, password } = req.body;
   const { data, error } = await supabase.auth.signUp({ email, password });
-  if (error) return res.status(400).json({ error: error.message });
+  if (error) {
+    // Traduce el mensaje más común de Supabase para que sea claro en español
+    if (/already registered|already exists|already in use/i.test(error.message)) {
+      return res.status(400).json({ error: 'Ese correo ya tiene una cuenta. Inicia sesión, o usa "¿Olvidaste tu contraseña?" si no la recuerdas.' });
+    }
+    return res.status(400).json({ error: error.message });
+  }
+  // Por seguridad, Supabase a veces NO marca error cuando el correo ya existe —
+  // en su lugar regresa un usuario con identities: [] (vacío). Lo detectamos aquí.
+  if (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+    return res.status(400).json({ error: 'Ese correo ya tiene una cuenta. Inicia sesión, o usa "¿Olvidaste tu contraseña?" si no la recuerdas.' });
+  }
   res.json({ mensaje: 'Cuenta creada', usuario: data.user });
 });
 
