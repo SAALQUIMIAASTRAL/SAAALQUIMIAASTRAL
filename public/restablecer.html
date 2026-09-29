@@ -2,130 +2,108 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Restablecer contraseña — Sam Alquimia Astral</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crear nueva contraseña — Sam Alquimia Astral</title>
 <style>
-  :root{
-    --plum:#2D1B4E;
-    --ink-dim:#7A6B9A;
-    --marigold-dark:#9B7A2E;
-    --marigold-soft:rgba(201,168,76,0.13);
-    --paper:#FFFFFF;
-    --page-bg:#FBFAFC;
-    --line:#E5E0EA;
-  }
-  *{box-sizing:border-box;}
-  body{
-    margin:0;font-family:'Work Sans',sans-serif;background:var(--page-bg);color:var(--plum);
-    display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;
-  }
-  .card{
-    background:var(--paper);border-radius:18px;padding:32px 26px;max-width:380px;width:100%;
-    box-shadow:0 8px 30px rgba(45,27,78,0.12);text-align:center;
-  }
-  h1{font-family:'Cormorant Garamond',serif;font-size:24px;margin:0 0 6px;}
-  .sub{font-size:13px;color:var(--ink-dim);margin-bottom:22px;}
-  label{display:block;text-align:left;font-size:12px;color:var(--ink-dim);margin-bottom:5px;}
-  input{
-    width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px;
-    font-family:'Work Sans',sans-serif;font-size:14px;color:var(--plum);margin-bottom:14px;
-  }
-  button{
-    width:100%;background:var(--marigold-dark);color:#fff;border:none;border-radius:100px;
-    padding:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Work Sans',sans-serif;
-  }
-  button:disabled{opacity:0.6;cursor:not-allowed;}
-  .msg{border-radius:10px;padding:10px 12px;font-size:12.5px;margin-bottom:14px;display:none;}
-  .msg.error{background:#fbe6e3;color:#a5442f;display:block;}
-  .msg.exito{background:#e3f2e6;color:#2f6b3f;display:block;}
-  a{color:var(--marigold-dark);}
+  body { font-family: 'Georgia', serif; max-width: 420px; margin: 60px auto; padding: 24px; color: #2D1B4E; background: #FAF6F0; }
+  h1 { font-size: 20px; color: #3D2460; text-align: center; }
+  p { font-size: 13px; color: #6b5a80; text-align: center; }
+  label { font-size: 13px; display: block; margin: 16px 0 4px; }
+  input { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1px solid #D9C6EE; font-size: 14px; }
+  button { width: 100%; margin-top: 18px; padding: 12px; border: none; border-radius: 100px; background: #3D2460; color: #fff; font-size: 14px; cursor: pointer; }
+  .msg { font-size: 13px; text-align: center; margin-top: 14px; }
+  .error { color: #a5442f; background:#fbe6e3; border-radius:10px; padding:10px; }
+  .exito { color: #1e6b3c; background:#e1f3e6; border-radius:10px; padding:10px; }
+  .aviso { color: #8a6414; background:#fdf2d8; border-radius:10px; padding:10px; }
+  .campo-pass{position:relative;}
+  .campo-pass input{padding-right:38px;}
+  .ojo-toggle{position:absolute;right:8px;bottom:9px;background:none;border:none;cursor:pointer;font-size:16px;color:#6b5a80;}
 </style>
 </head>
 <body>
-  <div class="card">
-    <div style="font-size:30px;margin-bottom:6px;">✦🌙✨</div>
-    <h1>Crea tu nueva contraseña</h1>
-    <div class="sub" id="sub-texto">Escribe tu nueva contraseña para tu cuenta.</div>
+  <h1>🌙 Crea tu nueva contraseña</h1>
+  <p>Escribe tu nueva contraseña para tu cuenta de Sam Alquimia Astral.</p>
 
-    <div class="msg" id="msg"></div>
-
-    <div id="form-contenido">
+  <div id="formulario">
+    <div class="campo-pass">
       <label>Nueva contraseña</label>
-      <input type="password" id="nueva-pass" placeholder="Mínimo 6 caracteres">
-      <label>Confirmar contraseña</label>
-      <input type="password" id="confirmar-pass" placeholder="Repite la contraseña">
-      <button id="btn-guardar" onclick="guardarNuevaPassword()">Guardar nueva contraseña</button>
+      <input type="password" id="nueva-password" placeholder="Mínimo 6 caracteres">
+      <button type="button" class="ojo-toggle" onclick="alternarOjo('nueva-password', this)">👁</button>
     </div>
-
-    <div id="exito-final" style="display:none;">
-      <p style="font-size:13px;color:var(--ink-dim);">Ya puedes volver a la app e iniciar sesión con tu nueva contraseña.</p>
+    <div class="campo-pass">
+      <label>Confirmar nueva contraseña</label>
+      <input type="password" id="confirmar-password" placeholder="Repite tu contraseña">
+      <button type="button" class="ojo-toggle" onclick="alternarOjo('confirmar-password', this)">👁</button>
     </div>
+    <button onclick="restablecer()">Guardar nueva contraseña</button>
   </div>
+  <div class="msg" id="mensaje"></div>
 
-<script>
-  const BACKEND = 'https://saaalquimiaastral.onrender.com';
+  <script>
+    function alternarOjo(id, boton) {
+      const input = document.getElementById(id);
+      const oculto = input.type === 'password';
+      input.type = oculto ? 'text' : 'password';
+      boton.textContent = oculto ? '🙈' : '👁';
+    }
 
-  // Supabase manda el token en el fragmento de la URL: #access_token=...&type=recovery&...
-  function leerParametrosHash() {
-    const hash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash;
-    const params = new URLSearchParams(hash);
-    return {
-      access_token: params.get('access_token'),
-      type: params.get('type'),
-      error_description: params.get('error_description'),
-    };
-  }
+    // Supabase manda el token en el fragmento de la URL: #access_token=...&type=recovery
+    function obtenerAccessToken() {
+      const hash = window.location.hash.substring(1);
+      const params = new URLSearchParams(hash);
+      return params.get('access_token');
+    }
 
-  function mostrarMensaje(tipo, texto) {
-    const el = document.getElementById('msg');
-    el.className = 'msg ' + tipo;
-    el.textContent = texto;
-  }
+    // Lee la respuesta como JSON de forma segura — si el servidor devolvió HTML
+    // por error (ruta caída, 502/504), no truena con "Unexpected token <".
+    async function leerJsonSeguro(r) {
+      const texto = await r.text();
+      try { return JSON.parse(texto); }
+      catch (e) { return { error: 'El servidor no respondió correctamente. Intenta de nuevo en unos segundos.' }; }
+    }
 
-  const { access_token, error_description } = leerParametrosHash();
+    async function restablecer() {
+      const msg = document.getElementById('mensaje');
+      const access_token = obtenerAccessToken();
+      const nueva_password = document.getElementById('nueva-password').value;
+      const confirmar_password = document.getElementById('confirmar-password').value;
 
-  if (error_description) {
-    document.getElementById('form-contenido').style.display = 'none';
-    mostrarMensaje('error', 'Este enlace ya no es válido o expiró. Vuelve a pedir uno nuevo desde la app.');
-  } else if (!access_token) {
-    document.getElementById('form-contenido').style.display = 'none';
-    mostrarMensaje('error', 'No encontramos un enlace válido. Ábrelo directamente desde el correo que te enviamos.');
-  }
-
-  async function guardarNuevaPassword() {
-    const nueva = document.getElementById('nueva-pass').value;
-    const confirmar = document.getElementById('confirmar-pass').value;
-
-    if (!nueva || nueva.length < 6) return mostrarMensaje('error', 'La contraseña debe tener al menos 6 caracteres.');
-    if (nueva !== confirmar) return mostrarMensaje('error', 'Las contraseñas no coinciden.');
-
-    const boton = document.getElementById('btn-guardar');
-    boton.disabled = true;
-    boton.textContent = 'Guardando...';
-
-    try {
-      const r = await fetch(BACKEND + '/auth/restablecer-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ access_token, nueva_password: nueva }),
-      });
-      const data = await r.json();
-      if (!r.ok) {
-        mostrarMensaje('error', data.error || 'No se pudo actualizar la contraseña.');
-        boton.disabled = false;
-        boton.textContent = 'Guardar nueva contraseña';
+      if (!access_token) {
+        msg.textContent = 'Este enlace no es válido o ya expiró. Solicita uno nuevo desde la app.';
+        msg.className = 'msg error';
         return;
       }
-      document.getElementById('form-contenido').style.display = 'none';
-      document.getElementById('exito-final').style.display = 'block';
-      mostrarMensaje('exito', '¡Contraseña actualizada correctamente!');
-    } catch (e) {
-      mostrarMensaje('error', 'Error de conexión. Intenta de nuevo.');
-      boton.disabled = false;
-      boton.textContent = 'Guardar nueva contraseña';
+      if (!nueva_password || nueva_password.length < 6) {
+        msg.textContent = 'La contraseña debe tener al menos 6 caracteres.';
+        msg.className = 'msg error';
+        return;
+      }
+      if (nueva_password !== confirmar_password) {
+        msg.textContent = 'Las contraseñas no coinciden. Revísalas e intenta de nuevo.';
+        msg.className = 'msg error';
+        return;
+      }
+
+      try {
+        const r = await fetch('/auth/restablecer-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ access_token, nueva_password }),
+        });
+        const data = await leerJsonSeguro(r);
+        if (!r.ok) {
+          msg.textContent = data.error || 'No se pudo actualizar la contraseña.';
+          msg.className = 'msg error';
+          return;
+        }
+        document.getElementById('formulario').style.display = 'none';
+        msg.textContent = '✅ ¡Contraseña actualizada! Ya puedes regresar a la app e iniciar sesión con tu nueva contraseña.';
+        msg.className = 'msg exito';
+      } catch (e) {
+        msg.textContent = 'Error de conexión: ' + e.message;
+        msg.className = 'msg error';
+      }
     }
-  }
-</script>
+  </script>
 </body>
 </html>

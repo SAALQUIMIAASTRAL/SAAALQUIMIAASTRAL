@@ -2,9 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v158-fusion-native-backend-login -->
+<!-- VERSION-APP: v159-reintento-carta-natal-en-frio -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -97,6 +97,10 @@
     height:100dvh;border-radius:0;
   }
   body.app-nativa .notch{ display:none; }
+  /* Elementos que solo tienen sentido en la versión web (PWA) — nunca deben verse dentro de la app nativa */
+  body.app-nativa .install-btn,
+  body.app-nativa .ios-modal-bg,
+  body.app-nativa .side-note{ display:none !important; }
   .notch{
     height:26px;display:flex;align-items:center;justify-content:center;
     background:var(--paper);flex:none;
@@ -125,7 +129,7 @@
   .season-banner .now{font-weight:600;display:flex;align-items:center;gap:5px;}
   .season-banner .next{color:var(--ink-dim);}
 
-  .band{position:relative;background:linear-gradient(160deg,var(--blush-1) 0%,var(--plum) 60%,var(--blush-2) 100%);padding:22px 18px 28px;overflow:hidden;}
+  .band{position:relative;background:linear-gradient(160deg,var(--blush-1) 0%,var(--plum) 60%,var(--blush-2) 100%);padding:calc(22px + env(safe-area-inset-top, 0px)) 18px 28px;overflow:hidden;}
   .band::before{content:'';position:absolute;top:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:rgba(201,168,76,0.08);pointer-events:none;}
   .band::after{content:'';position:absolute;bottom:-30px;left:-20px;width:120px;height:120px;border-radius:50%;background:rgba(155,125,212,0.1);pointer-events:none;}
   .band-icon{
@@ -410,6 +414,12 @@
   }
   .auth-error{background:#fbe6e3;color:#a5442f;border-radius:10px;padding:10px 12px;font-size:12px;margin-bottom:12px;display:none;}
   .auth-error.show{display:block;}
+  .auth-error.msj-verde{background:#e1f3e6;color:#1e6b3c;}
+  .auth-error.msj-amarillo{background:#fdf2d8;color:#8a6414;}
+  .auth-error.msj-rojo{background:#fbe6e3;color:#a5442f;}
+  .campo-pass{position:relative;}
+  .campo-pass input{padding-right:38px !important;}
+  .ojo-toggle{position:absolute;right:10px;bottom:11px;background:none;border:none;cursor:pointer;font-size:16px;padding:0;color:var(--ink-dim);line-height:1;}
   .auth-switch{text-align:center;font-size:12.5px;color:var(--ink-dim);margin-top:16px;}
   .auth-switch a{color:var(--marigold);font-weight:600;cursor:pointer;}
   .auth-loading{opacity:0.6;pointer-events:none;}
@@ -515,7 +525,7 @@
 
           <div class="auth-error" id="login-error"></div>
           <div class="auth-field"><label>Correo</label><input type="email" id="login-email"></div>
-          <div class="auth-field"><label>Contraseña</label><input type="password" id="login-pass"></div>
+          <div class="auth-field campo-pass"><label>Contraseña</label><input type="password" id="login-pass"><button type="button" class="ojo-toggle" onclick="alternarOjo('login-pass', this)">👁</button></div>
           <div style="text-align:right;margin:-8px 0 14px;"><a onclick="mostrarPantalla('olvide')" style="font-size:12px;color:var(--ink-dim);cursor:pointer;text-decoration:underline;">¿Olvidaste tu contraseña?</a></div>
           <button class="btn-primary" onclick="accionLogin()">Entrar</button>
           <div class="auth-switch">¿Aún no tienes cuenta? <a onclick="mostrarPantalla('registro')">Regístrate gratis</a></div>
@@ -538,7 +548,8 @@
           <div class="sub">Empieza gratis, descubre tu cielo hoy</div>
           <div class="auth-error" id="registro-error"></div>
           <div class="auth-field"><label>Correo</label><input type="email" id="registro-email"></div>
-          <div class="auth-field"><label>Contraseña</label><input type="password" id="registro-pass" placeholder="Mínimo 6 caracteres"></div>
+          <div class="auth-field campo-pass"><label>Contraseña</label><input type="password" id="registro-pass" placeholder="Mínimo 6 caracteres"><button type="button" class="ojo-toggle" onclick="alternarOjo('registro-pass', this)">👁</button></div>
+          <div class="auth-field campo-pass"><label>Confirmar contraseña</label><input type="password" id="registro-pass2" placeholder="Repite tu contraseña"><button type="button" class="ojo-toggle" onclick="alternarOjo('registro-pass2', this)">👁</button></div>
           <label style="display:flex;align-items:flex-start;gap:8px;font-size:11.5px;color:var(--ink-dim);margin:6px 0 12px;line-height:1.4;">
             <input type="checkbox" id="registro-acepta-terminos" style="margin-top:2px;">
             <span>Acepto los <a onclick="event.preventDefault();mostrarLegal('terminos')" style="color:var(--marigold-dark);cursor:pointer;">Términos y Condiciones</a> y el <a onclick="event.preventDefault();mostrarLegal('privacidad')" style="color:var(--marigold-dark);cursor:pointer;">Aviso de Privacidad</a>.</span>
@@ -1285,12 +1296,23 @@
       const ciudadesBuenas = (data.ciudades || []).filter(c => c.in_power_zone).sort((a, b) => (b.power_zone_strength || 0) - (a.power_zone_strength || 0)).slice(0, 6);
       if (ciudadesBuenas.length) {
         htmlLineas += `<div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin-bottom:8px;">📍 Ciudades donde tu energía se activa más</div>`;
-        htmlLineas += ciudadesBuenas.map(c => {
-          const ayuda = ayudaEspecificaCiudad(c.closest_line);
+
+        // Agrupar ciudades que comparten EXACTAMENTE la misma línea/interpretación —
+        // así evitamos repetir el mismo texto ciudad por ciudad. Solo se separan cuando
+        // el cálculo real (closest_line) es distinto, nunca inventamos diferencias.
+        const grupos = new Map();
+        ciudadesBuenas.forEach(c => {
+          const clave = c.closest_line || '—';
+          if (!grupos.has(clave)) grupos.set(clave, { closest_line: c.closest_line, ciudades: [] });
+          grupos.get(clave).ciudades.push(`${c.name}, ${c.country}`);
+        });
+
+        htmlLineas += Array.from(grupos.values()).map(g => {
+          const ayuda = ayudaEspecificaCiudad(g.closest_line);
           return `
           <div class="card-lectura">
-            <div class="card-titulo">${c.name}, ${c.country}</div>
-            <div class="card-etiqueta">Cerca de tu línea de ${traducirNombresPlanetasEnFrase(c.closest_line) || 'energía activa'}</div>
+            <div class="card-titulo">${g.ciudades.join(' · ')}</div>
+            <div class="card-etiqueta">Cerca de tu línea de ${traducirNombresPlanetasEnFrase(g.closest_line) || 'energía activa'}</div>
             ${ayuda ? `<div class="card-cuerpo" style="color:var(--plum);margin-top:4px;">${ayuda}</div>` : ''}
           </div>
         `}).join('');
@@ -2906,6 +2928,18 @@
     if (nombre) document.getElementById('pantalla-' + nombre).classList.add('show');
   }
 
+  // Lee la respuesta como JSON de forma segura. Si el servidor devolvió HTML por error
+  // (ruta caída, error 502/504, redirección inesperada), evita el crash "Unexpected token <"
+  // y regresa un mensaje claro en vez de romper la pantalla.
+  async function leerJsonSeguro(r) {
+    const texto = await r.text();
+    try {
+      return JSON.parse(texto);
+    } catch (e) {
+      return { error: 'El servidor no respondió correctamente (puede estar reiniciándose). Intenta de nuevo en unos segundos.' };
+    }
+  }
+
   async function pedirRecuperacion() {
     ocultarErrorEn('olvide-error');
     const email = document.getElementById('olvide-email').value.trim();
@@ -2916,22 +2950,52 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-      const data = await r.json();
+      const data = await leerJsonSeguro(r);
       if (!r.ok) { mostrarErrorEn('olvide-error', data.error || 'No se pudo procesar la solicitud.'); return; }
-      alert('Si ese correo está registrado, te llegará un enlace para crear una nueva contraseña. Revisa también spam.');
-      mostrarPantalla('login');
+      mostrarMensaje('olvide-error', 'Si ese correo está registrado, te llegará un enlace para crear una nueva contraseña. Revisa también spam.', 'verde');
+      setTimeout(() => mostrarPantalla('login'), 3000);
     } catch (e) {
       mostrarErrorEn('olvide-error', 'Error de conexión: ' + e.message);
     }
   }
 
-  function mostrarErrorEn(id, mensaje) {
+  // Sistema unificado de mensajes: 'rojo' (error), 'amarillo' (aviso/pendiente), 'verde' (éxito).
+  // mostrarErrorEn() se mantiene por compatibilidad y sigue siendo rojo por defecto.
+  function mostrarMensaje(id, mensaje, tipo = 'rojo') {
     const el = document.getElementById(id);
+    if (!el) return;
     el.textContent = mensaje;
-    el.classList.add('show');
+    el.classList.remove('msj-verde', 'msj-amarillo', 'msj-rojo');
+    el.classList.add('msj-' + tipo, 'show');
   }
+  function alternarOjo(inputId, boton) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    const oculto = input.type === 'password';
+    input.type = oculto ? 'text' : 'password';
+    boton.textContent = oculto ? '🙈' : '👁';
+  }
+
+  function mostrarErrorEn(id, mensaje) { mostrarMensaje(id, mensaje, 'rojo'); }
   function ocultarErrorEn(id) {
     document.getElementById(id).classList.remove('show');
+  }
+  // Mensaje flotante global (para cuando no hay una pantalla/campo específico visible, ej. arranque de la app)
+  function mostrarMensajeGlobal(texto, tipo = 'amarillo') {
+    let el = document.getElementById('mensaje-global-toast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'mensaje-global-toast';
+      el.style.cssText = 'position:fixed;top:calc(env(safe-area-inset-top,0px) + 14px);left:50%;transform:translateX(-50%);z-index:9999;border-radius:10px;padding:10px 16px;font-size:12.5px;font-family:"Work Sans",sans-serif;box-shadow:0 4px 14px rgba(0,0,0,0.15);max-width:90%;text-align:center;';
+      document.body.appendChild(el);
+    }
+    const colores = { verde: ['#e1f3e6', '#1e6b3c'], amarillo: ['#fdf2d8', '#8a6414'], rojo: ['#fbe6e3', '#a5442f'] };
+    const [bg, fg] = colores[tipo] || colores.amarillo;
+    el.style.background = bg; el.style.color = fg;
+    el.textContent = texto;
+    el.style.display = 'block';
+    clearTimeout(el._timeout);
+    el._timeout = setTimeout(() => { el.style.display = 'none'; }, 4000);
   }
 
   let _legalOrigen = 'registro';
@@ -2955,8 +3019,12 @@
     ocultarErrorEn('registro-error');
     const email = document.getElementById('registro-email').value.trim();
     const password = document.getElementById('registro-pass').value;
+    const password2 = document.getElementById('registro-pass2').value;
     if (!email || password.length < 6) {
       return mostrarErrorEn('registro-error', 'Escribe un correo válido y una contraseña de al menos 6 caracteres.');
+    }
+    if (password !== password2) {
+      return mostrarErrorEn('registro-error', 'Las contraseñas no coinciden. Revísalas e intenta de nuevo.');
     }
     if (!document.getElementById('registro-acepta-terminos').checked) {
       return mostrarErrorEn('registro-error', 'Debes aceptar los Términos y Condiciones y el Aviso de Privacidad para continuar.');
@@ -2969,7 +3037,7 @@
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
-    const data = await r.json();
+    const data = await leerJsonSeguro(r);
     if (!r.ok) return mostrarErrorEn('registro-error', data.error || 'No se pudo crear la cuenta.');
 
     // Login automático después de registrarse
@@ -2989,7 +3057,7 @@
     } else {
       document.getElementById('login-email').value = email;
       mostrarPantalla('login');
-      mostrarErrorEn('login-error', '✔ Cuenta creada. Revisa tu correo (' + email + ') y toca el link de confirmación antes de entrar. Si no lo ves, checa spam.');
+      mostrarMensaje('login-error', '✔ Cuenta creada. Revisa tu correo (' + email + ') y toca el link de confirmación antes de entrar. Si no lo ves, checa spam.', 'verde');
     }
   }
 
@@ -3260,11 +3328,25 @@
     } catch (e) { /* silencioso */ }
   }
 
-  async function revisarPerfilYArrancar() {
+  async function revisarPerfilYArrancar(reintentos = 3) {
     if (!SESION.token) return mostrarPantalla('bienvenida');
 
+    let r;
+    try {
+      r = await fetchAuth('/perfil', { headers: {} });
+    } catch (e) {
+      // Error de red (sin internet, servidor dormido despertando, etc.) — NO cerramos sesión.
+      // Reintentamos unas veces antes de rendirnos, manteniendo el token intacto.
+      if (reintentos > 0) {
+        setTimeout(() => revisarPerfilYArrancar(reintentos - 1), 2000);
+      } else {
+        mostrarPantalla(null);
+        mostrarMensajeGlobal('No se pudo conectar. Revisa tu internet — seguimos intentando.', 'amarillo');
+      }
+      return;
+    }
+
     // Intentar renovar el token si hay refresh disponible
-    let r = await fetchAuth('/perfil', { headers: {} });
     if (r.status === 401 && SESION.refresh) {
       try {
         const rr = await fetch(BACKEND + '/auth/refresh', {
@@ -3279,10 +3361,22 @@
           if (SESION.refresh) localStorage.setItem('saa_refresh', SESION.refresh);
           r = await fetchAuth('/perfil', { headers: {} });
         }
-      } catch (e) { /* si falla, cae al logout */ }
+      } catch (e) { /* si falla la renovación, seguimos abajo con la lógica de estado real */ }
     }
 
-    if (!r.ok) { cerrarSesion(); return; }
+    // Solo cerramos sesión cuando el servidor de verdad rechaza la autenticación (401),
+    // NUNCA por errores temporales (500, 503, timeouts, Render despertando, etc.)
+    if (r.status === 401) { cerrarSesion(); return; }
+    if (!r.ok) {
+      // Error temporal del servidor — reintentamos sin tocar el token ni expulsar a la usuaria
+      if (reintentos > 0) {
+        setTimeout(() => revisarPerfilYArrancar(reintentos - 1), 2000);
+      } else {
+        mostrarPantalla(null);
+        mostrarMensajeGlobal('El servidor está tardando en responder. Reintentando…', 'amarillo');
+      }
+      return;
+    }
     const data = await r.json();
     SESION.suscripcion = data.suscripcion || 'ninguna';
     if (!data.perfil || !data.perfil.ciudad_nacimiento) {
@@ -3381,7 +3475,7 @@
     `;
   }
 
-  async function calcularCartaReal(silencioso = false) {
+  async function calcularCartaReal(silencioso = false, reintentosSilencioso = 1) {
     const boton = document.getElementById('btn-calcular-carta');
     const chips = document.getElementById('carta-resultado-chips');
     if (!silencioso) {
@@ -3430,6 +3524,12 @@
       if (!silencioso) {
         chips.innerHTML = `<div class="row" style="color:#a5442f;">${err.message}</div>` +
           (err.detalle ? `<pre style="white-space:pre-wrap;font-size:9px;color:#a5442f;opacity:0.7;padding:8px;">${typeof err.detalle === 'string' ? err.detalle : JSON.stringify(err.detalle, null, 2)}</pre>` : '');
+      } else {
+        console.error('calcularCartaReal (silencioso) falló:', err.message);
+        // Reintenta una vez (común en apps nativas: la red puede tardar en estar lista al arrancar en frío)
+        if (reintentosSilencioso > 0) {
+          setTimeout(() => calcularCartaReal(true, reintentosSilencioso - 1), 1500);
+        }
       }
     }
     if (!silencioso) { boton.textContent = 'Calcular mi carta natal'; boton.disabled = false; }
@@ -4515,6 +4615,7 @@
     if (!original) return;
     document.getElementById('zoom-modal-content').innerHTML = original;
     document.getElementById('zoom-modal-bg').classList.add('open');
+    activarPanZoom(document.getElementById('zoom-modal-content'));
   }
 
   function verEnGrande() {
@@ -4522,12 +4623,86 @@
     if (!original) return;
     document.getElementById('zoom-modal-content').innerHTML = original;
     document.getElementById('zoom-modal-bg').classList.add('open');
+    activarPanZoom(document.getElementById('zoom-modal-content'));
   }
   function cerrarZoom() {
     document.getElementById('zoom-modal-bg').classList.remove('open');
   }
 
-  async function actualizarBandaConCartaReal() {
+  // Habilita pellizcar-para-zoom (pinch), arrastrar (pan) y doble-toque para restablecer,
+  // usando SOLO transform (translate+scale) sobre el contenedor — así el SVG/imagen interna
+  // nunca se re-dibuja ni se desalinean las líneas, solo se escala/mueve visualmente.
+  function activarPanZoom(contenedor) {
+    let escala = 1, x = 0, y = 0;
+    let ultimaDistancia = null;
+    let ultimoX = null, ultimoY = null;
+    let arrastrando = false;
+
+    contenedor.style.transformOrigin = '0 0';
+    contenedor.style.touchAction = 'none';
+    contenedor.style.cursor = 'grab';
+
+    function aplicar() {
+      contenedor.style.transform = `translate(${x}px, ${y}px) scale(${escala})`;
+    }
+    function distanciaEntre(t0, t1) {
+      const dx = t0.clientX - t1.clientX, dy = t0.clientY - t1.clientY;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    contenedor.onpointerdown = (e) => {
+      arrastrando = true;
+      ultimoX = e.clientX; ultimoY = e.clientY;
+      contenedor.setPointerCapture(e.pointerId);
+      contenedor.style.cursor = 'grabbing';
+    };
+    contenedor.onpointermove = (e) => {
+      if (!arrastrando) return;
+      x += e.clientX - ultimoX;
+      y += e.clientY - ultimoY;
+      ultimoX = e.clientX; ultimoY = e.clientY;
+      aplicar();
+    };
+    contenedor.onpointerup = contenedor.onpointercancel = () => {
+      arrastrando = false;
+      contenedor.style.cursor = 'grab';
+    };
+
+    // Pellizco con dos dedos (touch nativo, más confiable que Pointer Events para multitouch)
+    contenedor.ontouchstart = (e) => {
+      if (e.touches.length === 2) {
+        ultimaDistancia = distanciaEntre(e.touches[0], e.touches[1]);
+      }
+    };
+    contenedor.ontouchmove = (e) => {
+      if (e.touches.length === 2 && ultimaDistancia) {
+        e.preventDefault();
+        const nueva = distanciaEntre(e.touches[0], e.touches[1]);
+        const factor = nueva / ultimaDistancia;
+        escala = Math.max(1, Math.min(5, escala * factor));
+        ultimaDistancia = nueva;
+        aplicar();
+      }
+    };
+    contenedor.ontouchend = (e) => {
+      if (e.touches.length < 2) ultimaDistancia = null;
+    };
+
+    // Doble toque/clic para restablecer la vista
+    contenedor.ondblclick = () => {
+      escala = 1; x = 0; y = 0;
+      aplicar();
+    };
+
+    // Rueda del mouse (para pruebas en escritorio)
+    contenedor.onwheel = (e) => {
+      e.preventDefault();
+      escala = Math.max(1, Math.min(5, escala - e.deltaY * 0.001));
+      aplicar();
+    };
+  }
+
+  async function actualizarBandaConCartaReal(reintentos = 2) {
     try {
       const r = await fetchAuth('/carta-natal/ultima', { headers: {} });
       const data = await r.json();
@@ -4549,7 +4724,13 @@
       if (sol?.sign && elSol) elSol.textContent = signoEs(sol.sign) + (sol.degree ? ' ' + Math.floor(sol.degree) + '°' : '');
       if (luna?.sign && elLuna) elLuna.textContent = signoEs(luna.sign) + (luna.degree ? ' ' + Math.floor(luna.degree) + '°' : '');
       if (asc?.sign && elAsc) elAsc.textContent = signoEs(asc.sign) + (asc.degree ? ' ' + Math.floor(asc.degree) + '°' : '');
-    } catch (e) { /* silencioso */ }
+    } catch (e) {
+      console.error('actualizarBandaConCartaReal falló:', e.message);
+      // Reintenta automáticamente (común en apps nativas: la red puede tardar en estar lista al arrancar en frío)
+      if (reintentos > 0) {
+        setTimeout(() => actualizarBandaConCartaReal(reintentos - 1), 1500);
+      }
+    }
   }
 
   // ---- Función global de cerrar sección ----
