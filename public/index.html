@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v175-pellizco-touch-action-none -->
+<!-- VERSION-APP: v177-precios-en-mi-cuenta -->
 <!-- CONSOLIDADO: incluye v159 (reintento carta natal) + v160 (11 puntos: sesión, mensajes, contraseñas, JSON seguro, correo único, safe area, zoom mapa, agrupación ciudades) + v161 (posición del ojo) + v162 (frases variadas ACG) + v163 (diversidad de planetas en ciudades) + v164 (texto luna de hoy) + v165 (diario oculto por defecto) -->
 
 <link rel="manifest" href="manifest.json">
@@ -667,6 +667,39 @@
           <button class="btn-primary" style="background:var(--lilac);margin-bottom:10px;" onclick="abrirPortalPago()">Gestionar mi suscripción / método de pago</button>
           <div id="perfil-portal-error" style="font-size:12px;color:#a5442f;margin-bottom:16px;"></div>
 
+          <!-- Nota: esta tarjeta de planes cobra vía Stripe (versión web). En las apps nativas de
+               iOS/Android, esta parte se reemplaza por Apple In-App Purchase / Google Play Billing. -->
+          <div style="background:linear-gradient(160deg,var(--plum),var(--blush-2));border-radius:16px;padding:20px 18px;color:#fff;margin-bottom:20px;box-shadow:0 6px 20px rgba(45,27,78,0.35);" id="tarjeta-suscripcion">
+            <div style="font-size:11px;color:var(--band-text-dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">✦ Alquimia Astral Premium</div>
+            <h2 style="color:#fff;font-size:20px;margin-bottom:8px;border:none;padding:0;font-family:'Cormorant Garamond',serif;">Acceso completo a tu cielo</h2>
+            <div style="font-size:12px;color:var(--band-text-dim);margin-bottom:14px;line-height:1.6;">
+              ✓ Carta natal completa · ✓ Astrocartografía · ✓ Ciclo lunar personalizado<br>
+              ✓ Hasta 8 cartas guardadas · ✓ Sinastría y carta compuesta · ✓ Diario astrológico
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:14px;" id="selector-plan">
+              <div class="chip-plan" data-plan="mensual" onclick="elegirPlanSuscripcion('mensual')" style="flex:1;text-align:center;padding:9px 4px;border-radius:10px;cursor:pointer;background:rgba(255,255,255,0.22);border:1.5px solid #fff;">
+                <div style="font-size:11px;font-weight:600;">Mensual</div>
+                <div style="font-size:14px;font-weight:700;">$4.99</div>
+              </div>
+              <div class="chip-plan" data-plan="semestral" onclick="elegirPlanSuscripcion('semestral')" style="flex:1;text-align:center;padding:9px 4px;border-radius:10px;cursor:pointer;background:rgba(255,255,255,0.08);border:1.5px solid transparent;">
+                <div style="font-size:11px;font-weight:600;">6 meses</div>
+                <div style="font-size:14px;font-weight:700;">$25.99</div>
+              </div>
+              <div class="chip-plan" data-plan="anual" onclick="elegirPlanSuscripcion('anual')" style="flex:1;text-align:center;padding:9px 4px;border-radius:10px;cursor:pointer;background:rgba(255,255,255,0.08);border:1.5px solid transparent;position:relative;">
+                <div style="position:absolute;top:-9px;right:2px;background:var(--marigold);color:#fff;font-size:8.5px;font-weight:700;padding:2px 6px;border-radius:100px;">MEJOR</div>
+                <div style="font-size:11px;font-weight:600;">Anual</div>
+                <div style="font-size:14px;font-weight:700;">$45.99</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+              <div>
+                <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:#fff;line-height:1;" id="precio-plan-elegido">$4.99<span style="font-size:12px;color:var(--band-text-dim);font-family:'Work Sans',sans-serif;"> USD/mes</span></div>
+                <div style="font-size:10.5px;color:var(--band-text-dim);">Cancela cuando quieras</div>
+              </div>
+              <button onclick="accionSuscribirse()" id="btn-suscribirse" style="background:var(--marigold);color:#fff;border:none;border-radius:100px;padding:11px 20px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;box-shadow:0 4px 12px rgba(201,168,76,0.4);">Suscribirme →</button>
+            </div>
+          </div>
+
           <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:8px;">Idioma</div>
           <select style="width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-family:'Work Sans',sans-serif;font-size:13.5px;color:var(--plum);background:#fff;margin-bottom:8px;">
             <option value="es">🇲🇽 Español — disponible</option>
@@ -913,13 +946,6 @@
           </div>
 
           <div class="section" data-tab="ciclos">
-            <h2>📖 Tu mes astrológico</h2>
-            <div class="desc">El relato del mes y lo más importante que trae para ti, según tus tránsitos reales.</div>
-            <div id="mes-astrologico-contenido"><div class="disclaimer">Toca "Ver mi mes" para calcularlo.</div></div>
-            <button class="btn-outline" style="width:100%;margin-top:10px;" onclick="cargarMesAstrologico()">Ver mi mes</button>
-          </div>
-
-          <div class="section" data-tab="ciclos">
             <h2>¿Cuándo hacer cada cosa?</h2>
             <div class="desc">La Luna influye en todo. Aquí las fechas del mes donde la energía favorece cada tipo de acción.</div>
             <button class="btn-primary" style="margin-bottom:10px;" onclick="calcularCalendarioLunar(this)">Ver fechas exactas de este mes</button>
@@ -1093,38 +1119,14 @@
             </div>
           </div>
 
-          <div style="background:linear-gradient(160deg,var(--plum),var(--blush-2));border-radius:16px;padding:20px 18px;color:#fff;margin:12px 16px;box-shadow:0 6px 20px rgba(45,27,78,0.35);" id="tarjeta-suscripcion" data-tab="alquimia">
-            <div style="font-size:11px;color:var(--band-text-dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">✦ Alquimia Astral Premium</div>
-            <h2 style="color:#fff;font-size:20px;margin-bottom:8px;border:none;padding:0;font-family:'Cormorant Garamond',serif;">Acceso completo a tu cielo</h2>
-            <div style="font-size:12px;color:var(--band-text-dim);margin-bottom:14px;line-height:1.6;">
-              ✓ Carta natal completa · ✓ Astrocartografía · ✓ Ciclo lunar personalizado<br>
-              ✓ Hasta 8 cartas guardadas · ✓ Sinastría y carta compuesta · ✓ Diario astrológico
-            </div>
-            <div style="display:flex;gap:6px;margin-bottom:14px;" id="selector-plan">
-              <div class="chip-plan" data-plan="mensual" onclick="elegirPlanSuscripcion('mensual')" style="flex:1;text-align:center;padding:9px 4px;border-radius:10px;cursor:pointer;background:rgba(255,255,255,0.22);border:1.5px solid #fff;">
-                <div style="font-size:11px;font-weight:600;">Mensual</div>
-                <div style="font-size:14px;font-weight:700;">$4.99</div>
-              </div>
-              <div class="chip-plan" data-plan="semestral" onclick="elegirPlanSuscripcion('semestral')" style="flex:1;text-align:center;padding:9px 4px;border-radius:10px;cursor:pointer;background:rgba(255,255,255,0.08);border:1.5px solid transparent;">
-                <div style="font-size:11px;font-weight:600;">6 meses</div>
-                <div style="font-size:14px;font-weight:700;">$25.99</div>
-              </div>
-              <div class="chip-plan" data-plan="anual" onclick="elegirPlanSuscripcion('anual')" style="flex:1;text-align:center;padding:9px 4px;border-radius:10px;cursor:pointer;background:rgba(255,255,255,0.08);border:1.5px solid transparent;position:relative;">
-                <div style="position:absolute;top:-9px;right:2px;background:var(--marigold);color:#fff;font-size:8.5px;font-weight:700;padding:2px 6px;border-radius:100px;">MEJOR</div>
-                <div style="font-size:11px;font-weight:600;">Anual</div>
-                <div style="font-size:14px;font-weight:700;">$45.99</div>
-              </div>
-            </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-              <div>
-                <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:#fff;line-height:1;" id="precio-plan-elegido">$4.99<span style="font-size:12px;color:var(--band-text-dim);font-family:'Work Sans',sans-serif;"> USD/mes</span></div>
-                <div style="font-size:10.5px;color:var(--band-text-dim);">Cancela cuando quieras</div>
-              </div>
-              <button onclick="accionSuscribirse()" id="btn-suscribirse" style="background:var(--marigold);color:#fff;border:none;border-radius:100px;padding:11px 20px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;box-shadow:0 4px 12px rgba(201,168,76,0.4);">Suscribirme →</button>
-            </div>
+          <div class="section" data-tab="alquimia">
+            <h2>📖 Tu mes astrológico</h2>
+            <div class="desc">El relato del mes y lo más importante que trae para ti, según tus tránsitos reales.</div>
+            <div id="mes-astrologico-contenido"><div class="disclaimer">Toca "Ver mi mes" para calcularlo.</div></div>
+            <button class="btn-outline" style="width:100%;margin-top:10px;" onclick="cargarMesAstrologico()">Ver mi mes</button>
           </div>
 
-                    <div class="section" data-tab="carta" style="opacity:0.75;border:1px dashed var(--line);">
+          <div class="section" data-tab="carta" style="opacity:0.75;border:1px dashed var(--line);">
             <h2>☀️ Revolución Solar</h2>
             <div class="desc">Tu mapa del año — qué energías activa este cumpleaños en tu vida. <b>Próximamente.</b></div>
             <button class="btn-primary" disabled style="opacity:0.5;">Disponible pronto</button>
