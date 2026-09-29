@@ -309,8 +309,12 @@ async function leerPerfil(req) {
 // RUTA: Registro de nueva usuaria
 // ============================================================
 app.post('/auth/registro', async (req, res) => {
-  const { email, password } = req.body;
-  const { data, error } = await supabase.auth.signUp({ email, password });
+  const { email, password, nombre } = req.body;
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { nombre: nombre || null } },
+  });
   if (error) {
     // Traduce el mensaje más común de Supabase para que sea claro en español
     if (/already registered|already exists|already in use/i.test(error.message)) {
@@ -362,6 +366,24 @@ app.post('/auth/olvide-password', async (req, res) => {
 // ============================================================
 // RUTA: Completar el restablecimiento con el token que llega en el link del correo
 // ============================================================
+// ============================================================
+// RUTA: Cambiar contraseña estando ya conectada (sin pasar por correo).
+// Verifica primero la contraseña actual, por seguridad, antes de cambiarla.
+// ============================================================
+app.post('/auth/cambiar-password', requireLogin, async (req, res) => {
+  const { password_actual, nueva_password } = req.body;
+  if (!password_actual || !nueva_password) return res.status(400).json({ error: 'Faltan datos.' });
+  if (nueva_password.length < 6) return res.status(400).json({ error: 'La contraseña nueva debe tener al menos 6 caracteres.' });
+
+  // Verifica la contraseña actual antes de permitir el cambio
+  const { error: errorVerificacion } = await supabase.auth.signInWithPassword({ email: req.userEmail, password: password_actual });
+  if (errorVerificacion) return res.status(400).json({ error: 'Tu contraseña actual no es correcta.' });
+
+  const { error } = await req.supabase.auth.updateUser({ password: nueva_password });
+  if (error) return res.status(400).json({ error: error.message });
+  res.json({ mensaje: 'Contraseña actualizada correctamente.' });
+});
+
 app.post('/auth/restablecer-password', async (req, res) => {
   const { access_token, nueva_password } = req.body;
   if (!access_token || !nueva_password) return res.status(400).json({ error: 'Faltan datos.' });
@@ -465,13 +487,15 @@ app.post('/perfil', requireLogin, async (req, res) => {
 
 // RUTA: Leer el perfil actual de la usuaria
 app.get('/perfil', requireLogin, async (req, res) => {
-  const [{ data, error }, { data: sub }] = await Promise.all([
+  const [{ data, error }, { data: sub }, { data: usuarioAuth }] = await Promise.all([
     req.supabase.from('profiles').select('*').eq('id', req.userId).maybeSingle(),
     req.supabase.from('subscriptions').select('estado').eq('user_id', req.userId).maybeSingle(),
+    req.supabase.auth.getUser(),
   ]);
 
   if (error) return res.status(400).json({ error: error.message });
-  res.json({ perfil: data, suscripcion: sub?.estado || 'ninguna' });
+  const nombreSugerido = usuarioAuth?.user?.user_metadata?.nombre || null;
+  res.json({ perfil: data, suscripcion: sub?.estado || 'ninguna', nombre_sugerido: nombreSugerido });
 });
 
 // ============================================================
@@ -839,6 +863,64 @@ app.post('/home-summary', requireLogin, async (req, res) => {
     const anioPersonal = ciclosData?.data?.data?.personal_year?.number || null;
     const planetasHoy = transitosHoyData?.data?.subject_data;
 
+    // Detectar eventos especiales del día: un planeta que cambió de signo (ingreso),
+    // o que empezó/terminó su retrogradación, comparando contra el snapshot guardado ayer.
+    // Esto es igual para todo el mundo (no depende del usuario), por eso se guarda en una
+    // tabla global de una sola fila por día.
+    let eventosEspeciales = [];
+    if (planetasHoy) {
+      try {
+        const hoyISO = hoy.toISOString().slice(0, 10);
+        const { data: filaAyer } = await supabase
+          .from('estado_planetario_diario')
+          .select('fecha, datos')
+          .neq('fecha', hoyISO)
+          .order('fecha', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (filaAyer?.datos) {
+          const NOMBRES_PLANETA_ES = { sun:'Sol', moon:'Luna', mercury:'Mercurio', venus:'Venus', mars:'Marte', jupiter:'Júpiter', saturn:'Saturno', uranus:'Urano', neptune:'Neptuno', pluto:'Plutón' };
+          const SIGNOS_ES_LOCAL = { Ari:'Aries', Tau:'Tauro', Gem:'Géminis', Can:'Cáncer', Leo:'Leo', Vir:'Virgo', Lib:'Libra', Sco:'Escorpio', Sag:'Sagitario', Cap:'Capricornio', Aqu:'Acuario', Pis:'Piscis' };
+          Object.keys(NOMBRES_PLANETA_ES).forEach(key => {
+            const antes = filaAyer.datos[key];
+            const ahora = planetasHoy[key];
+            if (!antes || !ahora) return;
+            const nombreEs = NOMBRES_PLANETA_ES[key];
+            // Cambio de signo (ingreso)
+            if (antes.sign && ahora.sign && antes.sign !== ahora.sign) {
+              eventosEspeciales.push({
+                tipo: 'ingreso',
+                planeta: nombreEs,
+                texto: `${nombreEs} entró hoy a ${SIGNOS_ES_LOCAL[ahora.sign] || ahora.sign}. Es un buen momento para notar cómo cambia la energía de ${nombreEs.toLowerCase()} en tu día a día durante las próximas semanas.`,
+              });
+            }
+            // Cambio de dirección (empezó o terminó retrógrado)
+            const antesRetro = !!antes.retrograde;
+            const ahoraRetro = !!ahora.retrograde;
+            if (antesRetro !== ahoraRetro) {
+              eventosEspeciales.push({
+                tipo: ahoraRetro ? 'retrogrado_inicio' : 'retrogrado_fin',
+                planeta: nombreEs,
+                texto: ahoraRetro
+                  ? `${nombreEs} se volvió retrógrado hoy. Es un buen momento para revisar, repensar y no forzar decisiones grandes relacionadas con lo que ${nombreEs.toLowerCase()} representa para ti.`
+                  : `${nombreEs} volvió a movimiento directo hoy. Lo que estuvo detenido o en revisión relacionado con ${nombreEs.toLowerCase()} puede empezar a avanzar de nuevo.`,
+              });
+            }
+          });
+        }
+
+        // Guardar el snapshot de hoy para la comparación de mañana (upsert, no falla si ya existe)
+        const snapshotHoy = {};
+        Object.entries(planetasHoy).forEach(([key, val]) => {
+          if (val && val.sign) snapshotHoy[key] = { sign: val.sign, retrograde: !!val.retrograde };
+        });
+        await supabase.from('estado_planetario_diario').upsert({ fecha: hoyISO, datos: snapshotHoy }, { onConflict: 'fecha' });
+      } catch (e) {
+        console.error('No se pudo calcular eventos especiales planetarios:', e.message);
+      }
+    }
+
     // Extraer el tránsito más importante del día
     let transitoPrincipal = null;
     if (planetasHoy) {
@@ -855,6 +937,7 @@ app.post('/home-summary', requireLogin, async (req, res) => {
       dia_personal: diaPersonal,
       anio_personal: anioPersonal,
       transito_principal: transitoPrincipal,
+      eventos_especiales: eventosEspeciales,
       hora_local: hoy.getUTCHours(),
     };
 
