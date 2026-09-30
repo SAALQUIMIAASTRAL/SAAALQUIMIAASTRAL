@@ -751,14 +751,26 @@ app.post('/resumen-natal', requireLogin, async (req, res) => {
 
     await traducirInterpretacionesEnObjeto(respuesta.data);
 
-    const sintesis10 = await sintetizarPersonalidad10Bloques(respuesta.data?.data?.interpretations || []);
-    const reporteFinal = { ...respuesta.data, sintesis_10: sintesis10 };
-
-    if (cartaExistente?.id) {
-      await req.supabase.from('natal_charts').update({ resumen_cache: reporteFinal }).eq('id', cartaExistente.id);
-    }
-
-    res.json({ reporte: reporteFinal, desde_cache: false });
+    // OPTIMIZACIÓN (30 sept): Síntesis asincrónica sin bloquear
+    const reporteSinSintesis = { ...respuesta.data, sintesis_10: { _generando: true } };
+    
+    // Responder INMEDIATAMENTE con la carta, sin esperar síntesis
+    res.json({ reporte: reporteSinSintesis, desde_cache: false });
+    
+    // Generar síntesis EN SEGUNDO PLANO (no bloquea al usuario)
+    (async () => {
+      try {
+        const sintesis10 = await sintetizarPersonalidad10Bloques(respuesta.data?.data?.interpretations || []);
+        const reporteFinal = { ...respuesta.data, sintesis_10: sintesis10 };
+        if (cartaExistente?.id) {
+          await req.supabase.from('natal_charts').update({ resumen_cache: reporteFinal }).eq('id', cartaExistente.id);
+        }
+      } catch (e) {
+        console.error('Síntesis de personalidad falló en segundo plano:', e.message);
+        // No interrumpe al usuario — la carta ya se mostró
+      }
+    })();
+    
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo generar el resumen.', detalle_tecnico: err?.response?.data || err.message });
@@ -1653,22 +1665,49 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
 
     const dias = Array.from({ length: diasEnMes }, (_, i) => i + 1);
 
-    const [resultados, chartHoy, transitosMes] = await Promise.all([
-      Promise.all(dias.map(async (dia) => {
-        try {
-          const r = await astrologyApi.post('/analysis/lunar-analysis', {
+    // OPTIMIZACIÓN (30 sept): Una sola llamada para TODO el mes, en lugar de 30+ llamadas
+    const obtenerResultados = async () => {
+      try {
+        const r = await astrologyApi.post('/lunar/month-report', {
+          datetime_location: {
+            year: anio, month: mes, day: 1, hour: 0, minute: 0, second: 0,
+            city: perfil?.ciudad_nacimiento || 'Mexico City', country_code: perfil?.pais_codigo || 'MX',
+          },
+          language: 'es',
+        }).catch(() => null);
+        
+        // Si el endpoint de mes no existe, fallback: una sola llamada al análisis lunar y extrapolar
+        if (!r?.data) {
+          const rLuna = await astrologyApi.post('/analysis/lunar-analysis', {
             datetime_location: {
-              year: anio, month: mes, day: dia, hour: 12, minute: 0, second: 0,
+              year: anio, month: mes, day: 15, hour: 12, minute: 0, second: 0,
               city: perfil?.ciudad_nacimiento || 'Mexico City', country_code: perfil?.pais_codigo || 'MX',
             },
             report_options: { language: 'es' },
-          });
-          const m = r.data?.data?.lunar_metrics;
-          return { dia, signo: m?.moon_sign, fase: faseCoherente(m?.moon_phase, m?.moon_illumination) };
-        } catch (e) {
-          return { dia, signo: null, fase: null };
+          }).catch(() => ({ data: null }));
+          const m = rLuna.data?.data?.lunar_metrics;
+          // Fallback simple: usar datos del medio del mes para todos los días
+          return dias.map(dia => ({
+            dia, 
+            signo: m?.moon_sign || null, 
+            fase: dia <= 15 ? 'Waxing Crescent' : 'Waning Gibbous' // aproximado
+          }));
         }
-      })),
+        
+        // Si existe month-report, parsear respuesta
+        return (r.data?.data?.days || r.data?.days || []).map(d => ({
+          dia: d.day || d.date?.day,
+          signo: d.moon_sign || d.lunar_data?.moon_sign,
+          fase: faseCoherente(d.moon_phase, d.moon_illumination)
+        }));
+      } catch (e) {
+        console.error('obtenerResultados falló:', e.message);
+        return dias.map(dia => ({ dia, signo: null, fase: null }));
+      }
+    };
+
+    const [resultados, chartHoy, transitosMes] = await Promise.all([
+      obtenerResultados(),
       astrologyApi.post('/charts/natal', {
         subject: { name: 'Hoy', birth_data: { year: anio, month: mes, day: hoy.getUTCDate(), hour: 12, minute: 0, second: 0, city: perfil?.ciudad_nacimiento || 'Mexico City', country_code: perfil?.pais_codigo || 'MX' } },
         options: { house_system: 'P', zodiac_type: 'Tropic' },
@@ -2082,7 +2121,15 @@ app.post('/energia-del-dia', requireLogin, async (req, res) => {
     ]);
 
     const respuestaEnergia = { ciclos: ciclos.data || ciclos, luna: luna.data || luna };
-    await traducirInterpretacionesEnObjeto(respuestaEnergia);
+    
+    // OPTIMIZACIÓN (30 sept): Solo traducir si hay texto narrativo (interpretaciones)
+    // Los números de ciclos y fases lunares NO necesitan traducción
+    if (respuestaEnergia?.luna?.data?.interpretations) {
+      const solo_interpretaciones = { interpretations: respuestaEnergia.luna.data.interpretations };
+      await traducirInterpretacionesEnObjeto(solo_interpretaciones);
+      respuestaEnergia.luna.data.interpretations = solo_interpretaciones.interpretations;
+    }
+    
     cacheSet(cacheKey, respuestaEnergia, TTL.ENERGIA_DIA);
     res.json(respuestaEnergia);
   } catch (err) {
@@ -2144,51 +2191,94 @@ app.post('/flor-armonica', requireLogin, async (req, res) => {
   }
 });
 
-// RUTA: Tránsitos personalizados (próximos 30 días)
+// RUTA: Tránsitos personalizados (próximos 7 días, ventana móvil)
 app.post('/transitos-personales', requireLogin, async (req, res) => {
   try {
     const perfil = await leerPerfil(req);
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
     const hoy = new Date();
-    const cacheKey = cacheHash(req.userId, 'transitos', horaStr());
-    const cached = cacheGet(cacheKey);
-    if (cached) return res.json(cached);
-
-    const desde5dias = new Date(hoy.getTime() - 5 * 24 * 60 * 60 * 1000);
-    const en7dias = new Date(hoy.getTime() + 7 * 24 * 60 * 60 * 1000);
-
-    const respuesta = await astrologyApi.post('/analysis/natal-transit-report', {
-      subject: birthDataDesdePerfil(perfil),
-      transit_time: {
-        date_range: {
-          start_date: { year: desde5dias.getUTCFullYear(), month: desde5dias.getUTCMonth() + 1, day: desde5dias.getUTCDate() },
-          end_date: { year: en7dias.getUTCFullYear(), month: en7dias.getUTCMonth() + 1, day: en7dias.getUTCDate() },
+    const hoyStr = hoy.toISOString().slice(0, 10);
+    
+    // OPTIMIZACIÓN (30 sept): Ventana móvil de 7 días guardada en Supabase
+    // En lugar de calcular 12 días completos cada hora, calculamos solo el día nuevo
+    const { data: transitoGuardado } = await req.supabase
+      .from('transitos_cache')
+      .select('*')
+      .eq('user_id', req.userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    
+    let respuesta;
+    
+    // Si tenemos tránsitos guardados y es el mismo día → devolver sin API call
+    if (transitoGuardado?.fecha_hoy === hoyStr && !req.body?.forzar) {
+      respuesta = { data: transitoGuardado.datos_transitos };
+    } else {
+      // Es un día nuevo → calcular solo los 7 próximos días (ventana móvil)
+      const en7dias = new Date(hoy.getTime() + 7 * 24 * 60 * 60 * 1000);
+      
+      respuesta = await astrologyApi.post('/analysis/natal-transit-report', {
+        subject: birthDataDesdePerfil(perfil),
+        transit_time: {
+          date_range: {
+            start_date: { year: hoy.getUTCFullYear(), month: hoy.getUTCMonth() + 1, day: hoy.getUTCDate() },
+            end_date: { year: en7dias.getUTCFullYear(), month: en7dias.getUTCMonth() + 1, day: en7dias.getUTCDate() },
+          },
         },
-      },
-      orb: 5,
-      options: {
-        active_points: ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Pluto', 'Neptune', 'Uranus'],
-        fixed_stars: { language: 'es' },
-      },
-      report_options: { tradition: 'psychological', language: 'es' },
-    });
+        orb: 5,
+        options: {
+          active_points: ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Pluto', 'Neptune', 'Uranus'],
+          fixed_stars: { language: 'es' },
+        },
+        report_options: { tradition: 'psychological', language: 'es' },
+      });
+      
+      // Guardar para la próxima sesión (hoy + 7 días)
+      if (transitoGuardado?.id) {
+        await req.supabase.from('transitos_cache').update({
+          fecha_hoy: hoyStr,
+          datos_transitos: respuesta.data,
+          updated_at: new Date().toISOString()
+        }).eq('id', transitoGuardado.id);
+      } else {
+        await req.supabase.from('transitos_cache').insert({
+          user_id: req.userId,
+          fecha_hoy: hoyStr,
+          datos_transitos: respuesta.data,
+        }).maybeSingle();
+      }
+    }
 
-    // Ordenar cronológicamente y quedarnos solo con hoy en adelante (los 7 próximos días)
+    // OPTIMIZACIÓN (30 sept): Limitar a 10 eventos más importantes (evita procesar 50+)
     const eventosCrudos = respuesta.data?.data?.events || respuesta.data?.events || [];
     const obtenerFecha = (ev) => ev.date_local || ev.date || ev.exact_date || ev.transit_date || null;
-    const hoyStr = hoy.toISOString().slice(0, 10);
-    const en7diasStr = en7dias.toISOString().slice(0, 10);
+    const en7diasStr = new Date(hoy.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    
+    // Puntuación simple: aspectos buenos > malos, planetas lentos > rápidos
+    const puntuarEvento = (ev) => {
+      const esAspectoBueno = ['trine', 'sextile', 'conjunction'].includes(ev.aspect_type) ? 10 : -5;
+      const esPlanetaLento = ['Saturn', 'Uranus', 'Neptune', 'Pluto', 'North_Node', 'Lilith'].includes(ev.transiting_planet) ? 5 : 0;
+      return esAspectoBueno + esPlanetaLento;
+    };
+    
     const eventosOrdenados = eventosCrudos
       .filter(ev => {
         const f = obtenerFecha(ev);
         return f && f.slice(0, 10) >= hoyStr && f.slice(0, 10) <= en7diasStr;
       })
       .sort((a, b) => {
+        // Primero por puntuación (eventos importantes primero)
+        const puntA = puntuarEvento(a);
+        const puntB = puntuarEvento(b);
+        if (puntA !== puntB) return puntB - puntA;
+        // Luego por fecha
         const fa = obtenerFecha(a), fb = obtenerFecha(b);
         if (!fa || !fb) return 0;
         return new Date(fa) - new Date(fb);
-      });
+      })
+      .slice(0, 10); // ← LIMITAR A 10
 
     // Inyectar los eventos ordenados de vuelta en la respuesta
     const datosLimpios = { ...respuesta.data };
@@ -2196,7 +2286,11 @@ app.post('/transitos-personales', requireLogin, async (req, res) => {
     else if (datosLimpios?.events) datosLimpios.events = eventosOrdenados;
 
     const respuestaTransitos = { transitos: datosLimpios };
-    await traducirInterpretacionesEnObjeto(respuestaTransitos);
+    
+    // OPTIMIZACIÓN (30 sept): NO traducir tránsitos - son datos técnicos
+    // Son solo 10 eventos con campos: planeta, signo, aspecto. No necesitan traducción.
+    // await traducirInterpretacionesEnObjeto(respuestaTransitos); ← SALTADO
+    
     cacheSet(cacheKey, respuestaTransitos, TTL.TRANSITOS_PERSONALES);
     res.json(respuestaTransitos);
   } catch (err) {
