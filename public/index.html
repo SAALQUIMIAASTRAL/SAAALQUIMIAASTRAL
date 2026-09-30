@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v181-iconos-color-por-planeta -->
+<!-- VERSION-APP: v182-simplificado-y-deduplicado -->
 <!-- CONSOLIDADO: incluye v159 (reintento carta natal) + v160 (11 puntos: sesión, mensajes, contraseñas, JSON seguro, correo único, safe area, zoom mapa, agrupación ciudades) + v161 (posición del ojo) + v162 (frases variadas ACG) + v163 (diversidad de planetas en ciudades) + v164 (texto luna de hoy) + v165 (diario oculto por defecto) -->
 
 <link rel="manifest" href="manifest.json">
@@ -486,6 +486,30 @@
 
           <button class="btn-primary" onclick="mostrarPantalla('registro')">Crear mi cuenta</button>
           <button class="btn-outline" style="margin-top:10px;" onclick="mostrarPantalla('login')">Ya tengo cuenta</button>
+
+          <!-- Tarjetas empáticas: ayudan mucho a la conversión, se quedan -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:24px;">
+            <div style="background:var(--marigold-soft);border-radius:12px;padding:12px;text-align:center;">
+              <div style="font-size:22px;margin-bottom:4px;">✦</div>
+              <div style="font-size:12px;font-weight:600;color:var(--plum);">¿Quién eres de verdad?</div>
+              <div style="font-size:10.5px;color:var(--ink-dim);">Tu carta natal, con cálculos reales</div>
+            </div>
+            <div style="background:var(--lilac-soft);border-radius:12px;padding:12px;text-align:center;">
+              <div style="font-size:22px;margin-bottom:4px;">🌙</div>
+              <div style="font-size:12px;font-weight:600;color:var(--plum);">¿Por qué te sientes así hoy?</div>
+              <div style="font-size:10.5px;color:var(--ink-dim);">Tu luna personal, actualizada cada día</div>
+            </div>
+            <div style="background:var(--lilac-soft);border-radius:12px;padding:12px;text-align:center;">
+              <div style="font-size:22px;margin-bottom:4px;">🗺️</div>
+              <div style="font-size:12px;font-weight:600;color:var(--plum);">¿Migraste?</div>
+              <div style="font-size:10.5px;color:var(--ink-dim);">Descubre cómo te va en el país donde vives ahora</div>
+            </div>
+            <div style="background:var(--marigold-soft);border-radius:12px;padding:12px;text-align:center;">
+              <div style="font-size:22px;margin-bottom:4px;">♡</div>
+              <div style="font-size:12px;font-weight:600;color:var(--plum);">¿Son compatibles de verdad?</div>
+              <div style="font-size:10.5px;color:var(--ink-dim);">Compara tu carta con la de esa persona</div>
+            </div>
+          </div>
 
           <div style="text-align:center;margin-top:20px;font-size:11px;color:var(--ink-dim);">
             <a onclick="event.preventDefault();mostrarLegal('privacidad')" style="color:var(--ink-dim);cursor:pointer;text-decoration:underline;">Privacidad</a>
@@ -2596,50 +2620,36 @@
       const eventosPersonales = m.eventos_destacados || [];
       const areas = m.areas_destacadas || [];
 
-      // Resumen breve visible de entrada, sin acordeón
-      let html = `<div style="text-align:center;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:17px;color:var(--plum);margin-bottom:4px;">Tu mes astrológico — ${NOMBRES_MES[_calMesActual - 1]}</div>`;
-      const totalEventos = ingresos.length + retrogrados.length + eventosPersonales.length + lunaciones.luna_nueva.length + lunaciones.luna_llena.length;
+      // Resumen breve visible de entrada, sin acordeón — el mes bien destacado para que no se pierda
+      let html = `<div style="text-align:center;">
+          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14px;color:var(--ink-dim);">Tu mes astrológico</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:24px;color:var(--marigold-dark);margin-bottom:4px;">${NOMBRES_MES[_calMesActual - 1]}</div>
+        </div>`;
+      const totalEventos = ingresos.length + retrogrados.length + eventosPersonales.length;
       html += `<div class="disclaimer" style="text-align:center;margin-bottom:14px;">${totalEventos ? `${totalEventos} momentos clave este mes — toca cada bloque para explorarlos.` : 'Un mes sin grandes eventos mayores — buen momento para lo cotidiano.'}</div>`;
 
       // 1) Panorama del mes
       html += acordeonItemMes('nivel1-panorama', '🔮 Panorama del mes', m.relato ? `<div style="white-space:pre-line;">${m.relato}</div>` : 'Sin relato disponible este mes.', true);
 
-      // 2) Calendario astrológico — fechas cortas, deduplicadas, sin abrir detalle
-      const fechasCalendario = [
-        ...ingresos.map(i => ({ fecha: i.fecha, planeta: i.planeta, texto: `${i.planeta} entra en ${i.signo_nuevo}` })),
-        ...lunaciones.luna_nueva.map(l => ({ fecha: `${_calAnioActual}-${String(_calMesActual).padStart(2,'0')}-${String(l.dia).padStart(2,'0')}`, planeta: 'Luna', texto: `Luna Nueva${l.signo ? ` en ${l.signo}` : ''}` })),
-        ...lunaciones.luna_llena.map(l => ({ fecha: `${_calAnioActual}-${String(_calMesActual).padStart(2,'0')}-${String(l.dia).padStart(2,'0')}`, planeta: 'Luna', texto: `Luna Llena${l.signo ? ` en ${l.signo}` : ''}` })),
-        ...retrogrados.map(r => ({ fecha: r.fecha, planeta: r.planeta, texto: `${r.planeta} ${r.tipo === 'se_vuelve_retrogrado' ? 'se vuelve retrógrado' : 'retoma movimiento directo'}` })),
-      ].sort((a, b) => a.fecha.localeCompare(b.fecha));
-      const cuerpoCalendario = fechasCalendario.length
-        ? `<div style="display:flex;flex-wrap:wrap;gap:8px;">${fechasCalendario.map(f => `
-            <div style="background:var(--marigold-soft);border-radius:10px;padding:8px 10px 8px;min-width:88px;text-align:center;">
-              <div style="display:flex;justify-content:center;margin-bottom:4px;">${iconoCirculoPlaneta(f.planeta, 24)}</div>
-              <div style="font-size:10.5px;font-weight:700;color:var(--marigold-dark);">${f.fecha.slice(-2)} ${NOMBRES_MES[_calMesActual-1].slice(0,3).toUpperCase()}</div>
-              <div style="font-size:10.5px;color:var(--plum);margin-top:2px;">${f.texto}</div>
-            </div>`).join('')}</div>`
-        : '<div class="disclaimer">No hay fechas mayores detectadas este mes.</div>';
-      html += acordeonItemMes('nivel1-calendario', '📅 Calendario astrológico', cuerpoCalendario, false);
-
-      // 3) Eventos clave — ingresos y retrógrados, cada uno expandible individualmente
+      // 2) Eventos clave — ingresos y retrógrados, cada uno expandible individualmente (solo el título, sin subtítulo redundante)
       const eventosClave = [
-        ...ingresos.map(i => ({ id: `ing-${i.fecha}-${i.planeta}`, planeta: i.planeta, tema: `Entra a ${i.signo_nuevo}`,
+        ...ingresos.map(i => ({ id: `ing-${i.fecha}-${i.planeta}`, planeta: i.planeta,
           titulo: `${i.planeta} entra en ${i.signo_nuevo} — ${i.fecha.slice(-2)} ${NOMBRES_MES[_calMesActual-1].slice(0,3)}`,
           detalle: `<b>Qué significa:</b> ${i.planeta} activa ahora ${TEMA_PLANETA_INGRESO[i.planeta] || 'esta área de tu vida'} con el estilo de ${i.signo_nuevo}.<br><b>Cómo aprovecharlo:</b> Observa cómo cambia tu forma de vivir ${TEMA_PLANETA_INGRESO[i.planeta] || 'esto'} en las próximas semanas.` })),
-        ...retrogrados.map(r => ({ id: `retro-${r.fecha}-${r.planeta}`, planeta: r.planeta, tema: r.tipo === 'se_vuelve_retrogrado' ? 'Retrógrado' : 'Directo',
+        ...retrogrados.map(r => ({ id: `retro-${r.fecha}-${r.planeta}`, planeta: r.planeta,
           titulo: `${r.planeta} ${r.tipo === 'se_vuelve_retrogrado' ? 'retrógrado' : 'directo'} — ${r.fecha.slice(-2)} ${NOMBRES_MES[_calMesActual-1].slice(0,3)}`,
           detalle: `<b>Qué activa:</b> ${r.tipo === 'se_vuelve_retrogrado' ? 'Momento de revisar, repensar y no forzar decisiones grandes relacionadas con ' + (TEMA_PLANETA_INGRESO[r.planeta] || r.planeta) + '.' : 'Lo que estuvo detenido puede retomar su curso normal.'}${r.duracion_tipica ? `<br><b>Duración típica:</b> ${r.duracion_tipica}.` : ''}` })),
       ].slice(0, 10);
       const cuerpoEventosClave = eventosClave.length
-        ? eventosClave.map(ev => acordeonItemMes(ev.id, ev.titulo, ev.detalle, false, { planeta: ev.planeta, tema: ev.tema })).join('')
+        ? eventosClave.map(ev => acordeonItemMes(ev.id, ev.titulo, ev.detalle, false, { planeta: ev.planeta })).join('')
         : '<div class="disclaimer">Sin eventos generales mayores detectados este mes.</div>';
       html += acordeonItemMes('nivel1-eventosclave', '⭐ Eventos clave', cuerpoEventosClave, false);
 
-      // 4) Cómo te afecta a ti — tránsitos personales (aspectos a tu carta natal)
+      // 3) Cómo te afecta a ti — tránsitos personales, ya deduplicados por el backend (un solo día por aspecto)
       const cuerpoPersonal = eventosPersonales.length
         ? eventosPersonales.slice(0, 10).map(e => acordeonItemMes(
             `pers-${e.fecha}-${e.planeta_transito}-${e.punto_natal}`,
-            `${e.planeta_transito} ${e.aspecto} tu ${e.punto_natal} natal — pico: ${e.fecha.slice(-2)} ${NOMBRES_MES[_calMesActual-1].slice(0,3)}`,
+            `${e.planeta_transito} ${e.aspecto} tu ${e.punto_natal} natal — ${e.fecha.slice(-2)} ${NOMBRES_MES[_calMesActual-1].slice(0,3)}`,
             `${e.casa_natal ? `<b>Casa afectada:</b> Casa ${e.casa_natal}<br>` : ''}${e.area ? `<b>Área de vida:</b> ${e.area}<br>` : ''}<b>Qué significa:</b> ${e.planeta_transito} entra en contacto directo con tu ${e.punto_natal} natal, activando ${e.area || 'esta parte de tu carta'}.`,
             false,
             { planeta: e.planeta_transito, tema: e.area || e.aspecto }
@@ -2647,27 +2657,8 @@
         : '<div class="disclaimer">Sin tránsitos personales mayores este mes.</div>';
       html += acordeonItemMes('nivel1-personal', '🎯 Cómo te afecta a ti', cuerpoPersonal, false);
 
-      // 5) Áreas más activas — chips simples
-      const cuerpoAreas = areas.length
-        ? `<div style="display:flex;flex-wrap:wrap;gap:8px;">${areas.map(a => `<span style="display:inline-block;background:var(--marigold-soft);color:var(--plum);border-radius:100px;padding:6px 14px;font-size:12px;">${a}</span>`).join('')}</div>`
-        : '<div class="disclaimer">No hay un área claramente más activa este mes.</div>';
-      html += acordeonItemMes('nivel1-areas', '✨ Áreas más activas', cuerpoAreas, false);
-
-      // 6) Lunaciones — una tarjeta expandible por lunación
-      const todasLunaciones = [
-        ...lunaciones.luna_nueva.map(l => ({ ...l, tipo: 'Luna Nueva' })),
-        ...lunaciones.luna_llena.map(l => ({ ...l, tipo: 'Luna Llena' })),
-      ].sort((a, b) => a.dia - b.dia);
-      const cuerpoLunaciones = todasLunaciones.length
-        ? todasLunaciones.map(l => acordeonItemMes(
-            `luna-${l.dia}-${l.tipo}`,
-            `${l.tipo}${l.signo ? ` en ${l.signo}` : ''} — día ${l.dia}`,
-            `<b>Tema del signo:</b> ${l.signo && TEMA_SIGNO_LUNACION[l.signo] ? TEMA_SIGNO_LUNACION[l.signo] : 'energía propia de este momento lunar'}.<br><b>${l.tipo === 'Luna Nueva' ? 'Qué inicia' : 'Qué cierra'}:</b> ${l.tipo === 'Luna Nueva' ? 'Buen momento para sembrar intenciones en esta área.' : 'Buen momento para soltar y celebrar lo que ya diste.'}<br><b>Recomendación:</b> ${l.tipo === 'Luna Nueva' ? 'Escribe una intención concreta relacionada con este tema.' : 'Haz un cierre consciente de algo relacionado con este tema.'}`,
-            false,
-            { planeta: 'Luna', tema: l.signo && TEMA_SIGNO_LUNACION[l.signo] ? TEMA_SIGNO_LUNACION[l.signo] : l.tipo }
-          )).join('')
-        : '<div class="disclaimer">Sin lunaciones registradas este mes.</div>';
-      html += acordeonItemMes('nivel1-lunaciones', '🌙 Lunaciones del mes', cuerpoLunaciones, false);
+      // (Se quitaron "Calendario astrológico", "Áreas más activas" y "Lunaciones del mes" —
+      // redundantes con el relato y con el Calendario lunar que ya existe en otra parte de la app)
 
       contenedor.innerHTML = html;
     } catch (e) {
