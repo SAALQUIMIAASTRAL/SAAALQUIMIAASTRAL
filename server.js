@@ -561,6 +561,13 @@ app.get('/buscar-ciudad', async (req, res) => {
 app.post('/perfil', requireLogin, async (req, res) => {
   const { nombre, fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo, latitud, longitud } = req.body;
 
+  // Leer perfil ANTERIOR para comparar si cambiaron datos de nacimiento
+  const { data: perfilAnterior } = await supabase
+    .from('profiles')
+    .select('fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo')
+    .eq('id', req.userId)
+    .maybeSingle();
+
   const datosAGuardar = {
     id: req.userId,
     nombre,
@@ -569,7 +576,6 @@ app.post('/perfil', requireLogin, async (req, res) => {
     ciudad_nacimiento,
     pais_codigo,
   };
-  // Solo actualizamos coordenadas si vienen (evita borrar unas ya guardadas al editar solo el nombre, por ejemplo)
   if (typeof latitud === 'number' && !isNaN(latitud)) datosAGuardar.latitud = latitud;
   if (typeof longitud === 'number' && !isNaN(longitud)) datosAGuardar.longitud = longitud;
 
@@ -581,23 +587,41 @@ app.post('/perfil', requireLogin, async (req, res) => {
 
   if (error) return res.status(400).json({ error: error.message });
 
-  // Invalidar TODO lo que depende de los datos de nacimiento al editarlos —
-  // si no, quedan resultados viejos calculados con la fecha/ciudad anterior.
+  // Solo invalidar carta natal y cálculos pesados si cambiaron datos de NACIMIENTO.
+  // Cambiar solo el nombre NO debe borrar la carta — es costoso recalcularla.
+  const cambioDatosNacimiento = !perfilAnterior
+    || perfilAnterior.fecha_nacimiento !== fecha_nacimiento
+    || perfilAnterior.hora_nacimiento !== hora_nacimiento
+    || perfilAnterior.ciudad_nacimiento !== ciudad_nacimiento
+    || perfilAnterior.pais_codigo !== pais_codigo;
+
   const hoy = new Date();
   const anioActual = hoy.getUTCFullYear();
   const mesActual = hoy.getUTCMonth() + 1;
-  memoriaCache.delete(cacheHash('perfil', req.userId));
-  memoriaCache.delete(cacheHash(req.userId, 'acg', 'propia'));
-  memoriaCache.delete(cacheHash(req.userId, 'estrellas', 'propia'));
-  memoriaCache.delete(cacheHash(req.userId, 'calendario-lunar', `${anioActual}-${mesActual}`));
-  memoriaCache.delete(cacheHash(req.userId, 'home', hoyStr()));
-  memoriaCache.delete(cacheHash(req.userId, 'numerologia', 'propia', hoyStr()));
-  memoriaCache.delete(cacheHash(req.userId, 'energia', hoyStr()));
-  memoriaCache.delete(cacheHash(req.userId, 'horoscopo', hoyStr()));
-  memoriaCache.delete(cacheHash(req.userId, 'transitos', horaStr()));
-  await req.supabase.from('natal_charts').delete().eq('user_id', req.userId);
 
-  res.json({ mensaje: 'Perfil guardado', perfil: data });
+  // Caché de perfil siempre se limpia (el nombre pudo cambiar)
+  memoriaCache.delete(cacheHash('perfil', req.userId));
+
+  if (cambioDatosNacimiento) {
+    // Datos de nacimiento cambiaron → borrar carta y todos los cálculos derivados
+    memoriaCache.delete(cacheHash(req.userId, 'acg', 'propia'));
+    memoriaCache.delete(cacheHash(req.userId, 'estrellas', 'propia'));
+    memoriaCache.delete(cacheHash(req.userId, 'calendario-lunar', `${anioActual}-${mesActual}`));
+    memoriaCache.delete(cacheHash(req.userId, 'home', hoyStr()));
+    memoriaCache.delete(cacheHash(req.userId, 'numerologia', 'propia', hoyStr()));
+    memoriaCache.delete(cacheHash(req.userId, 'energia', hoyStr()));
+    memoriaCache.delete(cacheHash(req.userId, 'horoscopo', hoyStr()));
+    memoriaCache.delete(cacheHash(req.userId, 'transitos', horaStr()));
+    // Borrar caché persistente de ACG y numerología en Supabase también
+    supabase.from('cache_persistente').delete().in('clave', [
+      `acg_${req.userId}_propia`,
+      `num_${req.userId}_propia`,
+    ]).then(() => {}).catch(() => {});
+    // Borrar carta natal para que se recalcule con los nuevos datos
+    await req.supabase.from('natal_charts').delete().eq('user_id', req.userId);
+  }
+
+  res.json({ mensaje: 'Perfil guardado', perfil: data, recalculo_carta: cambioDatosNacimiento });
 });
 
 // RUTA: Leer el perfil actual de la usuaria
