@@ -1117,12 +1117,28 @@ app.post('/astrocartografia', requireLogin, async (req, res) => {
   try {
     const otraCartaId = req.body?.otra_carta_id || null;
     const cacheKey = cacheHash(req.userId, 'acg', otraCartaId || 'propia');
+
+    // 1) Caché en memoria (respuesta inmediata si el servidor no se reinició)
     const cached = cacheGet(cacheKey);
     if (cached) return res.json(cached);
 
+    // 2) Caché persistente en Supabase (sobrevive reinicios de Render)
+    const cacheDocId = `acg_${req.userId}_${otraCartaId || 'propia'}`;
+    if (!req.body?.forzar) {
+      const { data: cacheDb } = await supabase
+        .from('cache_persistente')
+        .select('datos')
+        .eq('clave', cacheDocId)
+        .maybeSingle();
+      if (cacheDb?.datos) {
+        cacheSet(cacheKey, cacheDb.datos, TTL.ASTROCARTOGRAFIA);
+        return res.json(cacheDb.datos);
+      }
+    }
+
     let datosSubject;
     if (otraCartaId) {
-      const { data: persona, error } = await req.supabase.from('otras_cartas').select('*').eq('id', otraCartaId).single();
+      const { data: persona, error } = await supabase.from('otras_cartas').select('*').eq('id', otraCartaId).eq('user_id', req.userId).single();
       if (error || !persona) return res.status(400).json({ error: 'No se encontró esa carta.' });
       datosSubject = birthDataDesdePerfil(persona, persona.nombre);
     } else {
@@ -1159,7 +1175,11 @@ app.post('/astrocartografia', requireLogin, async (req, res) => {
       analisis_personalizado_error: analisisLugares?._error_debug || null,
     };
     await traducirInterpretacionesEnObjeto(respuestaACG);
+
+    // Guardar en memoria y en Supabase
     cacheSet(cacheKey, respuestaACG, TTL.ASTROCARTOGRAFIA);
+    supabase.from('cache_persistente').upsert({ clave: cacheDocId, datos: respuestaACG, updated_at: new Date().toISOString() }, { onConflict: 'clave' }).then(() => {}).catch(e => console.error('No se pudo guardar caché ACG:', e.message));
+
     res.json(respuestaACG);
   } catch (err) {
     console.error(err?.response?.data || err.message);
@@ -1570,29 +1590,16 @@ app.put('/otras-cartas/:id', requireLogin, async (req, res) => {
 
 // RUTA: Listar las cartas de otras personas ya guardadas
 app.get('/otras-cartas', requireLogin, async (req, res) => {
-  const { data, error } = await req.supabase
+  // Usamos el cliente ADMIN (service_role) con filtro explícito por user_id
+  // para evitar que RLS bloquee silenciosamente las cartas guardadas.
+  // El frontend mostraba "sin cartas" aunque sí existían — era un bug de RLS.
+  const { data, error } = await supabase
     .from('otras_cartas')
     .select('id, nombre, fecha_nacimiento, ciudad_nacimiento, created_at')
+    .eq('user_id', req.userId)
     .order('created_at', { ascending: true });
   if (error) return res.status(400).json({ error: error.message });
-
-  // Diagnóstico: comparamos contra el cliente admin (sin RLS) para detectar
-  // si RLS está bloqueando filas que sí existen en la tabla
-  let debug = null;
-  try {
-    const { data: todasAdmin } = await supabase
-      .from('otras_cartas')
-      .select('id, user_id, nombre')
-      .eq('user_id', req.userId);
-    debug = {
-      filas_con_rls: (data || []).length,
-      filas_sin_rls_mismo_user_id: (todasAdmin || []).length,
-      ids_con_rls: (data || []).map(c => c.id),
-      ids_sin_rls: (todasAdmin || []).map(c => c.id),
-    };
-  } catch (eDebug) { debug = { error_debug: eDebug.message }; }
-
-  res.json({ cartas: data || [], debug });
+  res.json({ cartas: data || [] });
 });
 
 // RUTA: Próximos eclipses y cómo afectan tu carta natal
@@ -2016,12 +2023,30 @@ app.post('/numerologia', requireLogin, async (req, res) => {
   try {
     const otraCartaId = req.body?.otra_carta_id || null;
     const cacheKey = cacheHash(req.userId, 'numerologia', otraCartaId || 'propia', hoyStr());
+
+    // 1) Caché en memoria
     const cached = cacheGet(cacheKey);
     if (cached) return res.json(cached);
 
+    // 2) Caché persistente en Supabase — la numerología de números núcleo no cambia
+    // (solo el día personal cambia diario, pero los números de camino de vida, destino, etc. son fijos)
+    const cacheDocId = `num_${req.userId}_${otraCartaId || 'propia'}`;
+    if (!req.body?.forzar) {
+      const { data: cacheDb } = await supabase
+        .from('cache_persistente')
+        .select('datos, updated_at')
+        .eq('clave', cacheDocId)
+        .maybeSingle();
+      // Solo usar caché si fue calculado hoy (el día personal cambia cada día)
+      if (cacheDb?.datos && cacheDb.updated_at?.slice(0, 10) === hoyStr()) {
+        cacheSet(cacheKey, cacheDb.datos, TTL.NUMEROLOGIA);
+        return res.json(cacheDb.datos);
+      }
+    }
+
     let datosSubject;
     if (otraCartaId) {
-      const { data: persona, error } = await req.supabase.from('otras_cartas').select('*').eq('id', otraCartaId).single();
+      const { data: persona, error } = await supabase.from('otras_cartas').select('*').eq('id', otraCartaId).eq('user_id', req.userId).single();
       if (error || !persona) return res.status(400).json({ error: 'No se encontró esa carta.' });
       datosSubject = birthDataDesdePerfil(persona, persona.nombre);
     } else {
@@ -2037,7 +2062,11 @@ app.post('/numerologia', requireLogin, async (req, res) => {
 
     await traducirInterpretacionesEnObjeto(respuesta.data);
     const r = { numerologia: respuesta.data };
+
+    // Guardar en memoria y Supabase
     cacheSet(cacheKey, r, TTL.NUMEROLOGIA);
+    supabase.from('cache_persistente').upsert({ clave: cacheDocId, datos: r, updated_at: new Date().toISOString() }, { onConflict: 'clave' }).then(() => {}).catch(e => console.error('No se pudo guardar caché numerología:', e.message));
+
     res.json(r);
   } catch (err) {
     console.error(err?.response?.data || err.message);
