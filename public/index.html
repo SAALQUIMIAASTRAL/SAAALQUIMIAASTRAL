@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v186-limpieza-cache-y-sw-nuevo -->
+<!-- VERSION-APP: v190-agregar-carta-sin-reload -->
 <!-- CONSOLIDADO: incluye v159 (reintento carta natal) + v160 (11 puntos: sesión, mensajes, contraseñas, JSON seguro, correo único, safe area, zoom mapa, agrupación ciudades) + v161 (posición del ojo) + v162 (frases variadas ACG) + v163 (diversidad de planetas en ciudades) + v164 (texto luna de hoy) + v165 (diario oculto por defecto) -->
 
 <link rel="manifest" href="manifest.json">
@@ -1875,14 +1875,12 @@
       document.getElementById('form-nueva-carta').style.display = 'none';
       const eraEdicion = !!_editandoCartaId;
       _editandoCartaId = null;
+      // Tanto al editar como al crear: recargamos solo la lista de cartas (no toda la app),
+      // para no sacar a la usuaria de la pantalla de Personas ni dar la sensación de que
+      // la carta se perdió (antes hacía un reload completo que la regresaba al inicio).
+      await cargarCartasGuardadas();
       if (eraEdicion) {
-        // Al editar sí funciona bien reabrir el detalle sin recargar toda la página
-        await cargarCartasGuardadas();
         verDetalleOtraCarta(data.carta?.id, data.carta?.nombre || cuerpo.nombre);
-      } else {
-        // Al crear una persona nueva: recarga completa para garantizar que la lista
-        // se vea correcta sin depender de la actualización en vivo (que ha fallado antes)
-        setTimeout(() => { window.location.reload(); }, 600);
       }
     } catch (err) {
       resultado.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;

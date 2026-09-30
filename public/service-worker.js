@@ -19,9 +19,25 @@ self.addEventListener('activate', (evento) => {
   );
 });
 
+// Solo cacheamos archivos ESTÁTICOS de la app (HTML, JS, CSS, imágenes, fuentes).
+// NUNCA rutas de la API (/perfil, /mis-datos, /diario, etc.) — esas siempre son datos
+// personales y en vivo, y cachearlas podría mostrar datos viejos o, en un dispositivo
+// compartido, datos de otra persona si no hay internet. Esas rutas van siempre directo
+// a la red, sin pasar por este Service Worker.
+const DESTINOS_CACHEABLES = ['document', 'script', 'style', 'image', 'manifest', 'font', ''];
+function esArchivoEstatico(request) {
+  if (request.destination === 'document' || request.destination === 'script' ||
+      request.destination === 'style' || request.destination === 'image' ||
+      request.destination === 'manifest' || request.destination === 'font') return true;
+  // Algunos navegadores no reportan "destination" para ciertos <script>/<link> — revisamos
+  // por extensión como respaldo, y por si es la página principal (index.html o "/").
+  const ruta = new URL(request.url).pathname;
+  return ruta === '/' || /\.(html|js|css|png|jpg|jpeg|svg|webp|woff2?|ico|json)$/i.test(ruta);
+}
+
 self.addEventListener('fetch', (evento) => {
-  // Solo nos interesa cachear peticiones GET normales (no APIs, no POST)
   if (evento.request.method !== 'GET') return;
+  if (!esArchivoEstatico(evento.request)) return; // deja pasar las rutas de la API tal cual, sin cachear
 
   evento.respondWith(
     (async () => {
