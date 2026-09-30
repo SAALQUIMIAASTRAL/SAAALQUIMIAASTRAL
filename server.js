@@ -94,6 +94,14 @@ app.use((req, res, next) => {
   if (req.originalUrl === '/webhooks/stripe') return next();
   express.json()(req, res, next);
 });
+// El index.html NUNCA debe guardarse en caché del navegador — así cada carga siempre
+// pide la versión más reciente al servidor, en vez de quedarse atascado en una vieja.
+app.use((req, res, next) => {
+  if (req.path === '/' || req.path === '/index.html') {
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  }
+  next();
+});
 app.use(express.static('public'));
 
 // ---- Caché en memoria con limpieza automática ----
@@ -137,7 +145,7 @@ const TTL = {
   TRANSITOS_HOY: 30 * 60 * 1000,         // 30 min (compartida entre usuarios)
   LUNA: 30 * 60 * 1000,                  // 30 min
   HOROSCOPO: 2 * 60 * 60 * 1000,         // 2 hrs (cambia poco en el día)
-  ENERGIA_DIA: 60 * 60 * 1000,           // 1 hr
+  ENERGIA_DIA: 25 * 60 * 60 * 1000,      // 25 hrs — la clave de caché ya es por día completo (hoyStr()), así que solo el primer cálculo del día es lento; el resto del día responde instantáneo desde caché
   TRANSITOS_PERSONALES: 2 * 60 * 60 * 1000, // 2 hrs
   ECLIPSES: 48 * 60 * 60 * 1000,         // 48 hrs (cambian muy poco)
   CALENDARIO_LUNAR: 12 * 60 * 60 * 1000, // 12 hrs
@@ -995,12 +1003,16 @@ app.post('/home-summary', requireLogin, async (req, res) => {
           });
         }
 
-        // Guardar el snapshot de hoy para la comparación de mañana (upsert, no falla si ya existe)
+        // Guardar el snapshot de hoy para la comparación de mañana. NO se espera (no lleva
+        // "await") porque esto es solo para el día siguiente — no hace falta que la usuaria
+        // espere a que termine de guardarse para ver su respuesta, así la pantalla responde
+        // más rápido.
         const snapshotHoy = {};
         Object.entries(planetasHoy).forEach(([key, val]) => {
           if (val && val.sign) snapshotHoy[key] = { sign: val.sign, retrograde: !!val.retrograde };
         });
-        await supabase.from('estado_planetario_diario').upsert({ fecha: hoyISO, datos: snapshotHoy }, { onConflict: 'fecha' });
+        supabase.from('estado_planetario_diario').upsert({ fecha: hoyISO, datos: snapshotHoy }, { onConflict: 'fecha' })
+          .then(() => {}).catch(e => console.error('No se pudo guardar snapshot planetario:', e.message));
       } catch (e) {
         console.error('No se pudo calcular eventos especiales planetarios:', e.message);
       }
