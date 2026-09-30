@@ -781,7 +781,7 @@ app.post('/luna', requireLogin, async (req, res) => {
   try {
     const perfil = await leerPerfil(req);
     const ahora = new Date();
-    const cacheKey = cacheHash(req.userId, horaStr())
+    const cacheKey = cacheHash(req.userId, horaStr());
     const cached = cacheGet(cacheKey);
     if (cached) return res.json(cached);
 
@@ -2191,7 +2191,7 @@ app.post('/flor-armonica', requireLogin, async (req, res) => {
   }
 });
 
-// RUTA: Tránsitos personalizados (próximos 7 días, ventana móvil)
+// RUTA: Tránsitos personalizados (próximos 7 días, ventana móvil) — BUG CORREGIDO
 app.post('/transitos-personales', requireLogin, async (req, res) => {
   try {
     const perfil = await leerPerfil(req);
@@ -2291,6 +2291,7 @@ app.post('/transitos-personales', requireLogin, async (req, res) => {
     // Son solo 10 eventos con campos: planeta, signo, aspecto. No necesitan traducción.
     // await traducirInterpretacionesEnObjeto(respuestaTransitos); ← SALTADO
     
+    const cacheKey = cacheHash(req.userId, 'transitos', horaStr());
     cacheSet(cacheKey, respuestaTransitos, TTL.TRANSITOS_PERSONALES);
     res.json(respuestaTransitos);
   } catch (err) {
@@ -2569,9 +2570,6 @@ app.get('/biblioteca/:id', requireLogin, async (req, res) => {
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'shernsndez.22@gmail.com';
 app.post('/biblioteca', requireLogin, async (req, res) => {
   try {
-    const perfil = await leerPerfil(req);
-    if (!perfil) return res.status(401).json({ error: 'No autorizado.' });
-    // Verificar que es admin
     const { data: usuario } = await supabase.auth.admin.getUserById(req.userId).catch(() => ({ data: null }));
     const esAdmin = usuario?.user?.email === ADMIN_EMAIL || req.userEmail === ADMIN_EMAIL;
     if (!esAdmin) return res.status(403).json({ error: 'Solo la administradora puede agregar contenido.' });
