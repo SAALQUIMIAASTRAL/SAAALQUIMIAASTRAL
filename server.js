@@ -1611,10 +1611,11 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
     const mes = parseInt(req.body?.mes) || (hoy.getUTCMonth() + 1);
     const diasEnMes = new Date(Date.UTC(anio, mes, 0)).getUTCDate();
 
-    // Caché por usuario + mes/año — este cálculo cuesta ~32 créditos de API, no debe repetirse en cada clic
+    // Caché por usuario + mes/año — este cálculo cuesta ~32 créditos de API, no debe repetirse en cada clic.
+    // forzar_recalculo permite saltarse el caché (para pruebas, sin afectar el comportamiento normal).
     const cacheKey = cacheHash(req.userId, 'calendario-lunar', `${anio}-${mes}`);
     const cached = cacheGet(cacheKey);
-    if (cached) return res.json(cached);
+    if (cached && !req.body?.forzar_recalculo) return res.json(cached);
 
     const dias = Array.from({ length: diasEnMes }, (_, i) => i + 1);
 
@@ -2221,6 +2222,56 @@ app.post('/suscripcion/iniciar', requireLogin, async (req, res) => {
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ error: 'No se pudo iniciar el pago.' });
+  }
+});
+
+// ============================================================
+// RUTA: Validar y activar una compra nativa (Google Play Billing / Apple StoreKit).
+//
+// ⚠️ IMPORTANTE — ESTADO ACTUAL: para esta fase de PRUEBA CERRADA, esta ruta activa el
+// acceso premium confiando en el comprobante que manda el cliente (purchaseToken/orderId),
+// sin validarlo todavía contra el servidor de Google (eso requiere una cuenta de servicio
+// de Google Cloud con acceso a la Android Publisher API, que aún no está configurada).
+// Es aceptable para probar con testers conocidos (License Testing), pero ANTES de lanzar
+// a producción pública hay que agregar la validación server-side real con esa API —
+// si no, cualquiera podría fingir una compra falsa desde el navegador.
+// ============================================================
+app.post('/suscripcion/validar-compra-nativa', requireLogin, async (req, res) => {
+  try {
+    const { plataforma, plan, productId, purchaseToken, orderId, receipt, transactionId } = req.body || {};
+    if (plataforma !== 'google_play' && plataforma !== 'app_store') {
+      return res.status(400).json({ error: 'Plataforma de compra no reconocida.' });
+    }
+    // Android manda purchaseToken; iOS manda receipt o transactionId — cada plataforma tiene su propio comprobante
+    const comprobante = plataforma === 'google_play' ? purchaseToken : (receipt || transactionId);
+    if (!productId || !comprobante) {
+      return res.status(400).json({ error: 'Faltan datos de la compra.' });
+    }
+
+    // TODO (antes de producción pública): validar purchaseToken con la Android Publisher API
+    // (Google Play) o el receipt/transactionId con la App Store Server API (Apple), y usar
+    // las fechas reales de expiración que esas APIs regresan, en vez de calcularlas aquí.
+    const ahora = new Date();
+    const finPeriodoEstimado = new Date(ahora);
+    if (plan === 'anual') finPeriodoEstimado.setFullYear(finPeriodoEstimado.getFullYear() + 1);
+    else if (plan === 'semestral') finPeriodoEstimado.setMonth(finPeriodoEstimado.getMonth() + 6);
+    else finPeriodoEstimado.setMonth(finPeriodoEstimado.getMonth() + 1);
+
+    await req.supabase.from('subscriptions').upsert({
+      user_id: req.userId,
+      provider: plataforma,
+      product_id: productId,
+      transaction_id: comprobante,
+      estado: 'activa',
+      start_date: ahora.toISOString(),
+      expiration_date: finPeriodoEstimado.toISOString(),
+      trial_used: true,
+    }, { onConflict: 'user_id' });
+
+    res.json({ mensaje: 'Suscripción activada.', proveedor: plataforma });
+  } catch (err) {
+    console.error('Error validando compra nativa:', err.message);
+    res.status(500).json({ error: 'No se pudo validar la compra.' });
   }
 });
 
