@@ -241,6 +241,17 @@ async function traducirTextosConIA(textos) {
 // con IA en el mismo lugar. Así no dependemos de conocer la forma exacta de cada endpoint.
 const CAMPOS_INTERPRETATIVOS = ['interpretation', 'description', 'meaning', 'summary', 'advice', 'judgment', 'answer', 'text', 'narrative', 'analysis'];
 
+// Detecta si un texto está en inglés (palabras clave comunes)
+function esTextoEnIngles(texto) {
+  if (!texto || typeof texto !== 'string') return false;
+  const palabrasIngles = ['the', 'and', 'is', 'are', 'to', 'of', 'in', 'on', 'at', 'this', 'that', 'with', 'for', 'from'];
+  const palabrasSpanish = ['el', 'la', 'y', 'es', 'están', 'de', 'en', 'con', 'para', 'por', 'este', 'ese'];
+  const textLower = texto.toLowerCase();
+  const countEng = palabrasIngles.filter(p => textLower.includes(p)).length;
+  const countEs = palabrasSpanish.filter(p => textLower.includes(p)).length;
+  return countEng > countEs;
+}
+
 async function traducirInterpretacionesEnObjeto(raiz) {
   const objetos = [];
   function buscar(obj) {
@@ -255,7 +266,17 @@ async function traducirInterpretacionesEnObjeto(raiz) {
   }
   buscar(raiz);
   if (!objetos.length) return 0;
-  const { textos: traducidos } = await traducirTextosConIA(objetos.map(o => o.obj[o.campo]));
+  
+  // NUEVO (30 sept): Solo traduce si detecta que es inglés
+  const textosPorTraducir = objetos.map(o => o.obj[o.campo]);
+  const necesitaTraduccion = textosPorTraducir.some(t => esTextoEnIngles(t));
+  
+  if (!necesitaTraduccion) {
+    console.log('✓ Textos ya están en español, omitiendo traducción (ahorro de tokens)');
+    return 0; // No gastó tokens
+  }
+  
+  const { textos: traducidos } = await traducirTextosConIA(textosPorTraducir);
   objetos.forEach((o, i) => { if (traducidos[i]) o.obj[o.campo] = traducidos[i]; });
   return objetos.length;
 }
