@@ -5131,21 +5131,38 @@
     aplicarTamañoFuenteGuardado(); // Cargar tamaño de fuente guardado
   }
 
-  // ===== TAMAÑO DE FUENTE =====
+  // ===== TAMAÑO DE FUENTE (AGRESIVO - AFECTA TODO) =====
   function cambiarTamañoFuente(valor) {
     const porcentaje = parseInt(valor);
-    // Aplicar a toda la pantalla de perfil
+    const escala = porcentaje / 100;
     const pantallaPerfil = document.getElementById('pantalla-mi-perfil');
+    
     if (pantallaPerfil) {
-      const escala = porcentaje / 100;
-      // Multiplica los tamaños base por el factor
-      pantallaPerfil.style.fontSize = (13 * escala) + 'px'; // texto-cuerpo
+      // Agregar/actualizar estilos dinámicos que afecten TODOS los elementos
+      let styleId = 'saa-font-scale-dynamic';
+      let styleEl = document.getElementById(styleId);
+      if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.id = styleId;
+        document.head.appendChild(styleEl);
+      }
+      
+      // CSS agresivo: multiplica font-size de TODOS los descendientes
+      styleEl.textContent = `
+        #pantalla-mi-perfil,
+        #pantalla-mi-perfil * {
+          font-size: calc(${escala} * 1em) !important;
+        }
+      `;
     }
+    
     // Guardar preferencia
     localStorage.setItem('saa_tamaño_fuente', porcentaje);
+    
     // Actualizar display del valor
     const valorDisplay = document.getElementById('tamaño-fuente-valor');
     if (valorDisplay) valorDisplay.textContent = porcentaje + '%';
+    
     // Actualizar el slider
     const slider = document.getElementById('slider-tamaño-fuente');
     if (slider) slider.value = porcentaje;
