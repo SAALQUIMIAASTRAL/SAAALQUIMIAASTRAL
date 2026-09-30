@@ -1764,9 +1764,11 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
     }
 
     if (Array.isArray(eventosMes)) {
-      // Eventos mayores: aspectos exactos (orbe pequeño) a puntos natales importantes
-      const PUNTOS_NATALES_CLAVE = ['Sun', 'Moon', 'Ascendant', 'Medium_Coeli', 'Midheaven', 'MC'];
-      const vistos = new Set();
+      // Eventos mayores: aspectos exactos (orbe pequeño) a puntos natales importantes.
+      // Un mismo aspecto (ej. Sol sextil tu Plutón) puede seguir "exacto" varios días seguidos —
+      // aquí lo agrupamos por el aspecto en sí (sin la fecha) y nos quedamos SOLO con el día
+      // de orbe más pequeño (el más exacto), para no repetir el mismo evento 20 veces.
+      const mejorPorAspecto = new Map();
       eventosMes.forEach(ev => {
         const orbeAbs = Math.abs(ev.orb ?? 99);
         if (orbeAbs > 1.5) return; // solo lo más exacto/significativo del mes
@@ -1775,9 +1777,14 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
         if (typeof fechaCruda === 'object' && fechaCruda.day) fechaISO = `${fechaCruda.year}-${String(fechaCruda.month).padStart(2,'0')}-${String(fechaCruda.day).padStart(2,'0')}`;
         else { const d = new Date(fechaCruda); if (!isNaN(d)) fechaISO = d.toISOString().slice(0, 10); }
         if (!fechaISO) return;
-        const clave = `${fechaISO}|${ev.transiting_planet}|${ev.aspect_type}|${ev.stationed_planet}`;
-        if (vistos.has(clave)) return;
-        vistos.add(clave);
+        const clave = `${ev.transiting_planet}|${ev.aspect_type}|${ev.stationed_planet}`;
+        const existente = mejorPorAspecto.get(clave);
+        if (!existente || orbeAbs < existente.orbeAbs) {
+          mejorPorAspecto.set(clave, { ev, fechaISO, orbeAbs });
+        }
+      });
+      const PUNTOS_NATALES_CLAVE = ['Sun', 'Moon', 'Ascendant', 'Medium_Coeli', 'Midheaven', 'MC'];
+      mejorPorAspecto.forEach(({ ev, fechaISO }) => {
         eventosDestacadosMes.push({
           fecha: fechaISO,
           planeta_transito: NOMBRE_ES[ev.transiting_planet] || ev.transiting_planet,
