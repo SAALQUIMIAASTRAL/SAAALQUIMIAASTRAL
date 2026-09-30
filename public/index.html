@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v182-simplificado-y-deduplicado -->
+<!-- VERSION-APP: v185-ios-storekit-tambien-integrado -->
 <!-- CONSOLIDADO: incluye v159 (reintento carta natal) + v160 (11 puntos: sesión, mensajes, contraseñas, JSON seguro, correo único, safe area, zoom mapa, agrupación ciudades) + v161 (posición del ojo) + v162 (frases variadas ACG) + v163 (diversidad de planetas en ciudades) + v164 (texto luna de hoy) + v165 (diario oculto por defecto) -->
 
 <link rel="manifest" href="manifest.json">
@@ -99,6 +99,7 @@
     height:100dvh;border-radius:0;
   }
   body.app-nativa .notch{ display:none; }
+  body.app-nativa .app-nativa-only{ display:block !important; }
   /* Elementos que solo tienen sentido en la versión web (PWA) — nunca deben verse dentro de la app nativa */
   body.app-nativa .install-btn,
   body.app-nativa .ios-modal-bg,
@@ -689,6 +690,7 @@
           <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:6px;">Suscripción</div>
           <div id="perfil-estado-sub" style="font-size:12.5px;font-weight:600;margin-bottom:10px;"></div>
           <button class="btn-primary" style="background:var(--lilac);margin-bottom:10px;" onclick="abrirPortalPago()">Gestionar mi suscripción / método de pago</button>
+          <button class="btn-outline app-nativa-only" style="display:none;margin-bottom:10px;" onclick="accionRestaurarCompras()">Restaurar compras</button>
           <div id="perfil-portal-error" style="font-size:12px;color:#a5442f;margin-bottom:16px;"></div>
 
           <!-- Nota: esta tarjeta de planes cobra vía Stripe (versión web). En las apps nativas de
@@ -1147,7 +1149,10 @@
             <h2>📖 Tu mes astrológico</h2>
             <div class="desc">El relato del mes y lo más importante que trae para ti, según tus tránsitos reales.</div>
             <div id="mes-astrologico-contenido"><div class="disclaimer">Toca "Ver mi mes" para calcularlo.</div></div>
-            <button class="btn-outline" style="width:100%;margin-top:10px;" onclick="cargarMesAstrologico()">Ver mi mes</button>
+            <div style="display:flex;gap:8px;margin-top:10px;">
+              <button class="btn-outline" style="flex:1;" onclick="cargarMesAstrologico()">Ver mi mes</button>
+              <button class="btn-outline" style="width:44px;flex:none;" title="Recalcular sin usar lo guardado" onclick="cargarMesAstrologico(true)">🔄</button>
+            </div>
           </div>
 
           <div class="section" data-tab="carta" style="opacity:0.75;border:1px dashed var(--line);">
@@ -2601,14 +2606,14 @@
     icono.textContent = yaAbierto ? '▼' : '▲';
   }
 
-  async function cargarMesAstrologico() {
+  async function cargarMesAstrologico(forzarRecalculo) {
     const contenedor = document.getElementById('mes-astrologico-contenido');
-    contenedor.innerHTML = '<div class="disclaimer">Calculando tu mes… puede tardar un momento.</div>';
+    contenedor.innerHTML = `<div class="disclaimer">${forzarRecalculo ? 'Recalculando sin usar lo guardado…' : 'Calculando tu mes… puede tardar un momento.'}</div>`;
     try {
       const r = await fetchAuth('/calendario-lunar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mes: _calMesActual, anio: _calAnioActual }),
+        body: JSON.stringify({ mes: _calMesActual, anio: _calAnioActual, forzar_recalculo: !!forzarRecalculo }),
       });
       const data = await leerJsonSeguro(r);
       if (!r.ok) { contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular tu mes.'}</div>`; return; }
@@ -3108,6 +3113,12 @@
   }
 
   async function abrirPortalPago() {
+    // En Android nativo, la suscripción se gestiona desde Google Play, nunca desde Stripe
+    // (Google no permite cobros/gestión externa dentro de la app nativa).
+    if (esAndroidNativo()) {
+      const NativePurchases = window.Capacitor?.Plugins?.NativePurchases;
+      if (NativePurchases) { await NativePurchases.manageSubscriptions(); return; }
+    }
     const errorEl = document.getElementById('perfil-portal-error');
     errorEl.textContent = '';
     try {
@@ -3843,7 +3854,35 @@
     document.getElementById('precio-plan-elegido').innerHTML = _PRECIOS_PLAN[plan];
   }
 
+  // ============================================================
+  // COBROS NATIVOS — Android usa Google Play Billing, iOS usa StoreKit (mismo plugin
+  // @capgo/native-purchases para ambos). La versión web sigue usando Stripe.
+  //
+  // ⚠️ PENDIENTE DE CONFIRMAR (Android solamente): reemplazar los "planId" con los reales
+  // una vez creados los "Planes base" en Google Play Console. iOS no necesita este paso.
+  // ============================================================
+  const PLANES_ANDROID = {
+    mensual:   { productId: 'com.samalquimiaastral.app.mensual',    planId: 'PENDIENTE-plan-base-mensual' },
+    semestral: { productId: 'com.samalquimiaastral.app.seismeses',  planId: 'PENDIENTE-plan-base-6-meses' },
+    anual:     { productId: 'com.samalquimiaastral.app.anual',      planId: 'PENDIENTE-plan-base-anual' },
+  };
+  const PLANES_IOS = {
+    mensual:   { productId: 'com.samalquimiaastral.app.monthly' },
+    semestral: { productId: 'com.samalquimiaastral.app.sixmonths' },
+    anual:     { productId: 'com.samalquimiaastral.app.yearly' },
+  };
+
+  function esAndroidNativo() {
+    return !!(window.Capacitor && typeof window.Capacitor.getPlatform === 'function' && window.Capacitor.getPlatform() === 'android');
+  }
+  function esIOSNativo() {
+    return !!(window.Capacitor && typeof window.Capacitor.getPlatform === 'function' && window.Capacitor.getPlatform() === 'ios');
+  }
+
   async function accionSuscribirse() {
+    if (esAndroidNativo() || esIOSNativo()) return accionSuscribirseNativa();
+
+    // Flujo normal (solo web) — sin cambios, sigue usando Stripe
     const boton = document.getElementById('btn-suscribirse');
     boton.textContent = 'Un momento...';
     boton.disabled = true;
@@ -3863,6 +3902,89 @@
     } catch (e) {
       boton.textContent = 'Suscribirme';
       boton.disabled = false;
+    }
+  }
+
+  // Compra real usando Google Play Billing (Android) o StoreKit (iOS) — mismo plugin
+  // @capgo/native-purchases para ambos. Se accede vía el puente estándar Capacitor.Plugins,
+  // que es como se usa cualquier plugin nativo de Capacitor desde HTML plano (sin bundler).
+  async function accionSuscribirseNativa() {
+    const boton = document.getElementById('btn-suscribirse');
+    boton.textContent = 'Un momento...';
+    boton.disabled = true;
+    try {
+      const NativePurchases = window.Capacitor?.Plugins?.NativePurchases;
+      if (!NativePurchases) throw new Error('El módulo de compras no está disponible en esta build.');
+
+      const enAndroid = esAndroidNativo();
+      const config = enAndroid ? PLANES_ANDROID[_planElegido] : PLANES_IOS[_planElegido];
+      const resultado = await NativePurchases.purchaseProduct({
+        productIdentifier: config.productId,
+        ...(enAndroid ? { planIdentifier: config.planId } : {}), // planIdentifier solo aplica en Android
+        productType: 'subs',
+      });
+
+      // Avisamos al backend para activar el acceso premium con este comprobante.
+      // Android manda purchaseToken/orderId; iOS manda receipt/transactionId (campos distintos).
+      const r = await fetchAuth('/suscripcion/validar-compra-nativa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plataforma: enAndroid ? 'google_play' : 'app_store',
+          plan: _planElegido,
+          productId: config.productId,
+          purchaseToken: enAndroid ? resultado.purchaseToken : null,
+          orderId: enAndroid ? resultado.orderId : null,
+          receipt: enAndroid ? null : resultado.receipt,
+          transactionId: enAndroid ? null : resultado.transactionId,
+        }),
+      });
+      const data = await leerJsonSeguro(r);
+      if (!r.ok) throw new Error(data.error || 'No se pudo validar la compra.');
+
+      mostrarMensajeGlobal('¡Suscripción activada! Bienvenida a Premium 🌙', 'verde');
+      SESION.suscripcion = 'activa';
+      boton.textContent = 'Suscrita ✓';
+    } catch (e) {
+      boton.textContent = 'Suscribirme';
+      boton.disabled = false;
+      if (!/cancel/i.test(e.message || '')) {
+        mostrarMensajeGlobal('No se pudo completar la compra: ' + e.message, 'rojo');
+      }
+    }
+  }
+
+  // Restaurar compras (requisito de Google/Apple — botón visible en Mi cuenta)
+  async function accionRestaurarCompras() {
+    try {
+      const NativePurchases = window.Capacitor?.Plugins?.NativePurchases;
+      if (!NativePurchases) return mostrarMensajeGlobal('No disponible en esta versión.', 'amarillo');
+      const enAndroid = esAndroidNativo();
+      await NativePurchases.restorePurchases();
+      const { purchases } = await NativePurchases.getPurchases({ productType: 'subs' });
+      // Android marca compra válida con purchaseState; iOS marca suscripción activa con isActive
+      const activa = enAndroid
+        ? purchases.find(p => p.purchaseState === 'PURCHASED' || p.purchaseState === '1')
+        : purchases.find(p => p.isActive === true);
+      if (activa) {
+        const r = await fetchAuth('/suscripcion/validar-compra-nativa', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            plataforma: enAndroid ? 'google_play' : 'app_store',
+            productId: activa.productIdentifier,
+            purchaseToken: enAndroid ? activa.purchaseToken : null,
+            orderId: enAndroid ? activa.orderId : null,
+            receipt: enAndroid ? null : activa.receipt,
+            transactionId: enAndroid ? null : activa.transactionId,
+          }),
+        });
+        const data = await leerJsonSeguro(r);
+        if (r.ok) { mostrarMensajeGlobal('Compra restaurada correctamente.', 'verde'); SESION.suscripcion = 'activa'; return; }
+      }
+      mostrarMensajeGlobal('No encontramos ninguna compra activa para restaurar.', 'amarillo');
+    } catch (e) {
+      mostrarMensajeGlobal('No se pudo restaurar: ' + e.message, 'rojo');
     }
   }
 
