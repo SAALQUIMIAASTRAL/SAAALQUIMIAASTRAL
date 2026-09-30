@@ -741,7 +741,9 @@
           <div id="feedback-msg" style="font-size:12px;margin-bottom:12px;"></div>
 
           <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:8px;">Apariencia</div>
-          <div style="display:flex;align-items:center;justify-content:space-between;background:var(--marigold-soft);border-radius:12px;padding:12px 14px;margin-bottom:16px;">
+          
+          <!-- MODO OSCURO -->
+          <div style="display:flex;align-items:center;justify-content:space-between;background:var(--marigold-soft);border-radius:12px;padding:12px 14px;margin-bottom:12px;">
             <div>
               <div style="font-size:13px;font-weight:600;color:var(--plum);">Modo oscuro</div>
               <div style="font-size:11px;color:var(--ink-dim);">Cambia entre fondo claro y oscuro</div>
@@ -751,6 +753,29 @@
               <span style="position:absolute;inset:0;background:#ccc;border-radius:26px;transition:0.3s;" id="toggle-dark-span"></span>
               <span style="position:absolute;height:20px;width:20px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:0.3s;" id="toggle-dark-knob"></span>
             </label>
+          </div>
+
+          <!-- TAMAÑO DE FUENTE (NUEVO) -->
+          <div style="background:var(--marigold-soft);border-radius:12px;padding:14px;margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+              <div>
+                <div style="font-size:13px;font-weight:600;color:var(--plum);">Tamaño de fuente</div>
+                <div style="font-size:11px;color:var(--ink-dim);">Ajusta el tamaño para leer más cómodo</div>
+              </div>
+              <span id="tamaño-fuente-valor" style="font-size:12px;font-weight:600;color:var(--plum);min-width:35px;text-align:right;">100%</span>
+            </div>
+            <input type="range" id="slider-tamaño-fuente" min="80" max="150" value="100" step="5" 
+              onchange="cambiarTamañoFuente(this.value)"
+              style="width:100%;cursor:pointer;height:6px;border-radius:3px;background:linear-gradient(to right, var(--lilac), var(--marigold));outline:none;-webkit-appearance:none;appearance:none;">
+            <style>
+              #slider-tamaño-fuente::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:#fff;cursor:pointer;border:2px solid var(--lilac);box-shadow:0 2px 8px rgba(45,27,78,0.3);}
+              #slider-tamaño-fuente::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#fff;cursor:pointer;border:2px solid var(--lilac);box-shadow:0 2px 8px rgba(45,27,78,0.3);}
+            </style>
+            <div style="display:flex;gap:6px;margin-top:10px;justify-content:space-between;font-size:11px;color:var(--ink-dim);">
+              <span>Pequeño</span>
+              <span>Normal</span>
+              <span>Grande</span>
+            </div>
           </div>
           <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:8px;">Privacidad y datos</div>
           <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">
@@ -770,7 +795,7 @@
           </div>
 
           <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v157-tarjetas-bienvenida-empaticas</div>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v192</div>
         </div>
 
         <div class="topbar">
@@ -5103,6 +5128,32 @@
     const chk = document.getElementById('toggle-dark');
     if (chk) chk.checked = oscuro;
     cambiarTema(oscuro);
+    aplicarTamañoFuenteGuardado(); // Cargar tamaño de fuente guardado
+  }
+
+  // ===== TAMAÑO DE FUENTE =====
+  function cambiarTamañoFuente(valor) {
+    const porcentaje = parseInt(valor);
+    // Aplicar a toda la pantalla de perfil
+    const pantallaPerfil = document.getElementById('pantalla-mi-perfil');
+    if (pantallaPerfil) {
+      const escala = porcentaje / 100;
+      // Multiplica los tamaños base por el factor
+      pantallaPerfil.style.fontSize = (13 * escala) + 'px'; // texto-cuerpo
+    }
+    // Guardar preferencia
+    localStorage.setItem('saa_tamaño_fuente', porcentaje);
+    // Actualizar display del valor
+    const valorDisplay = document.getElementById('tamaño-fuente-valor');
+    if (valorDisplay) valorDisplay.textContent = porcentaje + '%';
+    // Actualizar el slider
+    const slider = document.getElementById('slider-tamaño-fuente');
+    if (slider) slider.value = porcentaje;
+  }
+
+  function aplicarTamañoFuenteGuardado() {
+    const tamaño = localStorage.getItem('saa_tamaño_fuente') || '100';
+    cambiarTamañoFuente(tamaño);
   }
 
   function cerrar(id) { const el = document.getElementById(id); if (el) el.innerHTML = ''; }
