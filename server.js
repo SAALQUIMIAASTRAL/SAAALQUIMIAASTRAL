@@ -176,7 +176,7 @@ async function traducirBloque(lista) {
     return { textos: lista, debug: 'Falta la variable de entorno ANTHROPIC_API_KEY en Render.' };
   }
   try {
-    const prompt = `Traduce cada uno de estos textos de astrología al español de México/Latinoamérica, natural y con tono cálido y profesional (no traducción literal palabra por palabra, y sin modismos de España como "vosotros" o "vale"). Responde ÚNICAMENTE con un array JSON de strings, en el mismo orden, sin explicación ni markdown:\n\n${JSON.stringify(lista)}`;
+    const prompt = `Estos son textos de astrología. Algunos ya vienen en español y otros en inglés — no importa cuál sea el caso de cada uno. Tu tarea es reescribir CADA texto en español natural de México/Latinoamérica, cálido y profesional, nunca genérico ni de manual técnico (sin modismos de España como "vosotros" o "vale", y sin traducción literal palabra por palabra si ya viene en español — mejóralo, no lo dejes igual). Responde ÚNICAMENTE con un array JSON de strings, en el mismo orden, sin explicación ni markdown:\n\n${JSON.stringify(lista)}`;
     const controlador = new AbortController();
     const timeoutId = setTimeout(() => controlador.abort(), 40000);
     const respuesta = await fetch('https://api.anthropic.com/v1/messages', {
@@ -232,6 +232,7 @@ async function traducirTextosConIA(textos) {
 // summary, advice, judgment) en cualquier nivel anidado de una respuesta, y lo traduce
 // con IA en el mismo lugar. Así no dependemos de conocer la forma exacta de cada endpoint.
 const CAMPOS_INTERPRETATIVOS = ['interpretation', 'description', 'meaning', 'summary', 'advice', 'judgment', 'answer', 'text', 'narrative', 'analysis'];
+
 async function traducirInterpretacionesEnObjeto(raiz) {
   const objetos = [];
   function buscar(obj) {
