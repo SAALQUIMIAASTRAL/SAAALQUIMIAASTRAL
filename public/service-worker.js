@@ -1,41 +1,43 @@
-const CACHE = 'saa-v1';
-const ASSETS = ['/', '/index.html'];
+// Service Worker — estrategia "red primero" (network-first).
+// Nunca sirve una copia vieja atascada: siempre intenta traer la versión más reciente
+// del servidor primero, y solo usa la copia guardada si no hay conexión a internet.
 
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
-  self.skipWaiting();
+const CACHE_NAME = 'saa-cache-v185';
+
+self.addEventListener('install', (evento) => {
+  self.skipWaiting(); // Activa esta versión nueva de inmediato, sin esperar a que se cierren pestañas viejas
 });
 
-self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(keys =>
-    Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-  ));
-  self.clients.claim();
+self.addEventListener('activate', (evento) => {
+  evento.waitUntil(
+    (async () => {
+      // Borra cualquier caché de una versión anterior a esta
+      const nombres = await caches.keys();
+      await Promise.all(nombres.filter(n => n !== CACHE_NAME).map(n => caches.delete(n)));
+      await self.clients.claim(); // Toma control de las pestañas abiertas de inmediato
+    })()
+  );
 });
 
-self.addEventListener('fetch', e => {
-  // Solo cachear GET de assets estáticos, no las llamadas a la API
-  if (e.request.method !== 'GET') return;
-  const url = new URL(e.request.url);
-  if (url.pathname.startsWith('/auth') || url.pathname.startsWith('/carta') ||
-      url.pathname.startsWith('/luna') || url.pathname.startsWith('/api') ||
-      url.pathname.startsWith('/transitos') || url.pathname.startsWith('/horoscopo') ||
-      url.pathname.startsWith('/eclipses') || url.pathname.startsWith('/sinastria') ||
-      url.pathname.startsWith('/numerologia') || url.pathname.startsWith('/energia') ||
-      url.pathname.startsWith('/home-summary') || url.pathname.startsWith('/diario') ||
-      url.pathname.startsWith('/biblioteca') || url.pathname.startsWith('/asistente')) {
-    return; // No cachear llamadas a la API
-  }
-  e.respondWith(
-    caches.match(e.request).then(cached => {
-      if (cached) return cached;
-      return fetch(e.request).then(response => {
-        if (response.ok && e.request.url.includes(self.location.origin)) {
-          const clone = response.clone();
-          caches.open(CACHE).then(c => c.put(e.request, clone));
-        }
-        return response;
-      }).catch(() => caches.match('/index.html'));
-    })
+self.addEventListener('fetch', (evento) => {
+  // Solo nos interesa cachear peticiones GET normales (no APIs, no POST)
+  if (evento.request.method !== 'GET') return;
+
+  evento.respondWith(
+    (async () => {
+      try {
+        // 1) Siempre intenta la red primero (la versión más nueva)
+        const respuestaRed = await fetch(evento.request);
+        // Si funcionó, guarda una copia por si se pierde la conexión después
+        const cache = await caches.open(CACHE_NAME);
+        cache.put(evento.request, respuestaRed.clone());
+        return respuestaRed;
+      } catch (e) {
+        // 2) Si no hay internet, usa la copia guardada (mejor que nada)
+        const copiaGuardada = await caches.match(evento.request);
+        if (copiaGuardada) return copiaGuardada;
+        throw e;
+      }
+    })()
   );
 });

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v185-ios-storekit-tambien-integrado -->
+<!-- VERSION-APP: v186-limpieza-cache-y-sw-nuevo -->
 <!-- CONSOLIDADO: incluye v159 (reintento carta natal) + v160 (11 puntos: sesión, mensajes, contraseñas, JSON seguro, correo único, safe area, zoom mapa, agrupación ciudades) + v161 (posición del ojo) + v162 (frases variadas ACG) + v163 (diversidad de planetas en ciudades) + v164 (texto luna de hoy) + v165 (diario oculto por defecto) -->
 
 <link rel="manifest" href="manifest.json">
@@ -5125,8 +5125,19 @@
   setTimeout(precargarCarta, 3000);
 
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('service-worker.js').catch(() => {});
+    window.addEventListener('load', async () => {
+      try {
+        // Limpieza única: borra cualquier Service Worker y caché viejos guardados en el
+        // dispositivo (de versiones anteriores) que estuvieran sirviendo una copia vieja
+        // de la app en vez de la actual. Después de esto, registra la versión nueva.
+        const registros = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registros.map(r => r.unregister()));
+        if (window.caches) {
+          const nombresCache = await caches.keys();
+          await Promise.all(nombresCache.map(n => caches.delete(n)));
+        }
+      } catch (e) { /* si falla la limpieza, igual intentamos registrar abajo */ }
+      navigator.serviceWorker.register('service-worker.js?v=185').catch(() => {});
     });
   }
 </script>
