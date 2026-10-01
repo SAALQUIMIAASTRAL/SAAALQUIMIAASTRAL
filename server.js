@@ -1620,6 +1620,12 @@ app.put('/otras-cartas/:id', requireLogin, async (req, res) => {
       svg_visual: null,
     };
 
+    // Borrar caché de carta compuesta en cache_persistente
+    supabase.from('cache_persistente')
+      .delete()
+      .eq('clave', `compuesta_${req.userId}_${req.params.id}`)
+      .then(() => {}).catch(() => {});
+
     const { data, error } = await req.supabase
       .from('otras_cartas')
       .update(registroActualizado)
