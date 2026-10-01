@@ -430,7 +430,7 @@
   .auth-error.msj-rojo{background:#fbe6e3;color:#a5442f;}
   .campo-pass{position:relative;}
   .campo-pass input{padding-right:38px !important;}
-  .ojo-toggle{position:absolute;right:10px;bottom:11px;background:none;border:none;cursor:pointer;font-size:16px;padding:0;color:var(--ink-dim);line-height:1;}
+  .ojo-toggle{position:absolute;right:10px;bottom:8px;background:none;border:none;cursor:pointer;font-size:20px;padding:4px;color:var(--ink-dim);line-height:1;z-index:10;-webkit-tap-highlight-color:transparent;}
   .auth-switch{text-align:center;font-size:12.5px;color:var(--ink-dim);margin-top:16px;}
   .auth-switch a{color:var(--marigold);font-weight:600;cursor:pointer;}
   .auth-loading{opacity:0.6;pointer-events:none;}
@@ -1817,14 +1817,12 @@
       }
       const data = await r.json();
       const carousel = document.getElementById('cartas-carousel');
-      const chipsHtml = (data.cartas || []).map(c => `
-        <div class="chart-chip" style="cursor:pointer; position:relative;">
-          <button onclick="event.stopPropagation(); eliminarCartaOtro('${c.id}', '${(c.nombre || '').replace(/'/g, '')}')" style="position:absolute; top:-4px; right:6px; background:var(--danger,#a5442f); color:#fff; border:none; border-radius:50%; width:18px; height:18px; font-size:11px; line-height:1; cursor:pointer; z-index:2;">✕</button>
-          <div onclick="verDetalleOtraCarta('${c.id}', '${(c.nombre || '').replace(/'/g, '')}')">
-            <div class="circ">${(c.nombre || '?')[0].toUpperCase()}</div><div class="lbl">${c.nombre}</div>
-          </div>
-        </div>
-      `).join('');
+      const chipsHtml = (data.cartas || []).map(c => {
+        const id = String(c.id || "");
+        const nombre = (c.nombre || "?").replace(/'/g, "");
+        const inicial = nombre[0].toUpperCase();
+        return `<div class="chart-chip" style="cursor:pointer;position:relative;" data-id="${id}" ontouchstart="iniciarLongPress(this)" ontouchend="cancelarLongPress(this)" ontouchcancel="cancelarLongPress(this)" onclick="verDetalleOtraCarta('${id}', '${nombre}')"><button class="btn-x-carta" onclick="event.stopPropagation();eliminarCartaOtro('${id}','${nombre}')" style="display:none;position:absolute;top:-4px;right:6px;background:#a5442f;color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:13px;cursor:pointer;z-index:10;">✕</button><div class="circ">${inicial}</div><div class="lbl">${nombre}</div></div>`;
+      }).join("");
       carousel.innerHTML = chipsHtml + '<div class="chart-chip add" onclick="mostrarFormularioCarta()"><div class="circ">+</div><div class="lbl">Agregar</div></div>';
       document.getElementById('cartas-count').textContent = `${(data.cartas || []).length} de 8 cartas creadas`;
 
@@ -2988,15 +2986,37 @@
     try {
       const r = await fetchAuth('/mis-datos', { headers: {} });
       const data = await r.json();
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const texto = JSON.stringify(data, null, 2);
+      const blob = new Blob([texto], { type: 'application/json' });
+
+      // En móvil nativo usar Web Share API si está disponible
+      if (navigator.share && navigator.canShare) {
+        try {
+          const file = new File([blob], 'mis-datos-alquimia-astral.json', { type: 'application/json' });
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file], title: 'Mis datos - Sam Alquimia Astral' });
+            return;
+          }
+        } catch (e) { /* fallback */ }
+      }
+
+      // Fallback para web
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = 'mis-datos-alquimia-astral.json';
-      a.click(); URL.revokeObjectURL(url);
+      a.href = url;
+      a.download = 'mis-datos-alquimia-astral.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     } catch (e) { alert('No se pudieron descargar los datos: ' + e.message); }
   }
 
   async function eliminarMiCuenta() {
+    const primera = confirm('⚠️ ¿Segura que quieres eliminar tu cuenta?\n\nEsto borrará permanentemente:\n• Tu carta natal\n• Tu diario\n• Tus personas guardadas\n• Tu suscripción\n\nEsta acción NO se puede deshacer.');
+    if (!primera) return;
+    const segunda = confirm('Esta es tu última oportunidad.\n\n¿Confirmas que quieres eliminar tu cuenta y todos tus datos para siempre?');
+    if (!segunda) return;
     try {
       const r = await fetchAuth('/mi-cuenta', { method: 'DELETE', headers: {} });
       const data = await r.json();
@@ -3243,6 +3263,36 @@
     input.type = oculto ? 'text' : 'password';
     boton.textContent = oculto ? '🙈' : '👁';
   }
+
+  // ===== LONG PRESS para mostrar X de eliminar carta =====
+  let _longPressTimer = null;
+  let _chipActivo = null;
+
+  function iniciarLongPress(chip) {
+    cancelarLongPress();
+    _longPressTimer = setTimeout(() => {
+      // Ocultar X de todos los chips primero
+      document.querySelectorAll('.btn-x-carta').forEach(b => b.style.display = 'none');
+      // Mostrar X solo en este chip
+      const btnX = chip.querySelector('.btn-x-carta');
+      if (btnX) btnX.style.display = 'flex';
+      _chipActivo = chip;
+      // Vibración suave si disponible
+      if (navigator.vibrate) navigator.vibrate(50);
+    }, 600);
+  }
+
+  function cancelarLongPress(chip) {
+    if (_longPressTimer) { clearTimeout(_longPressTimer); _longPressTimer = null; }
+  }
+
+  // Toque fuera → ocultar todas las X
+  document.addEventListener('touchstart', (e) => {
+    if (_chipActivo && !_chipActivo.contains(e.target)) {
+      document.querySelectorAll('.btn-x-carta').forEach(b => b.style.display = 'none');
+      _chipActivo = null;
+    }
+  }, { passive: true });
 
   function toggleCambiarPass() {
     const form = document.getElementById('cambiar-pass-form');
