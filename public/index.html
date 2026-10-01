@@ -704,12 +704,24 @@
           <div id="editar-datos-msg" style="font-size:12px;margin-bottom:16px;"></div>
 
           <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:6px;">Contraseña</div>
-          <span onclick="document.getElementById('cambiar-pass-form').style.display = document.getElementById('cambiar-pass-form').style.display === 'none' ? 'block' : 'none';" style="cursor:pointer;font-size:13px;font-weight:600;color:var(--marigold-dark);display:inline-block;margin-bottom:10px;">🔒 Cambiar mi contraseña</span>
+          <span onclick="toggleCambiarPass()" style="cursor:pointer;font-size:13px;font-weight:600;color:var(--marigold-dark);display:inline-block;margin-bottom:10px;">🔒 Cambiar mi contraseña</span>
           <div id="cambiar-pass-form" style="display:none;margin-bottom:16px;">
             <div class="auth-error" id="cambiar-pass-error"></div>
-            <div class="auth-field campo-pass"><label>Contraseña actual</label><input type="password" id="cambiar-pass-actual"><button type="button" class="ojo-toggle" onclick="alternarOjo('cambiar-pass-actual', this)">👁</button></div>
-            <div class="auth-field campo-pass"><label>Nueva contraseña</label><input type="password" id="cambiar-pass-nueva" placeholder="Mínimo 6 caracteres"><button type="button" class="ojo-toggle" onclick="alternarOjo('cambiar-pass-nueva', this)">👁</button></div>
-            <div class="auth-field campo-pass"><label>Confirmar nueva contraseña</label><input type="password" id="cambiar-pass-confirmar" placeholder="Repite la nueva contraseña"><button type="button" class="ojo-toggle" onclick="alternarOjo('cambiar-pass-confirmar', this)">👁</button></div>
+            <div class="auth-field campo-pass">
+              <label>Contraseña actual</label>
+              <input type="password" id="cambiar-pass-actual" autocomplete="current-password" style="-webkit-user-select:auto;user-select:auto;">
+              <button type="button" class="ojo-toggle" onclick="alternarOjo('cambiar-pass-actual', this)">👁</button>
+            </div>
+            <div class="auth-field campo-pass">
+              <label>Nueva contraseña</label>
+              <input type="password" id="cambiar-pass-nueva" placeholder="Mínimo 6 caracteres" autocomplete="new-password" style="-webkit-user-select:auto;user-select:auto;">
+              <button type="button" class="ojo-toggle" onclick="alternarOjo('cambiar-pass-nueva', this)">👁</button>
+            </div>
+            <div class="auth-field campo-pass">
+              <label>Confirmar nueva contraseña</label>
+              <input type="password" id="cambiar-pass-confirmar" placeholder="Repite la nueva contraseña" autocomplete="new-password" style="-webkit-user-select:auto;user-select:auto;">
+              <button type="button" class="ojo-toggle" onclick="alternarOjo('cambiar-pass-confirmar', this)">👁</button>
+            </div>
             <button class="btn-primary" onclick="accionCambiarPassword()">Guardar nueva contraseña</button>
           </div>
 
@@ -3230,6 +3242,25 @@
     const oculto = input.type === 'password';
     input.type = oculto ? 'text' : 'password';
     boton.textContent = oculto ? '🙈' : '👁';
+  }
+
+  function toggleCambiarPass() {
+    const form = document.getElementById('cambiar-pass-form');
+    const visible = form.style.display !== 'none';
+    form.style.display = visible ? 'none' : 'block';
+    if (!visible) {
+      // Limpiar campos al abrir
+      ['cambiar-pass-actual', 'cambiar-pass-nueva', 'cambiar-pass-confirmar'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.value = ''; el.type = 'password'; }
+      });
+      document.getElementById('cambiar-pass-error').textContent = '';
+      // Foco automático — delay para que el DOM esté visible en iOS
+      setTimeout(() => {
+        const campo = document.getElementById('cambiar-pass-actual');
+        if (campo) campo.focus();
+      }, 150);
+    }
   }
 
   function mostrarErrorEn(id, mensaje) { mostrarMensaje(id, mensaje, 'rojo'); }
