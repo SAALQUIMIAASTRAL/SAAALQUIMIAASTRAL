@@ -485,6 +485,14 @@
         <div class="notch"><div class="pill"></div></div>
 
         <!-- Pantalla de BIENVENIDA -->
+        <!-- SPLASH: se muestra mientras verifica si ya hay sesión activa -->
+        <div id="splash-verificando" style="display:none;position:absolute;inset:0;z-index:200;background:var(--page-bg);flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+          <div style="font-size:48px;">🔮</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--plum);">Sam Alquimia Astral</div>
+          <div style="width:36px;height:36px;border:3px solid var(--marigold);border-top-color:transparent;border-radius:50%;animation:girar 0.8s linear infinite;"></div>
+        </div>
+        <style>@keyframes girar{to{transform:rotate(360deg);}}</style>
+
         <div class="auth-overlay show" id="pantalla-bienvenida">
           <!-- Hero simple: sin tarjetas promocionales, sin precio, sin banners de instalación -->
           <div style="text-align:center;margin-bottom:32px;padding:40px 0 16px;">
@@ -3432,6 +3440,9 @@
   }
 
   async function entrarALaApp(perfil) {
+    // Ocultar splash de verificación
+    const splash = document.getElementById('splash-verificando');
+    if (splash) splash.style.display = 'none';
     mostrarPantalla(null);
     SESION.nombre = perfil?.nombre || 'Usuaria';
     const greet = document.getElementById('greeting-word');
@@ -3625,7 +3636,12 @@
   }
 
   async function revisarPerfilYArrancar(reintentos = 3) {
+    // Si tiene token guardado, mostrar splash mientras verifica — nunca la pantalla de bienvenida
     if (!SESION.token) return mostrarPantalla('bienvenida');
+    
+    // Mostrar splash de carga mientras verifica la sesión
+    const splash = document.getElementById('splash-verificando');
+    if (splash && reintentos === 3) splash.style.display = 'flex';
 
     let r;
     try {
@@ -5190,6 +5206,11 @@
     // Al cargar la página: ¿ya hay sesión guardada?
   aplicarTemaGuardado();
   cambiarPestana('hoy');
+  // Si ya hay sesión guardada, mostrar splash inmediatamente antes de verificar
+  if (SESION.token) {
+    const splash = document.getElementById('splash-verificando');
+    if (splash) splash.style.display = 'flex';
+  }
   revisarPerfilYArrancar();
 
   // Precarga de la carta natal en caché del navegador
