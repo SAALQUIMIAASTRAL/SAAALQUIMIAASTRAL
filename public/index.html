@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
 <title>Sam Alquimia Astral — App móvil</title>
 <!-- VERSION-APP: v192-energia-dia-mas-rapida -->
 <!-- CONSOLIDADO: incluye v159 (reintento carta natal) + v160 (11 puntos: sesión, mensajes, contraseñas, JSON seguro, correo único, safe area, zoom mapa, agrupación ciudades) + v161 (posición del ojo) + v162 (frases variadas ACG) + v163 (diversidad de planetas en ciudades) + v164 (texto luna de hoy) + v165 (diario oculto por defecto) -->
@@ -72,7 +72,10 @@
     --neutral-soft:rgba(45,27,78,0.07);
   }
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;background:#e9e2da;font-family:'Work Sans',sans-serif;color:var(--plum);overflow-x:hidden;max-width:100vw;}
+  html,body{margin:0;padding:0;background:#e9e2da;font-family:'Work Sans',sans-serif;color:var(--plum);overflow-x:hidden;max-width:100%;width:100%;position:relative;}
+  *, *::before, *::after { box-sizing: border-box; }
+  img, svg, video, canvas { max-width: 100%; height: auto; }
+  .card, .card-lectura, .band, .section { word-break: break-word; overflow-wrap: break-word; }
   h1,h2,h3,.display{font-family:'Cormorant Garamond',serif;font-weight:700;margin:0;}
   .page{display:flex;justify-content:center;padding:36px 12px;}
 
@@ -86,7 +89,7 @@
     background:var(--page-bg);
     border-radius:34px;overflow:hidden;
     height:800px;display:flex;flex-direction:column;
-    position:relative;
+    position:relative;overflow-x:hidden;width:100%;
   }
   /* Cuando la app corre DENTRO de la app nativa (iOS/Android vía Capacitor),
      quitamos el marco decorativo de teléfono: la pantalla real YA es un teléfono,
@@ -94,6 +97,11 @@
   body.app-nativa .phone{
     width:100%;max-width:100%;background:transparent;
     border-radius:0;padding:0;box-shadow:none;
+  }
+  /* Responsive para cualquier tamaño de teléfono */
+  @media (max-width: 390px) {
+    .phone { width: 100% !important; border-radius: 0 !important; padding: 0 !important; }
+    .screen { border-radius: 0 !important; }
   }
   body.app-nativa .screen{
     height:100dvh;border-radius:0;
@@ -121,7 +129,7 @@
   .assist-dot{width:22px;height:22px;border-radius:50%;background:conic-gradient(from 90deg,var(--marigold),var(--lilac),var(--marigold));}
   .avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--lilac),var(--marigold));}
 
-  .scroll{flex:1;overflow-y:auto;padding-bottom:78px;}
+  .scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:78px;width:100%;}
   .scroll::-webkit-scrollbar{display:none;}
 
   .season-banner{
