@@ -2,7 +2,7 @@
 // Nunca sirve una copia vieja atascada: siempre intenta traer la versión más reciente
 // del servidor primero, y solo usa la copia guardada si no hay conexión a internet.
 
-const CACHE_NAME = 'saa-cache-v185';
+const CACHE_NAME = 'saa-cache-v192';
 
 self.addEventListener('install', (evento) => {
   self.skipWaiting(); // Activa esta versión nueva de inmediato, sin esperar a que se cierren pestañas viejas
