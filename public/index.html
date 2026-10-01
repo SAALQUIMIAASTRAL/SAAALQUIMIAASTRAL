@@ -5078,53 +5078,112 @@
   // solo cambia de tamaño centrada en su sitio. Doble toque restablece el tamaño original.
   function activarPanZoom(contenedor) {
     let escala = 1;
+    let translateX = 0, translateY = 0;
     let ultimaDistancia = null;
+    let ultimoCentro = null;
+    let arrastrando = false;
+    let ultimoTouch = null;
 
-    contenedor.style.transformOrigin = 'center center';
+    contenedor.style.transformOrigin = '0 0';
     contenedor.style.touchAction = 'none';
     contenedor.style.willChange = 'transform';
+    contenedor.style.cursor = 'grab';
 
     function aplicar() {
-      contenedor.style.transform = `scale(${escala})`;
+      contenedor.style.transform = `translate(${translateX}px, ${translateY}px) scale(${escala})`;
     }
+
+    function limitarTraslacion() {
+      // Limitar el pan para que no se vaya más allá del contenido visible
+      const rect = contenedor.parentElement?.getBoundingClientRect() || { width: 300, height: 300 };
+      const ancho = rect.width;
+      const alto = rect.height;
+      const maxX = 0;
+      const minX = ancho - ancho * escala;
+      const maxY = 0;
+      const minY = alto - alto * escala;
+      translateX = Math.min(maxX, Math.max(minX, translateX));
+      translateY = Math.min(maxY, Math.max(minY, translateY));
+    }
+
     function distanciaEntre(t0, t1) {
       const dx = t0.clientX - t1.clientX, dy = t0.clientY - t1.clientY;
       return Math.sqrt(dx * dx + dy * dy);
     }
 
+    function centroEntre(t0, t1) {
+      return { x: (t0.clientX + t1.clientX) / 2, y: (t0.clientY + t1.clientY) / 2 };
+    }
+
     contenedor.addEventListener('touchstart', (e) => {
       if (e.touches.length === 2) {
         ultimaDistancia = distanciaEntre(e.touches[0], e.touches[1]);
+        ultimoCentro = centroEntre(e.touches[0], e.touches[1]);
+        arrastrando = false;
+      } else if (e.touches.length === 1) {
+        ultimoTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        arrastrando = true;
       }
     }, { passive: true });
 
     contenedor.addEventListener('touchmove', (e) => {
+      e.preventDefault();
       if (e.touches.length === 2 && ultimaDistancia) {
-        e.preventDefault();
+        // ZOOM con pellizco
         const nueva = distanciaEntre(e.touches[0], e.touches[1]);
+        const centro = centroEntre(e.touches[0], e.touches[1]);
         const factor = nueva / ultimaDistancia;
-        escala = Math.max(1, Math.min(4, escala * factor));
+        const nuevaEscala = Math.max(1, Math.min(6, escala * factor));
+
+        // Zoom centrado en el punto del pellizco
+        const rect = contenedor.parentElement?.getBoundingClientRect() || { left: 0, top: 0 };
+        const cx = centro.x - rect.left;
+        const cy = centro.y - rect.top;
+        translateX = cx - (cx - translateX) * (nuevaEscala / escala);
+        translateY = cy - (cy - translateY) * (nuevaEscala / escala);
+        escala = nuevaEscala;
         ultimaDistancia = nueva;
+        ultimoCentro = centro;
+        if (escala <= 1) { translateX = 0; translateY = 0; }
+        else limitarTraslacion();
+        aplicar();
+      } else if (e.touches.length === 1 && arrastrando && ultimoTouch && escala > 1) {
+        // PAN con un dedo (solo si hay zoom)
+        const dx = e.touches[0].clientX - ultimoTouch.x;
+        const dy = e.touches[0].clientY - ultimoTouch.y;
+        translateX += dx;
+        translateY += dy;
+        ultimoTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        limitarTraslacion();
         aplicar();
       }
     }, { passive: false });
 
     contenedor.addEventListener('touchend', (e) => {
-      if (e.touches.length < 2) ultimaDistancia = null;
+      if (e.touches.length < 2) { ultimaDistancia = null; ultimoCentro = null; }
+      if (e.touches.length === 0) { arrastrando = false; ultimoTouch = null; }
+      // Si regresa a escala 1, centrar
+      if (escala <= 1) { escala = 1; translateX = 0; translateY = 0; aplicar(); }
     }, { passive: true });
 
-    // Rueda del mouse, solo para pruebas en escritorio
+    // Doble toque para resetear
+    let ultimoTap = 0;
+    contenedor.addEventListener('touchend', (e) => {
+      const ahora = Date.now();
+      if (ahora - ultimoTap < 300) {
+        escala = 1; translateX = 0; translateY = 0; aplicar();
+      }
+      ultimoTap = ahora;
+    }, { passive: true });
+
+    // Mouse wheel para desktop
     contenedor.addEventListener('wheel', (e) => {
       e.preventDefault();
-      escala = Math.max(1, Math.min(4, escala - e.deltaY * 0.001));
+      const factor = e.deltaY < 0 ? 1.1 : 0.9;
+      escala = Math.max(1, Math.min(6, escala * factor));
+      if (escala <= 1) { translateX = 0; translateY = 0; }
       aplicar();
     }, { passive: false });
-
-    // Doble toque/clic para restablecer el tamaño
-    contenedor.addEventListener('dblclick', () => {
-      escala = 1;
-      aplicar();
-    });
   }
 
   async function actualizarBandaConCartaReal(reintentos = 2) {
