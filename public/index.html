@@ -2653,7 +2653,7 @@
           <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:24px;color:var(--marigold-dark);margin-bottom:4px;">${NOMBRES_MES[_calMesActual - 1]}</div>
         </div>`;
       const totalEventos = ingresos.length + retrogrados.length + eventosPersonales.length;
-      html += `<div class="disclaimer" style="text-align:center;margin-bottom:14px;">${totalEventos ? `${totalEventos} momentos clave este mes — toca cada bloque para explorarlos.` : 'Un mes sin grandes eventos mayores — buen momento para lo cotidiano.'}</div>`;
+      html += `<div class="disclaimer" style="text-align:center;margin-bottom:14px;">${totalEventos ? `Toca cada bloque para explorar lo que trae este mes.` : 'Un mes sin grandes eventos mayores — buen momento para lo cotidiano.'}</div>`;
 
       // 1) Panorama del mes
       html += acordeonItemMes('nivel1-panorama', '🔮 Panorama del mes', m.relato ? `<div style="white-space:pre-line;">${m.relato}</div>` : 'Sin relato disponible este mes.', true);
@@ -4596,12 +4596,26 @@
           <div class="card-lectura" style="background:var(--marigold-soft);border:1px solid var(--marigold-mid);margin-bottom:14px;">
             <div class="card-titulo">✨ Tus días de poder personal en ${nombreMes}</div>
             <div class="card-cuerpo" style="color:var(--ink-dim);margin-bottom:8px;">Calculado cruzando los tránsitos del mes con tu carta natal real — estos días específicos son buenos para ti, no genéricos.</div>
-            ${clavesDias.map(dia => `
-              <div style="margin-bottom:6px;font-size:12.5px;">
-                <b style="color:var(--marigold-dark);">Día ${dia}:</b>
-                <span style="color:var(--plum);">${diasPersonal[dia].join('; ')}</span>
-              </div>
-            `).join('')}
+            ${(() => {
+              // Agrupar días consecutivos con el mismo mensaje
+              const grupos = [];
+              clavesDias.forEach(dia => {
+                const msg = diasPersonal[dia].join('; ');
+                const ultimo = grupos[grupos.length - 1];
+                if (ultimo && ultimo.msg === msg && dia === ultimo.diasFin + 1) {
+                  ultimo.diasFin = dia;
+                } else {
+                  grupos.push({ diasInicio: dia, diasFin: dia, msg });
+                }
+              });
+              return grupos.map(g => {
+                const rango = g.diasInicio === g.diasFin ? `Día ${g.diasInicio}` : `Días ${g.diasInicio} al ${g.diasFin}`;
+                return `<div style="margin-bottom:6px;font-size:12.5px;">
+                  <b style="color:var(--marigold-dark);">${rango}:</b>
+                  <span style="color:var(--plum);">${g.msg}</span>
+                </div>`;
+              }).join('');
+            })()}
           </div>
         `;
       } else if (data.dias_poder_personal_error) {
