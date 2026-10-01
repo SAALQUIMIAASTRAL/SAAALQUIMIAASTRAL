@@ -781,11 +781,11 @@
               <span id="tamano-fuente-valor" style="font-size:12px;font-weight:600;color:var(--plum);min-width:35px;text-align:right;">100%</span>
             </div>
             <input type="range" id="slider-tamano-fuente" min="80" max="150" value="100" step="5"
-              oninput="cambiarTamanoFuente(this.value)"
-              style="width:100%;cursor:pointer;height:6px;border-radius:3px;background:linear-gradient(to right,var(--lilac),var(--marigold));outline:none;-webkit-appearance:none;appearance:none;">
+              oninput="cambiarTamanoFuente(this.value)" onchange="cambiarTamanoFuente(this.value)" ontouchend="cambiarTamanoFuente(this.value)"
+              style="width:100%;cursor:pointer;height:8px;border-radius:4px;background:linear-gradient(to right,var(--lilac),var(--marigold));outline:none;-webkit-appearance:none;appearance:none;touch-action:pan-x;">
             <style>
-              #slider-tamano-fuente::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:#fff;cursor:pointer;border:2px solid var(--lilac);box-shadow:0 2px 8px rgba(45,27,78,0.3);}
-              #slider-tamano-fuente::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;cursor:pointer;border:2px solid var(--lilac);box-shadow:0 2px 8px rgba(45,27,78,0.3);}
+              #slider-tamano-fuente::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:28px;height:28px;border-radius:50%;background:#fff;cursor:pointer;border:3px solid var(--lilac);box-shadow:0 2px 8px rgba(45,27,78,0.3);}
+              #slider-tamano-fuente::-moz-range-thumb{width:28px;height:28px;border-radius:50%;background:#fff;cursor:pointer;border:3px solid var(--lilac);box-shadow:0 2px 8px rgba(45,27,78,0.3);}
             </style>
             <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-dim);margin-top:8px;">
               <span>Pequeño</span><span>Normal</span><span>Grande</span>
