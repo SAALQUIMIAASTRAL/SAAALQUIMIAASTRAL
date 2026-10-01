@@ -245,10 +245,14 @@ const CAMPOS_INTERPRETATIVOS = ['interpretation', 'description', 'meaning', 'sum
 function esTextoEnIngles(texto) {
   if (!texto || typeof texto !== 'string') return false;
   const palabrasIngles = ['the', 'and', 'is', 'are', 'to', 'of', 'in', 'on', 'at', 'this', 'that', 'with', 'for', 'from'];
-  const palabrasSpanish = ['el', 'la', 'y', 'es', 'están', 'de', 'en', 'con', 'para', 'por', 'este', 'ese'];
+  const palabrasPortugues = ['que', 'para', 'uma', 'através', 'entre', 'com', 'por', 'dos', 'das', 'pelo', 'pela', 'enocionais', 'harmoniosa', 'capacidade', 'facilidade', 'através', 'nutrir', 'transformam', 'alimentam', 'expressar', 'satisfazen'];
+  const palabrasSpanish = ['el', 'la', 'y', 'es', 'están', 'de', 'en', 'con', 'para', 'por', 'este', 'ese', 'que', 'entre', 'sus', 'los', 'las'];
   const textLower = texto.toLowerCase();
-  const countEng = palabrasIngles.filter(p => textLower.includes(p)).length;
-  const countEs = palabrasSpanish.filter(p => textLower.includes(p)).length;
+  const countEng = palabrasIngles.filter(p => textLower.includes(' ' + p + ' ')).length;
+  const countPt = palabrasPortugues.filter(p => textLower.includes(p)).length;
+  const countEs = palabrasSpanish.filter(p => textLower.includes(' ' + p + ' ')).length;
+  // Traducir si está en inglés O en portugués
+  if (countPt >= 2) return true;
   return countEng > countEs;
 }
 
@@ -1331,6 +1335,19 @@ app.post('/carta-compuesta', requireLogin, async (req, res) => {
     const perfil = await leerPerfil(req);
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
+    const otraCartaId = req.body?.otra_carta_id || null;
+
+    // Caché persistente en Supabase — la carta compuesta no cambia
+    if (otraCartaId && !req.body?.forzar) {
+      const cacheDocId = `compuesta_${req.userId}_${otraCartaId}`;
+      const { data: cacheDb } = await supabase
+        .from('cache_persistente')
+        .select('datos')
+        .eq('clave', cacheDocId)
+        .maybeSingle();
+      if (cacheDb?.datos) return res.json(cacheDb.datos);
+    }
+
     let datosOtraPersona;
     if (req.body?.otra_carta_id) {
       const { data: persona, error } = await req.supabase
@@ -1367,11 +1384,19 @@ app.post('/carta-compuesta', requireLogin, async (req, res) => {
       traducirInterpretacionesEnObjeto(reseñaCompuesta?.data),
     ]);
 
-    res.json({
+    const respuestaCompuesta = {
       carta_compuesta: compuesta.data || compuesta,
       dinamica_ahora: dinamica.data || dinamica,
       reseña: reseñaCompuesta?.data || null,
-    });
+    };
+
+    // Guardar en caché persistente si tiene ID de carta guardada
+    if (otraCartaId) {
+      const cacheDocId = `compuesta_${req.userId}_${otraCartaId}`;
+      supabase.from('cache_persistente').upsert({ clave: cacheDocId, datos: respuestaCompuesta, updated_at: new Date().toISOString() }, { onConflict: 'clave' }).then(() => {}).catch(() => {});
+    }
+
+    res.json(respuestaCompuesta);
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo calcular la carta compuesta.', detalle_tecnico: err?.response?.data || err.message });
