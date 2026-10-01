@@ -270,16 +270,10 @@ async function traducirInterpretacionesEnObjeto(raiz) {
   }
   buscar(raiz);
   if (!objetos.length) return 0;
-  
-  // NUEVO (30 sept): Solo traduce si detecta que es inglés
+
+  // Siempre traducir — la API puede mandar inglés, portugués o mezcla
+  // El costo es mínimo comparado con mostrar texto en idioma incorrecto
   const textosPorTraducir = objetos.map(o => o.obj[o.campo]);
-  const necesitaTraduccion = textosPorTraducir.some(t => esTextoEnIngles(t));
-  
-  if (!necesitaTraduccion) {
-    console.log('✓ Textos ya están en español, omitiendo traducción (ahorro de tokens)');
-    return 0; // No gastó tokens
-  }
-  
   const { textos: traducidos } = await traducirTextosConIA(textosPorTraducir);
   objetos.forEach((o, i) => { if (traducidos[i]) o.obj[o.campo] = traducidos[i]; });
   return objetos.length;
