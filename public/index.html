@@ -5146,7 +5146,7 @@
           await Promise.all(nombresCache.map(n => caches.delete(n)));
         }
       } catch (e) { /* si falla la limpieza, igual intentamos registrar abajo */ }
-      navigator.serviceWorker.register('service-worker.js?v=185').catch(() => {});
+      navigator.serviceWorker.register('service-worker.js?v=192').catch(() => {});
     });
   }
 </script>
