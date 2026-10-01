@@ -5148,7 +5148,13 @@
     let el = document.getElementById(estiloId);
     if (!el) { el = document.createElement('style'); el.id = estiloId; document.head.appendChild(el); }
     const factor = pct / 100;
-    el.textContent = `* { font-size: calc(var(--fs-base, 1em) * ${factor}) !important; } h1,h2,h3 { font-size: calc(1.3em * ${factor}) !important; }`;
+    el.textContent = `
+      body { font-size: ${13 * factor}px !important; }
+      p, div, span, label, button, input, textarea, select, li, a { font-size: inherit; }
+      h1 { font-size: ${28 * factor}px !important; }
+      h2 { font-size: ${20 * factor}px !important; }
+      h3 { font-size: ${16 * factor}px !important; }
+    `;
     localStorage.setItem('saa_tamano_fuente', pct);
     const display = document.getElementById('tamano-fuente-valor');
     if (display) display.textContent = pct + '%';
