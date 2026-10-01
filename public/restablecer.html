@@ -15,9 +15,12 @@
   .error { color: #a5442f; background:#fbe6e3; border-radius:10px; padding:10px; }
   .exito { color: #1e6b3c; background:#e1f3e6; border-radius:10px; padding:10px; }
   .aviso { color: #8a6414; background:#fdf2d8; border-radius:10px; padding:10px; }
-  .campo-pass{position:relative;}
-  .campo-pass input{padding-right:38px;}
-  .ojo-toggle{position:absolute;right:8px;bottom:9px;background:none;border:none;cursor:pointer;font-size:16px;color:#6b5a80;}
+  .campo-pass { margin-bottom: 4px; }
+  .campo-pass label { font-size: 13px; display: block; margin: 16px 0 4px; }
+  .input-wrap { position: relative; }
+  .input-wrap input { width: 100%; box-sizing: border-box; padding: 10px 40px 10px 12px; border-radius: 10px; border: 1px solid #D9C6EE; font-size: 14px; }
+  .ojo-toggle { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 20px; color: #6b5a80; padding: 4px; z-index: 10; line-height: 1; }
+  input { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1px solid #D9C6EE; font-size: 14px; }
 </style>
 </head>
 <body>
@@ -27,13 +30,17 @@
   <div id="formulario">
     <div class="campo-pass">
       <label>Nueva contraseña</label>
-      <input type="password" id="nueva-password" placeholder="Mínimo 6 caracteres">
-      <button type="button" class="ojo-toggle" onclick="alternarOjo('nueva-password', this)">👁</button>
+      <div class="input-wrap">
+        <input type="password" id="nueva-password" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+        <button type="button" class="ojo-toggle" onclick="alternarOjo('nueva-password', this)">👁</button>
+      </div>
     </div>
     <div class="campo-pass">
       <label>Confirmar nueva contraseña</label>
-      <input type="password" id="confirmar-password" placeholder="Repite tu contraseña">
-      <button type="button" class="ojo-toggle" onclick="alternarOjo('confirmar-password', this)">👁</button>
+      <div class="input-wrap">
+        <input type="password" id="confirmar-password" placeholder="Repite tu contraseña" autocomplete="new-password">
+        <button type="button" class="ojo-toggle" onclick="alternarOjo('confirmar-password', this)">👁</button>
+      </div>
     </div>
     <button onclick="restablecer()">Guardar nueva contraseña</button>
   </div>
