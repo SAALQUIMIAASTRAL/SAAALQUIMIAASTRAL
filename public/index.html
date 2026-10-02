@@ -2504,7 +2504,8 @@
     const contenedor = document.getElementById('energia-resultado');
     contenedor.innerHTML = samLoading('Leyendo tu energía de hoy...');
     try {
-      const r = await fetchAuth('/energia-del-dia', { method: 'POST', headers: {} });
+      const _tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Mexico_City';
+      const r = await fetchAuth('/energia-del-dia', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ timezone: _tz }) });
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
@@ -4291,7 +4292,8 @@
     const contenedor = document.getElementById('transitos-resultado');
     contenedor.innerHTML = '<div class="disclaimer">Calculando tus tránsitos...</div>';
     try {
-      const r = await fetchAuth('/transitos-personales', { method: 'POST', headers: {} });
+      const _tz3 = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Mexico_City';
+      const r = await fetchAuth('/transitos-personales', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ timezone: _tz3 }) });
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
