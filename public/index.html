@@ -23,15 +23,56 @@
   --blush-1: #1a0f2e;
   --blush-2: #2d1b4e;
   --paper: #1e1230;
+  --page-bg: #120a24;
   --line: #3d2460;
   --ink: #f0e8ff;
   --ink-dim: #a89bc2;
-  --marigold-soft: #2a1a1f;
+  --marigold-soft: rgba(201,168,76,0.15);
+  --marigold-mid: rgba(201,168,76,0.25);
+  --marigold: #C9A84C;
+  --marigold-dark: #e0b85a;
+  --lilac: #b89ee8;
+  --lilac-soft: rgba(155,125,212,0.2);
   --plum: #d4b8ff;
+  --plum-light: #c4a0ff;
   --band-text: #fff;
   --band-text-dim: rgba(255,255,255,0.65);
   --moon-navy: #0d0820;
+  --armonia: #4caf70;
+  --armonia-soft: rgba(76,175,112,0.15);
+  --tension: #e05555;
+  --tension-soft: rgba(224,85,85,0.15);
+  --neutral-soft: rgba(212,184,255,0.08);
 }
+/* MODO OSCURO — estilo limpio tipo Claude */
+[data-theme="dark"] {
+  --page-bg: #1a1a1a;
+  --paper: #242424;
+  --line: #333333;
+  --plum: #e8e0f0;
+  --plum-light: #c4b0e8;
+  --ink-dim: #9a9a9a;
+  --marigold: #d4a843;
+  --marigold-dark: #e0b85a;
+  --marigold-soft: rgba(212,168,67,0.12);
+  --lilac: #b89ee8;
+  --lilac-soft: rgba(184,158,232,0.15);
+  --blush-1: #1a1a2e;
+  --blush-2: #16213e;
+  --band-text: #f0e8ff;
+  --armonia-soft: rgba(76,175,112,0.15);
+  --tension-soft: rgba(224,85,85,0.15);
+  --neutral-soft: rgba(255,255,255,0.05);
+}
+[data-theme="dark"] body { background: #1a1a1a !important; }
+[data-theme="dark"] .screen { background: var(--page-bg) !important; }
+[data-theme="dark"] .card-lectura,
+[data-theme="dark"] .section > div,
+[data-theme="dark"] .tarjeta-lectura { background: var(--paper) !important; border-color: var(--line) !important; }
+[data-theme="dark"] .bottomnav { background: #1e1e1e !important; border-top: 1px solid #2a2a2a !important; }
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select { background: #2a2a2a !important; color: #e8e0f0 !important; border-color: #444 !important; }
 :root{
     /* --- Colores de marca (design system v1) --- */
     --plum:#2D1B4E;
