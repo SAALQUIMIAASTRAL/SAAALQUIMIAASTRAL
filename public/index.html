@@ -2,11 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v192-energia-dia-mas-rapida -->
-<!-- CONSOLIDADO: incluye v159 (reintento carta natal) + v160 (11 puntos: sesión, mensajes, contraseñas, JSON seguro, correo único, safe area, zoom mapa, agrupación ciudades) + v161 (posición del ojo) + v162 (frases variadas ACG) + v163 (diversidad de planetas en ciudades) + v164 (texto luna de hoy) + v165 (diario oculto por defecto) -->
-
+<!-- VERSION-APP: v158-fusion-native-backend-login -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -19,64 +17,19 @@
   :root{
   --theme: light;
 }
-
-/* Modo oscuro — reglas de aplicación */
-[data-theme="dark"] body,
-[data-theme="dark"] .screen,
-[data-theme="dark"] .scroll { background: var(--page-bg) !important; color: var(--ink) !important; }
-[data-theme="dark"] .section { background: var(--page-bg) !important; }
-[data-theme="dark"] .card-lectura,
-[data-theme="dark"] .tarjeta-lectura { background: var(--paper) !important; border-color: var(--line) !important; }
-[data-theme="dark"] .bottomnav { background: var(--blush-1) !important; border-top: 1px solid var(--line) !important; }
-[data-theme="dark"] input,[data-theme="dark"] textarea,[data-theme="dark"] select { background: var(--paper) !important; color: var(--ink) !important; border-color: var(--line) !important; }
-[data-theme="dark"] label,[data-theme="dark"] p,[data-theme="dark"] .card-cuerpo,[data-theme="dark"] .desc,[data-theme="dark"] .lbl { color: var(--ink) !important; }
-[data-theme="dark"] h1,[data-theme="dark"] h2,[data-theme="dark"] h3 { color: var(--ink) !important; }
-[data-theme="dark"] .auth-field input,[data-theme="dark"] .auth-field label { color: var(--ink) !important; background: var(--paper) !important; }
-[data-theme="dark"] [style*="background:#fff"],[data-theme="dark"] [style*="background: #fff"] { background: var(--paper) !important; }
-[data-theme="dark"] [style*="background:var(--blush"],[data-theme="dark"] [style*="background: var(--blush"] { background: var(--blush-1) !important; }
-[data-theme="dark"] span:not(.g):not(.avatar-inicial):not(.ojo-toggle) { color: var(--ink); }
-
 [data-theme="dark"]{
   --blush-1: #1a0f2e;
-  --blush-2: #0f0a1a;
-  --paper: #1a1230;
-  --page-bg: #0f0a1a;
-  --line: #2d1f4a;
-  --ink: #e8deff;
-  --ink-dim: #8b7aaa;
-  --marigold-soft: rgba(201,168,76,0.15);
-  --marigold-mid: rgba(201,168,76,0.25);
-  --marigold: #C9A84C;
-  --marigold-dark: #e0b85a;
-  --lilac: #b89ee8;
-  --lilac-soft: rgba(155,125,212,0.2);
-  --plum: #e8deff;
-  --plum-light: #c4a8f0;
+  --blush-2: #2d1b4e;
+  --paper: #1e1230;
+  --line: #3d2460;
+  --ink: #f0e8ff;
+  --ink-dim: #a89bc2;
+  --marigold-soft: #2a1a1f;
+  --plum: #d4b8ff;
   --band-text: #fff;
   --band-text-dim: rgba(255,255,255,0.65);
   --moon-navy: #0d0820;
-  --armonia: #4caf70;
-  --armonia-soft: rgba(76,175,112,0.15);
-  --tension: #e05555;
-  --tension-soft: rgba(224,85,85,0.15);
-  --neutral-soft: rgba(212,184,255,0.08);
 }
-[data-theme="dark"] [style*="background:#FAF"],
-[data-theme="dark"] [style*="background:#FBF"],
-[data-theme="dark"] [style*="background:#fff8"],
-[data-theme="dark"] [style*="background: #FAF"],
-[data-theme="dark"] [style*="background: #FBF"] {
-  background: #1a1230 !important;
-}
-/* Evento/aviso de libra y banners */
-[data-theme="dark"] .aviso-evento,
-[data-theme="dark"] [style*="background:var(--blush"] {
-  background: #1a0f2e !important;
-  color: #e8deff !important;
-}
-/* Zoom modal */
-[data-theme="dark"] .zoom-modal-bg svg { background: #1a1230 !important; }
-[data-theme="dark"] .zoom-close-btn { background: #1a1230 !important; color: #e8deff !important; }
 :root{
     /* --- Colores de marca (design system v1) --- */
     --plum:#2D1B4E;
@@ -117,11 +70,8 @@
     --neutral-soft:rgba(45,27,78,0.07);
   }
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;background:#e9e2da;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;color:var(--plum);overflow-x:hidden;max-width:100%;width:100%;position:relative;font-size:15px;line-height:1.6;}
-  *, *::before, *::after { box-sizing: border-box; }
-  img, svg, video, canvas { max-width: 100%; height: auto; }
-  .card, .card-lectura, .band, .section { word-break: break-word; overflow-wrap: break-word; }
-  h1,h2,h3,.display{font-family:'Cormorant Garamond',serif;font-weight:700;margin:0;}
+  html,body{margin:0;padding:0;background:#e9e2da;font-family:'Work Sans',sans-serif;color:var(--plum);}
+  h1,h2,h3,.display{font-family:'Cormorant Garamond',serif;font-weight:800;margin:0;} .section h2{font-size:19px !important;font-weight:800 !important;}
   .page{display:flex;justify-content:center;padding:36px 12px;}
 
   /* ---------- phone frame ---------- */
@@ -134,7 +84,7 @@
     background:var(--page-bg);
     border-radius:34px;overflow:hidden;
     height:800px;display:flex;flex-direction:column;
-    position:relative;overflow-x:hidden;width:100%;
+    position:relative;
   }
   /* Cuando la app corre DENTRO de la app nativa (iOS/Android vía Capacitor),
      quitamos el marco decorativo de teléfono: la pantalla real YA es un teléfono,
@@ -143,20 +93,10 @@
     width:100%;max-width:100%;background:transparent;
     border-radius:0;padding:0;box-shadow:none;
   }
-  /* Responsive para cualquier tamaño de teléfono */
-  @media (max-width: 390px) {
-    .phone { width: 100% !important; border-radius: 0 !important; padding: 0 !important; }
-    .screen { border-radius: 0 !important; }
-  }
   body.app-nativa .screen{
     height:100dvh;border-radius:0;
   }
   body.app-nativa .notch{ display:none; }
-  body.app-nativa .app-nativa-only{ display:block !important; }
-  /* Elementos que solo tienen sentido en la versión web (PWA) — nunca deben verse dentro de la app nativa */
-  body.app-nativa .install-btn,
-  body.app-nativa .ios-modal-bg,
-  body.app-nativa .side-note{ display:none !important; }
   .notch{
     height:26px;display:flex;align-items:center;justify-content:center;
     background:var(--paper);flex:none;
@@ -171,19 +111,10 @@
   .topbar .brand{display:flex;align-items:center;gap:6px;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:17px;color:var(--plum);}
   .topbar .brand .g{color:var(--marigold);}
   .topbar .right{display:flex;align-items:center;gap:8px;}
-  .assist-dot{display:none;}
-  .avatar{
-    width:36px;height:36px;border-radius:50%;
-    background:linear-gradient(135deg,var(--lilac),var(--marigold));
-    display:flex;align-items:center;justify-content:center;
-    font-size:15px;font-weight:700;color:#fff;
-    overflow:hidden;border:2px solid var(--marigold);
-    cursor:pointer;
-  }
-  .avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
-  .avatar-inicial{font-size:15px;font-weight:700;color:#fff;}
+  .assist-dot{width:22px;height:22px;border-radius:50%;background:conic-gradient(from 90deg,var(--marigold),var(--lilac),var(--marigold));}
+  .avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--lilac),var(--marigold));}
 
-  .scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:78px;width:100%;}
+  .scroll{flex:1;overflow-y:auto;padding-bottom:78px;}
   .scroll::-webkit-scrollbar{display:none;}
 
   .season-banner{
@@ -194,7 +125,7 @@
   .season-banner .now{font-weight:600;display:flex;align-items:center;gap:5px;}
   .season-banner .next{color:var(--ink-dim);}
 
-  .band{position:relative;background:linear-gradient(160deg,var(--blush-1) 0%,var(--plum) 60%,var(--blush-2) 100%);padding:calc(22px + env(safe-area-inset-top, 0px)) 18px 28px;overflow:hidden;}
+  .band{position:relative;background:linear-gradient(160deg,var(--blush-1) 0%,var(--plum) 60%,var(--blush-2) 100%);padding:22px 18px 28px;overflow:hidden;}
   .band::before{content:'';position:absolute;top:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:rgba(201,168,76,0.08);pointer-events:none;}
   .band::after{content:'';position:absolute;bottom:-30px;left:-20px;width:120px;height:120px;border-radius:50%;background:rgba(155,125,212,0.1);pointer-events:none;}
   .band-icon{
@@ -220,11 +151,9 @@
     padding:14px 16px;
     box-shadow:0 2px 10px rgba(45,27,78,0.08);
   }
-  .section h2{font-size:19px;margin-bottom:6px;border-left:3px solid var(--marigold);padding-left:10px;font-family:'Cormorant Garamond',serif;font-weight:800;letter-spacing:0.1px;color:var(--plum);}
-  .section h3{font-size:16px;font-weight:700;color:var(--plum);}
-  h1,h2,h3{font-family:'Cormorant Garamond',serif;font-weight:800;}
+  .section h2{font-size:19px;font-weight:800;margin-bottom:4px;border-left:3px solid var(--marigold);padding-left:10px;font-family:'Cormorant Garamond',serif;font-weight:700;}
   .section .desc{font-size:12px;color:var(--ink-dim);margin-bottom:12px;line-height:1.5;}
-  .section .desc{font-size:14px;color:var(--ink-dim);margin-bottom:14px;line-height:1.6;}
+  .section .desc{font-size:12.5px;color:var(--ink-dim);margin-bottom:14px;line-height:1.5;}
 
   /* mis cartas (multi-perfil) */
   .charts-scroll{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px;}
@@ -306,7 +235,7 @@
     font-size:14px;color:var(--plum);margin-bottom:4px;
   }
   .card-lectura .card-cuerpo{
-    font-size:14.5px;color:var(--plum);line-height:1.65;
+    font-size:12.5px;color:var(--plum);line-height:1.6;
   }
   .card-lectura .card-etiqueta{
     font-size:10.5px;color:var(--marigold);font-weight:600;
@@ -481,45 +410,8 @@
   }
   .auth-error{background:#fbe6e3;color:#a5442f;border-radius:10px;padding:10px 12px;font-size:12px;margin-bottom:12px;display:none;}
   .auth-error.show{display:block;}
-  .auth-error.msj-verde{background:#e1f3e6;color:#1e6b3c;}
-  .auth-error.msj-amarillo{background:#fdf2d8;color:#8a6414;}
-  .auth-error.msj-rojo{background:#fbe6e3;color:#a5442f;}
-  .campo-pass{position:relative;}
-  .campo-pass input{padding-right:38px !important;}
-  .ojo-toggle{position:absolute;right:10px;bottom:8px;background:none;border:none;cursor:pointer;font-size:20px;padding:4px;color:var(--ink-dim);line-height:1;z-index:10;-webkit-tap-highlight-color:transparent;}
-
-  /* Secciones desplegables de Mi Cuenta */
-  .cuenta-seccion{border-radius:16px;overflow:hidden;background:var(--neutral-soft);border:1px solid var(--line);}
-  .cuenta-seccion-btn{width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:transparent;border:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--plum);font-family:'Work Sans',sans-serif;-webkit-tap-highlight-color:transparent;}
-  .cuenta-seccion-btn:active{background:var(--marigold-soft);}
-  .cuenta-chevron{font-size:11px;color:var(--ink-dim);transition:transform 0.2s;}
-  .cuenta-chevron.open{transform:rotate(180deg);}
-  .cuenta-seccion-body{padding:4px 14px 16px;border-top:1px solid var(--line);}
-  .cuenta-seccion-body .auth-field{margin-bottom:12px;}
-  .cuenta-seccion-body .auth-field input,
-  .cuenta-seccion-body .auth-field textarea{border-radius:12px;border:1px solid var(--line);padding:11px 14px;font-size:14px;width:100%;box-sizing:border-box;background:var(--paper);color:var(--plum);font-family:'Work Sans',sans-serif;}
-  .cuenta-seccion-body .auth-field label{font-size:12px;color:var(--ink-dim);display:block;margin-bottom:5px;font-weight:500;}
   .auth-switch{text-align:center;font-size:12.5px;color:var(--ink-dim);margin-top:16px;}
   .auth-switch a{color:var(--marigold);font-weight:600;cursor:pointer;}
-
-  .sam-loading {
-    display: inline-flex; flex-direction: column; align-items: center;
-    gap: 8px; padding: 20px; width: 100%; justify-content: center;
-  }
-  .sam-loading-icon {
-    font-size: 28px;
-    animation: sam-spin 1.5s ease-in-out infinite;
-    display: inline-block;
-  }
-  .sam-loading-text {
-    font-size: 13px; color: var(--ink-dim);
-    font-style: italic; letter-spacing: 0.3px;
-  }
-  @keyframes sam-spin {
-    0% { transform: rotate(0deg) scale(1); }
-    50% { transform: rotate(180deg) scale(1.15); }
-    100% { transform: rotate(360deg) scale(1); }
-  }
   .auth-loading{opacity:0.6;pointer-events:none;}
   .carta-real-row{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--plum);padding:4px 0;border-bottom:1px solid var(--marigold-soft);}
   .carta-real-row:last-child{border-bottom:none;}
@@ -550,6 +442,12 @@
     margin:12px 0 6px;padding-bottom:4px;
     border-bottom:1px solid var(--marigold-soft);
   }
+
+  .sam-loading{display:flex;flex-direction:column;align-items:center;gap:8px;padding:24px;width:100%;justify-content:center;}
+  .sam-loading-icon{font-size:28px;animation:sam-spin 1.5s ease-in-out infinite;display:inline-block;}
+  .sam-loading-text{font-size:13px;color:var(--ink-dim);font-style:italic;}
+  @keyframes sam-spin{0%{transform:rotate(0deg) scale(1);}50%{transform:rotate(180deg) scale(1.15);}100%{transform:rotate(360deg) scale(1);}}
+  @keyframes titilar{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.7;transform:scale(1.15);}}
 </style>
 </head>
 <body>
@@ -572,56 +470,23 @@
         <div class="notch"><div class="pill"></div></div>
 
         <!-- Pantalla de BIENVENIDA -->
-        <!-- BANNER: nueva versión disponible -->
-        <div id="banner-actualizacion" style="display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:999;background:var(--plum);color:#fff;border-radius:16px;padding:12px 18px;width:90%;max-width:340px;box-shadow:0 4px 20px rgba(0,0,0,0.3);text-align:center;">
-          <div style="font-size:13px;font-weight:600;margin-bottom:6px;">✨ Nueva versión disponible</div>
-          <div id="banner-actualizacion-msg" style="font-size:11.5px;opacity:0.85;margin-bottom:10px;"></div>
-          <div style="display:flex;gap:8px;justify-content:center;">
-            <button onclick="abrirTienda()" style="background:var(--marigold);color:var(--plum);border:none;border-radius:100px;padding:7px 18px;font-size:12px;font-weight:700;cursor:pointer;">Actualizar</button>
-            <button onclick="document.getElementById('banner-actualizacion').style.display='none'" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.4);border-radius:100px;padding:7px 14px;font-size:12px;cursor:pointer;">Ahora no</button>
-          </div>
-        </div>
-
-        <!-- MODAL: Reflexión del día -->
-        <div id="reflexion-modal-bg" onclick="if(event.target===this)cerrarReflexion()">
-          <div id="reflexion-modal">
-            <span class="reflexion-emoji" id="reflexion-emoji">🌙</span>
-            <div class="reflexion-texto" id="reflexion-texto">Cargando tu reflexión...</div>
-            <div class="reflexion-firma">✦ Sam Alquimia Astral</div>
-            <button onclick="cerrarReflexion()">Cerrar</button>
-          </div>
-        </div>
-
-        <!-- SPLASH: se muestra mientras verifica si ya hay sesión activa -->
-        <div id="splash-verificando" style="display:none;position:absolute;inset:0;z-index:200;background:var(--page-bg);flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+        <!-- SPLASH mientras verifica sesión -->
+        <div id="splash-verificando" style="display:none;position:absolute;inset:0;z-index:200;background:var(--page-bg,#FAF6F0);flex-direction:column;align-items:center;justify-content:center;gap:16px;">
           <div style="font-size:48px;">🔮</div>
           <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--plum);">Sam Alquimia Astral</div>
-          <div style="width:36px;height:36px;border:3px solid var(--marigold);border-top-color:transparent;border-radius:50%;animation:girar 0.8s linear infinite;"></div>
+          <div style="width:36px;height:36px;border:3px solid var(--marigold);border-top-color:transparent;border-radius:50%;animation:sam-spin 0.8s linear infinite;"></div>
         </div>
-        <style>@keyframes girar{to{transform:rotate(360deg);}}</style>
-        <style>
-          @keyframes titilar{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.75;transform:scale(1.15);}}
-          #reflexion-modal-bg{position:fixed;inset:0;background:rgba(15,10,26,0.85);z-index:300;display:none;align-items:flex-end;justify-content:center;padding:0 0 20px;}
-          #reflexion-modal-bg.open{display:flex;}
-          #reflexion-modal{background:var(--paper,#1a1230);border-radius:24px 24px 16px 16px;padding:28px 22px 24px;width:92%;max-width:380px;text-align:center;box-shadow:0 -4px 40px rgba(45,27,78,0.4);}
-          .reflexion-emoji{font-size:44px;margin-bottom:12px;display:block;}
-          .reflexion-texto{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;color:var(--plum);line-height:1.65;margin-bottom:16px;}
-          .reflexion-firma{font-size:12px;color:var(--ink-dim);margin-bottom:18px;}
-        </style>
 
         <div class="auth-overlay show" id="pantalla-bienvenida">
-          <!-- Hero simple: sin tarjetas promocionales, sin precio, sin banners de instalación -->
-          <div style="text-align:center;margin-bottom:32px;padding:40px 0 16px;">
+          <!-- Hero visual -->
+          <div style="text-align:center;margin-bottom:20px;padding:24px 0 16px;">
             <div style="font-size:52px;line-height:1;margin-bottom:8px;">🔮</div>
             <h1 style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:var(--plum);margin:0 0 6px;">Sam Alquimia Astral</h1>
             <div style="font-size:13px;color:var(--ink-dim);line-height:1.5;">Tu carta natal, tu luna y tus tránsitos<br>personalizados — siempre contigo</div>
           </div>
 
-          <button class="btn-primary" onclick="mostrarPantalla('registro')">Crear mi cuenta</button>
-          <button class="btn-outline" style="margin-top:10px;" onclick="mostrarPantalla('login')">Ya tengo cuenta</button>
-
-          <!-- Tarjetas empáticas: ayudan mucho a la conversión, se quedan -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:24px;">
+          <!-- Beneficios visuales -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;">
             <div style="background:var(--marigold-soft);border-radius:12px;padding:12px;text-align:center;">
               <div style="font-size:22px;margin-bottom:4px;">✦</div>
               <div style="font-size:12px;font-weight:600;color:var(--plum);">¿Quién eres de verdad?</div>
@@ -644,11 +509,13 @@
             </div>
           </div>
 
-          <div style="text-align:center;margin-top:20px;font-size:11px;color:var(--ink-dim);">
-            <a onclick="event.preventDefault();mostrarLegal('privacidad')" style="color:var(--ink-dim);cursor:pointer;text-decoration:underline;">Privacidad</a>
-            &nbsp;·&nbsp;
-            <a onclick="event.preventDefault();mostrarLegal('terminos')" style="color:var(--ink-dim);cursor:pointer;text-decoration:underline;">Términos</a>
+          <!-- Precio -->
+          <div style="text-align:center;font-size:12px;color:var(--ink-dim);margin-bottom:16px;">
+            Todo por <b style="color:var(--marigold-dark);">$4.99 USD/mes</b> · Cancela cuando quieras
           </div>
+
+          <button class="btn-primary" onclick="mostrarPantalla('registro')">Empezar ahora — es gratis</button>
+          <button class="btn-outline" style="margin-top:10px;" onclick="mostrarPantalla('login')">Ya tengo cuenta</button>
         </div>
 
         <!-- Pantalla de LOGIN -->
@@ -661,7 +528,7 @@
 
           <div class="auth-error" id="login-error"></div>
           <div class="auth-field"><label>Correo</label><input type="email" id="login-email"></div>
-          <div class="auth-field campo-pass"><label>Contraseña</label><input type="password" id="login-pass"><button type="button" class="ojo-toggle" onclick="alternarOjo('login-pass', this)">👁</button></div>
+          <div class="auth-field"><label>Contraseña</label><input type="password" id="login-pass"></div>
           <div style="text-align:right;margin:-8px 0 14px;"><a onclick="mostrarPantalla('olvide')" style="font-size:12px;color:var(--ink-dim);cursor:pointer;text-decoration:underline;">¿Olvidaste tu contraseña?</a></div>
           <button class="btn-primary" onclick="accionLogin()">Entrar</button>
           <div class="auth-switch">¿Aún no tienes cuenta? <a onclick="mostrarPantalla('registro')">Regístrate gratis</a></div>
@@ -683,10 +550,8 @@
           <h1>✦ Crea tu cuenta</h1>
           <div class="sub">Empieza gratis, descubre tu cielo hoy</div>
           <div class="auth-error" id="registro-error"></div>
-          <div class="auth-field"><label>Tu nombre</label><input type="text" id="registro-nombre" placeholder="¿Cómo te llamas?"></div>
           <div class="auth-field"><label>Correo</label><input type="email" id="registro-email"></div>
-          <div class="auth-field campo-pass"><label>Contraseña</label><input type="password" id="registro-pass" placeholder="Mínimo 6 caracteres"><button type="button" class="ojo-toggle" onclick="alternarOjo('registro-pass', this)">👁</button></div>
-          <div class="auth-field campo-pass"><label>Confirmar contraseña</label><input type="password" id="registro-pass2" placeholder="Repite tu contraseña"><button type="button" class="ojo-toggle" onclick="alternarOjo('registro-pass2', this)">👁</button></div>
+          <div class="auth-field"><label>Contraseña</label><input type="password" id="registro-pass" placeholder="Mínimo 6 caracteres"></div>
           <label style="display:flex;align-items:flex-start;gap:8px;font-size:11.5px;color:var(--ink-dim);margin:6px 0 12px;line-height:1.4;">
             <input type="checkbox" id="registro-acepta-terminos" style="margin-top:2px;">
             <span>Acepto los <a onclick="event.preventDefault();mostrarLegal('terminos')" style="color:var(--marigold-dark);cursor:pointer;">Términos y Condiciones</a> y el <a onclick="event.preventDefault();mostrarLegal('privacidad')" style="color:var(--marigold-dark);cursor:pointer;">Aviso de Privacidad</a>.</span>
@@ -741,6 +606,7 @@
             <input type="text" id="perfil-ciudad" placeholder="Ej. Mérida" oninput="buscarCiudadEnVivo('perfil')" autocomplete="off">
             <input type="hidden" id="perfil-lat">
             <input type="hidden" id="perfil-lng">
+            <div id="perfil-ciudad-sugerencias" style="position:relative;z-index:5;"></div>
             <div style="font-size:10.5px;color:var(--ink-dim);margin-top:3px;">Escribe y elige tu ciudad de la lista para que la ubicación sea exacta</div>
           </div>
           <div class="auth-field"><label>País</label>
@@ -768,278 +634,124 @@
         </div>
 
         <div class="auth-overlay" id="pantalla-mi-perfil">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-    <h1 style="margin:0;font-size:20px;">✦ Mi cuenta</h1>
-    <button onclick="mostrarPantalla(null)" style="background:var(--marigold-soft);border:none;border-radius:50%;width:34px;height:34px;font-size:16px;cursor:pointer;color:var(--plum);">✕</button>
-  </div>
-
-  <!-- FOTO DE PERFIL -->
-  <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:20px;gap:8px;">
-    <label for="input-foto-perfil" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;">
-      <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--lilac),var(--marigold));overflow:hidden;border:3px solid var(--marigold);display:flex;align-items:center;justify-content:center;">
-        <img id="foto-perfil-preview" src="" alt="" style="width:100%;height:100%;object-fit:cover;display:none;">
-        <span id="foto-perfil-inicial" style="font-size:28px;font-weight:700;color:#fff;">✦</span>
-      </div>
-      <span style="font-size:12px;color:var(--marigold-dark);font-weight:600;">📷 Cambiar foto</span>
-    </label>
-    <input type="file" id="input-foto-perfil" accept="image/*" style="display:none;position:absolute;opacity:0;width:0;height:0;" onchange="subirFotoPerfil(this)">
-    <div style="font-size:13px;color:var(--ink-dim);" id="perfil-email-mostrar"></div>
-  </div>
-
-  <!-- SECCIONES DESPLEGABLES -->
-  <div id="mi-cuenta-secciones" style="display:flex;flex-direction:column;gap:10px;">
-
-    <!-- 1. MIS DATOS DE NACIMIENTO -->
-    <div class="cuenta-seccion">
-      <button class="cuenta-seccion-btn" onclick="toggleSeccion('datos-nacimiento')">
-        <span>🎂 Mis datos de nacimiento</span><span class="cuenta-chevron" id="chev-datos-nacimiento">▼</span>
-      </button>
-      <div class="cuenta-seccion-body" id="datos-nacimiento" style="display:none;">
-        <div style="background:var(--marigold-soft);border-radius:12px;padding:12px;margin-bottom:12px;font-size:12.5px;color:var(--plum);">
-          ⚠️ <b>Atención:</b> Puedes modificar tu fecha de nacimiento <b>una sola vez</b>. Si quieres hacer la carta de otra persona, créala en <b>Personas</b>.
-        </div>
-        <div id="vista-datos-resumen" style="background:var(--neutral-soft);border-radius:12px;padding:14px;margin-bottom:12px;font-size:13.5px;color:var(--plum);line-height:1.9;"></div>
-        <div id="form-datos-nacimiento" style="display:none;">
-          <div class="auth-field"><label>Nombre</label><input type="text" id="perfil-nombre" placeholder="Tu nombre"></div>
-          <div class="auth-field"><label>Fecha de nacimiento</label><input type="date" id="perfil-fecha"></div>
-          <div class="auth-field"><label>Hora de nacimiento</label><input type="time" id="perfil-hora" placeholder="00:00"><div style="font-size:11px;color:var(--ink-dim);margin-top:3px;">Si no la sabes, pon 12:00</div></div>
-          <div class="auth-field" style="position:relative;">
-            <label>Ciudad de nacimiento</label>
-            <input type="text" id="perfil-ciudad" placeholder="Ej. Mérida" oninput="buscarCiudadEnVivo('perfil')" autocomplete="off" style="-webkit-user-select:auto;user-select:auto;">
-            <div id="perfil-ciudad-sugerencias" style="position:relative;z-index:5;"></div>
-            <div style="font-size:10.5px;color:var(--ink-dim);margin-top:3px;">Escribe y elige tu ciudad de la lista</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <h1 style="margin:0;">✦ Mi cuenta</h1>
+            <button onclick="mostrarPantalla(null)" style="background:var(--marigold-soft);border:none;border-radius:50%;width:34px;height:34px;font-size:16px;cursor:pointer;color:var(--plum);">✕</button>
           </div>
-          <input type="hidden" id="perfil-pais">
-          <input type="hidden" id="perfil-lat">
-          <input type="hidden" id="perfil-lon">
-          <div class="auth-error" id="perfil-error"></div>
-          <button class="btn-primary" onclick="guardarPerfil()" style="width:100%;margin-top:8px;">Guardar datos</button>
-        </div>
-        <button id="btn-editar-datos" class="btn-outline" onclick="mostrarFormDatos()" style="width:100%;border-radius:100px;padding:10px;">✏️ Editar mis datos</button>
-      </div>
-    </div>
 
-    <!-- 2. MI CORREO -->
-    <div class="cuenta-seccion">
-      <button class="cuenta-seccion-btn" onclick="toggleSeccion('cambiar-correo')">
-        <span>📧 Mi correo</span><span class="cuenta-chevron" id="chev-cambiar-correo">▼</span>
-      </button>
-      <div class="cuenta-seccion-body" id="cambiar-correo" style="display:none;">
-        <div style="background:var(--neutral-soft);border-radius:12px;padding:12px;margin-bottom:12px;font-size:13px;color:var(--plum);">
-          Correo actual: <b id="correo-actual-mostrar"></b>
-        </div>
-        <div style="background:var(--marigold-soft);border-radius:12px;padding:12px;margin-bottom:12px;font-size:12.5px;color:var(--plum);">
-          ⚠️ Solo puedes cambiar tu correo <b>una vez</b>.
-        </div>
-        <div class="auth-field"><label>Nuevo correo</label><input type="email" id="nuevo-correo" placeholder="nuevo@correo.com"></div>
-        <div class="auth-field"><label>Contraseña actual</label>
-          <div class="campo-pass" style="position:relative;">
-            <input type="password" id="pass-para-correo" placeholder="Confirma tu contraseña" style="width:100%;padding-right:38px;">
-            <button type="button" class="ojo-toggle" onclick="alternarOjo('pass-para-correo',this)">👁</button>
+          <div style="background:var(--marigold-soft);border-radius:12px;padding:14px;margin-bottom:16px;">
+            <div style="font-size:11px;color:var(--ink-dim);margin-bottom:2px;">Correo</div>
+            <div id="perfil-email-mostrar" style="font-size:13.5px;color:var(--plum);font-weight:600;"></div>
           </div>
-        </div>
-        <div class="auth-error" id="error-correo"></div>
-        <button class="btn-primary" onclick="cambiarCorreo()" style="width:100%;">Actualizar correo</button>
-      </div>
-    </div>
 
-    <!-- 3. MI CONTRASEÑA -->
-    <div class="cuenta-seccion">
-      <button class="cuenta-seccion-btn" onclick="toggleSeccion('cambiar-pass')">
-        <span>🔒 Mi contraseña</span><span class="cuenta-chevron" id="chev-cambiar-pass">▼</span>
-      </button>
-      <div class="cuenta-seccion-body" id="cambiar-pass" style="display:none;">
-        <div class="auth-error" id="cambiar-pass-error"></div>
-        <div class="auth-field campo-pass" style="position:relative;">
-          <label>Contraseña actual</label>
-          <input type="password" id="cambiar-pass-actual" autocomplete="current-password" style="-webkit-user-select:auto;user-select:auto;padding-right:44px;">
-          <button type="button" class="ojo-toggle" onclick="alternarOjo('cambiar-pass-actual',this)">👁</button>
-        </div>
-        <div class="auth-field campo-pass" style="position:relative;">
-          <label>Nueva contraseña</label>
-          <input type="password" id="cambiar-pass-nueva" placeholder="Mínimo 6 caracteres" autocomplete="new-password" style="-webkit-user-select:auto;user-select:auto;padding-right:44px;">
-          <button type="button" class="ojo-toggle" onclick="alternarOjo('cambiar-pass-nueva',this)">👁</button>
-        </div>
-        <div class="auth-field campo-pass" style="position:relative;">
-          <label>Confirmar nueva contraseña</label>
-          <input type="password" id="cambiar-pass-confirmar" placeholder="Repite la nueva contraseña" autocomplete="new-password" style="-webkit-user-select:auto;user-select:auto;padding-right:44px;">
-          <button type="button" class="ojo-toggle" onclick="alternarOjo('cambiar-pass-confirmar',this)">👁</button>
-        </div>
-        <button class="btn-primary" onclick="accionCambiarPassword()" style="width:100%;">Guardar nueva contraseña</button>
-      </div>
-    </div>
-
-    <!-- 4. MI SUSCRIPCIÓN -->
-    <div class="cuenta-seccion">
-      <button class="cuenta-seccion-btn" onclick="toggleSeccion('mi-suscripcion')">
-        <span>⭐ Mi suscripción</span><span class="cuenta-chevron" id="chev-mi-suscripcion">▼</span>
-      </button>
-      <div class="cuenta-seccion-body" id="mi-suscripcion" style="display:none;">
-        <div id="estado-suscripcion-detalle" style="background:var(--neutral-soft);border-radius:12px;padding:14px;margin-bottom:12px;font-size:13.5px;color:var(--plum);line-height:1.8;"></div>
-        <div id="btn-suscripcion-accion"></div>
-      </div>
-    </div>
-
-    <!-- 5. SISTEMA DE CASAS -->
-    <div class="cuenta-seccion">
-      <button class="cuenta-seccion-btn" onclick="toggleSeccion('sistema-casas')">
-        <span>🏛️ Sistema de casas</span><span class="cuenta-chevron" id="chev-sistema-casas">▼</span>
-      </button>
-      <div class="cuenta-seccion-body" id="sistema-casas" style="display:none;">
-        <div style="background:var(--neutral-soft);border-radius:12px;padding:14px;margin-bottom:8px;">
-          <div style="font-size:13px;font-weight:600;color:var(--plum);margin-bottom:6px;">Sistema actual: <span style="color:var(--marigold);">Plácido</span></div>
-          <div style="font-size:12.5px;color:var(--ink-dim);line-height:1.7;">El sistema de casas divide el cielo en 12 sectores que representan áreas de tu vida. <b style="color:var(--plum);">Plácido</b> es el más usado mundialmente y el que usa esta app — considera la latitud de tu lugar de nacimiento para calcular cada casa con mayor precisión personal.</div>
-        </div>
-        <div style="font-size:12px;color:var(--ink-dim);text-align:center;padding:6px;">Otros sistemas (Koch, Equal, Whole Sign) estarán disponibles próximamente.</div>
-      </div>
-    </div>
-
-    <!-- 6. NOTIFICACIONES -->
-    <div class="cuenta-seccion">
-      <button class="cuenta-seccion-btn" onclick="toggleSeccion('notificaciones')">
-        <span>🔔 Notificaciones</span><span class="cuenta-chevron" id="chev-notificaciones">▼</span>
-      </button>
-      <div class="cuenta-seccion-body" id="notificaciones" style="display:none;">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--neutral-soft);border-radius:12px;margin-bottom:8px;">
-          <div><div style="font-size:13px;font-weight:600;color:var(--plum);">Horóscopo diario</div><div style="font-size:11.5px;color:var(--ink-dim);">Cada mañana a las 8am</div></div>
-          <label style="position:relative;display:inline-block;width:44px;height:24px;"><input type="checkbox" id="notif-horoscopo" style="opacity:0;width:0;height:0;"><span style="position:absolute;inset:0;background:#ccc;border-radius:24px;cursor:pointer;transition:0.3s;" id="span-notif-horoscopo"></span><span style="position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;cursor:pointer;transition:0.3s;" id="knob-notif-horoscopo"></span></label>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--neutral-soft);border-radius:12px;margin-bottom:8px;">
-          <div><div style="font-size:13px;font-weight:600;color:var(--plum);">Tránsitos personales</div><div style="font-size:11.5px;color:var(--ink-dim);">Cuando hay un tránsito importante</div></div>
-          <label style="position:relative;display:inline-block;width:44px;height:24px;"><input type="checkbox" id="notif-transitos" style="opacity:0;width:0;height:0;"><span style="position:absolute;inset:0;background:#ccc;border-radius:24px;cursor:pointer;transition:0.3s;" id="span-notif-transitos"></span><span style="position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;cursor:pointer;transition:0.3s;" id="knob-notif-transitos"></span></label>
-        </div>
-        <div style="text-align:center;font-size:12px;color:var(--ink-dim);padding:8px;">🚀 Próximamente — las notificaciones push estarán disponibles pronto.</div>
-      </div>
-    </div>
-
-    <!-- 5. APARIENCIA -->
-    <div class="cuenta-seccion">
-      <button class="cuenta-seccion-btn" onclick="toggleSeccion('apariencia')">
-        <span>🎨 Apariencia</span><span class="cuenta-chevron" id="chev-apariencia">▼</span>
-      </button>
-      <div class="cuenta-seccion-body" id="apariencia" style="display:none;">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--neutral-soft);border-radius:12px;margin-bottom:12px;">
-          <div><div style="font-size:13px;font-weight:600;color:var(--plum);">Modo oscuro</div><div style="font-size:11.5px;color:var(--ink-dim);">Cambia entre fondo claro y oscuro</div></div>
-          <label style="position:relative;display:inline-block;width:46px;height:26px;cursor:pointer;">
-            <input type="checkbox" id="toggle-dark" onchange="cambiarTema(this.checked)" style="opacity:0;width:0;height:0;">
-            <span style="position:absolute;inset:0;background:#ccc;border-radius:26px;transition:0.3s;" id="toggle-dark-span"></span>
-            <span style="position:absolute;height:20px;width:20px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:0.3s;" id="toggle-dark-knob"></span>
-          </label>
-        </div>
-        <div style="padding:12px;background:var(--neutral-soft);border-radius:12px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-            <div><div style="font-size:13px;font-weight:600;color:var(--plum);">Tamaño de letra</div><div style="font-size:11.5px;color:var(--ink-dim);">Ajusta para leer más cómodo</div></div>
-            <span id="tamano-fuente-valor" style="font-size:12px;font-weight:600;color:var(--plum);">100%</span>
+          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+            <span>Mi nombre y datos de nacimiento</span>
+            <span onclick="activarEdicionDatos()" style="cursor:pointer;font-size:13px;font-weight:600;color:var(--marigold-dark);" id="boton-editar-datos">✏️ Editar</span>
           </div>
-          <input type="range" id="slider-tamano-fuente" min="80" max="150" value="100" step="5"
-            oninput="cambiarTamanoFuente(this.value)" onchange="cambiarTamanoFuente(this.value)" ontouchend="cambiarTamanoFuente(this.value)"
-            style="width:100%;cursor:pointer;height:8px;border-radius:4px;background:linear-gradient(to right,var(--lilac),var(--marigold));outline:none;-webkit-appearance:none;appearance:none;touch-action:pan-x;">
-          <style>
-            #slider-tamano-fuente::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:28px;height:28px;border-radius:50%;background:#fff;cursor:pointer;border:3px solid var(--lilac);box-shadow:0 2px 8px rgba(45,27,78,0.3);}
-            #slider-tamano-fuente::-moz-range-thumb{width:28px;height:28px;border-radius:50%;background:#fff;cursor:pointer;border:3px solid var(--lilac);box-shadow:0 2px 8px rgba(45,27,78,0.3);}
-          </style>
-          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-dim);margin-top:8px;"><span>Pequeño</span><span>Normal</span><span>Grande</span></div>
-        </div>
-      </div>
-    </div>
 
-    <!-- 6. QUIÉN SOY -->
-    <div class="cuenta-seccion">
-      <button class="cuenta-seccion-btn" onclick="toggleSeccion('quien-soy')">
-        <span>🌟 Quién soy</span><span class="cuenta-chevron" id="chev-quien-soy">▼</span>
-      </button>
-      <div class="cuenta-seccion-body" id="quien-soy" style="display:none;">
-        <div style="padding:16px 8px;">
-          <div style="text-align:center;margin-bottom:16px;">
-            <div style="width:100px;height:100px;border-radius:50%;overflow:hidden;border:3px solid var(--marigold);margin:0 auto 12px;box-shadow:0 4px 16px rgba(45,27,78,0.25);">
-              <img src="data:image/jpeg;base64,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" alt="Samantha Hernández" style="width:100%;height:100%;object-fit:cover;object-position:center top;">
+          <div id="vista-datos-resumen" style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:16px;font-size:13px;color:var(--plum);line-height:1.9;"></div>
+
+          <div id="editar-datos-form" style="display:none;">
+            <div class="disclaimer" style="margin-bottom:10px;">Si algo quedó mal escrito al registrarte, corrígelo aquí. Al guardar, tu carta natal se vuelve a calcular con los datos nuevos.</div>
+            <div class="auth-error" id="editar-datos-error"></div>
+            <div class="auth-field"><label>Nombre</label><input type="text" id="editar-nombre" placeholder="Tu nombre"></div>
+            <div class="auth-field"><label>Fecha de nacimiento</label><input type="date" id="editar-fecha"></div>
+            <div class="auth-field"><label>Hora de nacimiento</label><input type="time" id="editar-hora"></div>
+            <div class="auth-field"><label>Ciudad de nacimiento</label><input type="text" id="editar-ciudad" placeholder="Ej. Mérida" oninput="buscarCiudadEnVivo('editar')" autocomplete="off">
+              <input type="hidden" id="editar-lat">
+              <input type="hidden" id="editar-lng">
+              <div id="editar-ciudad-sugerencias" style="position:relative;z-index:5;"></div>
             </div>
-            <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:var(--plum);margin-bottom:6px;">Samantha Hernández</div>
-            <div style="font-size:13px;color:var(--ink-dim);line-height:1.7;">Astróloga profesional y creadora de Sam Alquimia Astral. Creo que cada persona merece entender su mapa cósmico — no como algo rígido, sino como una brújula para vivir con más consciencia, propósito y autenticidad. La astrología no te dice qué va a pasar; te ayuda a entender quién eres y qué ciclos estás atravesando para que puedas elegir mejor.</div>
+            <div class="auth-field"><label>País</label>
+              <select id="editar-pais" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;width:100%;">
+                <option value="">Selecciona tu país</option>
+              </select>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn-primary" style="background:var(--lilac);margin-bottom:6px;" onclick="guardarDatosNacimiento()">Guardar cambios</button>
+              <button class="btn-primary" style="background:var(--ink-dim);margin-bottom:6px;" onclick="cancelarEdicionDatos()">Cancelar</button>
+            </div>
           </div>
-          <div style="display:flex;flex-direction:column;gap:8px;">
-            <a href="https://www.tiktok.com/@samalquimiaastral" target="_blank" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--neutral-soft);border-radius:14px;text-decoration:none;color:var(--plum);">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.8a8.18 8.18 0 004.77 1.52V6.89a4.85 4.85 0 01-1-.2z"/></svg>
-              <span style="font-size:13px;font-weight:500;">TikTok — @samalquimiaastral</span>
-            </a>
-            <a href="https://www.instagram.com/samalquimiaastral" target="_blank" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--neutral-soft);border-radius:14px;text-decoration:none;color:var(--plum);">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
-              <span style="font-size:13px;font-weight:500;">Instagram — @samalquimiaastral</span>
-            </a>
-            <a href="https://www.facebook.com/samalquimiaastral" target="_blank" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--neutral-soft);border-radius:14px;text-decoration:none;color:var(--plum);">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
-              <span style="font-size:13px;font-weight:500;">Facebook — @samalquimiaastral</span>
-            </a>
-            <a href="mailto:soporte@samalquimiaastral.com" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--marigold-soft);border-radius:14px;text-decoration:none;color:var(--plum);">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-              <span style="font-size:13px;font-weight:500;">Citas y sesiones — soporte@samalquimiaastral.com</span>
-            </a>
+          <div id="editar-datos-msg" style="font-size:12px;margin-bottom:16px;"></div>
+
+
+          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:6px;">Suscripción</div>
+          <div id="perfil-estado-sub" style="font-size:12.5px;font-weight:600;margin-bottom:10px;"></div>
+          <button class="btn-primary" style="background:var(--lilac);margin-bottom:10px;" onclick="abrirPortalPago()">Gestionar mi suscripción / método de pago</button>
+          <div id="perfil-portal-error" style="font-size:12px;color:#a5442f;margin-bottom:16px;"></div>
+
+          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:8px;">Idioma</div>
+          <select style="width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-family:'Work Sans',sans-serif;font-size:13.5px;color:var(--plum);background:#fff;margin-bottom:8px;">
+            <option value="es">🇲🇽 Español — disponible</option>
+            <option value="en" disabled>🇺🇸 English — próximamente</option>
+            <option value="pt" disabled>🇧🇷 Português — próximamente</option>
+            <option value="ko" disabled>🇰🇷 한국어 (Coreano) — próximamente</option>
+          </select>
+          <div class="disclaimer" style="margin-bottom:16px;">Por ahora solo puedes usar español. En cuanto los demás idiomas estén listos, podrás cambiarlo aquí mismo.</div>
+
+          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:8px;">¿Sugerencias o problemas?</div>
+          <textarea id="feedback-texto" placeholder="Cuéntame qué mejorarías o qué no funciona bien..." style="width:100%;min-height:70px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:var(--paper);resize:none;box-sizing:border-box;margin-bottom:8px;"></textarea>
+          <button class="btn-primary" style="background:var(--lilac);margin-bottom:16px;" onclick="enviarFeedback()">Enviar sugerencia</button>
+          <div id="feedback-msg" style="font-size:12px;margin-bottom:12px;"></div>
+
+          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:8px;">Apariencia</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;background:var(--marigold-soft);border-radius:12px;padding:12px 14px;margin-bottom:16px;">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--plum);">Modo oscuro</div>
+              <div style="font-size:11px;color:var(--ink-dim);">Cambia entre fondo claro y oscuro</div>
+            </div>
+            <label style="position:relative;display:inline-block;width:46px;height:26px;cursor:pointer;">
+              <input type="checkbox" id="toggle-dark" onchange="cambiarTema(this.checked)" style="opacity:0;width:0;height:0;">
+              <span style="position:absolute;inset:0;background:#ccc;border-radius:26px;transition:0.3s;" id="toggle-dark-span"></span>
+              <span style="position:absolute;height:20px;width:20px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:0.3s;" id="toggle-dark-knob"></span>
+            </label>
           </div>
+          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:8px;">Privacidad y datos</div>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">
+            <button onclick="descargarMisDatos()" style="background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px 12px;text-align:left;font-size:12.5px;color:var(--plum);cursor:pointer;">📥 Descargar mis datos</button>
+            <button onclick="mostrarEliminarCuenta()" style="background:var(--paper);border:1px solid #e74c3c;border-radius:10px;padding:10px 12px;text-align:left;font-size:12.5px;color:#c0392b;cursor:pointer;">🗑️ Eliminar mi cuenta y datos</button>
+          </div>
+          <div id="eliminar-cuenta-confirm" style="display:none;background:#fbe6e3;border-radius:12px;padding:14px;margin-bottom:16px;">
+            <div style="font-size:12.5px;color:#c0392b;font-weight:600;margin-bottom:8px;">¿Estás segura? Esta acción es permanente.</div>
+            <div style="font-size:12px;color:#a5442f;margin-bottom:10px;">Se eliminarán tu perfil, carta natal, diario y todos tus datos. No se puede deshacer.</div>
+            <div style="display:flex;gap:8px;">
+              <button onclick="document.getElementById('eliminar-cuenta-confirm').style.display='none'" style="flex:1;background:var(--paper);border:1px solid var(--line);border-radius:100px;padding:8px;font-size:12px;color:var(--plum);cursor:pointer;">Cancelar</button>
+              <button onclick="eliminarMiCuenta()" style="flex:1;background:#c0392b;border:none;border-radius:100px;padding:8px;font-size:12px;color:#fff;font-weight:600;cursor:pointer;">Sí, eliminar todo</button>
+            </div>
+          </div>
+          <div style="font-size:10.5px;color:var(--ink-dim);margin-bottom:16px;line-height:1.5;">
+            <a href="#" onclick="event.preventDefault();mostrarLegal('privacidad')" style="color:var(--marigold-dark);">Aviso de Privacidad</a> · <a href="#" onclick="event.preventDefault();mostrarLegal('terminos')" style="color:var(--marigold-dark);">Términos y Condiciones</a>
+          </div>
+
+          <!-- QUIÉN SOY -->
+          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:8px;">🌟 Quién soy</div>
+          <div style="background:var(--marigold-soft);border-radius:14px;padding:16px;margin-bottom:16px;">
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;">
+              <div style="width:72px;height:72px;border-radius:50%;overflow:hidden;border:2px solid var(--marigold);flex-shrink:0;">
+                <img src="data:image/jpeg;base64,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" style="width:100%;height:100%;object-fit:cover;object-position:center top;">
+              </div>
+              <div>
+                <div style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;color:var(--plum);">Samantha Hernández</div>
+                <div style="font-size:12px;color:var(--ink-dim);">Astróloga profesional</div>
+              </div>
+            </div>
+            <div style="font-size:13px;color:var(--plum);line-height:1.7;margin-bottom:12px;">La astrología no te dice qué va a pasar — te ayuda a entender quién eres y qué ciclos estás atravesando para que puedas elegir mejor.</div>
+            <div style="display:flex;flex-direction:column;gap:7px;">
+              <a href="https://www.tiktok.com/@samalquimiaastral" target="_blank" style="display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--plum);font-size:13px;">🎵 TikTok — @samalquimiaastral</a>
+              <a href="https://www.instagram.com/samalquimiaastral" target="_blank" style="display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--plum);font-size:13px;">📸 Instagram — @samalquimiaastral</a>
+              <a href="https://www.facebook.com/samalquimiaastral" target="_blank" style="display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--plum);font-size:13px;">📘 Facebook — @samalquimiaastral</a>
+              <a href="mailto:soporte@samalquimiaastral.com" style="display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--plum);font-size:13px;">📧 Citas — soporte@samalquimiaastral.com</a>
+            </div>
+          </div>
+
+          <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
+          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v192</div>
         </div>
-      </div>
-    </div>
-
-    <!-- 7. AYUDA -->
-    <div class="cuenta-seccion">
-      <button class="cuenta-seccion-btn" onclick="toggleSeccion('ayuda')">
-        <span>💬 Ayuda y sugerencias</span><span class="cuenta-chevron" id="chev-ayuda">▼</span>
-      </button>
-      <div class="cuenta-seccion-body" id="ayuda" style="display:none;">
-        <a href="mailto:soporte@samalquimiaastral.com" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--neutral-soft);border-radius:12px;text-decoration:none;color:var(--plum);margin-bottom:10px;">
-          <span style="font-size:20px;">📧</span><span style="font-size:13px;font-weight:600;">Contáctanos — soporte@samalquimiaastral.com</span>
-        </a>
-        <div style="margin-bottom:8px;font-size:13px;font-weight:600;color:var(--plum);">¿Sugerencias o problemas?</div>
-        <textarea id="feedback-texto-cuenta" placeholder="Cuéntame qué mejorarías o qué no funciona bien..." style="width:100%;min-height:80px;padding:12px;border:1px solid var(--line);border-radius:12px;font-size:13px;font-family:'Work Sans',sans-serif;resize:none;background:var(--paper);color:var(--plum);box-sizing:border-box;"></textarea>
-        <button class="btn-primary" onclick="enviarFeedbackCuenta()" style="width:100%;margin-top:8px;">Enviar sugerencia</button>
-        <div id="feedback-cuenta-msg" style="text-align:center;font-size:12px;margin-top:6px;"></div>
-      </div>
-    </div>
-
-    <!-- 8. LEGAL -->
-    <div class="cuenta-seccion">
-      <button class="cuenta-seccion-btn" onclick="toggleSeccion('legal')">
-        <span>📜 Legal</span><span class="cuenta-chevron" id="chev-legal">▼</span>
-      </button>
-      <div class="cuenta-seccion-body" id="legal" style="display:none;">
-        <a href="/privacidad.html" target="_blank" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--neutral-soft);border-radius:12px;text-decoration:none;color:var(--plum);margin-bottom:8px;">
-          <span style="font-size:13px;">🔐 Política de privacidad</span><span>›</span>
-        </a>
-        <a href="/terminos.html" target="_blank" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--neutral-soft);border-radius:12px;text-decoration:none;color:var(--plum);">
-          <span style="font-size:13px;">📋 Términos y condiciones</span><span>›</span>
-        </a>
-      </div>
-    </div>
-
-    <!-- 9. PRIVACIDAD Y DATOS -->
-    <div class="cuenta-seccion">
-      <button class="cuenta-seccion-btn" onclick="toggleSeccion('privacidad-datos')">
-        <span>🗂️ Mis datos</span><span class="cuenta-chevron" id="chev-privacidad-datos">▼</span>
-      </button>
-      <div class="cuenta-seccion-body" id="privacidad-datos" style="display:none;">
-        <button class="btn-outline" onclick="descargarMisDatos()" style="width:100%;border-radius:100px;padding:11px;margin-bottom:10px;">📥 Descargar mis datos</button>
-        <button onclick="desactivarCuenta()" style="width:100%;padding:11px;border:1px solid var(--marigold);background:transparent;color:var(--marigold);border-radius:100px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:10px;">⏸️ Desactivar mi cuenta</button>
-        <button onclick="eliminarMiCuenta()" style="width:100%;padding:11px;border:1px solid var(--tension,#e05555);background:transparent;color:var(--tension,#e05555);border-radius:100px;font-size:13px;font-weight:600;cursor:pointer;">🗑️ Eliminar cuenta y datos</button>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- CERRAR SESIÓN -->
-  <button onclick="cerrarSesion()" style="width:100%;margin-top:16px;padding:13px;border:none;background:var(--blush-1,#1a0f2e);color:var(--plum);border-radius:100px;font-size:14px;font-weight:600;cursor:pointer;opacity:0.8;">
-    Cerrar sesión
-  </button>
-
-  <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:12px;opacity:0.6;" id="version-app">v192</div>
-</div>
 
         <div class="topbar">
           <span class="menu" onclick="abrirPerfil()" style="cursor:pointer;">☰</span>
           <div class="brand"><span class="g">✦</span>Sam Alquimia Astral</div>
-          <div class="right">
-            <div class="avatar" id="header-avatar" onclick="abrirPerfil()" title="Mi cuenta">
-              <span class="avatar-inicial" id="avatar-inicial">✦</span>
-            </div>
-          </div>
+          <div class="right"><div class="assist-dot" style="animation:titilar 2.5s ease-in-out infinite;cursor:pointer;" onclick="abrirReflexionDia()" title="Reflexión del día"></div><div class="avatar" id="header-avatar" onclick="abrirPerfil()" style="cursor:pointer;" title="Mi cuenta" style="cursor:pointer;" title="Cerrar sesión"></div></div>
         </div>
 
         <div class="season-banner" id="season-banner"></div>
@@ -1047,20 +759,19 @@
         <div class="scroll">
 
           <div class="band" data-tab="hoy">
-            <div class="band-icon" id="band-icon" onclick="abrirReflexionDia()" title="Reflexión del día" style="cursor:pointer;animation:titilar 2.5s ease-in-out infinite;">☀️</div>
+            <div class="band-icon" id="band-icon">☀️</div>
             <div class="date" id="banda-fecha">Cargando fecha...</div>
             <h1><span id="greeting-word">Buenas tardes</span>, <span id="banda-nombre">...</span></h1>
             <div class="quote" id="banda-frase">Un paso atrás, dos hacia adelante.</div>
             <div class="chip-list">
-              <div class="row"><span class="g">☉</span>Sol en <b id="banda-sol">··</b></div>
-              <div class="row"><span class="g">↑</span>Ascendente en <b id="banda-asc">··</b></div>
-              <div class="row"><span class="g">☽</span>Luna en <b id="banda-luna">··</b></div>
+              <div class="row"><span class="g">☉</span>Sol en <b id="banda-sol">Virgo</b></div>
+              <div class="row"><span class="g">↑</span>Ascendente en <b id="banda-asc">Libra</b></div>
+              <div class="row"><span class="g">☽</span>Luna en <b id="banda-luna">Escorpio</b></div>
             </div>
             <span class="link-arrow" onclick="document.getElementById('seccion-carta-natal').scrollIntoView({behavior:'smooth', block:'start'})" style="cursor:pointer;">Ver carta completa ›</span>
           </div>
 
           <div id="evento-astrologico-banner"></div>
-          <div id="eventos-especiales-dia" data-tab="hoy" style="padding:0 16px;"></div>
 
           <div class="section" data-tab="hoy" id="seccion-carta-natal">
             <h2>Tu carta natal</h2>
@@ -1105,7 +816,7 @@
             <button class="btn-primary" onclick="guardarDiario()">Guardar en mi diario</button>
             <div id="diario-msg" style="margin-top:8px;font-size:12px;"></div>
             <div id="diario-lista" style="margin-top:14px;"></div>
-            <button class="btn-outline" style="width:100%;margin-top:8px;" id="diario-btn-ver" onclick="alternarEntradasDiario()">Ver entradas anteriores</button>
+            <button class="btn-outline" style="width:100%;margin-top:8px;" onclick="cargarDiario()">Ver entradas anteriores</button>
           </div>
 
           <div class="section" data-tab="ciclos">
@@ -1207,7 +918,7 @@
             <h2>Ciclo lunar</h2>
             <div class="desc" id="luna-intro">Qué significa cada fase y cómo aprovecharla.</div>
 
-            <button class="btn-primary" style="margin-bottom:14px;" onclick="cargarLunaReal()">Ver la luna de hoy en el cielo</button>
+            <button class="btn-primary" style="margin-bottom:14px;" onclick="cargarLunaReal()">Ver mi luna de hoy</button>
             <div id="luna-cruda" style="margin-bottom:14px;"></div>
 
             <button class="btn-ghost-round" style="margin-bottom:14px;" onclick="verLunaVacia()">🌑 ¿Hay Luna Vacía de Curso hoy?</button>
@@ -1408,17 +1119,38 @@
             </div>
           </div>
 
-          <div class="section" data-tab="alquimia">
-            <h2>📖 Tu mes astrológico</h2>
-            <div class="desc">El relato del mes y lo más importante que trae para ti, según tus tránsitos reales.</div>
-            <div id="mes-astrologico-contenido"><div class="disclaimer">Toca "Ver mi mes" para calcularlo.</div></div>
-            <div style="display:flex;gap:8px;margin-top:10px;">
-              <button class="btn-outline" style="flex:1;" onclick="cargarMesAstrologico()">Ver mi mes</button>
-              <button class="btn-outline" style="width:44px;flex:none;" title="Recalcular sin usar lo guardado" onclick="cargarMesAstrologico(true)">🔄</button>
+          <div style="background:linear-gradient(160deg,var(--plum),var(--blush-2));border-radius:16px;padding:20px 18px;color:#fff;margin:12px 16px;box-shadow:0 6px 20px rgba(45,27,78,0.35);" id="tarjeta-suscripcion" data-tab="alquimia">
+            <div style="font-size:11px;color:var(--band-text-dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">✦ Alquimia Astral Premium</div>
+            <h2 style="color:#fff;font-size:20px;margin-bottom:8px;border:none;padding:0;font-family:'Cormorant Garamond',serif;">Acceso completo a tu cielo</h2>
+            <div style="font-size:12px;color:var(--band-text-dim);margin-bottom:14px;line-height:1.6;">
+              ✓ Carta natal completa · ✓ Astrocartografía · ✓ Ciclo lunar personalizado<br>
+              ✓ Hasta 8 cartas guardadas · ✓ Sinastría y carta compuesta · ✓ Diario astrológico
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:14px;" id="selector-plan">
+              <div class="chip-plan" data-plan="mensual" onclick="elegirPlanSuscripcion('mensual')" style="flex:1;text-align:center;padding:9px 4px;border-radius:10px;cursor:pointer;background:rgba(255,255,255,0.22);border:1.5px solid #fff;">
+                <div style="font-size:11px;font-weight:600;">Mensual</div>
+                <div style="font-size:14px;font-weight:700;">$4.99</div>
+              </div>
+              <div class="chip-plan" data-plan="semestral" onclick="elegirPlanSuscripcion('semestral')" style="flex:1;text-align:center;padding:9px 4px;border-radius:10px;cursor:pointer;background:rgba(255,255,255,0.08);border:1.5px solid transparent;">
+                <div style="font-size:11px;font-weight:600;">6 meses</div>
+                <div style="font-size:14px;font-weight:700;">$25.99</div>
+              </div>
+              <div class="chip-plan" data-plan="anual" onclick="elegirPlanSuscripcion('anual')" style="flex:1;text-align:center;padding:9px 4px;border-radius:10px;cursor:pointer;background:rgba(255,255,255,0.08);border:1.5px solid transparent;position:relative;">
+                <div style="position:absolute;top:-9px;right:2px;background:var(--marigold);color:#fff;font-size:8.5px;font-weight:700;padding:2px 6px;border-radius:100px;">MEJOR</div>
+                <div style="font-size:11px;font-weight:600;">Anual</div>
+                <div style="font-size:14px;font-weight:700;">$45.99</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+              <div>
+                <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:#fff;line-height:1;" id="precio-plan-elegido">$4.99<span style="font-size:12px;color:var(--band-text-dim);font-family:'Work Sans',sans-serif;"> USD/mes</span></div>
+                <div style="font-size:10.5px;color:var(--band-text-dim);">Cancela cuando quieras</div>
+              </div>
+              <button onclick="accionSuscribirse()" id="btn-suscribirse" style="background:var(--marigold);color:#fff;border:none;border-radius:100px;padding:11px 20px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;box-shadow:0 4px 12px rgba(201,168,76,0.4);">Suscribirme →</button>
             </div>
           </div>
 
-          <div class="section" data-tab="carta" style="opacity:0.75;border:1px dashed var(--line);">
+                    <div class="section" data-tab="carta" style="opacity:0.75;border:1px dashed var(--line);">
             <h2>☀️ Revolución Solar</h2>
             <div class="desc">Tu mapa del año — qué energías activa este cumpleaños en tu vida. <b>Próximamente.</b></div>
             <button class="btn-primary" disabled style="opacity:0.5;">Disponible pronto</button>
@@ -1501,7 +1233,7 @@
     const boton = document.getElementById('acg-boton');
     const contenedorMapa = document.getElementById('acg-mapa');
     const contenedorLineas = document.getElementById('acg-lines');
-    if (boton) { boton.textContent = '🌙 Calculando...'; boton.disabled = true; }
+    if (boton) { boton.textContent = 'Calculando...'; boton.disabled = true; }
     try {
       const r = await fetchAuth('/astrocartografia', { method: 'POST', headers: {} });
       const data = await r.json();
@@ -1577,66 +1309,22 @@
           const p = SIGNIFICADO_PLANETA_ACG[planetasEncontrados[0]];
           return `Aquí se activa tu energía de ${p.energia} — ${p.consejo}.`;
         }
-        const p1 = SIGNIFICADO_PLANETA_ACG[planetasEncontrados[0]];
-        const p2 = SIGNIFICADO_PLANETA_ACG[planetasEncontrados[1]];
-        const consejo2Cap = p2.consejo.charAt(0).toUpperCase() + p2.consejo.slice(1);
-        // Varias formas de redactar la misma combinación — se elige una según los planetas
-        // exactos (siempre la misma para esa combinación, pero distinta entre combinaciones),
-        // para que no todas las frases empiecen igual solo por compartir un planeta.
-        const plantillas = [
-          `Aquí se mezclan dos energías: ${p1.energia}, y ${p2.energia}. Por un lado, ${p1.consejo}; por otro, ${p2.consejo}.`,
-          `Esta zona activa tu ${p1.energia} junto con tu ${p2.energia}. ${consejo2Cap}, sin dejar de lado que ${p1.consejo}.`,
-          `Una combinación potente: ${p1.energia} de la mano de ${p2.energia}. ${p1.consejo.charAt(0).toUpperCase() + p1.consejo.slice(1)}, y también ${p2.consejo}.`,
-          `Sientes aquí tanto ${p1.energia} como ${p2.energia} — ${p2.consejo}, mientras que ${p1.consejo}.`,
-        ];
-        // Índice determinístico basado en los nombres de los planetas (misma combinación → misma frase siempre)
-        const semilla = (planetasEncontrados[0] + planetasEncontrados[1]).split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-        return plantillas[semilla % plantillas.length];
+        const consejos = planetasEncontrados.map(p => SIGNIFICADO_PLANETA_ACG[p].consejo);
+        return `Combina ${planetasEncontrados.map(p => SIGNIFICADO_PLANETA_ACG[p].energia).join(' con ')}. ${consejos[0].charAt(0).toUpperCase() + consejos[0].slice(1)}, y también ${consejos[1]}.`;
       }
 
       let htmlLineas = '';
 
-      // Ciudades destacadas (lo más concreto y útil) — priorizando VARIEDAD de planetas/líneas,
-      // no solo la fuerza cruda (si no, la Luna puede dominar las 6 por ser la más fuerte siempre).
-      const todasEnZona = (data.ciudades || []).filter(c => c.in_power_zone);
-      function planetaPrincipal(closestLine) {
-        if (!closestLine) return null;
-        return Object.keys(SIGNIFICADO_PLANETA_ACG).find(p => closestLine.includes(p)) || null;
-      }
-      // Agrupar primero por línea exacta (para no repetir texto entre ciudades idénticas)
-      const gruposPorLinea = new Map();
-      todasEnZona.forEach(c => {
-        const clave = c.closest_line || '—';
-        if (!gruposPorLinea.has(clave)) gruposPorLinea.set(clave, { closest_line: c.closest_line, ciudades: [], fuerza: 0 });
-        const g = gruposPorLinea.get(clave);
-        g.ciudades.push(`${c.name}, ${c.country}`);
-        g.fuerza = Math.max(g.fuerza, c.power_zone_strength || 0);
-      });
-      const gruposOrdenados = Array.from(gruposPorLinea.values()).sort((a, b) => b.fuerza - a.fuerza);
-      // De esos grupos, tomar el más fuerte de CADA planeta distinto primero (diversidad),
-      // y solo si sobran espacios (hasta 6), completar con los siguientes por fuerza aunque repitan planeta.
-      const vistoPlaneta = new Set();
-      const diversos = [];
-      const sobrantes = [];
-      gruposOrdenados.forEach(g => {
-        const planeta = planetaPrincipal(g.closest_line);
-        if (planeta && !vistoPlaneta.has(planeta)) {
-          vistoPlaneta.add(planeta);
-          diversos.push(g);
-        } else {
-          sobrantes.push(g);
-        }
-      });
-      const gruposFinales = [...diversos, ...sobrantes].slice(0, 6);
-
-      if (gruposFinales.length) {
+      // Ciudades destacadas (lo más concreto y útil)
+      const ciudadesBuenas = (data.ciudades || []).filter(c => c.in_power_zone).sort((a, b) => (b.power_zone_strength || 0) - (a.power_zone_strength || 0)).slice(0, 6);
+      if (ciudadesBuenas.length) {
         htmlLineas += `<div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin-bottom:8px;">📍 Ciudades donde tu energía se activa más</div>`;
-        htmlLineas += gruposFinales.map(g => {
-          const ayuda = ayudaEspecificaCiudad(g.closest_line);
+        htmlLineas += ciudadesBuenas.map(c => {
+          const ayuda = ayudaEspecificaCiudad(c.closest_line);
           return `
           <div class="card-lectura">
-            <div class="card-titulo">${g.ciudades.join(' · ')}</div>
-            <div class="card-etiqueta">Cerca de tu línea de ${traducirNombresPlanetasEnFrase(g.closest_line) || 'energía activa'}</div>
+            <div class="card-titulo">${c.name}, ${c.country}</div>
+            <div class="card-etiqueta">Cerca de tu línea de ${traducirNombresPlanetasEnFrase(c.closest_line) || 'energía activa'}</div>
             ${ayuda ? `<div class="card-cuerpo" style="color:var(--plum);margin-top:4px;">${ayuda}</div>` : ''}
           </div>
         `}).join('');
@@ -1891,7 +1579,7 @@
 
   async function verDetalleOtraCarta(id, nombre) {
     const contenedor = document.getElementById('carta-otro-detalle');
-    contenedor.innerHTML = samLoading('Leyendo la carta de ' + nombre + '...');
+    contenedor.innerHTML = '<div class="disclaimer">Cargando la carta de ' + nombre + '...</div>';
     try {
       const r = await fetchAuth('/otras-cartas/' + id, { headers: {} });
       const data = await r.json();
@@ -1934,7 +1622,7 @@
     const contenedor = document.getElementById('carta-otro-extra');
     const rutas = { 'numerologia':'/numerologia', 'flor-armonica':'/flor-armonica', 'estrellas-fijas':'/estrellas-fijas', 'astrocartografia':'/astrocartografia' };
     const llaves = { 'numerologia':'numerologia', 'flor-armonica':'flor', 'estrellas-fijas':'estrellas', 'astrocartografia':null };
-    contenedor.innerHTML = samLoading('Calculando para ' + nombre + '...');
+    contenedor.innerHTML = '<div class="disclaimer">Calculando para ' + nombre + '...</div>';
     const _cerrarExtra = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('carta-otro-extra').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
     try {
       const r = await fetchAuth(rutas[funcion], {
@@ -2019,12 +1707,14 @@
       }
       const data = await r.json();
       const carousel = document.getElementById('cartas-carousel');
-      const chipsHtml = (data.cartas || []).map(c => {
-        const id = String(c.id || "");
-        const nombre = (c.nombre || "?").replace(/'/g, "");
-        const inicial = nombre[0].toUpperCase();
-        return `<div class="chart-chip" style="cursor:pointer;position:relative;" data-id="${id}" ontouchstart="iniciarLongPress(this)" ontouchend="cancelarLongPress(this)" ontouchcancel="cancelarLongPress(this)" onclick="verDetalleOtraCarta('${id}', '${nombre}')"><button class="btn-x-carta" onclick="event.stopPropagation();eliminarCartaOtro('${id}','${nombre}')" style="display:none;position:absolute;top:-4px;right:6px;background:#a5442f;color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:13px;cursor:pointer;z-index:10;">✕</button><div class="circ">${inicial}</div><div class="lbl">${nombre}</div></div>`;
-      }).join("");
+      const chipsHtml = (data.cartas || []).map(c => `
+        <div class="chart-chip" style="cursor:pointer; position:relative;">
+          <button onclick="event.stopPropagation(); eliminarCartaOtro('${c.id}', '${(c.nombre || '').replace(/'/g, '')}')" style="position:absolute; top:-4px; right:6px; background:var(--danger,#a5442f); color:#fff; border:none; border-radius:50%; width:18px; height:18px; font-size:11px; line-height:1; cursor:pointer; z-index:2;">✕</button>
+          <div onclick="verDetalleOtraCarta('${c.id}', '${(c.nombre || '').replace(/'/g, '')}')">
+            <div class="circ">${(c.nombre || '?')[0].toUpperCase()}</div><div class="lbl">${c.nombre}</div>
+          </div>
+        </div>
+      `).join('');
       carousel.innerHTML = chipsHtml + '<div class="chart-chip add" onclick="mostrarFormularioCarta()"><div class="circ">+</div><div class="lbl">Agregar</div></div>';
       document.getElementById('cartas-count').textContent = `${(data.cartas || []).length} de 8 cartas creadas`;
 
@@ -2052,9 +1742,8 @@
         alert('No se pudo eliminar: ' + (d.error || r.status));
         return;
       }
-      // Solo refrescar la lista — NO recargar toda la app (eso lleva al inicio)
-      delete _otrasCartasCache[id];
-      await cargarCartasGuardadas();
+      // Recarga completa para garantizar que la lista quede correcta
+      window.location.reload();
     } catch (e) {
       alert('No se pudo eliminar: ' + e.message);
     }
@@ -2118,7 +1807,7 @@
       resultado.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Llena todos los datos.</div>';
       return;
     }
-    resultado.innerHTML = samLoading('Calculando y guardando...');
+    resultado.innerHTML = '<div class="disclaimer">Calculando y guardando...</div>';
     try {
       const r = _editandoCartaId
         ? await fetchAuth('/otras-cartas/' + _editandoCartaId, {
@@ -2137,12 +1826,14 @@
       document.getElementById('form-nueva-carta').style.display = 'none';
       const eraEdicion = !!_editandoCartaId;
       _editandoCartaId = null;
-      // Tanto al editar como al crear: recargamos solo la lista de cartas (no toda la app),
-      // para no sacar a la usuaria de la pantalla de Personas ni dar la sensación de que
-      // la carta se perdió (antes hacía un reload completo que la regresaba al inicio).
-      await cargarCartasGuardadas();
       if (eraEdicion) {
+        // Al editar sí funciona bien reabrir el detalle sin recargar toda la página
+        await cargarCartasGuardadas();
         verDetalleOtraCarta(data.carta?.id, data.carta?.nombre || cuerpo.nombre);
+      } else {
+        // Al crear una persona nueva: recarga completa para garantizar que la lista
+        // se vea correcta sin depender de la actualización en vivo (que ha fallado antes)
+        setTimeout(() => { window.location.reload(); }, 600);
       }
     } catch (err) {
       resultado.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
@@ -2685,10 +2376,9 @@
 
   async function verEnergiaDelDia() {
     const contenedor = document.getElementById('energia-resultado');
-    contenedor.innerHTML = samLoading('Leyendo tu energía de hoy...');
+    contenedor.innerHTML = '<div class="disclaimer">Calculando tu energía de hoy...</div>';
     try {
-      const _tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Mexico_City';
-      const r = await fetchAuth('/energia-del-dia', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ timezone: _tz }) });
+      const r = await fetchAuth('/energia-del-dia', { method: 'POST', headers: {} });
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
@@ -2800,149 +2490,8 @@
       document.getElementById('diario-animo-val').value = '';
       document.querySelectorAll('#diario-animo-btns button').forEach(b => b.style.background = 'var(--marigold-soft)');
       msg.textContent = '✓ Guardado en tu diario.'; msg.style.color = 'var(--armonia)';
-    } catch (e) { msg.textContent = e.message; msg.style.color = '#a5442f'; }
-  }
-
-  const TEMA_SIGNO_LUNACION = {
-    Aries:'nuevos comienzos e impulso personal', Tauro:'estabilidad, cuerpo y recursos propios', Géminis:'comunicación e ideas nuevas',
-    Cáncer:'hogar, familia y emociones', Leo:'creatividad, autoexpresión y reconocimiento', Virgo:'orden, salud y rutinas',
-    Libra:'relaciones, equilibrio y justicia', Escorpio:'transformación e intimidad', Sagitario:'expansión, viajes y sentido de vida',
-    Capricornio:'metas, disciplina y carrera', Acuario:'comunidad, innovación e independencia', Piscis:'espiritualidad, sueños y sensibilidad',
-  };
-  const TEMA_PLANETA_INGRESO = {
-    Sol:'tu identidad y vitalidad', Luna:'tus emociones', Mercurio:'tu forma de pensar y comunicarte', Venus:'el amor y los valores',
-    Marte:'la acción y el impulso', Júpiter:'el crecimiento y la expansión', Saturno:'la estructura y el compromiso',
-    Urano:'los cambios repentinos', Neptuno:'la sensibilidad y la intuición', Plutón:'la transformación profunda',
-    'Nodo Norte':'tu dirección kármica', 'Nodo Sur':'los patrones que sueltas', Lilith:'tu autenticidad más cruda',
-  };
-
-  const ICONO_PLANETA_MES = {
-    'Sol': { g: '☉', c: '#D9A441' }, 'Luna': { g: '☽', c: '#8B7BB8' }, 'Mercurio': { g: '☿', c: '#6FA3A0' },
-    'Venus': { g: '♀', c: '#D98A9E' }, 'Marte': { g: '♂', c: '#C1553B' }, 'Júpiter': { g: '♃', c: '#D9822B' },
-    'Saturno': { g: '♄', c: '#7A6A53' }, 'Urano': { g: '♅', c: '#4FA3A8' }, 'Neptuno': { g: '♆', c: '#4A6FA5' },
-    'Plutón': { g: '♇', c: '#5C4A6E' }, 'Nodo Norte': { g: '☊', c: '#8B7BB8' }, 'Nodo Sur': { g: '☋', c: '#8B7BB8' },
-    'Lilith': { g: '⚸', c: '#3D2460' }, 'Quirón': { g: '⚷', c: '#6FA37A' },
-  };
-  function iconoCirculoPlaneta(nombrePlaneta, tam) {
-    tam = tam || 34;
-    const info = ICONO_PLANETA_MES[nombrePlaneta] || { g: '✦', c: 'var(--marigold)' };
-    const fontSize = Math.round(tam * 0.47);
-    return `<div style="flex:none;width:${tam}px;height:${tam}px;border-radius:50%;background:${info.c};color:#fff;display:flex;align-items:center;justify-content:center;font-size:${fontSize}px;">${info.g}</div>`;
-  }
-
-  // tema (opcional): texto corto tipo "Armonía y libertad" mostrado debajo del título, como en la referencia visual
-  function acordeonItemMes(id, tituloHtml, cuerpoHtml, abierto, opciones) {
-    opciones = opciones || {};
-    const icono = opciones.planeta ? iconoCirculoPlaneta(opciones.planeta) : '';
-    const temaHtml = opciones.tema ? `<div style="font-size:11px;color:var(--ink-dim);margin-top:1px;">${opciones.tema}</div>` : '';
-    return `
-      <div class="acordeon-mes-item" style="border:1px solid var(--line);border-radius:12px;margin-bottom:8px;overflow:hidden;">
-        <div onclick="toggleAcordeonMes('${id}')" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;background:${abierto ? 'var(--marigold-soft)' : '#fff'};">
-          <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">
-            ${icono}
-            <div style="min-width:0;">
-              <div style="font-size:13px;font-weight:600;color:var(--plum);">${tituloHtml}</div>
-              ${temaHtml}
-            </div>
-          </div>
-          <div id="icono-${id}" style="font-size:12px;color:var(--ink-dim);flex:none;">${abierto ? '▲' : '▼'}</div>
-        </div>
-        <div id="cuerpo-${id}" style="display:${abierto ? 'block' : 'none'};padding:12px 14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--plum);line-height:1.6;">
-          ${cuerpoHtml}
-        </div>
-      </div>`;
-  }
-
-  function toggleAcordeonMes(id) {
-    const cuerpo = document.getElementById('cuerpo-' + id);
-    const icono = document.getElementById('icono-' + id);
-    if (!cuerpo) return;
-    const yaAbierto = cuerpo.style.display === 'block';
-    // Solo un bloque de PRIMER NIVEL abierto a la vez (los sub-eventos dentro sí pueden convivir)
-    if (id.startsWith('nivel1-')) {
-      document.querySelectorAll('[id^="cuerpo-nivel1-"]').forEach(el => el.style.display = 'none');
-      document.querySelectorAll('[id^="icono-nivel1-"]').forEach(el => el.textContent = '▼');
-    }
-    cuerpo.style.display = yaAbierto ? 'none' : 'block';
-    icono.textContent = yaAbierto ? '▼' : '▲';
-  }
-
-  async function cargarMesAstrologico(forzarRecalculo) {
-    const contenedor = document.getElementById('mes-astrologico-contenido');
-    contenedor.innerHTML = samLoading(forzarRecalculo ? 'Recalculando tu mes...' : 'Leyendo tu mes astrológico...');
-    try {
-      const r = await fetchAuth('/calendario-lunar', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mes: _calMesActual, anio: _calAnioActual, forzar_recalculo: !!forzarRecalculo }),
-      });
-      const data = await leerJsonSeguro(r);
-      if (!r.ok) { contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular tu mes.'}</div>`; return; }
-
-      const m = data.mes_astrologico || {};
-      const lunaciones = m.lunaciones || { luna_nueva: [], luna_llena: [] };
-      const ingresos = m.ingresos || [];
-      const retrogrados = m.retrogrados || [];
-      const eventosPersonales = m.eventos_destacados || [];
-      const areas = m.areas_destacadas || [];
-
-      // Resumen breve visible de entrada, sin acordeón — el mes bien destacado para que no se pierda
-      let html = `<div style="text-align:center;">
-          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14px;color:var(--ink-dim);">Tu mes astrológico</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:24px;color:var(--marigold-dark);margin-bottom:4px;">${NOMBRES_MES[_calMesActual - 1]}</div>
-        </div>`;
-      const totalEventos = ingresos.length + retrogrados.length + eventosPersonales.length;
-      html += `<div class="disclaimer" style="text-align:center;margin-bottom:14px;">${totalEventos ? `Toca cada bloque para explorar lo que trae este mes.` : 'Un mes sin grandes eventos mayores — buen momento para lo cotidiano.'}</div>`;
-
-      // 1) Panorama del mes
-      html += acordeonItemMes('nivel1-panorama', '🔮 Panorama del mes', m.relato ? `<div style="white-space:pre-line;">${m.relato}</div>` : 'Sin relato disponible este mes.', true);
-
-      // 2) Eventos clave — ingresos y retrógrados, cada uno expandible individualmente (solo el título, sin subtítulo redundante)
-      const eventosClave = [
-        ...ingresos.map(i => ({ id: `ing-${i.fecha}-${i.planeta}`, planeta: i.planeta,
-          titulo: `${i.planeta} entra en ${i.signo_nuevo} — ${i.fecha.slice(-2)} ${NOMBRES_MES[_calMesActual-1].slice(0,3)}`,
-          detalle: `<b>Qué significa:</b> ${i.planeta} activa ahora ${TEMA_PLANETA_INGRESO[i.planeta] || 'esta área de tu vida'} con el estilo de ${i.signo_nuevo}.<br><b>Cómo aprovecharlo:</b> Observa cómo cambia tu forma de vivir ${TEMA_PLANETA_INGRESO[i.planeta] || 'esto'} en las próximas semanas.` })),
-        ...retrogrados.map(r => ({ id: `retro-${r.fecha}-${r.planeta}`, planeta: r.planeta,
-          titulo: `${r.planeta} ${r.tipo === 'se_vuelve_retrogrado' ? 'retrógrado' : 'directo'} — ${r.fecha.slice(-2)} ${NOMBRES_MES[_calMesActual-1].slice(0,3)}`,
-          detalle: `<b>Qué activa:</b> ${r.tipo === 'se_vuelve_retrogrado' ? 'Momento de revisar, repensar y no forzar decisiones grandes relacionadas con ' + (TEMA_PLANETA_INGRESO[r.planeta] || r.planeta) + '.' : 'Lo que estuvo detenido puede retomar su curso normal.'}${r.duracion_tipica ? `<br><b>Duración típica:</b> ${r.duracion_tipica}.` : ''}` })),
-      ].slice(0, 10);
-      const cuerpoEventosClave = eventosClave.length
-        ? eventosClave.map(ev => acordeonItemMes(ev.id, ev.titulo, ev.detalle, false, { planeta: ev.planeta })).join('')
-        : '<div class="disclaimer">Sin eventos generales mayores detectados este mes.</div>';
-      html += acordeonItemMes('nivel1-eventosclave', '⭐ Eventos clave', cuerpoEventosClave, false);
-
-      // 3) Cómo te afecta a ti — tránsitos personales, ya deduplicados por el backend (un solo día por aspecto)
-      const cuerpoPersonal = eventosPersonales.length
-        ? eventosPersonales.slice(0, 10).map(e => acordeonItemMes(
-            `pers-${e.fecha}-${e.planeta_transito}-${e.punto_natal}`,
-            `${e.planeta_transito} ${e.aspecto} tu ${e.punto_natal} natal — ${e.fecha.slice(-2)} ${NOMBRES_MES[_calMesActual-1].slice(0,3)}`,
-            `${e.casa_natal ? `<b>Casa afectada:</b> Casa ${e.casa_natal}<br>` : ''}${e.area ? `<b>Área de vida:</b> ${e.area}<br>` : ''}<b>Qué significa:</b> ${e.planeta_transito} entra en contacto directo con tu ${e.punto_natal} natal, activando ${e.area || 'esta parte de tu carta'}.`,
-            false,
-            { planeta: e.planeta_transito, tema: e.area || e.aspecto }
-          )).join('')
-        : '<div class="disclaimer">Sin tránsitos personales mayores este mes.</div>';
-      html += acordeonItemMes('nivel1-personal', '🎯 Cómo te afecta a ti', cuerpoPersonal, false);
-
-      // (Se quitaron "Calendario astrológico", "Áreas más activas" y "Lunaciones del mes" —
-      // redundantes con el relato y con el Calendario lunar que ya existe en otra parte de la app)
-
-      contenedor.innerHTML = html;
-    } catch (e) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${e.message}</div>`;
-    }
-  }
-
-  async function alternarEntradasDiario() {
-    const lista = document.getElementById('diario-lista');
-    const boton = document.getElementById('diario-btn-ver');
-    const visible = lista.innerHTML.trim() !== '';
-    if (visible) {
-      lista.innerHTML = '';
-      boton.textContent = 'Ver entradas anteriores';
-    } else {
-      boton.textContent = 'Ocultar entradas';
       await cargarDiario();
-    }
+    } catch (e) { msg.textContent = e.message; msg.style.color = '#a5442f'; }
   }
 
   async function cargarDiario() {
@@ -3189,37 +2738,15 @@
     try {
       const r = await fetchAuth('/mis-datos', { headers: {} });
       const data = await r.json();
-      const texto = JSON.stringify(data, null, 2);
-      const blob = new Blob([texto], { type: 'application/json' });
-
-      // En móvil nativo usar Web Share API si está disponible
-      if (navigator.share && navigator.canShare) {
-        try {
-          const file = new File([blob], 'mis-datos-alquimia-astral.json', { type: 'application/json' });
-          if (navigator.canShare({ files: [file] })) {
-            await navigator.share({ files: [file], title: 'Mis datos - Sam Alquimia Astral' });
-            return;
-          }
-        } catch (e) { /* fallback */ }
-      }
-
-      // Fallback para web
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
-      a.download = 'mis-datos-alquimia-astral.json';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      a.href = url; a.download = 'mis-datos-alquimia-astral.json';
+      a.click(); URL.revokeObjectURL(url);
     } catch (e) { alert('No se pudieron descargar los datos: ' + e.message); }
   }
 
   async function eliminarMiCuenta() {
-    const primera = confirm('⚠️ ¿Segura que quieres eliminar tu cuenta?\n\nEsto borrará permanentemente:\n• Tu carta natal\n• Tu diario\n• Tus personas guardadas\n• Tu suscripción\n\nEsta acción NO se puede deshacer.');
-    if (!primera) return;
-    const segunda = confirm('Esta es tu última oportunidad.\n\n¿Confirmas que quieres eliminar tu cuenta y todos tus datos para siempre?');
-    if (!segunda) return;
     try {
       const r = await fetchAuth('/mi-cuenta', { method: 'DELETE', headers: {} });
       const data = await r.json();
@@ -3292,48 +2819,20 @@
     }
   }
 
-  function abrirPerfil(seccionAbierta) {
+  function abrirPerfil() {
     if (!SESION.email && SESION.token) SESION.email = decodificarEmailDeToken(SESION.token);
-
-    // Correo en header de Mi cuenta
-    const emailEl = document.getElementById('perfil-email-mostrar');
-    if (emailEl) emailEl.textContent = SESION.email || '';
-
-    // Correo en sección cambiar correo
-    const correoActual = document.getElementById('correo-actual-mostrar');
-    if (correoActual) correoActual.textContent = SESION.email || '';
-
+    document.getElementById('perfil-email-mostrar').textContent = SESION.email || '(correo no disponible)';
+    document.getElementById('perfil-portal-error').textContent = '';
+    const estadoEl = document.getElementById('perfil-estado-sub');
+    if (estadoEl) {
+      const s = SESION.suscripcion || 'ninguna';
+      const labels = { activa:'✅ Suscripción activa', ninguna:'⬜ Sin suscripción', vencida:'⚠️ Pago vencido', cancelada:'❌ Cancelada' };
+      const colors = { activa:'var(--armonia)', ninguna:'var(--ink-dim)', vencida:'#e67e22', cancelada:'#a5442f' };
+      estadoEl.textContent = labels[s] || s;
+      estadoEl.style.color = colors[s] || 'var(--ink-dim)';
+    }
     mostrarPantalla('mi-perfil');
     cargarDatosParaEditar();
-
-    // Foto de perfil
-    const fotoGuardada = localStorage.getItem('saa_foto_perfil');
-    const preview = document.getElementById('foto-perfil-preview');
-    const inicialEl = document.getElementById('foto-perfil-inicial');
-    if (fotoGuardada && preview) {
-      preview.src = fotoGuardada;
-      preview.style.display = 'block';
-      if (inicialEl) inicialEl.style.display = 'none';
-    } else if (inicialEl) {
-      const letra = (SESION.nombre || SESION.email || '✦')[0].toUpperCase();
-      inicialEl.textContent = letra;
-      inicialEl.style.display = 'block';
-      if (preview) preview.style.display = 'none';
-    }
-
-    // Cargar estado de suscripción
-    cargarEstadoSuscripcion();
-
-    // Abrir sección específica si se pide (ej: desde menú hamburguesa)
-    const seccion = seccionAbierta || 'datos-nacimiento';
-    setTimeout(() => {
-      const body = document.getElementById(seccion);
-      const chev = document.getElementById('chev-' + seccion);
-      if (body && body.style.display === 'none') {
-        body.style.display = 'block';
-        if (chev) chev.classList.add('open');
-      }
-    }, 100);
   }
 
   let _datosNacimientoActuales = null;
@@ -3424,12 +2923,6 @@
   }
 
   async function abrirPortalPago() {
-    // En Android nativo, la suscripción se gestiona desde Google Play, nunca desde Stripe
-    // (Google no permite cobros/gestión externa dentro de la app nativa).
-    if (esAndroidNativo()) {
-      const NativePurchases = window.Capacitor?.Plugins?.NativePurchases;
-      if (NativePurchases) { await NativePurchases.manageSubscriptions(); return; }
-    }
     const errorEl = document.getElementById('perfil-portal-error');
     errorEl.textContent = '';
     try {
@@ -3447,18 +2940,6 @@
     if (nombre) document.getElementById('pantalla-' + nombre).classList.add('show');
   }
 
-  // Lee la respuesta como JSON de forma segura. Si el servidor devolvió HTML por error
-  // (ruta caída, error 502/504, redirección inesperada), evita el crash "Unexpected token <"
-  // y regresa un mensaje claro en vez de romper la pantalla.
-  async function leerJsonSeguro(r) {
-    const texto = await r.text();
-    try {
-      return JSON.parse(texto);
-    } catch (e) {
-      return { error: 'El servidor no respondió correctamente (puede estar reiniciándose). Intenta de nuevo en unos segundos.' };
-    }
-  }
-
   async function pedirRecuperacion() {
     ocultarErrorEn('olvide-error');
     const email = document.getElementById('olvide-email').value.trim();
@@ -3469,289 +2950,22 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-      const data = await leerJsonSeguro(r);
+      const data = await r.json();
       if (!r.ok) { mostrarErrorEn('olvide-error', data.error || 'No se pudo procesar la solicitud.'); return; }
-      mostrarMensaje('olvide-error', 'Si ese correo está registrado, te llegará un enlace para crear una nueva contraseña. Revisa también spam.', 'verde');
-      setTimeout(() => mostrarPantalla('login'), 3000);
+      alert('Si ese correo está registrado, te llegará un enlace para crear una nueva contraseña. Revisa también spam.');
+      mostrarPantalla('login');
     } catch (e) {
       mostrarErrorEn('olvide-error', 'Error de conexión: ' + e.message);
     }
   }
 
-  // Sistema unificado de mensajes: 'rojo' (error), 'amarillo' (aviso/pendiente), 'verde' (éxito).
-  // mostrarErrorEn() se mantiene por compatibilidad y sigue siendo rojo por defecto.
-  function mostrarMensaje(id, mensaje, tipo = 'rojo') {
+  function mostrarErrorEn(id, mensaje) {
     const el = document.getElementById(id);
-    if (!el) return;
     el.textContent = mensaje;
-    el.classList.remove('msj-verde', 'msj-amarillo', 'msj-rojo');
-    el.classList.add('msj-' + tipo, 'show');
+    el.classList.add('show');
   }
-  function alternarOjo(inputId, boton) {
-    const input = document.getElementById(inputId);
-    if (!input) return;
-    const oculto = input.type === 'password';
-    input.type = oculto ? 'text' : 'password';
-    boton.textContent = oculto ? '🙈' : '👁';
-  }
-
-  // ===== REFLEXIÓN DEL DÍA =====
-  const REFLEXIONES_FALLBACK = [
-    { emoji:'🌙', texto:'Hoy es un buen día para confiar en lo que no puedes ver todavía. El universo trabaja incluso cuando tú descansas.' },
-    { emoji:'✨', texto:'Cada momento difícil que has atravesado te trajo hasta aquí. Eso no es poca cosa.' },
-    { emoji:'🌟', texto:'Tu energía es valiosa. Ponla donde te nutra, no donde te agote.' },
-    { emoji:'☀️', texto:'No tienes que tenerlo todo resuelto hoy. Un paso pequeño también es avanzar.' },
-    { emoji:'🔮', texto:'Lo que sientes hoy tiene un mensaje para ti. Tómate un momento para escucharlo.' },
-    { emoji:'🌸', texto:'Mereces el mismo amor y paciencia que le das a los demás.' },
-    { emoji:'💫', texto:'Hay cosas que solo tú puedes crear en este mundo. No las pospongas.' },
-    { emoji:'🌿', texto:'Tu intuición es tu brújula más confiable. Aprende a escucharla más.' },
-  ];
-
-  async function abrirReflexionDia() {
-    const modal = document.getElementById('reflexion-modal-bg');
-    const textoEl = document.getElementById('reflexion-texto');
-    const emojiEl = document.getElementById('reflexion-emoji');
-    if (!modal) return;
-    modal.classList.add('open');
-
-    // Mostrar fallback mientras carga
-    const fallback = REFLEXIONES_FALLBACK[new Date().getDay() % REFLEXIONES_FALLBACK.length];
-    emojiEl.textContent = fallback.emoji;
-    textoEl.textContent = fallback.texto;
-
-    // Intentar generar reflexión personalizada con IA
-    try {
-      if (!SESION.token) return;
-      const r = await fetchAuth('/asistente-ia', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          pregunta: 'Dame una reflexión corta y bonita para este momento del día. Que sea alentadora, personal y cálida. Máximo 3 oraciones. Solo el texto de la reflexión, sin saludos ni introducción.',
-          historial: []
-        })
-      });
-      const data = await r.json();
-      if (data.respuesta && data.respuesta.length > 10) {
-        textoEl.textContent = data.respuesta;
-      }
-    } catch(e) { /* usa el fallback */ }
-  }
-
-  function cerrarReflexion() {
-    document.getElementById('reflexion-modal-bg')?.classList.remove('open');
-  }
-
-  // ===== LONG PRESS para mostrar X de eliminar carta =====
-  let _longPressTimer = null;
-  let _chipActivo = null;
-
-  function iniciarLongPress(chip) {
-    cancelarLongPress();
-    _longPressTimer = setTimeout(() => {
-      // Ocultar X de todos los chips primero
-      document.querySelectorAll('.btn-x-carta').forEach(b => b.style.display = 'none');
-      // Mostrar X solo en este chip
-      const btnX = chip.querySelector('.btn-x-carta');
-      if (btnX) btnX.style.display = 'flex';
-      _chipActivo = chip;
-      // Vibración suave si disponible
-      if (navigator.vibrate) navigator.vibrate(50);
-    }, 600);
-  }
-
-  function cancelarLongPress(chip) {
-    if (_longPressTimer) { clearTimeout(_longPressTimer); _longPressTimer = null; }
-  }
-
-  // Toque fuera → ocultar todas las X
-  document.addEventListener('touchstart', (e) => {
-    if (_chipActivo && !_chipActivo.contains(e.target)) {
-      document.querySelectorAll('.btn-x-carta').forEach(b => b.style.display = 'none');
-      _chipActivo = null;
-    }
-  }, { passive: true });
-
-
-  function samLoading(texto) {
-    const iconos = ['🌙','✨','⭐','🔮','🌟'];
-    const icono = iconos[Math.floor(Math.random() * iconos.length)];
-    return `<div class="sam-loading"><span class="sam-loading-icon">${icono}</span><span class="sam-loading-text">${texto || 'Un momento...'}</span></div>`;
-  }
-
-  // ===== AVATAR / FOTO DE PERFIL =====
-  function actualizarAvatar(nombre, fotoUrl) {
-    const avatar = document.getElementById('header-avatar');
-    const inicial = document.getElementById('avatar-inicial');
-    if (!avatar) return;
-    if (fotoUrl) {
-      avatar.innerHTML = `<img src="${fotoUrl}" alt="foto de perfil">`;
-    } else if (nombre) {
-      const letra = nombre.trim()[0].toUpperCase();
-      avatar.innerHTML = `<span class="avatar-inicial">${letra}</span>`;
-    }
-  }
-
-  async function subirFotoPerfil(input) {
-    const archivo = input.files[0];
-    if (!archivo) return;
-    if (archivo.size > 2 * 1024 * 1024) { alert('La foto debe pesar menos de 2MB.'); return; }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target.result;
-      localStorage.setItem('saa_foto_perfil', dataUrl);
-      actualizarAvatar(null, dataUrl);
-      // Mostrar preview en Mi cuenta
-      const preview = document.getElementById('foto-perfil-preview');
-      if (preview) preview.src = dataUrl;
-    };
-    reader.readAsDataURL(archivo);
-  }
-
-  function cargarFotoGuardada(nombre) {
-    const foto = localStorage.getItem('saa_foto_perfil');
-    actualizarAvatar(nombre, foto || null);
-  }
-
-  // ===== SECCIONES DESPLEGABLES MI CUENTA =====
-  // ===== SUSCRIPCIÓN EN MI CUENTA =====
-  function irAPlanes() {
-    mostrarPantalla(null); // cerrar Mi cuenta
-    cambiarPestana('alquimia');
-    // Scroll al bloque de planes
-    setTimeout(() => {
-      const planes = document.getElementById('bloque-planes') || document.getElementById('btn-suscribirse');
-      if (planes) planes.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 300);
-  }
-
-  function cargarEstadoSuscripcion() {
-    const detalle = document.getElementById('estado-suscripcion-detalle');
-    const accion = document.getElementById('btn-suscripcion-accion');
-    if (!detalle || !accion) return;
-
-    const s = SESION.suscripcion || 'ninguna';
-    const esIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-    const esAndroid = /android/i.test(navigator.userAgent);
-
-    const labels = {
-      activa: '✅ Suscripción activa — tienes acceso completo a todas las funciones.',
-      ninguna: '⬜ Sin suscripción activa — activa Premium para acceder a todo.',
-      vencida: '⚠️ Tu pago no se procesó — actualiza tu método de pago.',
-      cancelada: '❌ Suscripción cancelada — puedes renovarla cuando quieras.'
-    };
-    detalle.textContent = labels[s] || s;
-
-    if (s === 'activa') {
-      if (esIOS) {
-        accion.innerHTML = `<div style="font-size:12px;color:var(--ink-dim);text-align:center;padding:8px;">Para cancelar tu suscripción ve a <b>Ajustes → tu nombre → Suscripciones</b> en tu iPhone.</div>`;
-      } else if (esAndroid) {
-        accion.innerHTML = `<div style="font-size:12px;color:var(--ink-dim);text-align:center;padding:8px;">Para cancelar ve a <b>Google Play → Suscripciones</b> en tu Android.</div>`;
-      } else {
-        accion.innerHTML = `<button class="btn-outline" onclick="abrirPortalStripe()" style="width:100%;border-radius:100px;padding:10px;font-size:13px;">Gestionar suscripción</button>`;
-      }
-    } else {
-      if (esIOS) {
-        accion.innerHTML = `<button class="btn-primary" onclick="mostrarPantalla(null);irAPagar()" style="width:100%;">Ver planes Premium</button>`;
-      } else if (esAndroid) {
-        accion.innerHTML = `<button class="btn-primary" onclick="mostrarPantalla(null);irAPagar()" style="width:100%;">Ver planes Premium</button>`;
-      } else {
-        accion.innerHTML = `<button class="btn-primary" onclick="mostrarPantalla(null);irAPagar()" style="width:100%;">Ver planes Premium</button>`;
-      }
-      // Botón restaurar compras (requerido por Apple/Google)
-      if (esIOS || esAndroid) {
-        accion.innerHTML += `<button onclick="accionRestaurarCompras()" style="width:100%;margin-top:8px;padding:10px;border:none;background:transparent;color:var(--ink-dim);font-size:12px;cursor:pointer;text-decoration:underline;">Restaurar compras</button>`;
-      }
-    }
-  }
-
-  function toggleSeccion(id) {
-    const body = document.getElementById(id);
-    const chev = document.getElementById('chev-' + id);
-    if (!body) return;
-    const abierto = body.style.display !== 'none';
-    body.style.display = abierto ? 'none' : 'block';
-    if (chev) chev.classList.toggle('open', !abierto);
-  }
-
-  function mostrarFormDatos() {
-    document.getElementById('form-datos-nacimiento').style.display = 'block';
-    document.getElementById('btn-editar-datos').style.display = 'none';
-  }
-
-  async function cambiarCorreo() {
-    const nuevoCorreo = document.getElementById('nuevo-correo')?.value.trim();
-    const pass = document.getElementById('pass-para-correo')?.value;
-    const errorEl = document.getElementById('error-correo');
-    if (!nuevoCorreo || !pass) { errorEl.textContent = 'Completa todos los campos.'; return; }
-    try {
-      // Verificar contraseña primero
-      const r1 = await fetch('/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ email: SESION.email, password: pass }) });
-      const d1 = await r1.json();
-      if (!r1.ok) { errorEl.textContent = 'Contraseña incorrecta.'; return; }
-      // Cambiar correo
-      const r2 = await fetchAuth('/auth/cambiar-correo', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ nuevo_email: nuevoCorreo }) });
-      const d2 = await r2.json();
-      if (!r2.ok) { errorEl.textContent = d2.error || 'No se pudo cambiar el correo.'; return; }
-      errorEl.style.color = 'var(--armonia)';
-      errorEl.textContent = '✅ Revisa tu nuevo correo para confirmar el cambio.';
-    } catch(e) { errorEl.textContent = 'Error: ' + e.message; }
-  }
-
-  function desactivarCuenta() {
-    alert('Para desactivar tu cuenta, primero cancela tu suscripción activa desde la sección de suscripción. Una vez cancelada, contacta a soporte@samalquimiaastral.com');
-  }
-
-  async function enviarFeedbackCuenta() {
-    const texto = document.getElementById('feedback-texto-cuenta')?.value.trim();
-    const msg = document.getElementById('feedback-cuenta-msg');
-    if (!texto) { msg.textContent = 'Escribe tu mensaje primero.'; return; }
-    try {
-      await fetchAuth('/feedback', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ tipo:'sugerencia', mensaje: texto }) });
-      document.getElementById('feedback-texto-cuenta').value = '';
-      msg.style.color = 'var(--armonia)';
-      msg.textContent = '✅ ¡Gracias! Tu mensaje fue enviado.';
-    } catch(e) { msg.textContent = 'Error al enviar.'; }
-  }
-
-  function toggleCambiarPass() {
-    const form = document.getElementById('cambiar-pass-form');
-    const visible = form.style.display !== 'none';
-    form.style.display = visible ? 'none' : 'block';
-    if (!visible) {
-      // Limpiar campos al abrir
-      ['cambiar-pass-actual', 'cambiar-pass-nueva', 'cambiar-pass-confirmar'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) { el.value = ''; el.type = 'password'; }
-      });
-      document.getElementById('cambiar-pass-error').textContent = '';
-      // Foco automático — delay para que el DOM esté visible en iOS
-      setTimeout(() => {
-        const campo = document.getElementById('cambiar-pass-actual');
-        if (campo) campo.focus();
-      }, 150);
-    }
-  }
-
-  function mostrarErrorEn(id, mensaje) { mostrarMensaje(id, mensaje, 'rojo'); }
   function ocultarErrorEn(id) {
     document.getElementById(id).classList.remove('show');
-  }
-  // Mensaje flotante global (para cuando no hay una pantalla/campo específico visible, ej. arranque de la app)
-  function mostrarMensajeGlobal(texto, tipo = 'amarillo') {
-    let el = document.getElementById('mensaje-global-toast');
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'mensaje-global-toast';
-      el.style.cssText = 'position:fixed;top:calc(env(safe-area-inset-top,0px) + 14px);left:50%;transform:translateX(-50%);z-index:9999;border-radius:10px;padding:10px 16px;font-size:12.5px;font-family:"Work Sans",sans-serif;box-shadow:0 4px 14px rgba(0,0,0,0.15);max-width:90%;text-align:center;';
-      document.body.appendChild(el);
-    }
-    const colores = { verde: ['#e1f3e6', '#1e6b3c'], amarillo: ['#fdf2d8', '#8a6414'], rojo: ['#fbe6e3', '#a5442f'] };
-    const [bg, fg] = colores[tipo] || colores.amarillo;
-    el.style.background = bg; el.style.color = fg;
-    el.textContent = texto;
-    el.style.display = 'block';
-    clearTimeout(el._timeout);
-    el._timeout = setTimeout(() => { el.style.display = 'none'; }, 4000);
   }
 
   let _legalOrigen = 'registro';
@@ -3773,18 +2987,10 @@
 
   async function accionRegistro() {
     ocultarErrorEn('registro-error');
-    const nombre = document.getElementById('registro-nombre').value.trim();
     const email = document.getElementById('registro-email').value.trim();
     const password = document.getElementById('registro-pass').value;
-    const password2 = document.getElementById('registro-pass2').value;
-    if (!nombre) {
-      return mostrarErrorEn('registro-error', 'Escribe tu nombre.');
-    }
     if (!email || password.length < 6) {
       return mostrarErrorEn('registro-error', 'Escribe un correo válido y una contraseña de al menos 6 caracteres.');
-    }
-    if (password !== password2) {
-      return mostrarErrorEn('registro-error', 'Las contraseñas no coinciden. Revísalas e intenta de nuevo.');
     }
     if (!document.getElementById('registro-acepta-terminos').checked) {
       return mostrarErrorEn('registro-error', 'Debes aceptar los Términos y Condiciones y el Aviso de Privacidad para continuar.');
@@ -3795,9 +3001,9 @@
     localStorage.removeItem('saa_token'); localStorage.removeItem('saa_refresh'); localStorage.removeItem('saa_email');
     const r = await fetch(BACKEND + '/auth/registro', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, nombre }),
+      body: JSON.stringify({ email, password }),
     });
-    const data = await leerJsonSeguro(r);
+    const data = await r.json();
     if (!r.ok) return mostrarErrorEn('registro-error', data.error || 'No se pudo crear la cuenta.');
 
     // Login automático después de registrarse
@@ -3817,7 +3023,7 @@
     } else {
       document.getElementById('login-email').value = email;
       mostrarPantalla('login');
-      mostrarMensaje('login-error', '✔ Cuenta creada. Revisa tu correo (' + email + ') y toca el link de confirmación antes de entrar. Si no lo ves, checa spam.', 'verde');
+      mostrarErrorEn('login-error', '✔ Cuenta creada. Revisa tu correo (' + email + ') y toca el link de confirmación antes de entrar. Si no lo ves, checa spam.');
     }
   }
 
@@ -3890,31 +3096,6 @@
   }
 
 
-  async function accionCambiarPassword() {
-    ocultarErrorEn('cambiar-pass-error');
-    const password_actual = document.getElementById('cambiar-pass-actual').value;
-    const nueva_password = document.getElementById('cambiar-pass-nueva').value;
-    const confirmar = document.getElementById('cambiar-pass-confirmar').value;
-    if (!password_actual) return mostrarErrorEn('cambiar-pass-error', 'Escribe tu contraseña actual.');
-    if (nueva_password.length < 6) return mostrarErrorEn('cambiar-pass-error', 'La nueva contraseña debe tener al menos 6 caracteres.');
-    if (nueva_password !== confirmar) return mostrarErrorEn('cambiar-pass-error', 'Las contraseñas nuevas no coinciden.');
-    try {
-      const r = await fetchAuth('/auth/cambiar-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password_actual, nueva_password }),
-      });
-      const data = await leerJsonSeguro(r);
-      if (!r.ok) return mostrarErrorEn('cambiar-pass-error', data.error || 'No se pudo cambiar la contraseña.');
-      mostrarMensaje('cambiar-pass-error', '✔ Contraseña actualizada correctamente.', 'verde');
-      document.getElementById('cambiar-pass-actual').value = '';
-      document.getElementById('cambiar-pass-nueva').value = '';
-      document.getElementById('cambiar-pass-confirmar').value = '';
-    } catch (e) {
-      mostrarErrorEn('cambiar-pass-error', 'Error de conexión: ' + e.message);
-    }
-  }
-
   async function accionGuardarPerfil() {
     ocultarErrorEn('perfil-error');
     const cuerpo = {
@@ -3950,30 +3131,23 @@
   }
 
   async function entrarALaApp(perfil) {
-    // Ocultar splash de verificación
-    const splash = document.getElementById('splash-verificando');
-    if (splash) splash.style.display = 'none';
     mostrarPantalla(null);
-    // Cargar foto/inicial en el avatar del header
-    cargarFotoGuardada(perfil?.nombre || SESION.email);
     SESION.nombre = perfil?.nombre || 'Usuaria';
     const greet = document.getElementById('greeting-word');
     const nombreEl = document.querySelector('.band h1');
     if (nombreEl) nombreEl.innerHTML = `<span id="greeting-word">${greet ? greet.textContent : 'Hola'}</span>, ${SESION.nombre}`;
     await calcularCartaReal(true); // asegura que la carta exista (la calcula si hace falta, silenciosamente)
+    actualizarBandaConCartaReal();
     cargarCartasGuardadas();
-    cargarHomeSummary(); // esta función ya llama a actualizarBandaConCartaReal() internamente
+    cargarHomeSummary();
     cargarEventoAstrologico();
     renderizarSemanaLunar();
   }
 
-  // Se revirtió el ícono SVG propio de fase lunar: se veía más estático/plano que el
-  // emoji original, que además ya se ve bien en iOS y Android modernos. Volvemos al emoji.
   const FASE_EMOJI = {
     'New Moon': '🌑', 'Waxing Crescent': '🌒', 'First Quarter': '🌓', 'Waxing Gibbous': '🌔',
     'Full Moon': '🌕', 'Waning Gibbous': '🌖', 'Last Quarter': '🌗', 'Waning Crescent': '🌘',
   };
-  function svgLuna(faseNombre) { return FASE_EMOJI[faseNombre] || '🌙'; }
   const NOMBRES_MES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   let _calMesActual = new Date().getUTCMonth() + 1;
   let _calAnioActual = new Date().getUTCFullYear();
@@ -3986,7 +3160,7 @@
     anio = anio || _calAnioActual;
     _calMesActual = mes;
     _calAnioActual = anio;
-    contenedor.innerHTML = samLoading('Leyendo tu mes astrológico...');
+    contenedor.innerHTML = '<div class="disclaimer">Calculando el mes...</div>';
     try {
       const r = await fetchAuth('/calendario-lunar', {
         method: 'POST',
@@ -4082,8 +3256,7 @@
 
   async function cargarHomeSummary() {
     try {
-      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Mexico_City';
-      const r = await fetchAuth('/home-summary', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ timezone }) });
+      const r = await fetchAuth('/home-summary', { method: 'POST', headers: {} });
       if (!r.ok) return;
       const data = await r.json();
 
@@ -4118,60 +3291,14 @@
         const tema = TEMAS_DIA_CORTO[data.dia_personal];
         if (tema && fraseEl) fraseEl.textContent = `Día personal ${data.dia_personal} · ${tema}`;
       }
-
-      // Banda Sol/Asc/Luna — se actualiza aquí mismo con los datos del tránsito principal
-      // que ya vienen en home-summary, sin necesitar una segunda llamada a /carta-natal/ultima.
-      // Así desaparece el "delay" en que se veían Virgo/Libra/Escorpio por defecto.
-      if (data.transito_principal?.signo) {
-        // Si home-summary no trae Sol/Asc/Luna natales, actualizarBandaConCartaReal()
-        // ya los tiene en caché y los actualiza rápido (está en paralelo).
-        // Solo mostramos "··" mientras tanto — no los valores hardcodeados viejos.
-      }
-      // Llama a actualizar la banda inmediatamente (no con setTimeout)
-      actualizarBandaConCartaReal();
-
-      // Eventos especiales del día: un planeta que cambió de signo o empezó/terminó retrógrado
-      const contenedorEventos = document.getElementById('eventos-especiales-dia');
-      if (contenedorEventos) {
-        if (data.eventos_especiales && data.eventos_especiales.length) {
-          const ICONO_EVENTO = { ingreso: '➡️', retrogrado_inicio: '⏪', retrogrado_fin: '⏩' };
-          contenedorEventos.innerHTML = data.eventos_especiales.map(ev => `
-            <div class="tarjeta-lectura neutral" style="margin-bottom:8px;">
-              <div class="titulo">${ICONO_EVENTO[ev.tipo] || '✨'} ${ev.planeta} — hoy es un día especial</div>
-              <div class="cuerpo">${ev.texto}</div>
-            </div>
-          `).join('');
-        } else {
-          contenedorEventos.innerHTML = '';
-        }
-      }
     } catch (e) { /* silencioso */ }
   }
 
-  async function revisarPerfilYArrancar(reintentos = 3) {
-    // Si tiene token guardado, mostrar splash mientras verifica — nunca la pantalla de bienvenida
+  async function revisarPerfilYArrancar() {
     if (!SESION.token) return mostrarPantalla('bienvenida');
-    
-    // Mostrar splash de carga mientras verifica la sesión
-    const splash = document.getElementById('splash-verificando');
-    if (splash && reintentos === 3) splash.style.display = 'flex';
-
-    let r;
-    try {
-      r = await fetchAuth('/perfil', { headers: {} });
-    } catch (e) {
-      // Error de red (sin internet, servidor dormido despertando, etc.) — NO cerramos sesión.
-      // Reintentamos unas veces antes de rendirnos, manteniendo el token intacto.
-      if (reintentos > 0) {
-        setTimeout(() => revisarPerfilYArrancar(reintentos - 1), 2000);
-      } else {
-        mostrarPantalla(null);
-        mostrarMensajeGlobal('No se pudo conectar. Revisa tu internet — seguimos intentando.', 'amarillo');
-      }
-      return;
-    }
 
     // Intentar renovar el token si hay refresh disponible
+    let r = await fetchAuth('/perfil', { headers: {} });
     if (r.status === 401 && SESION.refresh) {
       try {
         const rr = await fetch(BACKEND + '/auth/refresh', {
@@ -4186,31 +3313,14 @@
           if (SESION.refresh) localStorage.setItem('saa_refresh', SESION.refresh);
           r = await fetchAuth('/perfil', { headers: {} });
         }
-      } catch (e) { /* si falla la renovación, seguimos abajo con la lógica de estado real */ }
+      } catch (e) { /* si falla, cae al logout */ }
     }
 
-    // Solo cerramos sesión cuando el servidor de verdad rechaza la autenticación (401),
-    // NUNCA por errores temporales (500, 503, timeouts, Render despertando, etc.)
-    if (r.status === 401) { cerrarSesion(); return; }
-    if (!r.ok) {
-      // Error temporal del servidor — reintentamos sin tocar el token ni expulsar a la usuaria
-      if (reintentos > 0) {
-        setTimeout(() => revisarPerfilYArrancar(reintentos - 1), 2000);
-      } else {
-        mostrarPantalla(null);
-        mostrarMensajeGlobal('El servidor está tardando en responder. Reintentando…', 'amarillo');
-      }
-      return;
-    }
+    if (!r.ok) { cerrarSesion(); return; }
     const data = await r.json();
     SESION.suscripcion = data.suscripcion || 'ninguna';
     if (!data.perfil || !data.perfil.ciudad_nacimiento) {
       mostrarPantalla('perfil');
-      // Prellena el nombre con el que ya dio al registrarse, para no pedirlo dos veces
-      if (data.nombre_sugerido) {
-        const campoNombre = document.getElementById('perfil-nombre');
-        if (campoNombre && !campoNombre.value) campoNombre.value = data.nombre_sugerido;
-      }
     } else {
       entrarALaApp(data.perfil);
     }
@@ -4305,11 +3415,11 @@
     `;
   }
 
-  async function calcularCartaReal(silencioso = false, reintentosSilencioso = 1) {
+  async function calcularCartaReal(silencioso = false) {
     const boton = document.getElementById('btn-calcular-carta');
     const chips = document.getElementById('carta-resultado-chips');
     if (!silencioso) {
-      boton.textContent = '🌙 Calculando...'; boton.disabled = true;
+      boton.textContent = 'Calculando...'; boton.disabled = true;
       const rn = document.getElementById('resumen-natal-contenedor'); if (rn) rn.innerHTML = '';
       const cv = document.getElementById('carta-visual-contenedor'); if (cv) cv.innerHTML = '';
     }
@@ -4354,12 +3464,6 @@
       if (!silencioso) {
         chips.innerHTML = `<div class="row" style="color:#a5442f;">${err.message}</div>` +
           (err.detalle ? `<pre style="white-space:pre-wrap;font-size:9px;color:#a5442f;opacity:0.7;padding:8px;">${typeof err.detalle === 'string' ? err.detalle : JSON.stringify(err.detalle, null, 2)}</pre>` : '');
-      } else {
-        console.error('calcularCartaReal (silencioso) falló:', err.message);
-        // Reintenta una vez (común en apps nativas: la red puede tardar en estar lista al arrancar en frío)
-        if (reintentosSilencioso > 0) {
-          setTimeout(() => calcularCartaReal(true, reintentosSilencioso - 1), 1500);
-        }
       }
     }
     if (!silencioso) { boton.textContent = 'Calcular mi carta natal'; boton.disabled = false; }
@@ -4405,42 +3509,10 @@
   }
 
   function irAPagar() {
-    // Mostrar modal de planes en vez de cambiar de pestaña
-    mostrarModalPlanes();
-  }
-
-  function mostrarModalPlanes() {
-    const modal = document.getElementById('modal-planes-bg');
-    if (modal) { modal.style.display = 'flex'; return; }
-    // Crear modal si no existe
-    const div = document.createElement('div');
-    div.id = 'modal-planes-bg';
-    div.style.cssText = 'position:fixed;inset:0;background:rgba(15,10,26,0.9);z-index:500;display:flex;align-items:flex-end;justify-content:center;padding:0 0 20px;';
-    div.innerHTML = `
-      <div style="background:linear-gradient(135deg,var(--plum),#5a2d8a);border-radius:24px 24px 16px 16px;padding:28px 22px 24px;width:92%;max-width:380px;color:#fff;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;">✨ Activa Premium</div>
-          <button onclick="document.getElementById('modal-planes-bg').style.display='none'" style="background:rgba(255,255,255,0.15);border:none;border-radius:50%;width:30px;height:30px;color:#fff;font-size:16px;cursor:pointer;">✕</button>
-        </div>
-        <p style="font-size:13px;opacity:0.8;margin-bottom:18px;">Acceso completo a carta natal, tránsitos personales, sinastría, astrocartografía y más.</p>
-        <div style="display:flex;gap:8px;margin-bottom:16px;">
-          <button onclick="elegirPlanSuscripcion('mensual')" id="plan-btn-mensual" style="flex:1;padding:12px 6px;border-radius:14px;border:2px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:#fff;font-size:12px;font-weight:600;cursor:pointer;text-align:center;">
-            Mensual<br><b style="font-size:16px;">$4.99</b><br><span style="opacity:0.7;font-size:10px;">USD/mes</span>
-          </button>
-          <button onclick="elegirPlanSuscripcion('semestral')" id="plan-btn-semestral" style="flex:1;padding:12px 6px;border-radius:14px;border:2px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:#fff;font-size:12px;font-weight:600;cursor:pointer;text-align:center;">
-            6 meses<br><b style="font-size:16px;">$25.99</b><br><span style="opacity:0.7;font-size:10px;">USD total</span>
-          </button>
-          <button onclick="elegirPlanSuscripcion('anual')" id="plan-btn-anual" style="flex:1;padding:12px 6px;border-radius:14px;border:2px solid var(--marigold);background:rgba(201,168,76,0.2);color:#fff;font-size:12px;font-weight:600;cursor:pointer;text-align:center;">
-            Anual<br><b style="font-size:16px;">$45.99</b><br><span style="color:var(--marigold);font-size:10px;">Mejor precio</span>
-          </button>
-        </div>
-        <button id="btn-suscribirse" onclick="accionSuscribirse()" style="width:100%;padding:14px;border:none;border-radius:100px;background:var(--marigold);color:#1a0f2e;font-size:15px;font-weight:700;cursor:pointer;">
-          Comenzar — 7 días gratis
-        </button>
-        <p style="text-align:center;font-size:11px;opacity:0.5;margin-top:10px;">Cancela cuando quieras. Sin cargos durante la prueba.</p>
-        <button onclick="accionRestaurarCompras()" style="width:100%;padding:8px;border:none;background:transparent;color:rgba(255,255,255,0.4);font-size:11px;cursor:pointer;text-decoration:underline;">Restaurar compras</button>
-      </div>`;
-    document.querySelector('.screen').appendChild(div);
+    cambiarPestana('hoy');
+    setTimeout(() => {
+      document.getElementById('tarjeta-suscripcion').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
   }
 
   let _planElegido = 'mensual';
@@ -4455,35 +3527,7 @@
     document.getElementById('precio-plan-elegido').innerHTML = _PRECIOS_PLAN[plan];
   }
 
-  // ============================================================
-  // COBROS NATIVOS — Android usa Google Play Billing, iOS usa StoreKit (mismo plugin
-  // @capgo/native-purchases para ambos). La versión web sigue usando Stripe.
-  //
-  // ⚠️ PENDIENTE DE CONFIRMAR (Android solamente): reemplazar los "planId" con los reales
-  // una vez creados los "Planes base" en Google Play Console. iOS no necesita este paso.
-  // ============================================================
-  const PLANES_ANDROID = {
-    mensual:   { productId: 'com.samalquimiaastral.app.mensual',    planId: 'PENDIENTE-plan-base-mensual' },
-    semestral: { productId: 'com.samalquimiaastral.app.seismeses',  planId: 'PENDIENTE-plan-base-6-meses' },
-    anual:     { productId: 'com.samalquimiaastral.app.anual',      planId: 'PENDIENTE-plan-base-anual' },
-  };
-  const PLANES_IOS = {
-    mensual:   { productId: 'com.samalquimiaastral.app.monthly' },
-    semestral: { productId: 'com.samalquimiaastral.app.sixmonths' },
-    anual:     { productId: 'com.samalquimiaastral.app.yearly' },
-  };
-
-  function esAndroidNativo() {
-    return !!(window.Capacitor && typeof window.Capacitor.getPlatform === 'function' && window.Capacitor.getPlatform() === 'android');
-  }
-  function esIOSNativo() {
-    return !!(window.Capacitor && typeof window.Capacitor.getPlatform === 'function' && window.Capacitor.getPlatform() === 'ios');
-  }
-
   async function accionSuscribirse() {
-    if (esAndroidNativo() || esIOSNativo()) return accionSuscribirseNativa();
-
-    // Flujo normal (solo web) — sin cambios, sigue usando Stripe
     const boton = document.getElementById('btn-suscribirse');
     boton.textContent = 'Un momento...';
     boton.disabled = true;
@@ -4503,89 +3547,6 @@
     } catch (e) {
       boton.textContent = 'Suscribirme';
       boton.disabled = false;
-    }
-  }
-
-  // Compra real usando Google Play Billing (Android) o StoreKit (iOS) — mismo plugin
-  // @capgo/native-purchases para ambos. Se accede vía el puente estándar Capacitor.Plugins,
-  // que es como se usa cualquier plugin nativo de Capacitor desde HTML plano (sin bundler).
-  async function accionSuscribirseNativa() {
-    const boton = document.getElementById('btn-suscribirse');
-    boton.textContent = 'Un momento...';
-    boton.disabled = true;
-    try {
-      const NativePurchases = window.Capacitor?.Plugins?.NativePurchases;
-      if (!NativePurchases) throw new Error('El módulo de compras no está disponible en esta build.');
-
-      const enAndroid = esAndroidNativo();
-      const config = enAndroid ? PLANES_ANDROID[_planElegido] : PLANES_IOS[_planElegido];
-      const resultado = await NativePurchases.purchaseProduct({
-        productIdentifier: config.productId,
-        ...(enAndroid ? { planIdentifier: config.planId } : {}), // planIdentifier solo aplica en Android
-        productType: 'subs',
-      });
-
-      // Avisamos al backend para activar el acceso premium con este comprobante.
-      // Android manda purchaseToken/orderId; iOS manda receipt/transactionId (campos distintos).
-      const r = await fetchAuth('/suscripcion/validar-compra-nativa', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          plataforma: enAndroid ? 'google_play' : 'app_store',
-          plan: _planElegido,
-          productId: config.productId,
-          purchaseToken: enAndroid ? resultado.purchaseToken : null,
-          orderId: enAndroid ? resultado.orderId : null,
-          receipt: enAndroid ? null : resultado.receipt,
-          transactionId: enAndroid ? null : resultado.transactionId,
-        }),
-      });
-      const data = await leerJsonSeguro(r);
-      if (!r.ok) throw new Error(data.error || 'No se pudo validar la compra.');
-
-      mostrarMensajeGlobal('¡Suscripción activada! Bienvenida a Premium 🌙', 'verde');
-      SESION.suscripcion = 'activa';
-      boton.textContent = 'Suscrita ✓';
-    } catch (e) {
-      boton.textContent = 'Suscribirme';
-      boton.disabled = false;
-      if (!/cancel/i.test(e.message || '')) {
-        mostrarMensajeGlobal('No se pudo completar la compra: ' + e.message, 'rojo');
-      }
-    }
-  }
-
-  // Restaurar compras (requisito de Google/Apple — botón visible en Mi cuenta)
-  async function accionRestaurarCompras() {
-    try {
-      const NativePurchases = window.Capacitor?.Plugins?.NativePurchases;
-      if (!NativePurchases) return mostrarMensajeGlobal('No disponible en esta versión.', 'amarillo');
-      const enAndroid = esAndroidNativo();
-      await NativePurchases.restorePurchases();
-      const { purchases } = await NativePurchases.getPurchases({ productType: 'subs' });
-      // Android marca compra válida con purchaseState; iOS marca suscripción activa con isActive
-      const activa = enAndroid
-        ? purchases.find(p => p.purchaseState === 'PURCHASED' || p.purchaseState === '1')
-        : purchases.find(p => p.isActive === true);
-      if (activa) {
-        const r = await fetchAuth('/suscripcion/validar-compra-nativa', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            plataforma: enAndroid ? 'google_play' : 'app_store',
-            productId: activa.productIdentifier,
-            purchaseToken: enAndroid ? activa.purchaseToken : null,
-            orderId: enAndroid ? activa.orderId : null,
-            receipt: enAndroid ? null : activa.receipt,
-            transactionId: enAndroid ? null : activa.transactionId,
-          }),
-        });
-        const data = await leerJsonSeguro(r);
-        if (r.ok) { mostrarMensajeGlobal('Compra restaurada correctamente.', 'verde'); SESION.suscripcion = 'activa'; return; }
-      }
-      mostrarMensajeGlobal('No encontramos ninguna compra activa para restaurar.', 'amarillo');
-    } catch (e) {
-      mostrarMensajeGlobal('No se pudo restaurar: ' + e.message, 'rojo');
     }
   }
 
@@ -4716,10 +3677,9 @@
 
   async function verTransitosReales() {
     const contenedor = document.getElementById('transitos-resultado');
-    contenedor.innerHTML = samLoading('Leyendo tus tránsitos...');
+    contenedor.innerHTML = '<div class="disclaimer">Calculando tus tránsitos...</div>';
     try {
-      const _tz3 = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Mexico_City';
-      const r = await fetchAuth('/transitos-personales', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ timezone: _tz3 }) });
+      const r = await fetchAuth('/transitos-personales', { method: 'POST', headers: {} });
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
@@ -4734,7 +3694,7 @@
 
   async function verEstrellasFijas() {
     const contenedor = document.getElementById('estrellas-resultado');
-    contenedor.innerHTML = samLoading('Un momento...');
+    contenedor.innerHTML = '<div class="disclaimer">Calculando...</div>';
     try {
       const r = await fetchAuth('/estrellas-fijas', { method: 'POST', headers: {} });
       const data = await r.json();
@@ -4765,7 +3725,7 @@
 
   async function verNumerologia() {
     const contenedor = document.getElementById('numerologia-resultado');
-    contenedor.innerHTML = samLoading('Un momento...');
+    contenedor.innerHTML = '<div class="disclaimer">Calculando...</div>';
     try {
       const r = await fetchAuth('/numerologia', { method: 'POST', headers: {} });
       const data = await r.json();
@@ -4829,7 +3789,7 @@
 
   async function verFlorArmonica() {
     const contenedor = document.getElementById('flor-resultado');
-    contenedor.innerHTML = samLoading('Calculando tu flor armónica...');
+    contenedor.innerHTML = '<div class="disclaimer">Calculando tu flor armónica...</div>';
     try {
       const r = await fetchAuth('/flor-armonica', {
         method: 'POST',
@@ -4885,7 +3845,7 @@
       contenedor.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Primero elige a alguien de "Tus personas" arriba, o agrega a esa persona con el botón "+ Agregar".</div>';
       return;
     }
-    contenedor.innerHTML = samLoading('Calculando carta compuesta...');
+    contenedor.innerHTML = '<div class="disclaimer">Calculando carta compuesta...</div>';
     try {
       const r = await fetchAuth('/carta-compuesta', {
         method: 'POST',
@@ -4963,7 +3923,7 @@
       contenedor.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Primero elige a alguien de "Tus personas" arriba, o agrega a esa persona con el botón "+ Agregar".</div>';
       return;
     }
-    contenedor.innerHTML = samLoading('Calculando compatibilidad...');
+    contenedor.innerHTML = '<div class="disclaimer">Calculando compatibilidad...</div>';
     try {
       const r = await fetchAuth('/sinastria', {
         method: 'POST',
@@ -5166,33 +4126,12 @@
           <div class="card-lectura" style="background:var(--marigold-soft);border:1px solid var(--marigold-mid);margin-bottom:14px;">
             <div class="card-titulo">✨ Tus días de poder personal en ${nombreMes}</div>
             <div class="card-cuerpo" style="color:var(--ink-dim);margin-bottom:8px;">Calculado cruzando los tránsitos del mes con tu carta natal real — estos días específicos son buenos para ti, no genéricos.</div>
-            ${(() => {
-              // Agrupar TODOS los días con el mismo mensaje (consecutivos o no)
-              const porMensaje = new Map();
-              clavesDias.forEach(dia => {
-                const msg = diasPersonal[dia].join('; ');
-                if (!porMensaje.has(msg)) porMensaje.set(msg, []);
-                porMensaje.get(msg).push(parseInt(dia));
-              });
-              return Array.from(porMensaje.entries()).map(([msg, dias]) => {
-                dias.sort((a,b) => a - b);
-                // Construir rangos consecutivos dentro del grupo
-                const rangos = [];
-                let inicio = dias[0], fin = dias[0];
-                for (let i = 1; i < dias.length; i++) {
-                  if (dias[i] === fin + 1) { fin = dias[i]; }
-                  else { rangos.push(inicio === fin ? `${inicio}` : `${inicio} al ${fin}`); inicio = fin = dias[i]; }
-                }
-                rangos.push(inicio === fin ? `${inicio}` : `${inicio} al ${fin}`);
-                const rango = rangos.length === 1 
-                  ? (rangos[0].includes('al') ? `Días ${rangos[0]}` : `Día ${rangos[0]}`)
-                  : `Días ${rangos.join(', ')}`;
-                return `<div style="margin-bottom:8px;font-size:12.5px;padding:8px;background:var(--marigold-soft);border-radius:10px;">
-                  <b style="color:var(--marigold-dark);">${rango}:</b>
-                  <span style="color:var(--plum);"> ${msg}</span>
-                </div>`;
-              }).join('');
-            })()}
+            ${clavesDias.map(dia => `
+              <div style="margin-bottom:6px;font-size:12.5px;">
+                <b style="color:var(--marigold-dark);">Día ${dia}:</b>
+                <span style="color:var(--plum);">${diasPersonal[dia].join('; ')}</span>
+              </div>
+            `).join('')}
           </div>
         `;
       } else if (data.dias_poder_personal_error) {
@@ -5273,18 +4212,18 @@
       }
       // Consejo práctico según la fase lunar
       const CONSEJOS_FASE = {
-        'New Moon':'Luna Nueva — siembra intenciones. Ideal para iniciar proyectos y hacer listas de deseos.',
-        'Waxing Crescent':'Luna Creciente — construye impulso. Toma acción sobre lo que iniciaste.',
-        'First Quarter':'Cuarto Creciente — supera obstáculos. Empuja con decisión.',
-        'Waxing Gibbous':'Gibosa Creciente — refina y ajusta antes de la Luna Llena.',
-        'Full Moon':'Luna Llena — máxima energía. Lo que sembraste se hace visible. Celebra y suelta.',
-        'Waning Gibbous':'Gibosa Menguante — comparte lo aprendido en este ciclo.',
-        'Last Quarter':'Cuarto Menguante — suelta y cierra. Haz espacio para lo nuevo.',
-        'Waning Crescent':'Luna Menguante — descansa y reflexiona. Pronto empieza un ciclo nuevo.',
+        'New Moon':'🌑 Luna Nueva — siembra intenciones. Ideal para iniciar proyectos y hacer listas de deseos.',
+        'Waxing Crescent':'🌒 Luna Creciente — construye impulso. Toma acción sobre lo que iniciaste.',
+        'First Quarter':'🌓 Cuarto Creciente — supera obstáculos. Empuja con decisión.',
+        'Waxing Gibbous':'🌔 Gibosa Creciente — refina y ajusta antes de la Luna Llena.',
+        'Full Moon':'🌕 Luna Llena — máxima energía. Lo que sembraste se hace visible. Celebra y suelta.',
+        'Waning Gibbous':'🌖 Gibosa Menguante — comparte lo aprendido en este ciclo.',
+        'Last Quarter':'🌗 Cuarto Menguante — suelta y cierra. Haz espacio para lo nuevo.',
+        'Waning Crescent':'🌘 Luna Menguante — descansa y reflexiona. Pronto empieza un ciclo nuevo.',
       };
       const faseLunaHoy = data.luna?.data?.lunar_metrics?.moon_phase || '';
       const consejoDia = CONSEJOS_FASE[faseLunaHoy] || '';
-      const consejoHtml = consejoDia ? `<div style="background:linear-gradient(135deg,var(--blush-2),var(--blush-1));border-radius:12px;padding:12px 14px;color:#fff;margin-bottom:10px;font-size:12.5px;line-height:1.6;display:flex;align-items:center;gap:8px;">${svgLuna(faseLunaHoy, 22)}<span>${consejoDia}</span></div>` : '';
+      const consejoHtml = consejoDia ? `<div style="background:linear-gradient(135deg,var(--blush-2),var(--blush-1));border-radius:12px;padding:12px 14px;color:#fff;margin-bottom:10px;font-size:12.5px;line-height:1.6;">${consejoDia}</div>` : '';
       contenedor.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('luna-cruda').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>` + consejoHtml + resumenHtml + renderizarInforme(data.luna, null);
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
@@ -5347,7 +4286,7 @@
     const pregunta = document.getElementById('horaria-pregunta').value.trim();
     const contenedor = document.getElementById('horaria-resultado');
     if (!pregunta) { contenedor.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Escribe tu pregunta primero.</div>'; return; }
-    contenedor.innerHTML = samLoading('Leyendo la carta del momento...');
+    contenedor.innerHTML = '<div class="disclaimer">Calculando la carta del momento...</div>';
     const _cerrar = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('horaria-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
     try {
       const r = await fetchAuth('/horaria', {
@@ -5573,7 +4512,7 @@
       contenedor.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Escribe la ciudad y elige el país.</div>';
       return;
     }
-    contenedor.innerHTML = samLoading('Calculando cómo te afecta...');
+    contenedor.innerHTML = '<div class="disclaimer">Calculando cómo te afecta...</div>';
     try {
       const r = await fetchAuth('/relocacion', {
         method: 'POST',
@@ -5610,7 +4549,6 @@
     if (!original) return;
     document.getElementById('zoom-modal-content').innerHTML = original;
     document.getElementById('zoom-modal-bg').classList.add('open');
-    activarPanZoom(document.getElementById('zoom-modal-content'));
   }
 
   function verEnGrande() {
@@ -5618,128 +4556,12 @@
     if (!original) return;
     document.getElementById('zoom-modal-content').innerHTML = original;
     document.getElementById('zoom-modal-bg').classList.add('open');
-    activarPanZoom(document.getElementById('zoom-modal-content'));
   }
   function cerrarZoom() {
     document.getElementById('zoom-modal-bg').classList.remove('open');
   }
 
-  // Habilita pellizcar-para-zoom (pinch), arrastrar (pan) y doble-toque para restablecer,
-  // usando SOLO transform (translate+scale) sobre el contenedor — así el SVG/imagen interna
-  // nunca se re-dibuja ni se desalinean las líneas, solo se escala/mueve visualmente.
-  // Solo ACERCAR/ALEJAR (pellizco de dos dedos) — sin arrastre, la imagen no se mueve de lugar,
-  // solo cambia de tamaño centrada en su sitio. Doble toque restablece el tamaño original.
-  function activarPanZoom(contenedor) {
-    let escala = 1;
-    let translateX = 0, translateY = 0;
-    let ultimaDistancia = null;
-    let ultimoCentro = null;
-    let arrastrando = false;
-    let ultimoTouch = null;
-
-    contenedor.style.transformOrigin = '0 0';
-    contenedor.style.touchAction = 'none';
-    contenedor.style.willChange = 'transform';
-    contenedor.style.cursor = 'grab';
-
-    function aplicar() {
-      contenedor.style.transform = `translate(${translateX}px, ${translateY}px) scale(${escala})`;
-    }
-
-    function limitarTraslacion() {
-      // Limitar el pan para que no se vaya más allá del contenido visible
-      const rect = contenedor.parentElement?.getBoundingClientRect() || { width: 300, height: 300 };
-      const ancho = rect.width;
-      const alto = rect.height;
-      const maxX = 0;
-      const minX = ancho - ancho * escala;
-      const maxY = 0;
-      const minY = alto - alto * escala;
-      translateX = Math.min(maxX, Math.max(minX, translateX));
-      translateY = Math.min(maxY, Math.max(minY, translateY));
-    }
-
-    function distanciaEntre(t0, t1) {
-      const dx = t0.clientX - t1.clientX, dy = t0.clientY - t1.clientY;
-      return Math.sqrt(dx * dx + dy * dy);
-    }
-
-    function centroEntre(t0, t1) {
-      return { x: (t0.clientX + t1.clientX) / 2, y: (t0.clientY + t1.clientY) / 2 };
-    }
-
-    contenedor.addEventListener('touchstart', (e) => {
-      if (e.touches.length === 2) {
-        ultimaDistancia = distanciaEntre(e.touches[0], e.touches[1]);
-        ultimoCentro = centroEntre(e.touches[0], e.touches[1]);
-        arrastrando = false;
-      } else if (e.touches.length === 1) {
-        ultimoTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-        arrastrando = true;
-      }
-    }, { passive: true });
-
-    contenedor.addEventListener('touchmove', (e) => {
-      e.preventDefault();
-      if (e.touches.length === 2 && ultimaDistancia) {
-        // ZOOM con pellizco
-        const nueva = distanciaEntre(e.touches[0], e.touches[1]);
-        const centro = centroEntre(e.touches[0], e.touches[1]);
-        const factor = nueva / ultimaDistancia;
-        const nuevaEscala = Math.max(1, Math.min(6, escala * factor));
-
-        // Zoom centrado en el punto del pellizco
-        const rect = contenedor.parentElement?.getBoundingClientRect() || { left: 0, top: 0 };
-        const cx = centro.x - rect.left;
-        const cy = centro.y - rect.top;
-        translateX = cx - (cx - translateX) * (nuevaEscala / escala);
-        translateY = cy - (cy - translateY) * (nuevaEscala / escala);
-        escala = nuevaEscala;
-        ultimaDistancia = nueva;
-        ultimoCentro = centro;
-        if (escala <= 1) { translateX = 0; translateY = 0; }
-        else limitarTraslacion();
-        aplicar();
-      } else if (e.touches.length === 1 && arrastrando && ultimoTouch && escala > 1) {
-        // PAN con un dedo (solo si hay zoom)
-        const dx = e.touches[0].clientX - ultimoTouch.x;
-        const dy = e.touches[0].clientY - ultimoTouch.y;
-        translateX += dx;
-        translateY += dy;
-        ultimoTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-        limitarTraslacion();
-        aplicar();
-      }
-    }, { passive: false });
-
-    contenedor.addEventListener('touchend', (e) => {
-      if (e.touches.length < 2) { ultimaDistancia = null; ultimoCentro = null; }
-      if (e.touches.length === 0) { arrastrando = false; ultimoTouch = null; }
-      // Si regresa a escala 1, centrar
-      if (escala <= 1) { escala = 1; translateX = 0; translateY = 0; aplicar(); }
-    }, { passive: true });
-
-    // Doble toque para resetear
-    let ultimoTap = 0;
-    contenedor.addEventListener('touchend', (e) => {
-      const ahora = Date.now();
-      if (ahora - ultimoTap < 300) {
-        escala = 1; translateX = 0; translateY = 0; aplicar();
-      }
-      ultimoTap = ahora;
-    }, { passive: true });
-
-    // Mouse wheel para desktop
-    contenedor.addEventListener('wheel', (e) => {
-      e.preventDefault();
-      const factor = e.deltaY < 0 ? 1.1 : 0.9;
-      escala = Math.max(1, Math.min(6, escala * factor));
-      if (escala <= 1) { translateX = 0; translateY = 0; }
-      aplicar();
-    }, { passive: false });
-  }
-
-  async function actualizarBandaConCartaReal(reintentos = 2) {
+  async function actualizarBandaConCartaReal() {
     try {
       const r = await fetchAuth('/carta-natal/ultima', { headers: {} });
       const data = await r.json();
@@ -5761,13 +4583,7 @@
       if (sol?.sign && elSol) elSol.textContent = signoEs(sol.sign) + (sol.degree ? ' ' + Math.floor(sol.degree) + '°' : '');
       if (luna?.sign && elLuna) elLuna.textContent = signoEs(luna.sign) + (luna.degree ? ' ' + Math.floor(luna.degree) + '°' : '');
       if (asc?.sign && elAsc) elAsc.textContent = signoEs(asc.sign) + (asc.degree ? ' ' + Math.floor(asc.degree) + '°' : '');
-    } catch (e) {
-      console.error('actualizarBandaConCartaReal falló:', e.message);
-      // Reintenta automáticamente (común en apps nativas: la red puede tardar en estar lista al arrancar en frío)
-      if (reintentos > 0) {
-        setTimeout(() => actualizarBandaConCartaReal(reintentos - 1), 1500);
-      }
-    }
+    } catch (e) { /* silencioso */ }
   }
 
   // ---- Función global de cerrar sección ----
@@ -5787,30 +4603,6 @@
     const chk = document.getElementById('toggle-dark');
     if (chk) chk.checked = oscuro;
     cambiarTema(oscuro);
-    aplicarTamanoFuenteGuardado();
-  }
-
-  // ===== TAMAÑO DE FUENTE =====
-  function cambiarTamanoFuente(valor) {
-    const pct = parseInt(valor);
-    // CSS dinámico agresivo — afecta TODOS los font-size de la app
-    let estiloId = 'saa-fuente-css';
-    let el = document.getElementById(estiloId);
-    if (!el) { el = document.createElement('style'); el.id = estiloId; document.head.appendChild(el); }
-    const factor = pct / 100;
-    el.textContent = `
-      html { font-size: ${factor * 100}% !important; }
-    `;
-    localStorage.setItem('saa_tamano_fuente', pct);
-    const display = document.getElementById('tamano-fuente-valor');
-    if (display) display.textContent = pct + '%';
-    const slider = document.getElementById('slider-tamano-fuente');
-    if (slider) slider.value = pct;
-  }
-
-  function aplicarTamanoFuenteGuardado() {
-    const tamano = localStorage.getItem('saa_tamano_fuente') || '100';
-    cambiarTamanoFuente(tamano);
   }
 
   function cerrar(id) { const el = document.getElementById(id); if (el) el.innerHTML = ''; }
@@ -5818,49 +4610,62 @@
     // Al cargar la página: ¿ya hay sesión guardada?
   aplicarTemaGuardado();
   cambiarPestana('hoy');
-  // ===== VERIFICAR VERSIÓN =====
-  const VERSION_ACTUAL = 11; // versionCode actual de la app
-  
-  function abrirTienda() {
-    const esIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-    const esAndroid = /android/i.test(navigator.userAgent);
-    if (esIOS) {
-      window.open('https://apps.apple.com/app/id6738842800', '_blank');
-    } else if (esAndroid) {
-      window.open('market://details?id=com.samalquimiaastral.app', '_blank') ||
-      window.open('https://play.google.com/store/apps/details?id=com.samalquimiaastral.app', '_blank');
+  // ===== SAM LOADING =====
+  function samLoading(texto) {
+    const iconos = ['🌙','✨','⭐','🔮','🌟'];
+    const icono = iconos[Math.floor(Math.random() * iconos.length)];
+    return `<div class="sam-loading"><span class="sam-loading-icon">${icono}</span><span class="sam-loading-text">${texto || 'Un momento...'}</span></div>`;
+  }
+
+  // ===== REFLEXIÓN DEL DÍA =====
+  const REFLEXIONES_FALLBACK = [
+    {emoji:'🌙',texto:'Hoy es un buen día para confiar en lo que no puedes ver todavía. El universo trabaja incluso cuando tú descansas.'},
+    {emoji:'✨',texto:'Cada momento difícil que has atravesado te trajo hasta aquí. Eso no es poca cosa.'},
+    {emoji:'🌟',texto:'Tu energía es valiosa. Ponla donde te nutra, no donde te agote.'},
+    {emoji:'☀️',texto:'No tienes que tenerlo todo resuelto hoy. Un paso pequeño también es avanzar.'},
+    {emoji:'🔮',texto:'Lo que sientes hoy tiene un mensaje para ti. Tómate un momento para escucharlo.'},
+    {emoji:'🌸',texto:'Mereces el mismo amor y paciencia que le das a los demás.'},
+    {emoji:'💫',texto:'Hay cosas que solo tú puedes crear en este mundo. No las pospongas.'},
+    {emoji:'🌿',texto:'Tu intuición es tu brújula más confiable. Aprende a escucharla más.'},
+  ];
+
+  async function abrirReflexionDia() {
+    let modal = document.getElementById('reflexion-modal-bg');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'reflexion-modal-bg';
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(15,10,26,0.85);z-index:300;display:flex;align-items:flex-end;justify-content:center;padding:0 0 20px;';
+      modal.innerHTML = `
+        <div style="background:var(--paper,#1a1230);border-radius:24px 24px 16px 16px;padding:28px 22px 24px;width:92%;max-width:380px;text-align:center;box-shadow:0 -4px 40px rgba(45,27,78,0.4);">
+          <span id="reflexion-emoji" style="font-size:44px;margin-bottom:12px;display:block;">🌙</span>
+          <div id="reflexion-texto" style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--plum);line-height:1.65;margin-bottom:16px;">Cargando tu reflexión...</div>
+          <div style="font-size:12px;color:var(--ink-dim);margin-bottom:16px;">✦ Sam Alquimia Astral</div>
+          <button onclick="document.getElementById('reflexion-modal-bg').style.display='none'" style="background:var(--marigold);color:#fff;border:none;border-radius:100px;padding:11px 32px;font-size:14px;font-weight:600;cursor:pointer;">Cerrar</button>
+        </div>`;
+      modal.onclick = e => { if (e.target === modal) modal.style.display = 'none'; };
+      document.querySelector('.screen')?.appendChild(modal);
     }
-    document.getElementById('banner-actualizacion').style.display = 'none';
-  }
-
-  async function verificarVersionNueva() {
+    modal.style.display = 'flex';
+    const fallback = REFLEXIONES_FALLBACK[new Date().getDay() % REFLEXIONES_FALLBACK.length];
+    document.getElementById('reflexion-emoji').textContent = fallback.emoji;
+    document.getElementById('reflexion-texto').textContent = fallback.texto;
     try {
-      const r = await fetch('https://raw.githubusercontent.com/SAALQUIMIAASTRAL/SAAALQUIMIAASTRAL/main/public/version.json?t=' + Date.now());
-      if (!r.ok) return;
+      if (!SESION.token) return;
+      const r = await fetchAuth('/asistente-ia', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ pregunta:'Dame una reflexión corta y bonita para este momento del día. Alentadora, cálida y personal. Máximo 3 oraciones cortas. Solo el texto, sin saludos.', historial:[] })
+      });
       const data = await r.json();
-      if (data.version_code > VERSION_ACTUAL) {
-        const banner = document.getElementById('banner-actualizacion');
-        const msg = document.getElementById('banner-actualizacion-msg');
-        if (banner && msg) {
-          msg.textContent = data.mensaje || 'Hay mejoras y correcciones disponibles.';
-          banner.style.display = 'block';
-          // Si es obligatoria, ocultar el botón "Ahora no"
-          if (data.obligatoria) {
-            banner.querySelector('button:last-child').style.display = 'none';
-          }
-        }
-      }
-    } catch (e) { /* silencioso */ }
+      if (data.respuesta?.length > 10) document.getElementById('reflexion-texto').textContent = data.respuesta;
+    } catch(e) {}
   }
 
-  // Verificar versión al arrancar (sin bloquear la app)
-  setTimeout(verificarVersionNueva, 3000);
-
-  // Si ya hay sesión guardada, mostrar splash inmediatamente antes de verificar
+  // ===== SPLASH SCREEN =====
   if (SESION.token) {
     const splash = document.getElementById('splash-verificando');
     if (splash) splash.style.display = 'flex';
   }
+
   revisarPerfilYArrancar();
 
   // Precarga de la carta natal en caché del navegador
@@ -5874,19 +4679,8 @@
   setTimeout(precargarCarta, 3000);
 
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', async () => {
-      try {
-        // Limpieza única: borra cualquier Service Worker y caché viejos guardados en el
-        // dispositivo (de versiones anteriores) que estuvieran sirviendo una copia vieja
-        // de la app en vez de la actual. Después de esto, registra la versión nueva.
-        const registros = await navigator.serviceWorker.getRegistrations();
-        await Promise.all(registros.map(r => r.unregister()));
-        if (window.caches) {
-          const nombresCache = await caches.keys();
-          await Promise.all(nombresCache.map(n => caches.delete(n)));
-        }
-      } catch (e) { /* si falla la limpieza, igual intentamos registrar abajo */ }
-      navigator.serviceWorker.register('service-worker.js?v=192').catch(() => {});
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js').catch(() => {});
     });
   }
 </script>
