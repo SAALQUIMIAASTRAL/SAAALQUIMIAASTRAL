@@ -158,6 +158,14 @@ const TTL = {
 const hoyStr = () => new Date().toISOString().slice(0, 10);
 const horaStr = () => new Date().toISOString().slice(0, 13);
 
+// Fecha local del usuario según su timezone (evita que a las 7pm en México ya sea "mañana" en UTC)
+function hoyStrLocal(timezone) {
+  try {
+    if (!timezone) return hoyStr();
+    return new Date().toLocaleDateString('en-CA', { timeZone: timezone }); // formato YYYY-MM-DD
+  } catch (e) { return hoyStr(); }
+}
+
 app.get('/', (req, res) => {
   res.json({ estado: 'Sam Alquimia Astral backend funcionando ✅', prueba: '/probar.html' });
 });
@@ -981,8 +989,9 @@ app.post('/home-summary', requireLogin, async (req, res) => {
     const perfil = await leerPerfil(req);
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
+    const timezone = req.body?.timezone || 'America/Mexico_City';
     const hoy = new Date();
-    const cacheKey = cacheHash(req.userId, 'home', hoyStr());
+    const cacheKey = cacheHash(req.userId, 'home', hoyStrLocal(timezone));
     const cached = cacheGet(cacheKey);
     if (cached) return res.json({ ...cached, nombre: perfil.nombre });
 
@@ -2176,8 +2185,9 @@ app.post('/energia-del-dia', requireLogin, async (req, res) => {
     const perfil = await leerPerfil(req);
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
+    const timezone = req.body?.timezone || 'America/Mexico_City';
     const hoy = new Date();
-    const cacheKey = cacheHash(req.userId, 'energia', hoyStr());
+    const cacheKey = cacheHash(req.userId, 'energia', hoyStrLocal(timezone));
     const cached = cacheGet(cacheKey);
     if (cached) return res.json(cached);
 
@@ -2276,7 +2286,8 @@ app.post('/transitos-personales', requireLogin, async (req, res) => {
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
     const hoy = new Date();
-    const hoyStr = hoy.toISOString().slice(0, 10);
+    const timezone = req.body?.timezone || 'America/Mexico_City';
+    const hoyStr = hoyStrLocal(timezone);
     
     // OPTIMIZACIÓN (30 sept): Ventana móvil de 7 días guardada en Supabase
     // En lugar de calcular 12 días completos cada hora, calculamos solo el día nuevo
@@ -2365,9 +2376,8 @@ app.post('/transitos-personales', requireLogin, async (req, res) => {
 
     const respuestaTransitos = { transitos: datosLimpios };
     
-    // OPTIMIZACIÓN (30 sept): NO traducir tránsitos - son datos técnicos
-    // Son solo 10 eventos con campos: planeta, signo, aspecto. No necesitan traducción.
-    // await traducirInterpretacionesEnObjeto(respuestaTransitos); ← SALTADO
+    // Traducir interpretaciones de tránsitos (pueden venir en portugués o inglés)
+    await traducirInterpretacionesEnObjeto(respuestaTransitos);
     
     const cacheKey = cacheHash(req.userId, 'transitos', horaStr());
     cacheSet(cacheKey, respuestaTransitos, TTL.TRANSITOS_PERSONALES);
