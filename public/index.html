@@ -867,7 +867,32 @@
       </div>
     </div>
 
-    <!-- 4. NOTIFICACIONES -->
+    <!-- 4. MI SUSCRIPCIÓN -->
+    <div class="cuenta-seccion">
+      <button class="cuenta-seccion-btn" onclick="toggleSeccion('mi-suscripcion')">
+        <span>⭐ Mi suscripción</span><span class="cuenta-chevron" id="chev-mi-suscripcion">▼</span>
+      </button>
+      <div class="cuenta-seccion-body" id="mi-suscripcion" style="display:none;">
+        <div id="estado-suscripcion-detalle" style="background:var(--neutral-soft);border-radius:12px;padding:14px;margin-bottom:12px;font-size:13.5px;color:var(--plum);line-height:1.8;"></div>
+        <div id="btn-suscripcion-accion"></div>
+      </div>
+    </div>
+
+    <!-- 5. SISTEMA DE CASAS -->
+    <div class="cuenta-seccion">
+      <button class="cuenta-seccion-btn" onclick="toggleSeccion('sistema-casas')">
+        <span>🏛️ Sistema de casas</span><span class="cuenta-chevron" id="chev-sistema-casas">▼</span>
+      </button>
+      <div class="cuenta-seccion-body" id="sistema-casas" style="display:none;">
+        <div style="background:var(--neutral-soft);border-radius:12px;padding:14px;margin-bottom:8px;">
+          <div style="font-size:13px;font-weight:600;color:var(--plum);margin-bottom:6px;">Sistema actual: <span style="color:var(--marigold);">Plácido</span></div>
+          <div style="font-size:12.5px;color:var(--ink-dim);line-height:1.7;">El sistema de casas divide el cielo en 12 sectores que representan áreas de tu vida. <b style="color:var(--plum);">Plácido</b> es el más usado mundialmente y el que usa esta app — considera la latitud de tu lugar de nacimiento para calcular cada casa con mayor precisión personal.</div>
+        </div>
+        <div style="font-size:12px;color:var(--ink-dim);text-align:center;padding:6px;">Otros sistemas (Koch, Equal, Whole Sign) estarán disponibles próximamente.</div>
+      </div>
+    </div>
+
+    <!-- 6. NOTIFICACIONES -->
     <div class="cuenta-seccion">
       <button class="cuenta-seccion-btn" onclick="toggleSeccion('notificaciones')">
         <span>🔔 Notificaciones</span><span class="cuenta-chevron" id="chev-notificaciones">▼</span>
@@ -3292,6 +3317,9 @@
       if (preview) preview.style.display = 'none';
     }
 
+    // Cargar estado de suscripción
+    cargarEstadoSuscripcion();
+
     // Abrir sección específica si se pide (ej: desde menú hamburguesa)
     const seccion = seccionAbierta || 'datos-nacimiento';
     setTimeout(() => {
@@ -3581,6 +3609,47 @@
   }
 
   // ===== SECCIONES DESPLEGABLES MI CUENTA =====
+  // ===== SUSCRIPCIÓN EN MI CUENTA =====
+  function cargarEstadoSuscripcion() {
+    const detalle = document.getElementById('estado-suscripcion-detalle');
+    const accion = document.getElementById('btn-suscripcion-accion');
+    if (!detalle || !accion) return;
+
+    const s = SESION.suscripcion || 'ninguna';
+    const esIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const esAndroid = /android/i.test(navigator.userAgent);
+
+    const labels = {
+      activa: '✅ Suscripción activa — tienes acceso completo a todas las funciones.',
+      ninguna: '⬜ Sin suscripción activa — activa Premium para acceder a todo.',
+      vencida: '⚠️ Tu pago no se procesó — actualiza tu método de pago.',
+      cancelada: '❌ Suscripción cancelada — puedes renovarla cuando quieras.'
+    };
+    detalle.textContent = labels[s] || s;
+
+    if (s === 'activa') {
+      if (esIOS) {
+        accion.innerHTML = `<div style="font-size:12px;color:var(--ink-dim);text-align:center;padding:8px;">Para cancelar tu suscripción ve a <b>Ajustes → tu nombre → Suscripciones</b> en tu iPhone.</div>`;
+      } else if (esAndroid) {
+        accion.innerHTML = `<div style="font-size:12px;color:var(--ink-dim);text-align:center;padding:8px;">Para cancelar ve a <b>Google Play → Suscripciones</b> en tu Android.</div>`;
+      } else {
+        accion.innerHTML = `<button class="btn-outline" onclick="abrirPortalStripe()" style="width:100%;border-radius:100px;padding:10px;font-size:13px;">Gestionar suscripción</button>`;
+      }
+    } else {
+      if (esIOS) {
+        accion.innerHTML = `<button class="btn-primary" onclick="cambiarPestana('alquimia')" style="width:100%;">Ver planes Premium</button>`;
+      } else if (esAndroid) {
+        accion.innerHTML = `<button class="btn-primary" onclick="cambiarPestana('alquimia')" style="width:100%;">Ver planes Premium</button>`;
+      } else {
+        accion.innerHTML = `<button class="btn-primary" onclick="cambiarPestana('alquimia')" style="width:100%;">Ver planes Premium</button>`;
+      }
+      // Botón restaurar compras (requerido por Apple/Google)
+      if (esIOS || esAndroid) {
+        accion.innerHTML += `<button onclick="accionRestaurarCompras()" style="width:100%;margin-top:8px;padding:10px;border:none;background:transparent;color:var(--ink-dim);font-size:12px;cursor:pointer;text-decoration:underline;">Restaurar compras</button>`;
+      }
+    }
+  }
+
   function toggleSeccion(id) {
     const body = document.getElementById(id);
     const chev = document.getElementById('chev-' + id);
