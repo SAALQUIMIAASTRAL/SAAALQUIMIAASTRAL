@@ -8,146 +8,11 @@ const axios = require('axios');
 const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 
-// ---- Efemérides propias (sin depender de la API externa ni gastar créditos) ----
-// Se usan SOLO para saber en qué signo está cada planeta cada día del mes, y así
-// detectar ingresos (cambios de signo) con precisión astronómica real (algoritmo de
-// Meeus, capítulo 33 — el mismo que usa cualquier software de astrología serio).
-const { julian, planetposition } = require('astronomia');
-const baseAstro = require('astronomia/base');
-const apparentAstro = require('astronomia/apparent');
-const nutationAstro = require('astronomia/nutation');
-const VSOP_MERCURY = require('astronomia/data/vsop87Bmercury').default;
-const VSOP_VENUS = require('astronomia/data/vsop87Bvenus').default;
-const VSOP_EARTH = require('astronomia/data/vsop87Bearth').default;
-const VSOP_MARS = require('astronomia/data/vsop87Bmars').default;
-const VSOP_JUPITER = require('astronomia/data/vsop87Bjupiter').default;
-const VSOP_SATURN = require('astronomia/data/vsop87Bsaturn').default;
-const VSOP_URANUS = require('astronomia/data/vsop87Buranus').default;
-const VSOP_NEPTUNE = require('astronomia/data/vsop87Bneptune').default;
-
-const PLANETAS_VSOP = {
-  Mercurio: VSOP_MERCURY, Venus: VSOP_VENUS, Marte: VSOP_MARS, Júpiter: VSOP_JUPITER,
-  Saturno: VSOP_SATURN, Urano: VSOP_URANUS, Neptuno: VSOP_NEPTUNE,
-};
-
-// Calcular posición real de la Luna con astronomia (Meeus cap. 47)
-// Devuelve { signo, grados, fase, iluminacion, diaLunar }
-function calcularLunaHoy(fecha) {
-  try {
-    const moon = require('astronomia/moonposition');
-    const moonIllum = require('astronomia/moonillum');
-    const hoy = fecha || new Date();
-    const jde = julian.CalendarGregorianToJD(
-      hoy.getUTCFullYear(),
-      hoy.getUTCMonth() + 1,
-      hoy.getUTCDate() + (hoy.getUTCHours() + hoy.getUTCMinutes() / 60) / 24
-    );
-    const pos = moon.position(jde);
-    // Longitud eclíptica → signo
-    const lon = ((pos.lon * 180 / Math.PI) % 360 + 360) % 360;
-    const signo = SIGNOS_12[Math.floor(lon / 30)];
-    const grados = lon % 30;
-
-    // Iluminación y fase
-    const k = moonIllum.phaseAngle(jde);
-    const iluminacion = Math.round(moonIllum.illuminated(k) * 100);
-
-    // Fase por iluminación + dirección
-    let fase;
-    const kRad = k * Math.PI / 180;
-    if (iluminacion <= 3) fase = 'Luna Nueva';
-    else if (iluminacion >= 97) fase = 'Luna Llena';
-    else {
-      // Comparar con ayer para saber si crece o mengua
-      const jdeAyer = jde - 1;
-      const kAyer = moonIllum.phaseAngle(jdeAyer);
-      const ilumAyer = moonIllum.illuminated(kAyer) * 100;
-      const creciendo = iluminacion > ilumAyer;
-      if (iluminacion < 50) fase = creciendo ? 'Creciente' : 'Menguante';
-      else fase = creciendo ? 'Gibosa Creciente' : 'Gibosa Menguante';
-    }
-
-    // Día lunar (días desde luna nueva anterior)
-    const diaLunar = Math.round((1 - Math.cos(kRad)) / 2 * 29.5) + 1;
-
-    return { signo, grados: Math.floor(grados), fase, iluminacion, diaLunar };
-  } catch (e) {
-    console.error('calcularLunaHoy falló:', e.message);
-    return null;
-  }
-}
-const SIGNOS_12 = ['Aries','Tauro','Géminis','Cáncer','Leo','Virgo','Libra','Escorpio','Sagitario','Capricornio','Acuario','Piscis'];
-
-// Longitud eclíptica geocéntrica aparente de un planeta (Meeus cap. 33) — de aquí sale el signo.
-function longitudEclipticaGrados(datosVSOP, jde) {
-  const tierra = new planetposition.Planet(VSOP_EARTH);
-  const planeta = new planetposition.Planet(datosVSOP);
-  const posTierra = tierra.position(jde);
-  const [L0, B0, R0] = [posTierra.lon, posTierra.lat, posTierra.range];
-  const [sB0, cB0] = baseAstro.sincos(B0);
-  const [sL0, cL0] = baseAstro.sincos(L0);
-  let x, y, z;
-  function calcular(tau) {
-    const pos = planeta.position(jde - tau);
-    const [L, B, R] = [pos.lon, pos.lat, pos.range];
-    const [sB, cB] = baseAstro.sincos(B);
-    const [sL, cL] = baseAstro.sincos(L);
-    x = R * cB * cL - R0 * cB0 * cL0;
-    y = R * cB * sL - R0 * cB0 * sL0;
-    z = R * sB - R0 * sB0;
-  }
-  calcular(0);
-  const delta = Math.sqrt(x * x + y * y + z * z);
-  const tau = baseAstro.lightTime(delta);
-  calcular(tau);
-  let lambda = Math.atan2(y, x);
-  const beta = Math.atan2(z, Math.hypot(x, y));
-  const [dLambda, dBeta] = apparentAstro.eclipticAberration(lambda, beta, jde);
-  const fk5 = planetposition.toFK5(lambda + dLambda, beta + dBeta, jde);
-  lambda = fk5.lon;
-  const [dPsi] = nutationAstro.nutation(jde);
-  lambda += dPsi;
-  return ((lambda * 180 / Math.PI) % 360 + 360) % 360;
-}
-function signoDeGrados(grados) {
-  return SIGNOS_12[Math.floor(grados / 30)];
-}
-// Calcula, para un planeta y un mes/año, en qué días (si los hay) cambia de signo.
-// Devuelve como máximo un evento por cambio real detectado (comparando día por día al mediodía UTC).
-function ingresosDelMesPorEfemerides(anio, mes, diasEnMes) {
-  const eventos = [];
-  Object.entries(PLANETAS_VSOP).forEach(([nombrePlaneta, datosVSOP]) => {
-    let signoAnterior = null;
-    for (let dia = 1; dia <= diasEnMes; dia++) {
-      const jde = julian.CalendarGregorianToJD(anio, mes, dia + 0.5); // mediodía UTC
-      const grados = longitudEclipticaGrados(datosVSOP, jde);
-      const signoHoy = signoDeGrados(grados);
-      if (signoAnterior && signoHoy !== signoAnterior) {
-        eventos.push({
-          fecha: `${anio}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`,
-          planeta: nombrePlaneta,
-          signo_nuevo: signoHoy,
-        });
-      }
-      signoAnterior = signoHoy;
-    }
-  });
-  return eventos;
-}
-
 const app = express();
 app.use(cors());
 app.use((req, res, next) => {
   if (req.originalUrl === '/webhooks/stripe') return next();
   express.json()(req, res, next);
-});
-// El index.html NUNCA debe guardarse en caché del navegador — así cada carga siempre
-// pide la versión más reciente al servidor, en vez de quedarse atascado en una vieja.
-app.use((req, res, next) => {
-  if (req.path === '/' || req.path === '/index.html') {
-    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-  }
-  next();
 });
 app.use(express.static('public'));
 
@@ -166,19 +31,6 @@ function cacheHash(...partes) {
   return crypto.createHash('md5').update(partes.join('|')).digest('hex').slice(0, 12);
 }
 
-const NOMBRES_MES_LARGO = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-const SIGNOS_ES_INGRESO = { Ari:'Aries', Tau:'Tauro', Gem:'Géminis', Can:'Cáncer', Leo:'Leo', Vir:'Virgo', Lib:'Libra', Sco:'Escorpio', Sag:'Sagitario', Cap:'Capricornio', Aqu:'Acuario', Pis:'Piscis' };
-
-// Corrige la fase lunar cuando queda inconsistente con el % de iluminación
-// (la API a veces ya marca "menguante"/"creciente" por ángulo mientras la luz
-// sigue casi al 100% o casi al 0%, lo cual se lee como contradicción en la app).
-function faseCoherente(fase, iluminacionPct) {
-  if (iluminacionPct === undefined || iluminacionPct === null) return fase;
-  if (iluminacionPct >= 97) return 'Full Moon';
-  if (iluminacionPct <= 3) return 'New Moon';
-  return fase;
-}
-
 // Limpieza automática cada 10 min — evita fugas de memoria
 setInterval(() => {
   const ahora = Date.now();
@@ -192,7 +44,7 @@ const TTL = {
   TRANSITOS_HOY: 30 * 60 * 1000,         // 30 min (compartida entre usuarios)
   LUNA: 30 * 60 * 1000,                  // 30 min
   HOROSCOPO: 2 * 60 * 60 * 1000,         // 2 hrs (cambia poco en el día)
-  ENERGIA_DIA: 25 * 60 * 60 * 1000,      // 25 hrs — la clave de caché ya es por día completo (hoyStr()), así que solo el primer cálculo del día es lento; el resto del día responde instantáneo desde caché
+  ENERGIA_DIA: 60 * 60 * 1000,           // 1 hr
   TRANSITOS_PERSONALES: 2 * 60 * 60 * 1000, // 2 hrs
   ECLIPSES: 48 * 60 * 60 * 1000,         // 48 hrs (cambian muy poco)
   CALENDARIO_LUNAR: 12 * 60 * 60 * 1000, // 12 hrs
@@ -204,14 +56,6 @@ const TTL = {
 // Helper: obtener hoy en formato YYYY-MM-DD para claves de caché
 const hoyStr = () => new Date().toISOString().slice(0, 10);
 const horaStr = () => new Date().toISOString().slice(0, 13);
-
-// Fecha local del usuario según su timezone (evita que a las 7pm en México ya sea "mañana" en UTC)
-function hoyStrLocal(timezone) {
-  try {
-    if (!timezone) return hoyStr();
-    return new Date().toLocaleDateString('en-CA', { timeZone: timezone }); // formato YYYY-MM-DD
-  } catch (e) { return hoyStr(); }
-}
 
 app.get('/', (req, res) => {
   res.json({ estado: 'Sam Alquimia Astral backend funcionando ✅', prueba: '/probar.html' });
@@ -239,7 +83,7 @@ async function traducirBloque(lista) {
     return { textos: lista, debug: 'Falta la variable de entorno ANTHROPIC_API_KEY en Render.' };
   }
   try {
-    const prompt = `Estos son textos de astrología. Algunos ya vienen en español y otros en inglés — no importa cuál sea el caso de cada uno. Tu tarea es reescribir CADA texto en español natural de México/Latinoamérica, cálido y profesional, nunca genérico ni de manual técnico (sin modismos de España como "vosotros" o "vale", y sin traducción literal palabra por palabra si ya viene en español — mejóralo, no lo dejes igual). Responde ÚNICAMENTE con un array JSON de strings, en el mismo orden, sin explicación ni markdown:\n\n${JSON.stringify(lista)}`;
+    const prompt = `Traduce cada uno de estos textos de astrología al español de México/Latinoamérica, natural y con tono cálido y profesional (no traducción literal palabra por palabra, y sin modismos de España como "vosotros" o "vale"). Responde ÚNICAMENTE con un array JSON de strings, en el mismo orden, sin explicación ni markdown:\n\n${JSON.stringify(lista)}`;
     const controlador = new AbortController();
     const timeoutId = setTimeout(() => controlador.abort(), 40000);
     const respuesta = await fetch('https://api.anthropic.com/v1/messages', {
@@ -295,22 +139,6 @@ async function traducirTextosConIA(textos) {
 // summary, advice, judgment) en cualquier nivel anidado de una respuesta, y lo traduce
 // con IA en el mismo lugar. Así no dependemos de conocer la forma exacta de cada endpoint.
 const CAMPOS_INTERPRETATIVOS = ['interpretation', 'description', 'meaning', 'summary', 'advice', 'judgment', 'answer', 'text', 'narrative', 'analysis'];
-
-// Detecta si un texto está en inglés (palabras clave comunes)
-function esTextoEnIngles(texto) {
-  if (!texto || typeof texto !== 'string') return false;
-  const palabrasIngles = ['the', 'and', 'is', 'are', 'to', 'of', 'in', 'on', 'at', 'this', 'that', 'with', 'for', 'from'];
-  const palabrasPortugues = ['que', 'para', 'uma', 'através', 'entre', 'com', 'por', 'dos', 'das', 'pelo', 'pela', 'enocionais', 'harmoniosa', 'capacidade', 'facilidade', 'através', 'nutrir', 'transformam', 'alimentam', 'expressar', 'satisfazen'];
-  const palabrasSpanish = ['el', 'la', 'y', 'es', 'están', 'de', 'en', 'con', 'para', 'por', 'este', 'ese', 'que', 'entre', 'sus', 'los', 'las'];
-  const textLower = texto.toLowerCase();
-  const countEng = palabrasIngles.filter(p => textLower.includes(' ' + p + ' ')).length;
-  const countPt = palabrasPortugues.filter(p => textLower.includes(p)).length;
-  const countEs = palabrasSpanish.filter(p => textLower.includes(' ' + p + ' ')).length;
-  // Traducir si está en inglés O en portugués
-  if (countPt >= 2) return true;
-  return countEng > countEs;
-}
-
 async function traducirInterpretacionesEnObjeto(raiz) {
   const objetos = [];
   function buscar(obj) {
@@ -325,11 +153,7 @@ async function traducirInterpretacionesEnObjeto(raiz) {
   }
   buscar(raiz);
   if (!objetos.length) return 0;
-
-  // Siempre traducir — la API puede mandar inglés, portugués o mezcla
-  // El costo es mínimo comparado con mostrar texto en idioma incorrecto
-  const textosPorTraducir = objetos.map(o => o.obj[o.campo]);
-  const { textos: traducidos } = await traducirTextosConIA(textosPorTraducir);
+  const { textos: traducidos } = await traducirTextosConIA(objetos.map(o => o.obj[o.campo]));
   objetos.forEach((o, i) => { if (traducidos[i]) o.obj[o.campo] = traducidos[i]; });
   return objetos.length;
 }
@@ -475,25 +299,9 @@ async function leerPerfil(req) {
 // RUTA: Registro de nueva usuaria
 // ============================================================
 app.post('/auth/registro', async (req, res) => {
-  const email = (req.body.email || '').trim().toLowerCase();
-  const { password, nombre } = req.body;
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: { data: { nombre: nombre || null } },
-  });
-  if (error) {
-    // Traduce el mensaje más común de Supabase para que sea claro en español
-    if (/already registered|already exists|already in use/i.test(error.message)) {
-      return res.status(400).json({ error: 'Ese correo ya tiene una cuenta. Inicia sesión, o usa "¿Olvidaste tu contraseña?" si no la recuerdas.' });
-    }
-    return res.status(400).json({ error: error.message });
-  }
-  // Por seguridad, Supabase a veces NO marca error cuando el correo ya existe —
-  // en su lugar regresa un usuario con identities: [] (vacío). Lo detectamos aquí.
-  if (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
-    return res.status(400).json({ error: 'Ese correo ya tiene una cuenta. Inicia sesión, o usa "¿Olvidaste tu contraseña?" si no la recuerdas.' });
-  }
+  const { email, password } = req.body;
+  const { data, error } = await supabase.auth.signUp({ email, password });
+  if (error) return res.status(400).json({ error: error.message });
   res.json({ mensaje: 'Cuenta creada', usuario: data.user });
 });
 
@@ -501,8 +309,7 @@ app.post('/auth/registro', async (req, res) => {
 // RUTA: Inicio de sesión
 // ============================================================
 app.post('/auth/login', async (req, res) => {
-  const email = (req.body.email || '').trim().toLowerCase();
-  const { password } = req.body;
+  const { email, password } = req.body;
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return res.status(400).json({ error: error.message });
   res.json({ sesion: data.session, usuario: data.user });
@@ -520,7 +327,7 @@ app.post('/auth/refresh', async (req, res) => {
 // RUTA: Solicitar recuperación de contraseña (envía correo con link)
 // ============================================================
 app.post('/auth/olvide-password', async (req, res) => {
-  const email = (req.body.email || '').trim().toLowerCase();
+  const { email } = req.body;
   if (!email) return res.status(400).json({ error: 'Falta el correo.' });
   const urlBase = process.env.APP_PUBLIC_URL || `${req.protocol}://${req.get('host')}`;
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -534,40 +341,6 @@ app.post('/auth/olvide-password', async (req, res) => {
 // ============================================================
 // RUTA: Completar el restablecimiento con el token que llega en el link del correo
 // ============================================================
-// ============================================================
-// RUTA: Cambiar contraseña estando ya conectada (sin pasar por correo).
-// Verifica primero la contraseña actual, por seguridad, antes de cambiarla.
-// ============================================================
-app.post('/auth/cambiar-correo', requireLogin, async (req, res) => {
-  const { nuevo_email } = req.body;
-  if (!nuevo_email?.trim()) return res.status(400).json({ error: 'Falta el nuevo correo.' });
-
-  // Verificar que no haya cambiado el correo antes
-  const { data: perfil } = await supabase.from('profiles').select('correo_cambiado').eq('id', req.userId).maybeSingle();
-  if (perfil?.correo_cambiado) return res.status(400).json({ error: 'Solo puedes cambiar tu correo una vez.' });
-
-  const { error } = await req.supabase.auth.updateUser({ email: nuevo_email.trim().toLowerCase() });
-  if (error) return res.status(400).json({ error: error.message });
-
-  // Marcar que ya cambió el correo
-  await supabase.from('profiles').update({ correo_cambiado: true }).eq('id', req.userId);
-  res.json({ mensaje: 'Revisa tu nuevo correo para confirmar el cambio.' });
-});
-
-app.post('/auth/cambiar-password', requireLogin, async (req, res) => {
-  const { password_actual, nueva_password } = req.body;
-  if (!password_actual || !nueva_password) return res.status(400).json({ error: 'Faltan datos.' });
-  if (nueva_password.length < 6) return res.status(400).json({ error: 'La contraseña nueva debe tener al menos 6 caracteres.' });
-
-  // Verifica la contraseña actual antes de permitir el cambio
-  const { error: errorVerificacion } = await supabase.auth.signInWithPassword({ email: req.userEmail, password: password_actual });
-  if (errorVerificacion) return res.status(400).json({ error: 'Tu contraseña actual no es correcta.' });
-
-  const { error } = await req.supabase.auth.updateUser({ password: nueva_password });
-  if (error) return res.status(400).json({ error: error.message });
-  res.json({ mensaje: 'Contraseña actualizada correctamente.' });
-});
-
 app.post('/auth/restablecer-password', async (req, res) => {
   const { access_token, nueva_password } = req.body;
   if (!access_token || !nueva_password) return res.status(400).json({ error: 'Faltan datos.' });
@@ -630,13 +403,6 @@ app.get('/buscar-ciudad', async (req, res) => {
 app.post('/perfil', requireLogin, async (req, res) => {
   const { nombre, fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo, latitud, longitud } = req.body;
 
-  // Leer perfil ANTERIOR para comparar si cambiaron datos de nacimiento
-  const { data: perfilAnterior } = await supabase
-    .from('profiles')
-    .select('fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo')
-    .eq('id', req.userId)
-    .maybeSingle();
-
   const datosAGuardar = {
     id: req.userId,
     nombre,
@@ -645,6 +411,7 @@ app.post('/perfil', requireLogin, async (req, res) => {
     ciudad_nacimiento,
     pais_codigo,
   };
+  // Solo actualizamos coordenadas si vienen (evita borrar unas ya guardadas al editar solo el nombre, por ejemplo)
   if (typeof latitud === 'number' && !isNaN(latitud)) datosAGuardar.latitud = latitud;
   if (typeof longitud === 'number' && !isNaN(longitud)) datosAGuardar.longitud = longitud;
 
@@ -656,54 +423,34 @@ app.post('/perfil', requireLogin, async (req, res) => {
 
   if (error) return res.status(400).json({ error: error.message });
 
-  // Solo invalidar carta natal y cálculos pesados si cambiaron datos de NACIMIENTO.
-  // Cambiar solo el nombre NO debe borrar la carta — es costoso recalcularla.
-  const cambioDatosNacimiento = !perfilAnterior
-    || perfilAnterior.fecha_nacimiento !== fecha_nacimiento
-    || perfilAnterior.hora_nacimiento !== hora_nacimiento
-    || perfilAnterior.ciudad_nacimiento !== ciudad_nacimiento
-    || perfilAnterior.pais_codigo !== pais_codigo;
-
+  // Invalidar TODO lo que depende de los datos de nacimiento al editarlos —
+  // si no, quedan resultados viejos calculados con la fecha/ciudad anterior.
   const hoy = new Date();
   const anioActual = hoy.getUTCFullYear();
   const mesActual = hoy.getUTCMonth() + 1;
-
-  // Caché de perfil siempre se limpia (el nombre pudo cambiar)
   memoriaCache.delete(cacheHash('perfil', req.userId));
+  memoriaCache.delete(cacheHash(req.userId, 'acg', 'propia'));
+  memoriaCache.delete(cacheHash(req.userId, 'estrellas', 'propia'));
+  memoriaCache.delete(cacheHash(req.userId, 'calendario-lunar', `${anioActual}-${mesActual}`));
+  memoriaCache.delete(cacheHash(req.userId, 'home', hoyStr()));
+  memoriaCache.delete(cacheHash(req.userId, 'numerologia', 'propia', hoyStr()));
+  memoriaCache.delete(cacheHash(req.userId, 'energia', hoyStr()));
+  memoriaCache.delete(cacheHash(req.userId, 'horoscopo', hoyStr()));
+  memoriaCache.delete(cacheHash(req.userId, 'transitos', horaStr()));
+  await req.supabase.from('natal_charts').delete().eq('user_id', req.userId);
 
-  if (cambioDatosNacimiento) {
-    // Datos de nacimiento cambiaron → borrar carta y todos los cálculos derivados
-    memoriaCache.delete(cacheHash(req.userId, 'acg', 'propia'));
-    memoriaCache.delete(cacheHash(req.userId, 'estrellas', 'propia'));
-    memoriaCache.delete(cacheHash(req.userId, 'calendario-lunar', `${anioActual}-${mesActual}`));
-    memoriaCache.delete(cacheHash(req.userId, 'home', hoyStr()));
-    memoriaCache.delete(cacheHash(req.userId, 'numerologia', 'propia', hoyStr()));
-    memoriaCache.delete(cacheHash(req.userId, 'energia', hoyStr()));
-    memoriaCache.delete(cacheHash(req.userId, 'horoscopo', hoyStr()));
-    memoriaCache.delete(cacheHash(req.userId, 'transitos', horaStr()));
-    // Borrar caché persistente de ACG y numerología en Supabase también
-    supabase.from('cache_persistente').delete().in('clave', [
-      `acg_${req.userId}_propia`,
-      `num_${req.userId}_propia`,
-    ]).then(() => {}).catch(() => {});
-    // Borrar carta natal para que se recalcule con los nuevos datos
-    await req.supabase.from('natal_charts').delete().eq('user_id', req.userId);
-  }
-
-  res.json({ mensaje: 'Perfil guardado', perfil: data, recalculo_carta: cambioDatosNacimiento });
+  res.json({ mensaje: 'Perfil guardado', perfil: data });
 });
 
 // RUTA: Leer el perfil actual de la usuaria
 app.get('/perfil', requireLogin, async (req, res) => {
-  const [{ data, error }, { data: sub }, { data: usuarioAuth }] = await Promise.all([
+  const [{ data, error }, { data: sub }] = await Promise.all([
     req.supabase.from('profiles').select('*').eq('id', req.userId).maybeSingle(),
     req.supabase.from('subscriptions').select('estado').eq('user_id', req.userId).maybeSingle(),
-    req.supabase.auth.getUser(),
   ]);
 
   if (error) return res.status(400).json({ error: error.message });
-  const nombreSugerido = usuarioAuth?.user?.user_metadata?.nombre || null;
-  res.json({ perfil: data, suscripcion: sub?.estado || 'ninguna', nombre_sugerido: nombreSugerido });
+  res.json({ perfil: data, suscripcion: sub?.estado || 'ninguna' });
 });
 
 // ============================================================
@@ -844,26 +591,14 @@ app.post('/resumen-natal', requireLogin, async (req, res) => {
 
     await traducirInterpretacionesEnObjeto(respuesta.data);
 
-    // OPTIMIZACIÓN (30 sept): Síntesis asincrónica sin bloquear
-    const reporteSinSintesis = { ...respuesta.data, sintesis_10: { _generando: true } };
-    
-    // Responder INMEDIATAMENTE con la carta, sin esperar síntesis
-    res.json({ reporte: reporteSinSintesis, desde_cache: false });
-    
-    // Generar síntesis EN SEGUNDO PLANO (no bloquea al usuario)
-    (async () => {
-      try {
-        const sintesis10 = await sintetizarPersonalidad10Bloques(respuesta.data?.data?.interpretations || []);
-        const reporteFinal = { ...respuesta.data, sintesis_10: sintesis10 };
-        if (cartaExistente?.id) {
-          await req.supabase.from('natal_charts').update({ resumen_cache: reporteFinal }).eq('id', cartaExistente.id);
-        }
-      } catch (e) {
-        console.error('Síntesis de personalidad falló en segundo plano:', e.message);
-        // No interrumpe al usuario — la carta ya se mostró
-      }
-    })();
-    
+    const sintesis10 = await sintetizarPersonalidad10Bloques(respuesta.data?.data?.interpretations || []);
+    const reporteFinal = { ...respuesta.data, sintesis_10: sintesis10 };
+
+    if (cartaExistente?.id) {
+      await req.supabase.from('natal_charts').update({ resumen_cache: reporteFinal }).eq('id', cartaExistente.id);
+    }
+
+    res.json({ reporte: reporteFinal, desde_cache: false });
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo generar el resumen.', detalle_tecnico: err?.response?.data || err.message });
@@ -872,52 +607,36 @@ app.post('/resumen-natal', requireLogin, async (req, res) => {
 
 app.post('/luna', requireLogin, async (req, res) => {
   try {
+    const perfil = await leerPerfil(req);
     const ahora = new Date();
-    const cacheKey = cacheHash('luna-propia', hoyStr());
+    const cacheKey = cacheHash(req.userId, horaStr())
     const cached = cacheGet(cacheKey);
     if (cached) return res.json(cached);
 
-    // Usar efemérides propias — más confiable que la API externa
-    const lunaCalc = calcularLunaHoy(ahora);
+    const respuesta = await astrologyApi.post('/analysis/lunar-analysis', {
+      datetime_location: {
+        year: ahora.getUTCFullYear(),
+        month: ahora.getUTCMonth() + 1,
+        day: ahora.getUTCDate(),
+        hour: ahora.getUTCHours(),
+        minute: ahora.getUTCMinutes(),
+        second: 0,
+        city: perfil?.ciudad_nacimiento || 'Mexico City',
+        country_code: perfil?.pais_codigo || 'MX',
+      },
+      report_options: { language: 'es' },
+    });
 
-    // Obtener interpretación de la API (solo texto, no el signo/fase)
-    let interpretaciones = null;
-    try {
-      const perfil = await leerPerfil(req);
-      const respuesta = await astrologyApi.post('/analysis/lunar-analysis', {
-        datetime_location: {
-          year: ahora.getUTCFullYear(), month: ahora.getUTCMonth() + 1, day: ahora.getUTCDate(),
-          hour: ahora.getUTCHours(), minute: ahora.getUTCMinutes(), second: 0,
-          city: perfil?.ciudad_nacimiento || 'Mexico City', country_code: perfil?.pais_codigo || 'MX',
-        },
-        report_options: { language: 'es' },
-      });
-      interpretaciones = respuesta.data;
-      await traducirInterpretacionesEnObjeto(interpretaciones);
-    } catch (e) { console.error('Luna API falló, usando solo efemérides:', e.message); }
-
-    const respuestaLuna = {
-      mensaje: 'Datos lunares de hoy',
-      luna: {
-        data: {
-          lunar_metrics: {
-            moon_sign: lunaCalc?.signo || null,
-            moon_phase: lunaCalc?.fase || null,
-            moon_illumination: lunaCalc?.iluminacion || null,
-            moon_day: lunaCalc?.diaLunar || null,
-          },
-          interpretations: interpretaciones?.data?.interpretations || [],
-        },
-        // datos de efemérides propias para referencia
-        _efemerides: lunaCalc,
-      }
-    };
-
+    const respuestaLuna = { mensaje: 'Datos lunares de hoy', luna: respuesta.data };
+    await traducirInterpretacionesEnObjeto(respuestaLuna);
     cacheSet(cacheKey, respuestaLuna, TTL.LUNA);
     res.json(respuestaLuna);
   } catch (err) {
     console.error(err?.response?.data || err.message);
-    res.status(500).json({ error: 'No se pudo obtener la fase lunar.', detalle_tecnico: err?.response?.data || err.message });
+    res.status(500).json({
+      error: 'No se pudo obtener la fase lunar.',
+      detalle_tecnico: err?.response?.data || err.message,
+    });
   }
 });
 
@@ -1068,9 +787,8 @@ app.post('/home-summary', requireLogin, async (req, res) => {
     const perfil = await leerPerfil(req);
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
-    const timezone = req.body?.timezone || 'America/Mexico_City';
     const hoy = new Date();
-    const cacheKey = cacheHash(req.userId, 'home', hoyStrLocal(timezone));
+    const cacheKey = cacheHash(req.userId, 'home', hoyStr());
     const cached = cacheGet(cacheKey);
     if (cached) return res.json({ ...cached, nombre: perfil.nombre });
 
@@ -1095,78 +813,10 @@ app.post('/home-summary', requireLogin, async (req, res) => {
       }).catch(() => null),
     ]);
 
-    // Usar efemérides propias para luna — más confiable que API externa
-    const lunaEfem = calcularLunaHoy(hoy);
-    const luna = lunaEfem ? {
-      moon_sign: lunaEfem.signo,
-      moon_phase: lunaEfem.fase,
-      moon_illumination: lunaEfem.iluminacion,
-      moon_day: lunaEfem.diaLunar,
-    } : lunaData?.data?.data?.lunar_metrics;
+    const luna = lunaData?.data?.data?.lunar_metrics;
     const diaPersonal = ciclosData?.data?.data?.personal_day?.number || null;
     const anioPersonal = ciclosData?.data?.data?.personal_year?.number || null;
     const planetasHoy = transitosHoyData?.data?.subject_data;
-
-    // Detectar eventos especiales del día: un planeta que cambió de signo (ingreso),
-    // o que empezó/terminó su retrogradación, comparando contra el snapshot guardado ayer.
-    // Esto es igual para todo el mundo (no depende del usuario), por eso se guarda en una
-    // tabla global de una sola fila por día.
-    let eventosEspeciales = [];
-    if (planetasHoy) {
-      try {
-        const hoyISO = hoy.toISOString().slice(0, 10);
-        const { data: filaAyer } = await supabase
-          .from('estado_planetario_diario')
-          .select('fecha, datos')
-          .neq('fecha', hoyISO)
-          .order('fecha', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (filaAyer?.datos) {
-          const NOMBRES_PLANETA_ES = { sun:'Sol', moon:'Luna', mercury:'Mercurio', venus:'Venus', mars:'Marte', jupiter:'Júpiter', saturn:'Saturno', uranus:'Urano', neptune:'Neptuno', pluto:'Plutón' };
-          Object.keys(NOMBRES_PLANETA_ES).forEach(key => {
-            const antes = filaAyer.datos[key];
-            const ahora = planetasHoy[key];
-            if (!antes || !ahora) return;
-            const nombreEs = NOMBRES_PLANETA_ES[key];
-            // Cambio de signo (ingreso)
-            if (antes.sign && ahora.sign && antes.sign !== ahora.sign) {
-              eventosEspeciales.push({
-                tipo: 'ingreso',
-                planeta: nombreEs,
-                texto: `${nombreEs} entró hoy a ${SIGNOS_ES_INGRESO[ahora.sign] || ahora.sign}. Es un buen momento para notar cómo cambia la energía de ${nombreEs.toLowerCase()} en tu día a día durante las próximas semanas.`,
-              });
-            }
-            // Cambio de dirección (empezó o terminó retrógrado)
-            const antesRetro = !!antes.retrograde;
-            const ahoraRetro = !!ahora.retrograde;
-            if (antesRetro !== ahoraRetro) {
-              eventosEspeciales.push({
-                tipo: ahoraRetro ? 'retrogrado_inicio' : 'retrogrado_fin',
-                planeta: nombreEs,
-                texto: ahoraRetro
-                  ? `${nombreEs} se volvió retrógrado hoy. Es un buen momento para revisar, repensar y no forzar decisiones grandes relacionadas con lo que ${nombreEs.toLowerCase()} representa para ti.`
-                  : `${nombreEs} volvió a movimiento directo hoy. Lo que estuvo detenido o en revisión relacionado con ${nombreEs.toLowerCase()} puede empezar a avanzar de nuevo.`,
-              });
-            }
-          });
-        }
-
-        // Guardar el snapshot de hoy para la comparación de mañana. NO se espera (no lleva
-        // "await") porque esto es solo para el día siguiente — no hace falta que la usuaria
-        // espere a que termine de guardarse para ver su respuesta, así la pantalla responde
-        // más rápido.
-        const snapshotHoy = {};
-        Object.entries(planetasHoy).forEach(([key, val]) => {
-          if (val && val.sign) snapshotHoy[key] = { sign: val.sign, retrograde: !!val.retrograde };
-        });
-        supabase.from('estado_planetario_diario').upsert({ fecha: hoyISO, datos: snapshotHoy }, { onConflict: 'fecha' })
-          .then(() => {}).catch(e => console.error('No se pudo guardar snapshot planetario:', e.message));
-      } catch (e) {
-        console.error('No se pudo calcular eventos especiales planetarios:', e.message);
-      }
-    }
 
     // Extraer el tránsito más importante del día
     let transitoPrincipal = null;
@@ -1180,11 +830,10 @@ app.post('/home-summary', requireLogin, async (req, res) => {
     }
 
     const resumen = {
-      luna: luna ? { signo: luna.moon_sign, fase: faseCoherente(luna.moon_phase, luna.moon_illumination), iluminacion: Math.round(luna.moon_illumination), dia_lunar: luna.moon_day } : null,
+      luna: luna ? { signo: luna.moon_sign, fase: luna.moon_phase, iluminacion: Math.round(luna.moon_illumination), dia_lunar: luna.moon_day } : null,
       dia_personal: diaPersonal,
       anio_personal: anioPersonal,
       transito_principal: transitoPrincipal,
-      eventos_especiales: eventosEspeciales,
       hora_local: hoy.getUTCHours(),
     };
 
@@ -1234,28 +883,12 @@ app.post('/astrocartografia', requireLogin, async (req, res) => {
   try {
     const otraCartaId = req.body?.otra_carta_id || null;
     const cacheKey = cacheHash(req.userId, 'acg', otraCartaId || 'propia');
-
-    // 1) Caché en memoria (respuesta inmediata si el servidor no se reinició)
     const cached = cacheGet(cacheKey);
     if (cached) return res.json(cached);
 
-    // 2) Caché persistente en Supabase (sobrevive reinicios de Render)
-    const cacheDocId = `acg_${req.userId}_${otraCartaId || 'propia'}`;
-    if (!req.body?.forzar) {
-      const { data: cacheDb } = await supabase
-        .from('cache_persistente')
-        .select('datos')
-        .eq('clave', cacheDocId)
-        .maybeSingle();
-      if (cacheDb?.datos) {
-        cacheSet(cacheKey, cacheDb.datos, TTL.ASTROCARTOGRAFIA);
-        return res.json(cacheDb.datos);
-      }
-    }
-
     let datosSubject;
     if (otraCartaId) {
-      const { data: persona, error } = await supabase.from('otras_cartas').select('*').eq('id', otraCartaId).eq('user_id', req.userId).single();
+      const { data: persona, error } = await req.supabase.from('otras_cartas').select('*').eq('id', otraCartaId).single();
       if (error || !persona) return res.status(400).json({ error: 'No se encontró esa carta.' });
       datosSubject = birthDataDesdePerfil(persona, persona.nombre);
     } else {
@@ -1292,11 +925,7 @@ app.post('/astrocartografia', requireLogin, async (req, res) => {
       analisis_personalizado_error: analisisLugares?._error_debug || null,
     };
     await traducirInterpretacionesEnObjeto(respuestaACG);
-
-    // Guardar en memoria y en Supabase
     cacheSet(cacheKey, respuestaACG, TTL.ASTROCARTOGRAFIA);
-    supabase.from('cache_persistente').upsert({ clave: cacheDocId, datos: respuestaACG, updated_at: new Date().toISOString() }, { onConflict: 'clave' }).then(() => {}).catch(e => console.error('No se pudo guardar caché ACG:', e.message));
-
     res.json(respuestaACG);
   } catch (err) {
     console.error(err?.response?.data || err.message);
@@ -1424,19 +1053,6 @@ app.post('/carta-compuesta', requireLogin, async (req, res) => {
     const perfil = await leerPerfil(req);
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
-    const otraCartaId = req.body?.otra_carta_id || null;
-
-    // Caché persistente en Supabase — la carta compuesta no cambia
-    if (otraCartaId && !req.body?.forzar) {
-      const cacheDocId = `compuesta_${req.userId}_${otraCartaId}`;
-      const { data: cacheDb } = await supabase
-        .from('cache_persistente')
-        .select('datos')
-        .eq('clave', cacheDocId)
-        .maybeSingle();
-      if (cacheDb?.datos) return res.json(cacheDb.datos);
-    }
-
     let datosOtraPersona;
     if (req.body?.otra_carta_id) {
       const { data: persona, error } = await req.supabase
@@ -1473,19 +1089,11 @@ app.post('/carta-compuesta', requireLogin, async (req, res) => {
       traducirInterpretacionesEnObjeto(reseñaCompuesta?.data),
     ]);
 
-    const respuestaCompuesta = {
+    res.json({
       carta_compuesta: compuesta.data || compuesta,
       dinamica_ahora: dinamica.data || dinamica,
       reseña: reseñaCompuesta?.data || null,
-    };
-
-    // Guardar en caché persistente si tiene ID de carta guardada
-    if (otraCartaId) {
-      const cacheDocId = `compuesta_${req.userId}_${otraCartaId}`;
-      supabase.from('cache_persistente').upsert({ clave: cacheDocId, datos: respuestaCompuesta, updated_at: new Date().toISOString() }, { onConflict: 'clave' }).then(() => {}).catch(() => {});
-    }
-
-    res.json(respuestaCompuesta);
+    });
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo calcular la carta compuesta.', detalle_tecnico: err?.response?.data || err.message });
@@ -1709,12 +1317,6 @@ app.put('/otras-cartas/:id', requireLogin, async (req, res) => {
       svg_visual: null,
     };
 
-    // Borrar caché de carta compuesta en cache_persistente
-    supabase.from('cache_persistente')
-      .delete()
-      .eq('clave', `compuesta_${req.userId}_${req.params.id}`)
-      .then(() => {}).catch(() => {});
-
     const { data, error } = await req.supabase
       .from('otras_cartas')
       .update(registroActualizado)
@@ -1734,16 +1336,29 @@ app.put('/otras-cartas/:id', requireLogin, async (req, res) => {
 
 // RUTA: Listar las cartas de otras personas ya guardadas
 app.get('/otras-cartas', requireLogin, async (req, res) => {
-  // Usamos el cliente ADMIN (service_role) con filtro explícito por user_id
-  // para evitar que RLS bloquee silenciosamente las cartas guardadas.
-  // El frontend mostraba "sin cartas" aunque sí existían — era un bug de RLS.
-  const { data, error } = await supabase
+  const { data, error } = await req.supabase
     .from('otras_cartas')
     .select('id, nombre, fecha_nacimiento, ciudad_nacimiento, created_at')
-    .eq('user_id', req.userId)
     .order('created_at', { ascending: true });
   if (error) return res.status(400).json({ error: error.message });
-  res.json({ cartas: data || [] });
+
+  // Diagnóstico: comparamos contra el cliente admin (sin RLS) para detectar
+  // si RLS está bloqueando filas que sí existen en la tabla
+  let debug = null;
+  try {
+    const { data: todasAdmin } = await supabase
+      .from('otras_cartas')
+      .select('id, user_id, nombre')
+      .eq('user_id', req.userId);
+    debug = {
+      filas_con_rls: (data || []).length,
+      filas_sin_rls_mismo_user_id: (todasAdmin || []).length,
+      ids_con_rls: (data || []).map(c => c.id),
+      ids_sin_rls: (todasAdmin || []).map(c => c.id),
+    };
+  } catch (eDebug) { debug = { error_debug: eDebug.message }; }
+
+  res.json({ cartas: data || [], debug });
 });
 
 // RUTA: Próximos eclipses y cómo afectan tu carta natal
@@ -1808,57 +1423,29 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
     const mes = parseInt(req.body?.mes) || (hoy.getUTCMonth() + 1);
     const diasEnMes = new Date(Date.UTC(anio, mes, 0)).getUTCDate();
 
-    // Caché por usuario + mes/año — este cálculo cuesta ~32 créditos de API, no debe repetirse en cada clic.
-    // forzar_recalculo permite saltarse el caché (para pruebas, sin afectar el comportamiento normal).
+    // Caché por usuario + mes/año — este cálculo cuesta ~32 créditos de API, no debe repetirse en cada clic
     const cacheKey = cacheHash(req.userId, 'calendario-lunar', `${anio}-${mes}`);
     const cached = cacheGet(cacheKey);
-    if (cached && !req.body?.forzar_recalculo) return res.json(cached);
+    if (cached) return res.json(cached);
 
     const dias = Array.from({ length: diasEnMes }, (_, i) => i + 1);
 
-    // OPTIMIZACIÓN (30 sept): Una sola llamada para TODO el mes, en lugar de 30+ llamadas
-    const obtenerResultados = async () => {
-      try {
-        const r = await astrologyApi.post('/lunar/month-report', {
-          datetime_location: {
-            year: anio, month: mes, day: 1, hour: 0, minute: 0, second: 0,
-            city: perfil?.ciudad_nacimiento || 'Mexico City', country_code: perfil?.pais_codigo || 'MX',
-          },
-          language: 'es',
-        }).catch(() => null);
-        
-        // Si el endpoint de mes no existe, fallback: una sola llamada al análisis lunar y extrapolar
-        if (!r?.data) {
-          const rLuna = await astrologyApi.post('/analysis/lunar-analysis', {
+    const [resultados, chartHoy, transitosMes] = await Promise.all([
+      Promise.all(dias.map(async (dia) => {
+        try {
+          const r = await astrologyApi.post('/analysis/lunar-analysis', {
             datetime_location: {
-              year: anio, month: mes, day: 15, hour: 12, minute: 0, second: 0,
+              year: anio, month: mes, day: dia, hour: 12, minute: 0, second: 0,
               city: perfil?.ciudad_nacimiento || 'Mexico City', country_code: perfil?.pais_codigo || 'MX',
             },
             report_options: { language: 'es' },
-          }).catch(() => ({ data: null }));
-          const m = rLuna.data?.data?.lunar_metrics;
-          // Fallback simple: usar datos del medio del mes para todos los días
-          return dias.map(dia => ({
-            dia, 
-            signo: m?.moon_sign || null, 
-            fase: dia <= 15 ? 'Waxing Crescent' : 'Waning Gibbous' // aproximado
-          }));
+          });
+          const m = r.data?.data?.lunar_metrics;
+          return { dia, signo: m?.moon_sign, fase: m?.moon_phase };
+        } catch (e) {
+          return { dia, signo: null, fase: null };
         }
-        
-        // Si existe month-report, parsear respuesta
-        return (r.data?.data?.days || r.data?.days || []).map(d => ({
-          dia: d.day || d.date?.day,
-          signo: d.moon_sign || d.lunar_data?.moon_sign,
-          fase: faseCoherente(d.moon_phase, d.moon_illumination)
-        }));
-      } catch (e) {
-        console.error('obtenerResultados falló:', e.message);
-        return dias.map(dia => ({ dia, signo: null, fase: null }));
-      }
-    };
-
-    const [resultados, chartHoy, transitosMes] = await Promise.all([
-      obtenerResultados(),
+      })),
       astrologyApi.post('/charts/natal', {
         subject: { name: 'Hoy', birth_data: { year: anio, month: mes, day: hoy.getUTCDate(), hour: 12, minute: 0, second: 0, city: perfil?.ciudad_nacimiento || 'Mexico City', country_code: perfil?.pais_codigo || 'MX' } },
         options: { house_system: 'P', zodiac_type: 'Tropic' },
@@ -1900,10 +1487,6 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
       Jupiter: 'Júpiter', Saturn: 'Saturno', Uranus: 'Urano', Neptune: 'Neptuno', Pluto: 'Plutón',
       Medium_Coeli: 'Medio Cielo', Midheaven: 'Medio Cielo', MC: 'Medio Cielo',
       Ascendant: 'Ascendente', Descendant: 'Descendente', Imum_Coeli: 'Fondo de Cielo',
-      Mean_Node: 'Nodo Norte', True_Node: 'Nodo Norte', North_Node: 'Nodo Norte',
-      Mean_South_Node: 'Nodo Sur', True_South_Node: 'Nodo Sur', South_Node: 'Nodo Sur',
-      Mean_Lilith: 'Lilith', True_Lilith: 'Lilith', Lilith: 'Lilith', Black_Moon_Lilith: 'Lilith',
-      Chiron: 'Quirón',
     };
     const ASPECTO_ES = { trine: 'trígono', sextile: 'sextil', conjunction: 'conjunción', square: 'cuadratura', opposition: 'oposición' };
     const BUENO_PARA = {
@@ -1959,173 +1542,11 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
       diasPoderError = 'La respuesta no tuvo el campo "events" esperado. Estructura recibida: ' + JSON.stringify(Object.keys(transitosMes?.data || {}));
     }
 
-    // ============================================================
-    // "TU MES ASTROLÓGICO" — reutiliza eventosMes y resultados (ya obtenidos arriba,
-    // sin llamadas nuevas a la API) para armar: eventos destacados, lunaciones,
-    // retrógrados, áreas de vida más activas, y un relato narrativo con IA basado
-    // ÚNICAMENTE en los datos reales calculados (nunca inventa fechas/signos/aspectos).
-    // ============================================================
-    const AREA_POR_CASA = {
-      1: 'tu identidad y cómo te muestras al mundo', 2: 'dinero y recursos materiales',
-      3: 'comunicación, aprendizaje y el entorno cercano', 4: 'hogar, familia y raíces',
-      5: 'creatividad, romance y disfrute', 6: 'trabajo diario y salud',
-      7: 'relaciones y sociedades', 8: 'transformación, intimidad y recursos compartidos',
-      9: 'crecimiento, viajes y visión de vida', 10: 'carrera e imagen pública',
-      11: 'comunidad, amistades y proyectos a futuro', 12: 'descanso, espiritualidad y lo oculto',
-    };
-    let eventosDestacadosMes = [];
-    let lunacionesMes = { luna_nueva: [], luna_llena: [] };
-    let retrogradosMes = [];
-    let areasMes = [];
-    let relatoMes = null;
-    // Ingresos de signo (Venus entra a Escorpio, etc.) — calculados con efemérides propias
-    // (matemática astronómica real, día por día), cubriendo TODO el mes, pasado y futuro,
-    // sin depender de la API externa ni gastar créditos extra.
-    let ingresosMes = [];
-    try {
-      ingresosMes = ingresosDelMesPorEfemerides(anio, mes, diasEnMes);
-    } catch (e) {
-      console.error('No se pudieron calcular ingresos del mes con efemérides:', e.message);
-    }
-
-    if (Array.isArray(eventosMes)) {
-      // Eventos mayores: aspectos exactos (orbe pequeño) a puntos natales importantes.
-      // Un mismo aspecto (ej. Sol sextil tu Plutón) puede seguir "exacto" varios días seguidos —
-      // aquí lo agrupamos por el aspecto en sí (sin la fecha) y nos quedamos SOLO con el día
-      // de orbe más pequeño (el más exacto), para no repetir el mismo evento 20 veces.
-      const mejorPorAspecto = new Map();
-      eventosMes.forEach(ev => {
-        const orbeAbs = Math.abs(ev.orb ?? 99);
-        if (orbeAbs > 1.5) return; // solo lo más exacto/significativo del mes
-        const fechaCruda = ev.date || ev.exact_date || ev.timestamp || ev.start_date || ev.datetime;
-        let fechaISO = null;
-        if (typeof fechaCruda === 'object' && fechaCruda.day) fechaISO = `${fechaCruda.year}-${String(fechaCruda.month).padStart(2,'0')}-${String(fechaCruda.day).padStart(2,'0')}`;
-        else { const d = new Date(fechaCruda); if (!isNaN(d)) fechaISO = d.toISOString().slice(0, 10); }
-        if (!fechaISO) return;
-        const clave = `${ev.transiting_planet}|${ev.aspect_type}|${ev.stationed_planet}`;
-        const existente = mejorPorAspecto.get(clave);
-        if (!existente || orbeAbs < existente.orbeAbs) {
-          mejorPorAspecto.set(clave, { ev, fechaISO, orbeAbs });
-        }
-      });
-      const PUNTOS_NATALES_CLAVE = ['Sun', 'Moon', 'Ascendant', 'Medium_Coeli', 'Midheaven', 'MC'];
-      mejorPorAspecto.forEach(({ ev, fechaISO }) => {
-        eventosDestacadosMes.push({
-          fecha: fechaISO,
-          planeta_transito: NOMBRE_ES[ev.transiting_planet] || ev.transiting_planet,
-          aspecto: ASPECTO_ES[(ev.aspect_type || '').toLowerCase()] || ev.aspect_type,
-          punto_natal: NOMBRE_ES[ev.stationed_planet] || ev.stationed_planet,
-          casa_natal: ev.natal_house || null,
-          area: ev.natal_house ? AREA_POR_CASA[ev.natal_house] : null,
-          clave_para_puntos: PUNTOS_NATALES_CLAVE.includes(ev.stationed_planet),
-        });
-      });
-      eventosDestacadosMes.sort((a, b) => a.fecha.localeCompare(b.fecha));
-
-      // Retrógrados/directos: detecta cambio de signo de velocidad por planeta a lo largo del mes
-      const velocidadPorPlaneta = {};
-      eventosMes.forEach(ev => {
-        if (typeof ev.transiting_speed !== 'number' || !ev.transiting_planet) return;
-        const fechaCruda = ev.date || ev.exact_date;
-        const d = new Date(typeof fechaCruda === 'object' ? `${fechaCruda.year}-${fechaCruda.month}-${fechaCruda.day}` : fechaCruda);
-        if (isNaN(d)) return;
-        const key = ev.transiting_planet;
-        velocidadPorPlaneta[key] = velocidadPorPlaneta[key] || [];
-        velocidadPorPlaneta[key].push({ fecha: d.toISOString().slice(0, 10), speed: ev.transiting_speed });
-      });
-      Object.entries(velocidadPorPlaneta).forEach(([planeta, puntos]) => {
-        puntos.sort((a, b) => a.fecha.localeCompare(b.fecha));
-        for (let i = 1; i < puntos.length; i++) {
-          const antes = puntos[i - 1].speed, ahora = puntos[i].speed;
-          if (antes > 0 && ahora < 0) retrogradosMes.push({ planeta: NOMBRE_ES[planeta] || planeta, fecha: puntos[i].fecha, tipo: 'se_vuelve_retrogrado' });
-          if (antes < 0 && ahora > 0) retrogradosMes.push({ planeta: NOMBRE_ES[planeta] || planeta, fecha: puntos[i].fecha, tipo: 'vuelve_directo' });
-        }
-      });
-      // Dedupe simple (evita marcar el mismo día repetido por múltiples eventos del mismo planeta)
-      retrogradosMes = retrogradosMes.filter((r, i, arr) => arr.findIndex(x => x.planeta === r.planeta && x.tipo === r.tipo) === i);
-      // Duración típica aproximada por planeta (conocimiento astrológico general, no una fecha específica inventada)
-      const DURACION_TIPICA_RETRO = {
-        Mercury: 'unas 3 semanas', Venus: 'unas 6 semanas', Mars: 'unos 2 a 2.5 meses',
-        Jupiter: 'unos 4 meses', Saturn: 'unos 4.5 meses', Uranus: 'unos 5 meses',
-        Neptune: 'unos 5 meses', Pluto: 'unos 5 meses',
-      };
-      retrogradosMes.forEach(r => {
-        const claveOriginal = Object.keys(NOMBRE_ES).find(k => NOMBRE_ES[k] === r.planeta);
-        r.duracion_tipica = DURACION_TIPICA_RETRO[claveOriginal] || null;
-      });
-
-      // Áreas de vida más activas del mes (top 3, solo si hay datos — nunca todas por obligación)
-      const conteoAreas = {};
-      eventosDestacadosMes.forEach(e => { if (e.area) conteoAreas[e.area] = (conteoAreas[e.area] || 0) + 1; });
-      areasMes = Object.entries(conteoAreas).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([area]) => area);
-    }
-
-    // Lunaciones del mes (luna nueva / luna llena) con su signo real, tomadas del detalle día a día ya calculado
-    lunacionesMes = { luna_nueva: [], luna_llena: [] };
-    resultados.forEach(d => {
-      const signoEs = d.signo ? (SIGNOS_ES_INGRESO[d.signo] || d.signo) : null;
-      if (d.fase === 'New Moon') lunacionesMes.luna_nueva.push({ dia: d.dia, signo: signoEs });
-      if (d.fase === 'Full Moon') lunacionesMes.luna_llena.push({ dia: d.dia, signo: signoEs });
-    });
-
-    // Relato del mes con IA — SOLO redacta con los hechos reales de arriba, nunca inventa datos.
-    // Se guarda en caché junto con el resto (una vez por usuaria por mes).
-    const hayAlgoQueContar = eventosDestacadosMes.length || lunacionesMes.luna_nueva.length || lunacionesMes.luna_llena.length || retrogradosMes.length || ingresosMes.length;
-    if (process.env.ANTHROPIC_API_KEY && hayAlgoQueContar) {
-      try {
-        const hechos = [
-          ...eventosDestacadosMes.slice(0, 10).map(e => `Día ${e.fecha.slice(-2)}: ${e.planeta_transito} en ${e.aspecto} con tu ${e.punto_natal} natal${e.area ? ` (afecta ${e.area})` : ''}.`),
-          ...lunacionesMes.luna_nueva.map(l => `Día ${l.dia}: Luna Nueva${l.signo ? ` en ${l.signo}` : ''}.`),
-          ...lunacionesMes.luna_llena.map(l => `Día ${l.dia}: Luna Llena${l.signo ? ` en ${l.signo}` : ''}.`),
-          ...retrogradosMes.map(r => `Día ${r.fecha.slice(-2)}: ${r.planeta} ${r.tipo === 'se_vuelve_retrogrado' ? 'se vuelve retrógrado' : 'retoma movimiento directo'}.`),
-          ...ingresosMes.slice(0, 8).map(i => `Día ${i.fecha.slice(-2)}: ${i.planeta} entró a ${i.signo_nuevo}.`),
-        ].join('\n');
-
-        const prompt = `Eres una astróloga profesional escribiendo el relato del mes de ${NOMBRES_MES_LARGO[mes-1] || mes} para alguien SIN conocimientos de astrología, en español de México/Latinoamérica.
-
-Tono: cálido, sencillo, como si le contaras a una amiga qué esperar del mes — NUNCA técnico, NUNCA una lista de fechas leída en voz alta, y NUNCA frases vacías tipo "confía en el universo" o "se vienen cambios".
-
-Estos son los ÚNICOS hechos astrológicos reales de este mes que puedes usar (no inventes fechas, signos, aspectos ni eventos que no estén aquí). No tienes que mencionarlos todos — elige los 3 o 4 más relevantes para el relato y deja el resto fuera, así el texto no se siente como una lista:
-
-${hechos}
-
-Escribe un relato narrativo de 3 párrafos cortos siguiendo esta estructura:
-1. "El mes comienza con..." (primeros 10 días)
-2. "A mitad de mes..." (días 11-20)
-3. "Hacia el final del mes..." (días 21 en adelante)
-
-Si algún tercio del mes no tiene eventos relevantes, dilo brevemente como un tramo más tranquilo, sin inventar nada. Máximo 160 palabras en total. Responde SOLO con el texto del relato, sin título ni markdown, sin tecnicismos como "orbe" o "natal_house".`;
-
-        const controlador = new AbortController();
-        const timeoutId = setTimeout(() => controlador.abort(), 30000);
-        const respuestaIA = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
-          body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 700, messages: [{ role: 'user', content: prompt }] }),
-          signal: controlador.signal,
-        });
-        clearTimeout(timeoutId);
-        const datosIA = await respuestaIA.json();
-        if (respuestaIA.ok) relatoMes = (datosIA.content?.[0]?.text || '').trim();
-      } catch (e) {
-        console.error('relato_mes falló:', e.message);
-      }
-    }
-
     const respuestaCalendario = {
       mes, anio, calendario, detalle_dias: resultados, mercurio_retrogrado: mercurioRetrogrado,
       dias_poder_personal: diasPoderPersonal,
       dias_poder_personal_error: diasPoderError,
       dias_poder_personal_diagnostico: diasPoderDiagnostico,
-      // Campos nuevos de "Tu mes astrológico" (puntos 14-17) — no afectan nada de lo anterior
-      mes_astrologico: {
-        eventos_destacados: eventosDestacadosMes,
-        lunaciones: lunacionesMes,
-        retrogrados: retrogradosMes,
-        ingresos: ingresosMes,
-        areas_destacadas: areasMes,
-        relato: relatoMes,
-      },
     };
     cacheSet(cacheKey, respuestaCalendario, TTL.CALENDARIO_LUNAR);
     res.json(respuestaCalendario);
@@ -2167,30 +1588,12 @@ app.post('/numerologia', requireLogin, async (req, res) => {
   try {
     const otraCartaId = req.body?.otra_carta_id || null;
     const cacheKey = cacheHash(req.userId, 'numerologia', otraCartaId || 'propia', hoyStr());
-
-    // 1) Caché en memoria
     const cached = cacheGet(cacheKey);
     if (cached) return res.json(cached);
 
-    // 2) Caché persistente en Supabase — la numerología de números núcleo no cambia
-    // (solo el día personal cambia diario, pero los números de camino de vida, destino, etc. son fijos)
-    const cacheDocId = `num_${req.userId}_${otraCartaId || 'propia'}`;
-    if (!req.body?.forzar) {
-      const { data: cacheDb } = await supabase
-        .from('cache_persistente')
-        .select('datos, updated_at')
-        .eq('clave', cacheDocId)
-        .maybeSingle();
-      // Solo usar caché si fue calculado hoy (el día personal cambia cada día)
-      if (cacheDb?.datos && cacheDb.updated_at?.slice(0, 10) === hoyStr()) {
-        cacheSet(cacheKey, cacheDb.datos, TTL.NUMEROLOGIA);
-        return res.json(cacheDb.datos);
-      }
-    }
-
     let datosSubject;
     if (otraCartaId) {
-      const { data: persona, error } = await supabase.from('otras_cartas').select('*').eq('id', otraCartaId).eq('user_id', req.userId).single();
+      const { data: persona, error } = await req.supabase.from('otras_cartas').select('*').eq('id', otraCartaId).single();
       if (error || !persona) return res.status(400).json({ error: 'No se encontró esa carta.' });
       datosSubject = birthDataDesdePerfil(persona, persona.nombre);
     } else {
@@ -2206,11 +1609,7 @@ app.post('/numerologia', requireLogin, async (req, res) => {
 
     await traducirInterpretacionesEnObjeto(respuesta.data);
     const r = { numerologia: respuesta.data };
-
-    // Guardar en memoria y Supabase
     cacheSet(cacheKey, r, TTL.NUMEROLOGIA);
-    supabase.from('cache_persistente').upsert({ clave: cacheDocId, datos: r, updated_at: new Date().toISOString() }, { onConflict: 'clave' }).then(() => {}).catch(e => console.error('No se pudo guardar caché numerología:', e.message));
-
     res.json(r);
   } catch (err) {
     console.error(err?.response?.data || err.message);
@@ -2271,9 +1670,8 @@ app.post('/energia-del-dia', requireLogin, async (req, res) => {
     const perfil = await leerPerfil(req);
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
-    const timezone = req.body?.timezone || 'America/Mexico_City';
     const hoy = new Date();
-    const cacheKey = cacheHash(req.userId, 'energia', hoyStrLocal(timezone));
+    const cacheKey = cacheHash(req.userId, 'energia', hoyStr());
     const cached = cacheGet(cacheKey);
     if (cached) return res.json(cached);
 
@@ -2295,15 +1693,7 @@ app.post('/energia-del-dia', requireLogin, async (req, res) => {
     ]);
 
     const respuestaEnergia = { ciclos: ciclos.data || ciclos, luna: luna.data || luna };
-    
-    // OPTIMIZACIÓN (30 sept): Solo traducir si hay texto narrativo (interpretaciones)
-    // Los números de ciclos y fases lunares NO necesitan traducción
-    if (respuestaEnergia?.luna?.data?.interpretations) {
-      const solo_interpretaciones = { interpretations: respuestaEnergia.luna.data.interpretations };
-      await traducirInterpretacionesEnObjeto(solo_interpretaciones);
-      respuestaEnergia.luna.data.interpretations = solo_interpretaciones.interpretations;
-    }
-    
+    await traducirInterpretacionesEnObjeto(respuestaEnergia);
     cacheSet(cacheKey, respuestaEnergia, TTL.ENERGIA_DIA);
     res.json(respuestaEnergia);
   } catch (err) {
@@ -2365,95 +1755,51 @@ app.post('/flor-armonica', requireLogin, async (req, res) => {
   }
 });
 
-// RUTA: Tránsitos personalizados (próximos 7 días, ventana móvil) — BUG CORREGIDO
+// RUTA: Tránsitos personalizados (próximos 30 días)
 app.post('/transitos-personales', requireLogin, async (req, res) => {
   try {
     const perfil = await leerPerfil(req);
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
     const hoy = new Date();
-    const timezone = req.body?.timezone || 'America/Mexico_City';
-    const hoyStr = hoyStrLocal(timezone);
-    
-    // OPTIMIZACIÓN (30 sept): Ventana móvil de 7 días guardada en Supabase
-    // En lugar de calcular 12 días completos cada hora, calculamos solo el día nuevo
-    const { data: transitoGuardado } = await req.supabase
-      .from('transitos_cache')
-      .select('*')
-      .eq('user_id', req.userId)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    
-    let respuesta;
-    
-    // Si tenemos tránsitos guardados y es el mismo día → devolver sin API call
-    if (transitoGuardado?.fecha_hoy === hoyStr && !req.body?.forzar) {
-      respuesta = { data: transitoGuardado.datos_transitos };
-    } else {
-      // Es un día nuevo → calcular solo los 7 próximos días (ventana móvil)
-      const en7dias = new Date(hoy.getTime() + 7 * 24 * 60 * 60 * 1000);
-      
-      respuesta = await astrologyApi.post('/analysis/natal-transit-report', {
-        subject: birthDataDesdePerfil(perfil),
-        transit_time: {
-          date_range: {
-            start_date: { year: hoy.getUTCFullYear(), month: hoy.getUTCMonth() + 1, day: hoy.getUTCDate() },
-            end_date: { year: en7dias.getUTCFullYear(), month: en7dias.getUTCMonth() + 1, day: en7dias.getUTCDate() },
-          },
-        },
-        orb: 5,
-        options: {
-          active_points: ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Pluto', 'Neptune', 'Uranus'],
-          fixed_stars: { language: 'es' },
-        },
-        report_options: { tradition: 'psychological', language: 'es' },
-      });
-      
-      // Guardar para la próxima sesión (hoy + 7 días)
-      if (transitoGuardado?.id) {
-        await req.supabase.from('transitos_cache').update({
-          fecha_hoy: hoyStr,
-          datos_transitos: respuesta.data,
-          updated_at: new Date().toISOString()
-        }).eq('id', transitoGuardado.id);
-      } else {
-        await req.supabase.from('transitos_cache').insert({
-          user_id: req.userId,
-          fecha_hoy: hoyStr,
-          datos_transitos: respuesta.data,
-        }).maybeSingle();
-      }
-    }
+    const cacheKey = cacheHash(req.userId, 'transitos', horaStr());
+    const cached = cacheGet(cacheKey);
+    if (cached) return res.json(cached);
 
-    // OPTIMIZACIÓN (30 sept): Limitar a 10 eventos más importantes (evita procesar 50+)
+    const desde5dias = new Date(hoy.getTime() - 5 * 24 * 60 * 60 * 1000);
+    const en7dias = new Date(hoy.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    const respuesta = await astrologyApi.post('/analysis/natal-transit-report', {
+      subject: birthDataDesdePerfil(perfil),
+      transit_time: {
+        date_range: {
+          start_date: { year: desde5dias.getUTCFullYear(), month: desde5dias.getUTCMonth() + 1, day: desde5dias.getUTCDate() },
+          end_date: { year: en7dias.getUTCFullYear(), month: en7dias.getUTCMonth() + 1, day: en7dias.getUTCDate() },
+        },
+      },
+      orb: 5,
+      options: {
+        active_points: ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Pluto', 'Neptune', 'Uranus'],
+        fixed_stars: { language: 'es' },
+      },
+      report_options: { tradition: 'psychological', language: 'es' },
+    });
+
+    // Ordenar cronológicamente y quedarnos solo con hoy en adelante (los 7 próximos días)
     const eventosCrudos = respuesta.data?.data?.events || respuesta.data?.events || [];
     const obtenerFecha = (ev) => ev.date_local || ev.date || ev.exact_date || ev.transit_date || null;
-    const en7diasStr = new Date(hoy.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-    
-    // Puntuación simple: aspectos buenos > malos, planetas lentos > rápidos
-    const puntuarEvento = (ev) => {
-      const esAspectoBueno = ['trine', 'sextile', 'conjunction'].includes(ev.aspect_type) ? 10 : -5;
-      const esPlanetaLento = ['Saturn', 'Uranus', 'Neptune', 'Pluto', 'North_Node', 'Lilith'].includes(ev.transiting_planet) ? 5 : 0;
-      return esAspectoBueno + esPlanetaLento;
-    };
-    
+    const hoyStr = hoy.toISOString().slice(0, 10);
+    const en7diasStr = en7dias.toISOString().slice(0, 10);
     const eventosOrdenados = eventosCrudos
       .filter(ev => {
         const f = obtenerFecha(ev);
         return f && f.slice(0, 10) >= hoyStr && f.slice(0, 10) <= en7diasStr;
       })
       .sort((a, b) => {
-        // Primero por puntuación (eventos importantes primero)
-        const puntA = puntuarEvento(a);
-        const puntB = puntuarEvento(b);
-        if (puntA !== puntB) return puntB - puntA;
-        // Luego por fecha
         const fa = obtenerFecha(a), fb = obtenerFecha(b);
         if (!fa || !fb) return 0;
         return new Date(fa) - new Date(fb);
-      })
-      .slice(0, 10); // ← LIMITAR A 10
+      });
 
     // Inyectar los eventos ordenados de vuelta en la respuesta
     const datosLimpios = { ...respuesta.data };
@@ -2461,11 +1807,7 @@ app.post('/transitos-personales', requireLogin, async (req, res) => {
     else if (datosLimpios?.events) datosLimpios.events = eventosOrdenados;
 
     const respuestaTransitos = { transitos: datosLimpios };
-    
-    // Traducir interpretaciones de tránsitos (pueden venir en portugués o inglés)
     await traducirInterpretacionesEnObjeto(respuestaTransitos);
-    
-    const cacheKey = cacheHash(req.userId, 'transitos', horaStr());
     cacheSet(cacheKey, respuestaTransitos, TTL.TRANSITOS_PERSONALES);
     res.json(respuestaTransitos);
   } catch (err) {
@@ -2488,7 +1830,7 @@ app.post('/suscripcion/iniciar', requireLogin, async (req, res) => {
     // Buscamos si ya existe un customer_id guardado; si no, creamos uno en Stripe
     const { data: subExistente } = await req.supabase
       .from('subscriptions')
-      .select('stripe_customer_id, trial_used')
+      .select('stripe_customer_id')
       .eq('user_id', req.userId)
       .maybeSingle();
 
@@ -2498,14 +1840,10 @@ app.post('/suscripcion/iniciar', requireLogin, async (req, res) => {
       customerId = customer.id;
       await req.supabase.from('subscriptions').upsert({
         user_id: req.userId,
-        provider: 'stripe',
         stripe_customer_id: customerId,
         estado: 'pendiente',
       }, { onConflict: 'user_id' });
     }
-
-    // No dar un segundo periodo de prueba a quien ya lo usó antes (aunque cancele y regrese, o reinstale)
-    const yaUsoTrial = !!subExistente?.trial_used;
 
     const sesionPago = await stripe.checkout.sessions.create({
       mode: 'subscription',
@@ -2513,7 +1851,7 @@ app.post('/suscripcion/iniciar', requireLogin, async (req, res) => {
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
       subscription_data: {
-        ...(yaUsoTrial ? {} : { trial_period_days: 7 }),
+        trial_period_days: 7,
         metadata: { user_id: req.userId, plan },
       },
       success_url: `${req.headers.origin || 'https://tuapp.com'}/pago-exitoso`,
@@ -2525,56 +1863,6 @@ app.post('/suscripcion/iniciar', requireLogin, async (req, res) => {
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ error: 'No se pudo iniciar el pago.' });
-  }
-});
-
-// ============================================================
-// RUTA: Validar y activar una compra nativa (Google Play Billing / Apple StoreKit).
-//
-// ⚠️ IMPORTANTE — ESTADO ACTUAL: para esta fase de PRUEBA CERRADA, esta ruta activa el
-// acceso premium confiando en el comprobante que manda el cliente (purchaseToken/orderId),
-// sin validarlo todavía contra el servidor de Google (eso requiere una cuenta de servicio
-// de Google Cloud con acceso a la Android Publisher API, que aún no está configurada).
-// Es aceptable para probar con testers conocidos (License Testing), pero ANTES de lanzar
-// a producción pública hay que agregar la validación server-side real con esa API —
-// si no, cualquiera podría fingir una compra falsa desde el navegador.
-// ============================================================
-app.post('/suscripcion/validar-compra-nativa', requireLogin, async (req, res) => {
-  try {
-    const { plataforma, plan, productId, purchaseToken, orderId, receipt, transactionId } = req.body || {};
-    if (plataforma !== 'google_play' && plataforma !== 'app_store') {
-      return res.status(400).json({ error: 'Plataforma de compra no reconocida.' });
-    }
-    // Android manda purchaseToken; iOS manda receipt o transactionId — cada plataforma tiene su propio comprobante
-    const comprobante = plataforma === 'google_play' ? purchaseToken : (receipt || transactionId);
-    if (!productId || !comprobante) {
-      return res.status(400).json({ error: 'Faltan datos de la compra.' });
-    }
-
-    // TODO (antes de producción pública): validar purchaseToken con la Android Publisher API
-    // (Google Play) o el receipt/transactionId con la App Store Server API (Apple), y usar
-    // las fechas reales de expiración que esas APIs regresan, en vez de calcularlas aquí.
-    const ahora = new Date();
-    const finPeriodoEstimado = new Date(ahora);
-    if (plan === 'anual') finPeriodoEstimado.setFullYear(finPeriodoEstimado.getFullYear() + 1);
-    else if (plan === 'semestral') finPeriodoEstimado.setMonth(finPeriodoEstimado.getMonth() + 6);
-    else finPeriodoEstimado.setMonth(finPeriodoEstimado.getMonth() + 1);
-
-    await req.supabase.from('subscriptions').upsert({
-      user_id: req.userId,
-      provider: plataforma,
-      product_id: productId,
-      transaction_id: comprobante,
-      estado: 'activa',
-      start_date: ahora.toISOString(),
-      expiration_date: finPeriodoEstimado.toISOString(),
-      trial_used: true,
-    }, { onConflict: 'user_id' });
-
-    res.json({ mensaje: 'Suscripción activada.', proveedor: plataforma });
-  } catch (err) {
-    console.error('Error validando compra nativa:', err.message);
-    res.status(500).json({ error: 'No se pudo validar la compra.' });
   }
 });
 
@@ -2744,6 +2032,9 @@ app.get('/biblioteca/:id', requireLogin, async (req, res) => {
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'shernsndez.22@gmail.com';
 app.post('/biblioteca', requireLogin, async (req, res) => {
   try {
+    const perfil = await leerPerfil(req);
+    if (!perfil) return res.status(401).json({ error: 'No autorizado.' });
+    // Verificar que es admin
     const { data: usuario } = await supabase.auth.admin.getUserById(req.userId).catch(() => ({ data: null }));
     const esAdmin = usuario?.user?.email === ADMIN_EMAIL || req.userEmail === ADMIN_EMAIL;
     if (!esAdmin) return res.status(403).json({ error: 'Solo la administradora puede agregar contenido.' });
@@ -2878,22 +2169,12 @@ app.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async (r
       case 'checkout.session.completed': {
         const session = evento.data.object;
         const userId = session.metadata?.user_id;
-        const plan = session.metadata?.plan || null;
         if (userId && session.subscription) {
-          // Traemos la suscripción completa de Stripe para saber si tuvo periodo de prueba y sus fechas reales
-          let subStripe = null;
-          try { subStripe = await stripe.subscriptions.retrieve(session.subscription); } catch (e) { /* seguimos con lo que hay */ }
           await sb.from('subscriptions').upsert({
             user_id: userId,
-            provider: 'stripe',
-            product_id: plan,
             stripe_customer_id: session.customer,
             stripe_subscription_id: session.subscription,
-            transaction_id: session.subscription,
             estado: 'activa',
-            start_date: subStripe?.current_period_start ? new Date(subStripe.current_period_start * 1000).toISOString() : new Date().toISOString(),
-            expiration_date: subStripe?.current_period_end ? new Date(subStripe.current_period_end * 1000).toISOString() : null,
-            trial_used: !!subStripe?.trial_end || true,
           }, { onConflict: 'user_id' });
         }
         break;
@@ -2903,10 +2184,7 @@ app.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async (r
         const { data: perfil } = await sb.from('subscriptions').select('user_id').eq('stripe_subscription_id', sub.id).maybeSingle();
         if (perfil) {
           const estado = (sub.status === 'active' || sub.status === 'trialing') ? 'activa' : sub.status === 'past_due' ? 'vencida' : 'cancelada';
-          await sb.from('subscriptions').update({
-            estado,
-            expiration_date: sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null,
-          }).eq('stripe_subscription_id', sub.id);
+          await sb.from('subscriptions').update({ estado }).eq('stripe_subscription_id', sub.id);
         }
         break;
       }
@@ -2934,12 +2212,6 @@ app.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async (r
 // Arrancar el servidor
 // ============================================================
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, async () => {
+app.listen(PORT, () => {
   console.log(`Sam Alquimia Astral backend corriendo en http://localhost:${PORT}`);
-  // Limpiar caché de luna y tránsitos al arrancar para evitar datos viejos
-  try {
-    await supabase.from('cache_persistente').delete().like('clave', '%luna%');
-    await supabase.from('transitos_cache').delete().neq('user_id', '00000000-0000-0000-0000-000000000000');
-    console.log('✓ Caché de luna y tránsitos limpiado al arrancar');
-  } catch(e) { console.error('Limpieza de caché falló:', e.message); }
 });
