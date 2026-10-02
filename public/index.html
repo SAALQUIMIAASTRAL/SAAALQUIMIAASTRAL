@@ -19,22 +19,39 @@
   :root{
   --theme: light;
 }
+
+/* Modo oscuro — reglas de aplicación */
+[data-theme="dark"] body,
+[data-theme="dark"] .screen,
+[data-theme="dark"] .scroll { background: var(--page-bg) !important; color: var(--ink) !important; }
+[data-theme="dark"] .section { background: var(--page-bg) !important; }
+[data-theme="dark"] .card-lectura,
+[data-theme="dark"] .tarjeta-lectura { background: var(--paper) !important; border-color: var(--line) !important; }
+[data-theme="dark"] .bottomnav { background: var(--blush-1) !important; border-top: 1px solid var(--line) !important; }
+[data-theme="dark"] input,[data-theme="dark"] textarea,[data-theme="dark"] select { background: var(--paper) !important; color: var(--ink) !important; border-color: var(--line) !important; }
+[data-theme="dark"] label,[data-theme="dark"] p,[data-theme="dark"] .card-cuerpo,[data-theme="dark"] .desc,[data-theme="dark"] .lbl { color: var(--ink) !important; }
+[data-theme="dark"] h1,[data-theme="dark"] h2,[data-theme="dark"] h3 { color: var(--ink) !important; }
+[data-theme="dark"] .auth-field input,[data-theme="dark"] .auth-field label { color: var(--ink) !important; background: var(--paper) !important; }
+[data-theme="dark"] [style*="background:#fff"],[data-theme="dark"] [style*="background: #fff"] { background: var(--paper) !important; }
+[data-theme="dark"] [style*="background:var(--blush"],[data-theme="dark"] [style*="background: var(--blush"] { background: var(--blush-1) !important; }
+[data-theme="dark"] span:not(.g):not(.avatar-inicial):not(.ojo-toggle) { color: var(--ink); }
+
 [data-theme="dark"]{
   --blush-1: #1a0f2e;
-  --blush-2: #2d1b4e;
-  --paper: #1e1230;
-  --page-bg: #120a24;
-  --line: #3d2460;
-  --ink: #f0e8ff;
-  --ink-dim: #a89bc2;
+  --blush-2: #0f0a1a;
+  --paper: #1a1230;
+  --page-bg: #0f0a1a;
+  --line: #2d1f4a;
+  --ink: #e8deff;
+  --ink-dim: #8b7aaa;
   --marigold-soft: rgba(201,168,76,0.15);
   --marigold-mid: rgba(201,168,76,0.25);
   --marigold: #C9A84C;
   --marigold-dark: #e0b85a;
   --lilac: #b89ee8;
   --lilac-soft: rgba(155,125,212,0.2);
-  --plum: #d4b8ff;
-  --plum-light: #c4a0ff;
+  --plum: #e8deff;
+  --plum-light: #c4a8f0;
   --band-text: #fff;
   --band-text-dim: rgba(255,255,255,0.65);
   --moon-navy: #0d0820;
@@ -43,95 +60,6 @@
   --tension: #e05555;
   --tension-soft: rgba(224,85,85,0.15);
   --neutral-soft: rgba(212,184,255,0.08);
-}
-/* MODO OSCURO — estilo limpio tipo Claude */
-[data-theme="dark"] {
-  --page-bg: #0f0a1a;
-  --paper: #1a1230;
-  --line: #2d1f4a;
-  --plum: #e8deff;
-  --plum-light: #c4a8f0;
-  --ink-dim: #8b7aaa;
-  --band-text: #f0e8ff;
-  --band-text-dim: rgba(240,232,255,0.6);
-  --marigold: #d4a843;
-  --marigold-dark: #e8bf5a;
-  --marigold-soft: rgba(212,168,67,0.15);
-  --marigold-mid: rgba(212,168,67,0.25);
-  --lilac: #b89ee8;
-  --lilac-soft: rgba(184,158,232,0.15);
-  --blush-1: #1a0f2e;
-  --blush-2: #120a24;
-  --neutral-soft: rgba(155,125,212,0.08);
-  --armonia: #4caf70;
-  --armonia-soft: rgba(76,175,112,0.15);
-  --tension: #e05555;
-  --tension-soft: rgba(224,85,85,0.15);
-}
-[data-theme="dark"] body,
-[data-theme="dark"] .screen,
-[data-theme="dark"] .scroll,
-[data-theme="dark"] [data-tab].tab-activa { background: #0f0a1a !important; }
-[data-theme="dark"] .section { background: #0f0a1a !important; }
-[data-theme="dark"] .card-lectura,
-[data-theme="dark"] .tarjeta-lectura { background: #1a1230 !important; border-color: #2d1f4a !important; }
-[data-theme="dark"] .btn-primary { background: var(--marigold) !important; color: #1a0f2e !important; }
-[data-theme="dark"] .btn-outline { border-color: var(--marigold) !important; color: var(--marigold) !important; background: transparent !important; }
-[data-theme="dark"] .bottomnav { background: #120a24 !important; border-top: 1px solid #2d1f4a !important; }
-[data-theme="dark"] input,
-[data-theme="dark"] textarea,
-[data-theme="dark"] select { background: #1a1230 !important; color: #e8deff !important; border-color: #2d1f4a !important; }
-[data-theme="dark"] h1,[data-theme="dark"] h2,[data-theme="dark"] h3 { color: #e8deff !important; }
-
-/* Todo el texto en modo oscuro debe ser legible */
-[data-theme="dark"] label,
-[data-theme="dark"] p,
-[data-theme="dark"] span:not(.g):not(.avatar-inicial),
-[data-theme="dark"] li,
-[data-theme="dark"] td,
-[data-theme="dark"] th,
-[data-theme="dark"] .card-cuerpo,
-[data-theme="dark"] .card-titulo,
-[data-theme="dark"] .card-etiqueta,
-[data-theme="dark"] .desc,
-[data-theme="dark"] .lbl { color: #e8deff !important; }
-
-/* Textos secundarios */
-[data-theme="dark"] .ink-dim,
-[data-theme="dark"] [style*="color:var(--ink-dim)"],
-[data-theme="dark"] [style*="color: var(--ink-dim)"] { color: #8b7aaa !important; }
-
-/* Textos dorados se mantienen */
-[data-theme="dark"] [style*="color:var(--marigold)"],
-[data-theme="dark"] [style*="color: var(--marigold)"],
-[data-theme="dark"] .marigold { color: #d4a843 !important; }
-
-/* Bordes de campos */
-[data-theme="dark"] .auth-field input,
-[data-theme="dark"] .auth-field select,
-[data-theme="dark"] .auth-field textarea { 
-  background: #1a1230 !important; 
-  color: #e8deff !important; 
-  border-color: #2d1f4a !important; 
-}
-[data-theme="dark"] .auth-field label { color: #8b7aaa !important; }
-[data-theme="dark"] .band { background: linear-gradient(145deg,#1a0f2e 0%,#0f0a1a 100%) !important; }
-
-/* Regla global: cualquier elemento con fondo blanco o claro se vuelve oscuro */
-[data-theme="dark"] .card-lectura,
-[data-theme="dark"] .acg-line,
-[data-theme="dark"] .ios-modal,
-[data-theme="dark"] .lectura-modal,
-[data-theme="dark"] .auth-overlay,
-[data-theme="dark"] #vista-datos-resumen,
-[data-theme="dark"] [style*="background:#fff"],
-[data-theme="dark"] [style*="background: #fff"],
-[data-theme="dark"] [style*="background:white"],
-[data-theme="dark"] [style*="background:var(--paper)"],
-[data-theme="dark"] [style*="background:var(--page-bg)"] {
-  background: #1a1230 !important;
-  color: #e8deff !important;
-  border-color: #2d1f4a !important;
 }
 [data-theme="dark"] [style*="background:#FAF"],
 [data-theme="dark"] [style*="background:#FBF"],
@@ -557,6 +485,18 @@
   .campo-pass{position:relative;}
   .campo-pass input{padding-right:38px !important;}
   .ojo-toggle{position:absolute;right:10px;bottom:8px;background:none;border:none;cursor:pointer;font-size:20px;padding:4px;color:var(--ink-dim);line-height:1;z-index:10;-webkit-tap-highlight-color:transparent;}
+
+  /* Secciones desplegables de Mi Cuenta */
+  .cuenta-seccion{border-radius:16px;overflow:hidden;background:var(--neutral-soft);border:1px solid var(--line);}
+  .cuenta-seccion-btn{width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:transparent;border:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--plum);font-family:'Work Sans',sans-serif;-webkit-tap-highlight-color:transparent;}
+  .cuenta-seccion-btn:active{background:var(--marigold-soft);}
+  .cuenta-chevron{font-size:11px;color:var(--ink-dim);transition:transform 0.2s;}
+  .cuenta-chevron.open{transform:rotate(180deg);}
+  .cuenta-seccion-body{padding:4px 14px 16px;border-top:1px solid var(--line);}
+  .cuenta-seccion-body .auth-field{margin-bottom:12px;}
+  .cuenta-seccion-body .auth-field input,
+  .cuenta-seccion-body .auth-field textarea{border-radius:12px;border:1px solid var(--line);padding:11px 14px;font-size:14px;width:100%;box-sizing:border-box;background:var(--paper);color:var(--plum);font-family:'Work Sans',sans-serif;}
+  .cuenta-seccion-body .auth-field label{font-size:12px;color:var(--ink-dim);display:block;margin-bottom:5px;font-weight:500;}
   .auth-switch{text-align:center;font-size:12.5px;color:var(--ink-dim);margin-top:16px;}
   .auth-switch a{color:var(--marigold);font-weight:600;cursor:pointer;}
 
@@ -640,6 +580,16 @@
           </div>
         </div>
 
+        <!-- MODAL: Reflexión del día -->
+        <div id="reflexion-modal-bg" onclick="if(event.target===this)cerrarReflexion()">
+          <div id="reflexion-modal">
+            <span class="reflexion-emoji" id="reflexion-emoji">🌙</span>
+            <div class="reflexion-texto" id="reflexion-texto">Cargando tu reflexión...</div>
+            <div class="reflexion-firma">✦ Sam Alquimia Astral</div>
+            <button onclick="cerrarReflexion()">Cerrar</button>
+          </div>
+        </div>
+
         <!-- SPLASH: se muestra mientras verifica si ya hay sesión activa -->
         <div id="splash-verificando" style="display:none;position:absolute;inset:0;z-index:200;background:var(--page-bg);flex-direction:column;align-items:center;justify-content:center;gap:16px;">
           <div style="font-size:48px;">🔮</div>
@@ -647,6 +597,15 @@
           <div style="width:36px;height:36px;border:3px solid var(--marigold);border-top-color:transparent;border-radius:50%;animation:girar 0.8s linear infinite;"></div>
         </div>
         <style>@keyframes girar{to{transform:rotate(360deg);}}</style>
+        <style>
+          @keyframes titilar{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.75;transform:scale(1.15);}}
+          #reflexion-modal-bg{position:fixed;inset:0;background:rgba(15,10,26,0.85);z-index:300;display:none;align-items:flex-end;justify-content:center;padding:0 0 20px;}
+          #reflexion-modal-bg.open{display:flex;}
+          #reflexion-modal{background:var(--paper,#1a1230);border-radius:24px 24px 16px 16px;padding:28px 22px 24px;width:92%;max-width:380px;text-align:center;box-shadow:0 -4px 40px rgba(45,27,78,0.4);}
+          .reflexion-emoji{font-size:44px;margin-bottom:12px;display:block;}
+          .reflexion-texto{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;color:var(--plum);line-height:1.65;margin-bottom:16px;}
+          .reflexion-firma{font-size:12px;color:var(--ink-dim);margin-bottom:18px;}
+        </style>
 
         <div class="auth-overlay show" id="pantalla-bienvenida">
           <!-- Hero simple: sin tarjetas promocionales, sin precio, sin banners de instalación -->
@@ -808,186 +767,235 @@
         </div>
 
         <div class="auth-overlay" id="pantalla-mi-perfil">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-            <h1 style="margin:0;">✦ Mi cuenta</h1>
-            <button onclick="mostrarPantalla(null)" style="background:var(--marigold-soft);border:none;border-radius:50%;width:34px;height:34px;font-size:16px;cursor:pointer;color:var(--plum);">✕</button>
-          </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <h1 style="margin:0;font-size:20px;">✦ Mi cuenta</h1>
+    <button onclick="mostrarPantalla(null)" style="background:var(--marigold-soft);border:none;border-radius:50%;width:34px;height:34px;font-size:16px;cursor:pointer;color:var(--plum);">✕</button>
+  </div>
 
-          <!-- Foto de perfil -->
-          <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:16px;gap:10px;">
-            <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--lilac),var(--marigold));overflow:hidden;border:3px solid var(--marigold);display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="document.getElementById('input-foto-perfil').click()">
-              <img id="foto-perfil-preview" src="" alt="" style="width:100%;height:100%;object-fit:cover;display:none;">
-              <span id="foto-perfil-inicial" style="font-size:28px;font-weight:700;color:#fff;">✦</span>
-            </div>
-            <label style="font-size:12px;color:var(--marigold-dark);cursor:pointer;font-weight:600;" onclick="document.getElementById('input-foto-perfil').click()">📷 Cambiar foto</label>
-            <input type="file" id="input-foto-perfil" accept="image/*" style="display:none;" onchange="subirFotoPerfil(this)">
-          </div>
+  <!-- FOTO DE PERFIL -->
+  <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:20px;gap:8px;">
+    <label for="input-foto-perfil" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;">
+      <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--lilac),var(--marigold));overflow:hidden;border:3px solid var(--marigold);display:flex;align-items:center;justify-content:center;">
+        <img id="foto-perfil-preview" src="" alt="" style="width:100%;height:100%;object-fit:cover;display:none;">
+        <span id="foto-perfil-inicial" style="font-size:28px;font-weight:700;color:#fff;">✦</span>
+      </div>
+      <span style="font-size:12px;color:var(--marigold-dark);font-weight:600;">📷 Cambiar foto</span>
+    </label>
+    <input type="file" id="input-foto-perfil" accept="image/*" style="display:none;position:absolute;opacity:0;width:0;height:0;" onchange="subirFotoPerfil(this)">
+    <div style="font-size:13px;color:var(--ink-dim);" id="perfil-email-mostrar"></div>
+  </div>
 
-          <div style="background:var(--marigold-soft);border-radius:12px;padding:14px;margin-bottom:16px;">
-            <div style="font-size:11px;color:var(--ink-dim);margin-bottom:2px;">Correo</div>
-            <div id="perfil-email-mostrar" style="font-size:13.5px;color:var(--plum);font-weight:600;"></div>
-          </div>
+  <!-- SECCIONES DESPLEGABLES -->
+  <div id="mi-cuenta-secciones" style="display:flex;flex-direction:column;gap:10px;">
 
-          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
-            <span>Mi nombre y datos de nacimiento</span>
-            <span onclick="activarEdicionDatos()" style="cursor:pointer;font-size:13px;font-weight:600;color:var(--marigold-dark);" id="boton-editar-datos">✏️ Editar</span>
-          </div>
-
-          <div id="vista-datos-resumen" style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:16px;font-size:13px;color:var(--plum);line-height:1.9;"></div>
-
-          <div id="editar-datos-form" style="display:none;">
-            <div class="disclaimer" style="margin-bottom:10px;">Si algo quedó mal escrito al registrarte, corrígelo aquí. Al guardar, tu carta natal se vuelve a calcular con los datos nuevos.</div>
-            <div class="auth-error" id="editar-datos-error"></div>
-            <div class="auth-field"><label>Nombre</label><input type="text" id="editar-nombre" placeholder="Tu nombre"></div>
-            <div class="auth-field"><label>Fecha de nacimiento</label><input type="date" id="editar-fecha"></div>
-            <div class="auth-field"><label>Hora de nacimiento</label><input type="time" id="editar-hora"></div>
-            <div class="auth-field"><label>Ciudad de nacimiento</label><input type="text" id="editar-ciudad" placeholder="Ej. Mérida" oninput="buscarCiudadEnVivo('editar')" autocomplete="off">
-              <input type="hidden" id="editar-lat">
-              <input type="hidden" id="editar-lng">
-              <div id="editar-ciudad-sugerencias" style="position:relative;z-index:5;"></div>
-            </div>
-            <div class="auth-field"><label>País</label>
-              <select id="editar-pais" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;width:100%;">
-                <option value="">Selecciona tu país</option>
-              </select>
-            </div>
-            <div style="display:flex;gap:8px;">
-              <button class="btn-primary" style="background:var(--lilac);margin-bottom:6px;" onclick="guardarDatosNacimiento()">Guardar cambios</button>
-              <button class="btn-primary" style="background:var(--ink-dim);margin-bottom:6px;" onclick="cancelarEdicionDatos()">Cancelar</button>
-            </div>
-          </div>
-          <div id="editar-datos-msg" style="font-size:12px;margin-bottom:16px;"></div>
-
-          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:6px;">Contraseña</div>
-          <span onclick="toggleCambiarPass()" style="cursor:pointer;font-size:13px;font-weight:600;color:var(--marigold-dark);display:inline-block;margin-bottom:10px;">🔒 Cambiar mi contraseña</span>
-          <div id="cambiar-pass-form" style="display:none;margin-bottom:16px;">
-            <div class="auth-error" id="cambiar-pass-error"></div>
-            <div class="auth-field campo-pass">
-              <label>Contraseña actual</label>
-              <input type="password" id="cambiar-pass-actual" autocomplete="current-password" style="-webkit-user-select:auto;user-select:auto;">
-              <button type="button" class="ojo-toggle" onclick="alternarOjo('cambiar-pass-actual', this)">👁</button>
-            </div>
-            <div class="auth-field campo-pass">
-              <label>Nueva contraseña</label>
-              <input type="password" id="cambiar-pass-nueva" placeholder="Mínimo 6 caracteres" autocomplete="new-password" style="-webkit-user-select:auto;user-select:auto;">
-              <button type="button" class="ojo-toggle" onclick="alternarOjo('cambiar-pass-nueva', this)">👁</button>
-            </div>
-            <div class="auth-field campo-pass">
-              <label>Confirmar nueva contraseña</label>
-              <input type="password" id="cambiar-pass-confirmar" placeholder="Repite la nueva contraseña" autocomplete="new-password" style="-webkit-user-select:auto;user-select:auto;">
-              <button type="button" class="ojo-toggle" onclick="alternarOjo('cambiar-pass-confirmar', this)">👁</button>
-            </div>
-            <button class="btn-primary" onclick="accionCambiarPassword()">Guardar nueva contraseña</button>
-          </div>
-
-          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:6px;">Suscripción</div>
-          <div id="perfil-estado-sub" style="font-size:12.5px;font-weight:600;margin-bottom:10px;"></div>
-          <button class="btn-primary" style="background:var(--lilac);margin-bottom:10px;" onclick="abrirPortalPago()">Gestionar mi suscripción / método de pago</button>
-          <button class="btn-outline app-nativa-only" style="display:none;margin-bottom:10px;" onclick="accionRestaurarCompras()">Restaurar compras</button>
-          <div id="perfil-portal-error" style="font-size:12px;color:#a5442f;margin-bottom:16px;"></div>
-
-          <!-- Nota: esta tarjeta de planes cobra vía Stripe (versión web). En las apps nativas de
-               iOS/Android, esta parte se reemplaza por Apple In-App Purchase / Google Play Billing. -->
-          <div style="background:linear-gradient(160deg,var(--plum),var(--blush-2));border-radius:16px;padding:20px 18px;color:#fff;margin-bottom:20px;box-shadow:0 6px 20px rgba(45,27,78,0.35);" id="tarjeta-suscripcion">
-            <div style="font-size:11px;color:var(--band-text-dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">✦ Alquimia Astral Premium</div>
-            <h2 style="color:#fff;font-size:20px;margin-bottom:8px;border:none;padding:0;font-family:'Cormorant Garamond',serif;">Acceso completo a tu cielo</h2>
-            <div style="font-size:12px;color:var(--band-text-dim);margin-bottom:14px;line-height:1.6;">
-              ✓ Carta natal completa · ✓ Astrocartografía · ✓ Ciclo lunar personalizado<br>
-              ✓ Hasta 8 cartas guardadas · ✓ Sinastría y carta compuesta · ✓ Diario astrológico
-            </div>
-            <div style="display:flex;gap:6px;margin-bottom:14px;" id="selector-plan">
-              <div class="chip-plan" data-plan="mensual" onclick="elegirPlanSuscripcion('mensual')" style="flex:1;text-align:center;padding:9px 4px;border-radius:10px;cursor:pointer;background:rgba(255,255,255,0.22);border:1.5px solid #fff;">
-                <div style="font-size:11px;font-weight:600;">Mensual</div>
-                <div style="font-size:14px;font-weight:700;">$4.99</div>
-              </div>
-              <div class="chip-plan" data-plan="semestral" onclick="elegirPlanSuscripcion('semestral')" style="flex:1;text-align:center;padding:9px 4px;border-radius:10px;cursor:pointer;background:rgba(255,255,255,0.08);border:1.5px solid transparent;">
-                <div style="font-size:11px;font-weight:600;">6 meses</div>
-                <div style="font-size:14px;font-weight:700;">$25.99</div>
-              </div>
-              <div class="chip-plan" data-plan="anual" onclick="elegirPlanSuscripcion('anual')" style="flex:1;text-align:center;padding:9px 4px;border-radius:10px;cursor:pointer;background:rgba(255,255,255,0.08);border:1.5px solid transparent;position:relative;">
-                <div style="position:absolute;top:-9px;right:2px;background:var(--marigold);color:#fff;font-size:8.5px;font-weight:700;padding:2px 6px;border-radius:100px;">MEJOR</div>
-                <div style="font-size:11px;font-weight:600;">Anual</div>
-                <div style="font-size:14px;font-weight:700;">$45.99</div>
-              </div>
-            </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-              <div>
-                <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:#fff;line-height:1;" id="precio-plan-elegido">$4.99<span style="font-size:12px;color:var(--band-text-dim);font-family:'Work Sans',sans-serif;"> USD/mes</span></div>
-                <div style="font-size:10.5px;color:var(--band-text-dim);">Cancela cuando quieras</div>
-              </div>
-              <button onclick="accionSuscribirse()" id="btn-suscribirse" style="background:var(--marigold);color:#fff;border:none;border-radius:100px;padding:11px 20px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;box-shadow:0 4px 12px rgba(201,168,76,0.4);">Suscribirme →</button>
-            </div>
-          </div>
-
-          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:8px;">Idioma</div>
-          <select style="width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-family:'Work Sans',sans-serif;font-size:13.5px;color:var(--plum);background:#fff;margin-bottom:8px;">
-            <option value="es">🇲🇽 Español — disponible</option>
-            <option value="en" disabled>🇺🇸 English — próximamente</option>
-            <option value="pt" disabled>🇧🇷 Português — próximamente</option>
-            <option value="ko" disabled>🇰🇷 한국어 (Coreano) — próximamente</option>
-          </select>
-          <div class="disclaimer" style="margin-bottom:16px;">Por ahora solo puedes usar español. En cuanto los demás idiomas estén listos, podrás cambiarlo aquí mismo.</div>
-
-          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:8px;">¿Sugerencias o problemas?</div>
-          <textarea id="feedback-texto" placeholder="Cuéntame qué mejorarías o qué no funciona bien..." style="width:100%;min-height:70px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:var(--paper);resize:none;box-sizing:border-box;margin-bottom:8px;"></textarea>
-          <button class="btn-primary" style="background:var(--lilac);margin-bottom:16px;" onclick="enviarFeedback()">Enviar sugerencia</button>
-          <div id="feedback-msg" style="font-size:12px;margin-bottom:12px;"></div>
-
-          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:8px;">Apariencia</div>
-          
-          <!-- MODO OSCURO -->
-          <div style="display:flex;align-items:center;justify-content:space-between;background:var(--marigold-soft);border-radius:12px;padding:12px 14px;margin-bottom:12px;">
-            <div>
-              <div style="font-size:13px;font-weight:600;color:var(--plum);">Modo oscuro</div>
-              <div style="font-size:11px;color:var(--ink-dim);">Cambia entre fondo claro y oscuro</div>
-            </div>
-            <label style="position:relative;display:inline-block;width:46px;height:26px;cursor:pointer;">
-              <input type="checkbox" id="toggle-dark" onchange="cambiarTema(this.checked)" style="opacity:0;width:0;height:0;">
-              <span style="position:absolute;inset:0;background:#ccc;border-radius:26px;transition:0.3s;" id="toggle-dark-span"></span>
-              <span style="position:absolute;height:20px;width:20px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:0.3s;" id="toggle-dark-knob"></span>
-            </label>
-          </div>
-
-          <!-- TAMAÑO DE FUENTE -->
-          <div style="background:var(--marigold-soft);border-radius:12px;padding:14px;margin-bottom:16px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-              <div>
-                <div style="font-size:13px;font-weight:600;color:var(--plum);">Tamaño de letra</div>
-                <div style="font-size:11px;color:var(--ink-dim);">Ajusta para leer más cómodo</div>
-              </div>
-              <span id="tamano-fuente-valor" style="font-size:12px;font-weight:600;color:var(--plum);min-width:35px;text-align:right;">100%</span>
-            </div>
-            <input type="range" id="slider-tamano-fuente" min="80" max="150" value="100" step="5"
-              oninput="cambiarTamanoFuente(this.value)" onchange="cambiarTamanoFuente(this.value)" ontouchend="cambiarTamanoFuente(this.value)"
-              style="width:100%;cursor:pointer;height:8px;border-radius:4px;background:linear-gradient(to right,var(--lilac),var(--marigold));outline:none;-webkit-appearance:none;appearance:none;touch-action:pan-x;">
-            <style>
-              #slider-tamano-fuente::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:28px;height:28px;border-radius:50%;background:#fff;cursor:pointer;border:3px solid var(--lilac);box-shadow:0 2px 8px rgba(45,27,78,0.3);}
-              #slider-tamano-fuente::-moz-range-thumb{width:28px;height:28px;border-radius:50%;background:#fff;cursor:pointer;border:3px solid var(--lilac);box-shadow:0 2px 8px rgba(45,27,78,0.3);}
-            </style>
-            <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-dim);margin-top:8px;">
-              <span>Pequeño</span><span>Normal</span><span>Grande</span>
-            </div>
-          </div>
-          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--plum);margin-bottom:8px;">Privacidad y datos</div>
-          <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">
-            <button onclick="descargarMisDatos()" style="background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px 12px;text-align:left;font-size:12.5px;color:var(--plum);cursor:pointer;">📥 Descargar mis datos</button>
-            <button onclick="mostrarEliminarCuenta()" style="background:var(--paper);border:1px solid #e74c3c;border-radius:10px;padding:10px 12px;text-align:left;font-size:12.5px;color:#c0392b;cursor:pointer;">🗑️ Eliminar mi cuenta y datos</button>
-          </div>
-          <div id="eliminar-cuenta-confirm" style="display:none;background:#fbe6e3;border-radius:12px;padding:14px;margin-bottom:16px;">
-            <div style="font-size:12.5px;color:#c0392b;font-weight:600;margin-bottom:8px;">¿Estás segura? Esta acción es permanente.</div>
-            <div style="font-size:12px;color:#a5442f;margin-bottom:10px;">Se eliminarán tu perfil, carta natal, diario y todos tus datos. No se puede deshacer.</div>
-            <div style="display:flex;gap:8px;">
-              <button onclick="document.getElementById('eliminar-cuenta-confirm').style.display='none'" style="flex:1;background:var(--paper);border:1px solid var(--line);border-radius:100px;padding:8px;font-size:12px;color:var(--plum);cursor:pointer;">Cancelar</button>
-              <button onclick="eliminarMiCuenta()" style="flex:1;background:#c0392b;border:none;border-radius:100px;padding:8px;font-size:12px;color:#fff;font-weight:600;cursor:pointer;">Sí, eliminar todo</button>
-            </div>
-          </div>
-          <div style="font-size:10.5px;color:var(--ink-dim);margin-bottom:16px;line-height:1.5;">
-            <a href="#" onclick="event.preventDefault();mostrarLegal('privacidad')" style="color:var(--marigold-dark);">Aviso de Privacidad</a> · <a href="#" onclick="event.preventDefault();mostrarLegal('terminos')" style="color:var(--marigold-dark);">Términos y Condiciones</a>
-          </div>
-
-          <button class="btn-primary" style="background:var(--plum);" onclick="cerrarSesion()">Cerrar sesión</button>
-          <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:10px;opacity:0.6;">v192-energia-dia-mas-rapida</div>
+    <!-- 1. MIS DATOS DE NACIMIENTO -->
+    <div class="cuenta-seccion">
+      <button class="cuenta-seccion-btn" onclick="toggleSeccion('datos-nacimiento')">
+        <span>🎂 Mis datos de nacimiento</span><span class="cuenta-chevron" id="chev-datos-nacimiento">▼</span>
+      </button>
+      <div class="cuenta-seccion-body" id="datos-nacimiento" style="display:none;">
+        <div style="background:var(--marigold-soft);border-radius:12px;padding:12px;margin-bottom:12px;font-size:12.5px;color:var(--plum);">
+          ⚠️ <b>Atención:</b> Puedes modificar tu fecha de nacimiento <b>una sola vez</b>. Si quieres hacer la carta de otra persona, créala en <b>Personas</b>.
         </div>
+        <div id="vista-datos-resumen" style="background:var(--neutral-soft);border-radius:12px;padding:14px;margin-bottom:12px;font-size:13.5px;color:var(--plum);line-height:1.9;"></div>
+        <div id="form-datos-nacimiento" style="display:none;">
+          <div class="auth-field"><label>Nombre</label><input type="text" id="perfil-nombre" placeholder="Tu nombre"></div>
+          <div class="auth-field"><label>Fecha de nacimiento</label><input type="date" id="perfil-fecha"></div>
+          <div class="auth-field"><label>Hora de nacimiento</label><input type="time" id="perfil-hora" placeholder="00:00"><div style="font-size:11px;color:var(--ink-dim);margin-top:3px;">Si no la sabes, pon 12:00</div></div>
+          <div class="auth-field"><label>Ciudad de nacimiento</label>
+            <input type="text" id="perfil-ciudad-input" placeholder="Escribe tu ciudad..." autocomplete="off" oninput="buscarCiudadPerfil(this.value)">
+            <div id="perfil-ciudad-sugerencias" style="display:none;position:absolute;z-index:50;background:var(--paper);border:1px solid var(--line);border-radius:12px;width:100%;max-height:180px;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,0.15);"></div>
+          </div>
+          <input type="hidden" id="perfil-ciudad">
+          <input type="hidden" id="perfil-pais">
+          <input type="hidden" id="perfil-lat">
+          <input type="hidden" id="perfil-lon">
+          <div class="auth-error" id="perfil-error"></div>
+          <button class="btn-primary" onclick="guardarPerfil()" style="width:100%;margin-top:8px;">Guardar datos</button>
+        </div>
+        <button id="btn-editar-datos" class="btn-outline" onclick="mostrarFormDatos()" style="width:100%;border-radius:100px;padding:10px;">✏️ Editar mis datos</button>
+      </div>
+    </div>
+
+    <!-- 2. MI CORREO -->
+    <div class="cuenta-seccion">
+      <button class="cuenta-seccion-btn" onclick="toggleSeccion('cambiar-correo')">
+        <span>📧 Mi correo</span><span class="cuenta-chevron" id="chev-cambiar-correo">▼</span>
+      </button>
+      <div class="cuenta-seccion-body" id="cambiar-correo" style="display:none;">
+        <div style="background:var(--neutral-soft);border-radius:12px;padding:12px;margin-bottom:12px;font-size:13px;color:var(--plum);">
+          Correo actual: <b id="correo-actual-mostrar"></b>
+        </div>
+        <div style="background:var(--marigold-soft);border-radius:12px;padding:12px;margin-bottom:12px;font-size:12.5px;color:var(--plum);">
+          ⚠️ Solo puedes cambiar tu correo <b>una vez</b>.
+        </div>
+        <div class="auth-field"><label>Nuevo correo</label><input type="email" id="nuevo-correo" placeholder="nuevo@correo.com"></div>
+        <div class="auth-field"><label>Contraseña actual</label>
+          <div class="campo-pass" style="position:relative;">
+            <input type="password" id="pass-para-correo" placeholder="Confirma tu contraseña" style="width:100%;padding-right:38px;">
+            <button type="button" class="ojo-toggle" onclick="alternarOjo('pass-para-correo',this)">👁</button>
+          </div>
+        </div>
+        <div class="auth-error" id="error-correo"></div>
+        <button class="btn-primary" onclick="cambiarCorreo()" style="width:100%;">Actualizar correo</button>
+      </div>
+    </div>
+
+    <!-- 3. MI CONTRASEÑA -->
+    <div class="cuenta-seccion">
+      <button class="cuenta-seccion-btn" onclick="toggleSeccion('cambiar-pass')">
+        <span>🔒 Mi contraseña</span><span class="cuenta-chevron" id="chev-cambiar-pass">▼</span>
+      </button>
+      <div class="cuenta-seccion-body" id="cambiar-pass" style="display:none;">
+        <div class="auth-error" id="cambiar-pass-error"></div>
+        <div class="auth-field campo-pass" style="position:relative;">
+          <label>Contraseña actual</label>
+          <input type="password" id="cambiar-pass-actual" autocomplete="current-password" style="-webkit-user-select:auto;user-select:auto;padding-right:44px;">
+          <button type="button" class="ojo-toggle" onclick="alternarOjo('cambiar-pass-actual',this)">👁</button>
+        </div>
+        <div class="auth-field campo-pass" style="position:relative;">
+          <label>Nueva contraseña</label>
+          <input type="password" id="cambiar-pass-nueva" placeholder="Mínimo 6 caracteres" autocomplete="new-password" style="-webkit-user-select:auto;user-select:auto;padding-right:44px;">
+          <button type="button" class="ojo-toggle" onclick="alternarOjo('cambiar-pass-nueva',this)">👁</button>
+        </div>
+        <div class="auth-field campo-pass" style="position:relative;">
+          <label>Confirmar nueva contraseña</label>
+          <input type="password" id="cambiar-pass-confirmar" placeholder="Repite la nueva contraseña" autocomplete="new-password" style="-webkit-user-select:auto;user-select:auto;padding-right:44px;">
+          <button type="button" class="ojo-toggle" onclick="alternarOjo('cambiar-pass-confirmar',this)">👁</button>
+        </div>
+        <button class="btn-primary" onclick="accionCambiarPassword()" style="width:100%;">Guardar nueva contraseña</button>
+      </div>
+    </div>
+
+    <!-- 4. NOTIFICACIONES -->
+    <div class="cuenta-seccion">
+      <button class="cuenta-seccion-btn" onclick="toggleSeccion('notificaciones')">
+        <span>🔔 Notificaciones</span><span class="cuenta-chevron" id="chev-notificaciones">▼</span>
+      </button>
+      <div class="cuenta-seccion-body" id="notificaciones" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--neutral-soft);border-radius:12px;margin-bottom:8px;">
+          <div><div style="font-size:13px;font-weight:600;color:var(--plum);">Horóscopo diario</div><div style="font-size:11.5px;color:var(--ink-dim);">Cada mañana a las 8am</div></div>
+          <label style="position:relative;display:inline-block;width:44px;height:24px;"><input type="checkbox" id="notif-horoscopo" style="opacity:0;width:0;height:0;"><span style="position:absolute;inset:0;background:#ccc;border-radius:24px;cursor:pointer;transition:0.3s;" id="span-notif-horoscopo"></span><span style="position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;cursor:pointer;transition:0.3s;" id="knob-notif-horoscopo"></span></label>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--neutral-soft);border-radius:12px;margin-bottom:8px;">
+          <div><div style="font-size:13px;font-weight:600;color:var(--plum);">Tránsitos personales</div><div style="font-size:11.5px;color:var(--ink-dim);">Cuando hay un tránsito importante</div></div>
+          <label style="position:relative;display:inline-block;width:44px;height:24px;"><input type="checkbox" id="notif-transitos" style="opacity:0;width:0;height:0;"><span style="position:absolute;inset:0;background:#ccc;border-radius:24px;cursor:pointer;transition:0.3s;" id="span-notif-transitos"></span><span style="position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;cursor:pointer;transition:0.3s;" id="knob-notif-transitos"></span></label>
+        </div>
+        <div style="text-align:center;font-size:12px;color:var(--ink-dim);padding:8px;">🚀 Próximamente — las notificaciones push estarán disponibles pronto.</div>
+      </div>
+    </div>
+
+    <!-- 5. APARIENCIA -->
+    <div class="cuenta-seccion">
+      <button class="cuenta-seccion-btn" onclick="toggleSeccion('apariencia')">
+        <span>🎨 Apariencia</span><span class="cuenta-chevron" id="chev-apariencia">▼</span>
+      </button>
+      <div class="cuenta-seccion-body" id="apariencia" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--neutral-soft);border-radius:12px;margin-bottom:12px;">
+          <div><div style="font-size:13px;font-weight:600;color:var(--plum);">Modo oscuro</div><div style="font-size:11.5px;color:var(--ink-dim);">Cambia entre fondo claro y oscuro</div></div>
+          <label style="position:relative;display:inline-block;width:46px;height:26px;cursor:pointer;">
+            <input type="checkbox" id="toggle-dark" onchange="cambiarTema(this.checked)" style="opacity:0;width:0;height:0;">
+            <span style="position:absolute;inset:0;background:#ccc;border-radius:26px;transition:0.3s;" id="toggle-dark-span"></span>
+            <span style="position:absolute;height:20px;width:20px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:0.3s;" id="toggle-dark-knob"></span>
+          </label>
+        </div>
+        <div style="padding:12px;background:var(--neutral-soft);border-radius:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <div><div style="font-size:13px;font-weight:600;color:var(--plum);">Tamaño de letra</div><div style="font-size:11.5px;color:var(--ink-dim);">Ajusta para leer más cómodo</div></div>
+            <span id="tamano-fuente-valor" style="font-size:12px;font-weight:600;color:var(--plum);">100%</span>
+          </div>
+          <input type="range" id="slider-tamano-fuente" min="80" max="150" value="100" step="5"
+            oninput="cambiarTamanoFuente(this.value)" onchange="cambiarTamanoFuente(this.value)" ontouchend="cambiarTamanoFuente(this.value)"
+            style="width:100%;cursor:pointer;height:8px;border-radius:4px;background:linear-gradient(to right,var(--lilac),var(--marigold));outline:none;-webkit-appearance:none;appearance:none;touch-action:pan-x;">
+          <style>
+            #slider-tamano-fuente::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:28px;height:28px;border-radius:50%;background:#fff;cursor:pointer;border:3px solid var(--lilac);box-shadow:0 2px 8px rgba(45,27,78,0.3);}
+            #slider-tamano-fuente::-moz-range-thumb{width:28px;height:28px;border-radius:50%;background:#fff;cursor:pointer;border:3px solid var(--lilac);box-shadow:0 2px 8px rgba(45,27,78,0.3);}
+          </style>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-dim);margin-top:8px;"><span>Pequeño</span><span>Normal</span><span>Grande</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. QUIÉN SOY -->
+    <div class="cuenta-seccion">
+      <button class="cuenta-seccion-btn" onclick="toggleSeccion('quien-soy')">
+        <span>🌟 Quién soy</span><span class="cuenta-chevron" id="chev-quien-soy">▼</span>
+      </button>
+      <div class="cuenta-seccion-body" id="quien-soy" style="display:none;">
+        <div style="text-align:center;padding:16px 8px;">
+          <div style="font-size:32px;margin-bottom:8px;">🔮</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:var(--plum);margin-bottom:8px;">Samy Hernández</div>
+          <div style="font-size:13px;color:var(--ink-dim);margin-bottom:16px;line-height:1.6;">Astróloga profesional. Te ayudo a entender tu carta natal y los ciclos que moldean tu vida.</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <a href="https://www.tiktok.com/@samalquimiaastral" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--neutral-soft);border-radius:12px;text-decoration:none;color:var(--plum);">
+              <span style="font-size:20px;">🎵</span><span style="font-size:13px;">TikTok — @samalquimiaastral</span>
+            </a>
+            <a href="https://www.instagram.com/samalquimiaastral" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--neutral-soft);border-radius:12px;text-decoration:none;color:var(--plum);">
+              <span style="font-size:20px;">📸</span><span style="font-size:13px;">Instagram — @samalquimiaastral</span>
+            </a>
+            <a href="https://www.facebook.com/samalquimiaastral" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--neutral-soft);border-radius:12px;text-decoration:none;color:var(--plum);">
+              <span style="font-size:20px;">📘</span><span style="font-size:13px;">Facebook — @samalquimiaastral</span>
+            </a>
+            <a href="mailto:soporte@samalquimiaastral.com" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--neutral-soft);border-radius:12px;text-decoration:none;color:var(--plum);">
+              <span style="font-size:20px;">📧</span><span style="font-size:13px;">Citas y sesiones — soporte@samalquimiaastral.com</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. AYUDA -->
+    <div class="cuenta-seccion">
+      <button class="cuenta-seccion-btn" onclick="toggleSeccion('ayuda')">
+        <span>💬 Ayuda y sugerencias</span><span class="cuenta-chevron" id="chev-ayuda">▼</span>
+      </button>
+      <div class="cuenta-seccion-body" id="ayuda" style="display:none;">
+        <a href="mailto:soporte@samalquimiaastral.com" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--neutral-soft);border-radius:12px;text-decoration:none;color:var(--plum);margin-bottom:10px;">
+          <span style="font-size:20px;">📧</span><span style="font-size:13px;font-weight:600;">Contáctanos — soporte@samalquimiaastral.com</span>
+        </a>
+        <div style="margin-bottom:8px;font-size:13px;font-weight:600;color:var(--plum);">¿Sugerencias o problemas?</div>
+        <textarea id="feedback-texto-cuenta" placeholder="Cuéntame qué mejorarías o qué no funciona bien..." style="width:100%;min-height:80px;padding:12px;border:1px solid var(--line);border-radius:12px;font-size:13px;font-family:'Work Sans',sans-serif;resize:none;background:var(--paper);color:var(--plum);box-sizing:border-box;"></textarea>
+        <button class="btn-primary" onclick="enviarFeedbackCuenta()" style="width:100%;margin-top:8px;">Enviar sugerencia</button>
+        <div id="feedback-cuenta-msg" style="text-align:center;font-size:12px;margin-top:6px;"></div>
+      </div>
+    </div>
+
+    <!-- 8. LEGAL -->
+    <div class="cuenta-seccion">
+      <button class="cuenta-seccion-btn" onclick="toggleSeccion('legal')">
+        <span>📜 Legal</span><span class="cuenta-chevron" id="chev-legal">▼</span>
+      </button>
+      <div class="cuenta-seccion-body" id="legal" style="display:none;">
+        <a href="/privacidad.html" target="_blank" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--neutral-soft);border-radius:12px;text-decoration:none;color:var(--plum);margin-bottom:8px;">
+          <span style="font-size:13px;">🔐 Política de privacidad</span><span>›</span>
+        </a>
+        <a href="/terminos.html" target="_blank" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--neutral-soft);border-radius:12px;text-decoration:none;color:var(--plum);">
+          <span style="font-size:13px;">📋 Términos y condiciones</span><span>›</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- 9. PRIVACIDAD Y DATOS -->
+    <div class="cuenta-seccion">
+      <button class="cuenta-seccion-btn" onclick="toggleSeccion('privacidad-datos')">
+        <span>🗂️ Mis datos</span><span class="cuenta-chevron" id="chev-privacidad-datos">▼</span>
+      </button>
+      <div class="cuenta-seccion-body" id="privacidad-datos" style="display:none;">
+        <button class="btn-outline" onclick="descargarMisDatos()" style="width:100%;border-radius:100px;padding:11px;margin-bottom:10px;">📥 Descargar mis datos</button>
+        <button onclick="desactivarCuenta()" style="width:100%;padding:11px;border:1px solid var(--marigold);background:transparent;color:var(--marigold);border-radius:100px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:10px;">⏸️ Desactivar mi cuenta</button>
+        <button onclick="eliminarMiCuenta()" style="width:100%;padding:11px;border:1px solid var(--tension,#e05555);background:transparent;color:var(--tension,#e05555);border-radius:100px;font-size:13px;font-weight:600;cursor:pointer;">🗑️ Eliminar cuenta y datos</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CERRAR SESIÓN -->
+  <button onclick="cerrarSesion()" style="width:100%;margin-top:16px;padding:13px;border:none;background:var(--blush-1,#1a0f2e);color:var(--plum);border-radius:100px;font-size:14px;font-weight:600;cursor:pointer;opacity:0.8;">
+    Cerrar sesión
+  </button>
+
+  <div style="text-align:center;font-size:9.5px;color:var(--ink-dim);margin-top:12px;opacity:0.6;" id="version-app">v192</div>
+</div>
 
         <div class="topbar">
           <span class="menu" onclick="abrirPerfil()" style="cursor:pointer;">☰</span>
@@ -1004,7 +1012,7 @@
         <div class="scroll">
 
           <div class="band" data-tab="hoy">
-            <div class="band-icon" id="band-icon">☀️</div>
+            <div class="band-icon" id="band-icon" onclick="abrirReflexionDia()" title="Reflexión del día" style="cursor:pointer;animation:titilar 2.5s ease-in-out infinite;">☀️</div>
             <div class="date" id="banda-fecha">Cargando fecha...</div>
             <h1><span id="greeting-word">Buenas tardes</span>, <span id="banda-nombre">...</span></h1>
             <div class="quote" id="banda-frase">Un paso atrás, dos hacia adelante.</div>
@@ -3438,6 +3446,52 @@
     boton.textContent = oculto ? '🙈' : '👁';
   }
 
+  // ===== REFLEXIÓN DEL DÍA =====
+  const REFLEXIONES_FALLBACK = [
+    { emoji:'🌙', texto:'Hoy es un buen día para confiar en lo que no puedes ver todavía. El universo trabaja incluso cuando tú descansas.' },
+    { emoji:'✨', texto:'Cada momento difícil que has atravesado te trajo hasta aquí. Eso no es poca cosa.' },
+    { emoji:'🌟', texto:'Tu energía es valiosa. Ponla donde te nutra, no donde te agote.' },
+    { emoji:'☀️', texto:'No tienes que tenerlo todo resuelto hoy. Un paso pequeño también es avanzar.' },
+    { emoji:'🔮', texto:'Lo que sientes hoy tiene un mensaje para ti. Tómate un momento para escucharlo.' },
+    { emoji:'🌸', texto:'Mereces el mismo amor y paciencia que le das a los demás.' },
+    { emoji:'💫', texto:'Hay cosas que solo tú puedes crear en este mundo. No las pospongas.' },
+    { emoji:'🌿', texto:'Tu intuición es tu brújula más confiable. Aprende a escucharla más.' },
+  ];
+
+  async function abrirReflexionDia() {
+    const modal = document.getElementById('reflexion-modal-bg');
+    const textoEl = document.getElementById('reflexion-texto');
+    const emojiEl = document.getElementById('reflexion-emoji');
+    if (!modal) return;
+    modal.classList.add('open');
+
+    // Mostrar fallback mientras carga
+    const fallback = REFLEXIONES_FALLBACK[new Date().getDay() % REFLEXIONES_FALLBACK.length];
+    emojiEl.textContent = fallback.emoji;
+    textoEl.textContent = fallback.texto;
+
+    // Intentar generar reflexión personalizada con IA
+    try {
+      if (!SESION.token) return;
+      const r = await fetchAuth('/asistente-ia', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pregunta: 'Dame una reflexión corta y bonita para este momento del día. Que sea alentadora, personal y cálida. Máximo 3 oraciones. Solo el texto de la reflexión, sin saludos ni introducción.',
+          historial: []
+        })
+      });
+      const data = await r.json();
+      if (data.respuesta && data.respuesta.length > 10) {
+        textoEl.textContent = data.respuesta;
+      }
+    } catch(e) { /* usa el fallback */ }
+  }
+
+  function cerrarReflexion() {
+    document.getElementById('reflexion-modal-bg')?.classList.remove('open');
+  }
+
   // ===== LONG PRESS para mostrar X de eliminar carta =====
   let _longPressTimer = null;
   let _chipActivo = null;
@@ -3507,6 +3561,56 @@
   function cargarFotoGuardada(nombre) {
     const foto = localStorage.getItem('saa_foto_perfil');
     actualizarAvatar(nombre, foto || null);
+  }
+
+  // ===== SECCIONES DESPLEGABLES MI CUENTA =====
+  function toggleSeccion(id) {
+    const body = document.getElementById(id);
+    const chev = document.getElementById('chev-' + id);
+    if (!body) return;
+    const abierto = body.style.display !== 'none';
+    body.style.display = abierto ? 'none' : 'block';
+    if (chev) chev.classList.toggle('open', !abierto);
+  }
+
+  function mostrarFormDatos() {
+    document.getElementById('form-datos-nacimiento').style.display = 'block';
+    document.getElementById('btn-editar-datos').style.display = 'none';
+  }
+
+  async function cambiarCorreo() {
+    const nuevoCorreo = document.getElementById('nuevo-correo')?.value.trim();
+    const pass = document.getElementById('pass-para-correo')?.value;
+    const errorEl = document.getElementById('error-correo');
+    if (!nuevoCorreo || !pass) { errorEl.textContent = 'Completa todos los campos.'; return; }
+    try {
+      // Verificar contraseña primero
+      const r1 = await fetch('/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ email: SESION.email, password: pass }) });
+      const d1 = await r1.json();
+      if (!r1.ok) { errorEl.textContent = 'Contraseña incorrecta.'; return; }
+      // Cambiar correo
+      const r2 = await fetchAuth('/auth/cambiar-correo', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ nuevo_email: nuevoCorreo }) });
+      const d2 = await r2.json();
+      if (!r2.ok) { errorEl.textContent = d2.error || 'No se pudo cambiar el correo.'; return; }
+      errorEl.style.color = 'var(--armonia)';
+      errorEl.textContent = '✅ Revisa tu nuevo correo para confirmar el cambio.';
+    } catch(e) { errorEl.textContent = 'Error: ' + e.message; }
+  }
+
+  function desactivarCuenta() {
+    alert('Para desactivar tu cuenta, primero cancela tu suscripción activa desde la sección de suscripción. Una vez cancelada, contacta a soporte@samalquimiaastral.com');
+  }
+
+  async function enviarFeedbackCuenta() {
+    const texto = document.getElementById('feedback-texto-cuenta')?.value.trim();
+    const msg = document.getElementById('feedback-cuenta-msg');
+    if (!texto) { msg.textContent = 'Escribe tu mensaje primero.'; return; }
+    try {
+      await fetchAuth('/feedback', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ tipo:'sugerencia', mensaje: texto }) });
+      document.getElementById('feedback-texto-cuenta').value = '';
+      msg.style.color = 'var(--armonia)';
+      msg.textContent = '✅ ¡Gracias! Tu mensaje fue enviado.';
+    } catch(e) { msg.textContent = 'Error al enviar.'; }
   }
 
   function toggleCambiarPass() {
