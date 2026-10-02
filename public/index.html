@@ -46,39 +46,43 @@
 }
 /* MODO OSCURO — estilo limpio tipo Claude */
 [data-theme="dark"] {
-  --page-bg: #1a1a1a;
-  --paper: #242424;
-  --line: #333333;
-  --plum: #e8e0f0;
-  --plum-light: #c4b0e8;
-  --ink-dim: #9a9a9a;
+  --page-bg: #0f0a1a;
+  --paper: #1a1230;
+  --line: #2d1f4a;
+  --plum: #e8deff;
+  --plum-light: #c4a8f0;
+  --ink-dim: #8b7aaa;
+  --band-text: #f0e8ff;
+  --band-text-dim: rgba(240,232,255,0.6);
   --marigold: #d4a843;
-  --marigold-dark: #e0b85a;
-  --marigold-soft: rgba(212,168,67,0.12);
+  --marigold-dark: #e8bf5a;
+  --marigold-soft: rgba(212,168,67,0.15);
+  --marigold-mid: rgba(212,168,67,0.25);
   --lilac: #b89ee8;
   --lilac-soft: rgba(184,158,232,0.15);
-  --blush-1: #1a1a2e;
-  --blush-2: #16213e;
-  --band-text: #f0e8ff;
+  --blush-1: #1a0f2e;
+  --blush-2: #120a24;
+  --neutral-soft: rgba(155,125,212,0.08);
+  --armonia: #4caf70;
   --armonia-soft: rgba(76,175,112,0.15);
+  --tension: #e05555;
   --tension-soft: rgba(224,85,85,0.15);
-  --neutral-soft: rgba(255,255,255,0.05);
 }
 [data-theme="dark"] body,
 [data-theme="dark"] .screen,
-[data-theme="dark"] .phone,
-[data-theme="dark"] [data-tab],
-[data-theme="dark"] .scroll { background: #1a1a1a !important; color: #e8e0f0 !important; }
-[data-theme="dark"] .section { background: #1a1a1a !important; }
-[data-theme="dark"] h1,[data-theme="dark"] h2,[data-theme="dark"] h3,
-[data-theme="dark"] p,[data-theme="dark"] span,[data-theme="dark"] div { color: #e8e0f0; }
+[data-theme="dark"] .scroll,
+[data-theme="dark"] [data-tab].tab-activa { background: #0f0a1a !important; }
+[data-theme="dark"] .section { background: #0f0a1a !important; }
 [data-theme="dark"] .card-lectura,
-[data-theme="dark"] .section > div,
-[data-theme="dark"] .tarjeta-lectura { background: var(--paper) !important; border-color: var(--line) !important; }
-[data-theme="dark"] .bottomnav { background: #1e1e1e !important; border-top: 1px solid #2a2a2a !important; }
+[data-theme="dark"] .tarjeta-lectura { background: #1a1230 !important; border-color: #2d1f4a !important; }
+[data-theme="dark"] .btn-primary { background: var(--marigold) !important; color: #1a0f2e !important; }
+[data-theme="dark"] .btn-outline { border-color: var(--marigold) !important; color: var(--marigold) !important; background: transparent !important; }
+[data-theme="dark"] .bottomnav { background: #120a24 !important; border-top: 1px solid #2d1f4a !important; }
 [data-theme="dark"] input,
 [data-theme="dark"] textarea,
-[data-theme="dark"] select { background: #2a2a2a !important; color: #e8e0f0 !important; border-color: #444 !important; }
+[data-theme="dark"] select { background: #1a1230 !important; color: #e8deff !important; border-color: #2d1f4a !important; }
+[data-theme="dark"] h1,[data-theme="dark"] h2,[data-theme="dark"] h3 { color: #e8deff !important; }
+[data-theme="dark"] .band { background: linear-gradient(145deg,#1a0f2e 0%,#0f0a1a 100%) !important; }
 :root{
     /* --- Colores de marca (design system v1) --- */
     --plum:#2D1B4E;
@@ -173,8 +177,17 @@
   .topbar .brand{display:flex;align-items:center;gap:6px;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:17px;color:var(--plum);}
   .topbar .brand .g{color:var(--marigold);}
   .topbar .right{display:flex;align-items:center;gap:8px;}
-  .assist-dot{width:22px;height:22px;border-radius:50%;background:conic-gradient(from 90deg,var(--marigold),var(--lilac),var(--marigold));}
-  .avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--lilac),var(--marigold));}
+  .assist-dot{display:none;}
+  .avatar{
+    width:36px;height:36px;border-radius:50%;
+    background:linear-gradient(135deg,var(--lilac),var(--marigold));
+    display:flex;align-items:center;justify-content:center;
+    font-size:15px;font-weight:700;color:#fff;
+    overflow:hidden;border:2px solid var(--marigold);
+    cursor:pointer;
+  }
+  .avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+  .avatar-inicial{font-size:15px;font-weight:700;color:#fff;}
 
   .scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:78px;width:100%;}
   .scroll::-webkit-scrollbar{display:none;}
@@ -734,6 +747,16 @@
             <button onclick="mostrarPantalla(null)" style="background:var(--marigold-soft);border:none;border-radius:50%;width:34px;height:34px;font-size:16px;cursor:pointer;color:var(--plum);">✕</button>
           </div>
 
+          <!-- Foto de perfil -->
+          <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:16px;gap:10px;">
+            <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--lilac),var(--marigold));overflow:hidden;border:3px solid var(--marigold);display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="document.getElementById('input-foto-perfil').click()">
+              <img id="foto-perfil-preview" src="" alt="" style="width:100%;height:100%;object-fit:cover;display:none;">
+              <span id="foto-perfil-inicial" style="font-size:28px;font-weight:700;color:#fff;">✦</span>
+            </div>
+            <label style="font-size:12px;color:var(--marigold-dark);cursor:pointer;font-weight:600;" onclick="document.getElementById('input-foto-perfil').click()">📷 Cambiar foto</label>
+            <input type="file" id="input-foto-perfil" accept="image/*" style="display:none;" onchange="subirFotoPerfil(this)">
+          </div>
+
           <div style="background:var(--marigold-soft);border-radius:12px;padding:14px;margin-bottom:16px;">
             <div style="font-size:11px;color:var(--ink-dim);margin-bottom:2px;">Correo</div>
             <div id="perfil-email-mostrar" style="font-size:13.5px;color:var(--plum);font-weight:600;"></div>
@@ -903,7 +926,11 @@
         <div class="topbar">
           <span class="menu" onclick="abrirPerfil()" style="cursor:pointer;">☰</span>
           <div class="brand"><span class="g">✦</span>Sam Alquimia Astral</div>
-          <div class="right"><div class="assist-dot"></div><div class="avatar" onclick="cerrarSesion()" style="cursor:pointer;" title="Cerrar sesión"></div></div>
+          <div class="right">
+            <div class="avatar" id="header-avatar" onclick="abrirPerfil()" title="Mi cuenta">
+              <span class="avatar-inicial" id="avatar-inicial">✦</span>
+            </div>
+          </div>
         </div>
 
         <div class="season-banner" id="season-banner"></div>
@@ -3170,6 +3197,20 @@
     }
     mostrarPantalla('mi-perfil');
     cargarDatosParaEditar();
+    // Cargar foto de perfil guardada
+    const fotoGuardada = localStorage.getItem('saa_foto_perfil');
+    const preview = document.getElementById('foto-perfil-preview');
+    const inicialEl = document.getElementById('foto-perfil-inicial');
+    if (fotoGuardada && preview) {
+      preview.src = fotoGuardada;
+      preview.style.display = 'block';
+      if (inicialEl) inicialEl.style.display = 'none';
+    } else if (inicialEl) {
+      const letra = (SESION.nombre || SESION.email || '✦')[0].toUpperCase();
+      inicialEl.textContent = letra;
+      inicialEl.style.display = 'block';
+      if (preview) preview.style.display = 'none';
+    }
   }
 
   let _datosNacimientoActuales = null;
@@ -3366,6 +3407,40 @@
     const iconos = ['🌙','✨','⭐','🔮','🌟'];
     const icono = iconos[Math.floor(Math.random() * iconos.length)];
     return `<div class="sam-loading"><span class="sam-loading-icon">${icono}</span><span class="sam-loading-text">${texto || 'Un momento...'}</span></div>`;
+  }
+
+  // ===== AVATAR / FOTO DE PERFIL =====
+  function actualizarAvatar(nombre, fotoUrl) {
+    const avatar = document.getElementById('header-avatar');
+    const inicial = document.getElementById('avatar-inicial');
+    if (!avatar) return;
+    if (fotoUrl) {
+      avatar.innerHTML = `<img src="${fotoUrl}" alt="foto de perfil">`;
+    } else if (nombre) {
+      const letra = nombre.trim()[0].toUpperCase();
+      avatar.innerHTML = `<span class="avatar-inicial">${letra}</span>`;
+    }
+  }
+
+  async function subirFotoPerfil(input) {
+    const archivo = input.files[0];
+    if (!archivo) return;
+    if (archivo.size > 2 * 1024 * 1024) { alert('La foto debe pesar menos de 2MB.'); return; }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target.result;
+      localStorage.setItem('saa_foto_perfil', dataUrl);
+      actualizarAvatar(null, dataUrl);
+      // Mostrar preview en Mi cuenta
+      const preview = document.getElementById('foto-perfil-preview');
+      if (preview) preview.src = dataUrl;
+    };
+    reader.readAsDataURL(archivo);
+  }
+
+  function cargarFotoGuardada(nombre) {
+    const foto = localStorage.getItem('saa_foto_perfil');
+    actualizarAvatar(nombre, foto || null);
   }
 
   function toggleCambiarPass() {
@@ -3609,6 +3684,8 @@
     const splash = document.getElementById('splash-verificando');
     if (splash) splash.style.display = 'none';
     mostrarPantalla(null);
+    // Cargar foto/inicial en el avatar del header
+    cargarFotoGuardada(perfil?.nombre || SESION.email);
     SESION.nombre = perfil?.nombre || 'Usuaria';
     const greet = document.getElementById('greeting-word');
     const nombreEl = document.querySelector('.band h1');
