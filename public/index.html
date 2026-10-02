@@ -72,7 +72,7 @@
     --neutral-soft:rgba(45,27,78,0.07);
   }
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;background:#e9e2da;font-family:'Work Sans',sans-serif;color:var(--plum);overflow-x:hidden;max-width:100%;width:100%;position:relative;}
+  html,body{margin:0;padding:0;background:#e9e2da;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;color:var(--plum);overflow-x:hidden;max-width:100%;width:100%;position:relative;font-size:15px;line-height:1.6;}
   *, *::before, *::after { box-sizing: border-box; }
   img, svg, video, canvas { max-width: 100%; height: auto; }
   .card, .card-lectura, .band, .section { word-break: break-word; overflow-wrap: break-word; }
@@ -168,7 +168,7 @@
   }
   .section h2{font-size:15px;margin-bottom:4px;border-left:3px solid var(--marigold);padding-left:10px;font-family:'Cormorant Garamond',serif;font-weight:700;}
   .section .desc{font-size:12px;color:var(--ink-dim);margin-bottom:12px;line-height:1.5;}
-  .section .desc{font-size:12.5px;color:var(--ink-dim);margin-bottom:14px;line-height:1.5;}
+  .section .desc{font-size:14px;color:var(--ink-dim);margin-bottom:14px;line-height:1.6;}
 
   /* mis cartas (multi-perfil) */
   .charts-scroll{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px;}
@@ -250,7 +250,7 @@
     font-size:14px;color:var(--plum);margin-bottom:4px;
   }
   .card-lectura .card-cuerpo{
-    font-size:12.5px;color:var(--plum);line-height:1.6;
+    font-size:14.5px;color:var(--plum);line-height:1.65;
   }
   .card-lectura .card-etiqueta{
     font-size:10.5px;color:var(--marigold);font-weight:600;
@@ -433,6 +433,25 @@
   .ojo-toggle{position:absolute;right:10px;bottom:8px;background:none;border:none;cursor:pointer;font-size:20px;padding:4px;color:var(--ink-dim);line-height:1;z-index:10;-webkit-tap-highlight-color:transparent;}
   .auth-switch{text-align:center;font-size:12.5px;color:var(--ink-dim);margin-top:16px;}
   .auth-switch a{color:var(--marigold);font-weight:600;cursor:pointer;}
+
+  .sam-loading {
+    display: inline-flex; flex-direction: column; align-items: center;
+    gap: 8px; padding: 20px; width: 100%; justify-content: center;
+  }
+  .sam-loading-icon {
+    font-size: 28px;
+    animation: sam-spin 1.5s ease-in-out infinite;
+    display: inline-block;
+  }
+  .sam-loading-text {
+    font-size: 13px; color: var(--ink-dim);
+    font-style: italic; letter-spacing: 0.3px;
+  }
+  @keyframes sam-spin {
+    0% { transform: rotate(0deg) scale(1); }
+    50% { transform: rotate(180deg) scale(1.15); }
+    100% { transform: rotate(360deg) scale(1); }
+  }
   .auth-loading{opacity:0.6;pointer-events:none;}
   .carta-real-row{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--plum);padding:4px 0;border-bottom:1px solid var(--marigold-soft);}
   .carta-real-row:last-child{border-bottom:none;}
@@ -1299,7 +1318,7 @@
     const boton = document.getElementById('acg-boton');
     const contenedorMapa = document.getElementById('acg-mapa');
     const contenedorLineas = document.getElementById('acg-lines');
-    if (boton) { boton.textContent = 'Calculando...'; boton.disabled = true; }
+    if (boton) { boton.textContent = '🌙 Calculando...'; boton.disabled = true; }
     try {
       const r = await fetchAuth('/astrocartografia', { method: 'POST', headers: {} });
       const data = await r.json();
@@ -1689,7 +1708,7 @@
 
   async function verDetalleOtraCarta(id, nombre) {
     const contenedor = document.getElementById('carta-otro-detalle');
-    contenedor.innerHTML = '<div class="disclaimer">Cargando la carta de ' + nombre + '...</div>';
+    contenedor.innerHTML = samLoading('Leyendo la carta de ' + nombre + '...');
     try {
       const r = await fetchAuth('/otras-cartas/' + id, { headers: {} });
       const data = await r.json();
@@ -1732,7 +1751,7 @@
     const contenedor = document.getElementById('carta-otro-extra');
     const rutas = { 'numerologia':'/numerologia', 'flor-armonica':'/flor-armonica', 'estrellas-fijas':'/estrellas-fijas', 'astrocartografia':'/astrocartografia' };
     const llaves = { 'numerologia':'numerologia', 'flor-armonica':'flor', 'estrellas-fijas':'estrellas', 'astrocartografia':null };
-    contenedor.innerHTML = '<div class="disclaimer">Calculando para ' + nombre + '...</div>';
+    contenedor.innerHTML = samLoading('Calculando para ' + nombre + '...');
     const _cerrarExtra = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('carta-otro-extra').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
     try {
       const r = await fetchAuth(rutas[funcion], {
@@ -1916,7 +1935,7 @@
       resultado.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Llena todos los datos.</div>';
       return;
     }
-    resultado.innerHTML = '<div class="disclaimer">Calculando y guardando...</div>';
+    resultado.innerHTML = samLoading('Calculando y guardando...');
     try {
       const r = _editandoCartaId
         ? await fetchAuth('/otras-cartas/' + _editandoCartaId, {
@@ -2483,7 +2502,7 @@
 
   async function verEnergiaDelDia() {
     const contenedor = document.getElementById('energia-resultado');
-    contenedor.innerHTML = '<div class="disclaimer">Calculando tu energía de hoy...</div>';
+    contenedor.innerHTML = samLoading('Leyendo tu energía de hoy...');
     try {
       const r = await fetchAuth('/energia-del-dia', { method: 'POST', headers: {} });
       const data = await r.json();
@@ -2666,7 +2685,7 @@
 
   async function cargarMesAstrologico(forzarRecalculo) {
     const contenedor = document.getElementById('mes-astrologico-contenido');
-    contenedor.innerHTML = `<div class="disclaimer">${forzarRecalculo ? 'Recalculando sin usar lo guardado…' : 'Calculando tu mes… puede tardar un momento.'}</div>`;
+    contenedor.innerHTML = samLoading(forzarRecalculo ? 'Recalculando tu mes...' : 'Leyendo tu mes astrológico...');
     try {
       const r = await fetchAuth('/calendario-lunar', {
         method: 'POST',
@@ -3294,6 +3313,13 @@
     }
   }, { passive: true });
 
+
+  function samLoading(texto) {
+    const iconos = ['🌙','✨','⭐','🔮','🌟'];
+    const icono = iconos[Math.floor(Math.random() * iconos.length)];
+    return `<div class="sam-loading"><span class="sam-loading-icon">${icono}</span><span class="sam-loading-text">${texto || 'Un momento...'}</span></div>`;
+  }
+
   function toggleCambiarPass() {
     const form = document.getElementById('cambiar-pass-form');
     const visible = form.style.display !== 'none';
@@ -3565,7 +3591,7 @@
     anio = anio || _calAnioActual;
     _calMesActual = mes;
     _calAnioActual = anio;
-    contenedor.innerHTML = '<div class="disclaimer">Calculando el mes...</div>';
+    contenedor.innerHTML = samLoading('Leyendo tu mes astrológico...');
     try {
       const r = await fetchAuth('/calendario-lunar', {
         method: 'POST',
@@ -3661,7 +3687,8 @@
 
   async function cargarHomeSummary() {
     try {
-      const r = await fetchAuth('/home-summary', { method: 'POST', headers: {} });
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Mexico_City';
+      const r = await fetchAuth('/home-summary', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ timezone }) });
       if (!r.ok) return;
       const data = await r.json();
 
@@ -3887,7 +3914,7 @@
     const boton = document.getElementById('btn-calcular-carta');
     const chips = document.getElementById('carta-resultado-chips');
     if (!silencioso) {
-      boton.textContent = 'Calculando...'; boton.disabled = true;
+      boton.textContent = '🌙 Calculando...'; boton.disabled = true;
       const rn = document.getElementById('resumen-natal-contenedor'); if (rn) rn.innerHTML = '';
       const cv = document.getElementById('carta-visual-contenedor'); if (cv) cv.innerHTML = '';
     }
@@ -4712,22 +4739,29 @@
             <div class="card-titulo">✨ Tus días de poder personal en ${nombreMes}</div>
             <div class="card-cuerpo" style="color:var(--ink-dim);margin-bottom:8px;">Calculado cruzando los tránsitos del mes con tu carta natal real — estos días específicos son buenos para ti, no genéricos.</div>
             ${(() => {
-              // Agrupar días consecutivos con el mismo mensaje
-              const grupos = [];
+              // Agrupar TODOS los días con el mismo mensaje (consecutivos o no)
+              const porMensaje = new Map();
               clavesDias.forEach(dia => {
                 const msg = diasPersonal[dia].join('; ');
-                const ultimo = grupos[grupos.length - 1];
-                if (ultimo && ultimo.msg === msg && dia === ultimo.diasFin + 1) {
-                  ultimo.diasFin = dia;
-                } else {
-                  grupos.push({ diasInicio: dia, diasFin: dia, msg });
-                }
+                if (!porMensaje.has(msg)) porMensaje.set(msg, []);
+                porMensaje.get(msg).push(parseInt(dia));
               });
-              return grupos.map(g => {
-                const rango = g.diasInicio === g.diasFin ? `Día ${g.diasInicio}` : `Días ${g.diasInicio} al ${g.diasFin}`;
-                return `<div style="margin-bottom:6px;font-size:12.5px;">
+              return Array.from(porMensaje.entries()).map(([msg, dias]) => {
+                dias.sort((a,b) => a - b);
+                // Construir rangos consecutivos dentro del grupo
+                const rangos = [];
+                let inicio = dias[0], fin = dias[0];
+                for (let i = 1; i < dias.length; i++) {
+                  if (dias[i] === fin + 1) { fin = dias[i]; }
+                  else { rangos.push(inicio === fin ? `${inicio}` : `${inicio} al ${fin}`); inicio = fin = dias[i]; }
+                }
+                rangos.push(inicio === fin ? `${inicio}` : `${inicio} al ${fin}`);
+                const rango = rangos.length === 1 
+                  ? (rangos[0].includes('al') ? `Días ${rangos[0]}` : `Día ${rangos[0]}`)
+                  : `Días ${rangos.join(', ')}`;
+                return `<div style="margin-bottom:8px;font-size:12.5px;padding:8px;background:var(--marigold-soft);border-radius:10px;">
                   <b style="color:var(--marigold-dark);">${rango}:</b>
-                  <span style="color:var(--plum);">${g.msg}</span>
+                  <span style="color:var(--plum);"> ${msg}</span>
                 </div>`;
               }).join('');
             })()}
