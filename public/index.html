@@ -1203,29 +1203,6 @@
             <div id="tarot-resultado" style="margin-top:14px;"></div>
           </div>
 
-          <!-- TARJETA DE SUSCRIPCIÓN -->
-          <div class="section" data-tab="hoy" id="tarjeta-suscripcion" style="background:linear-gradient(135deg,var(--plum),#6b3fa0);color:#fff;border-radius:20px;display:none;">
-            <h2 style="color:#fff;font-size:18px;margin-bottom:6px;">✨ Activa Premium</h2>
-            <p style="color:rgba(255,255,255,0.8);font-size:13px;margin-bottom:16px;">Acceso completo a carta natal, tránsitos, sinastría, astrocartografía y más.</p>
-            <!-- Selector de plan -->
-            <div style="display:flex;gap:8px;margin-bottom:16px;">
-              <button onclick="elegirPlanSuscripcion('mensual')" id="plan-btn-mensual" style="flex:1;padding:10px 6px;border-radius:12px;border:2px solid rgba(255,255,255,0.5);background:rgba(255,255,255,0.15);color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
-                Mensual<br><span style="font-size:15px;">$4.99</span><br><span style="opacity:0.7;font-size:10px;">USD/mes</span>
-              </button>
-              <button onclick="elegirPlanSuscripcion('semestral')" id="plan-btn-semestral" style="flex:1;padding:10px 6px;border-radius:12px;border:2px solid rgba(255,255,255,0.5);background:rgba(255,255,255,0.15);color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
-                6 meses<br><span style="font-size:15px;">$25.99</span><br><span style="opacity:0.7;font-size:10px;">USD</span>
-              </button>
-              <button onclick="elegirPlanSuscripcion('anual')" id="plan-btn-anual" style="flex:1;padding:10px 6px;border-radius:12px;border:2px solid var(--marigold);background:rgba(201,168,76,0.25);color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
-                Anual<br><span style="font-size:15px;">$45.99</span><br><span style="color:var(--marigold);font-size:10px;">Mejor precio</span>
-              </button>
-            </div>
-            <button id="btn-suscribirse" onclick="accionSuscribirse()" style="width:100%;padding:13px;border:none;border-radius:100px;background:var(--marigold);color:#1a0f2e;font-size:15px;font-weight:700;cursor:pointer;">
-              Comenzar ahora — 7 días gratis
-            </button>
-            <p style="text-align:center;font-size:11px;color:rgba(255,255,255,0.6);margin-top:10px;">Cancela cuando quieras. Sin cargos durante el período de prueba.</p>
-            <button onclick="accionRestaurarCompras()" style="width:100%;padding:8px;border:none;background:transparent;color:rgba(255,255,255,0.5);font-size:11px;cursor:pointer;text-decoration:underline;">Restaurar compras</button>
-          </div>
-
           <div class="section" data-tab="ciclos">
             <h2>Ciclo lunar</h2>
             <div class="desc" id="luna-intro">Qué significa cada fase y cómo aprovecharla.</div>
@@ -4428,15 +4405,42 @@
   }
 
   function irAPagar() {
-    mostrarPantalla(null);
-    cambiarPestana('hoy');
-    setTimeout(() => {
-      const t = document.getElementById('tarjeta-suscripcion');
-      if (t) {
-        t.style.display = 'block';
-        t.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }, 200);
+    // Mostrar modal de planes en vez de cambiar de pestaña
+    mostrarModalPlanes();
+  }
+
+  function mostrarModalPlanes() {
+    const modal = document.getElementById('modal-planes-bg');
+    if (modal) { modal.style.display = 'flex'; return; }
+    // Crear modal si no existe
+    const div = document.createElement('div');
+    div.id = 'modal-planes-bg';
+    div.style.cssText = 'position:fixed;inset:0;background:rgba(15,10,26,0.9);z-index:500;display:flex;align-items:flex-end;justify-content:center;padding:0 0 20px;';
+    div.innerHTML = `
+      <div style="background:linear-gradient(135deg,var(--plum),#5a2d8a);border-radius:24px 24px 16px 16px;padding:28px 22px 24px;width:92%;max-width:380px;color:#fff;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;">✨ Activa Premium</div>
+          <button onclick="document.getElementById('modal-planes-bg').style.display='none'" style="background:rgba(255,255,255,0.15);border:none;border-radius:50%;width:30px;height:30px;color:#fff;font-size:16px;cursor:pointer;">✕</button>
+        </div>
+        <p style="font-size:13px;opacity:0.8;margin-bottom:18px;">Acceso completo a carta natal, tránsitos personales, sinastría, astrocartografía y más.</p>
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+          <button onclick="elegirPlanSuscripcion('mensual')" id="plan-btn-mensual" style="flex:1;padding:12px 6px;border-radius:14px;border:2px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:#fff;font-size:12px;font-weight:600;cursor:pointer;text-align:center;">
+            Mensual<br><b style="font-size:16px;">$4.99</b><br><span style="opacity:0.7;font-size:10px;">USD/mes</span>
+          </button>
+          <button onclick="elegirPlanSuscripcion('semestral')" id="plan-btn-semestral" style="flex:1;padding:12px 6px;border-radius:14px;border:2px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:#fff;font-size:12px;font-weight:600;cursor:pointer;text-align:center;">
+            6 meses<br><b style="font-size:16px;">$25.99</b><br><span style="opacity:0.7;font-size:10px;">USD total</span>
+          </button>
+          <button onclick="elegirPlanSuscripcion('anual')" id="plan-btn-anual" style="flex:1;padding:12px 6px;border-radius:14px;border:2px solid var(--marigold);background:rgba(201,168,76,0.2);color:#fff;font-size:12px;font-weight:600;cursor:pointer;text-align:center;">
+            Anual<br><b style="font-size:16px;">$45.99</b><br><span style="color:var(--marigold);font-size:10px;">Mejor precio</span>
+          </button>
+        </div>
+        <button id="btn-suscribirse" onclick="accionSuscribirse()" style="width:100%;padding:14px;border:none;border-radius:100px;background:var(--marigold);color:#1a0f2e;font-size:15px;font-weight:700;cursor:pointer;">
+          Comenzar — 7 días gratis
+        </button>
+        <p style="text-align:center;font-size:11px;opacity:0.5;margin-top:10px;">Cancela cuando quieras. Sin cargos durante la prueba.</p>
+        <button onclick="accionRestaurarCompras()" style="width:100%;padding:8px;border:none;background:transparent;color:rgba(255,255,255,0.4);font-size:11px;cursor:pointer;text-decoration:underline;">Restaurar compras</button>
+      </div>`;
+    document.querySelector('.screen').appendChild(div);
   }
 
   let _planElegido = 'mensual';
