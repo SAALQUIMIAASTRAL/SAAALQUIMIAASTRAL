@@ -491,6 +491,22 @@ app.post('/auth/olvide-password', async (req, res) => {
 // RUTA: Cambiar contraseña estando ya conectada (sin pasar por correo).
 // Verifica primero la contraseña actual, por seguridad, antes de cambiarla.
 // ============================================================
+app.post('/auth/cambiar-correo', requireLogin, async (req, res) => {
+  const { nuevo_email } = req.body;
+  if (!nuevo_email?.trim()) return res.status(400).json({ error: 'Falta el nuevo correo.' });
+
+  // Verificar que no haya cambiado el correo antes
+  const { data: perfil } = await supabase.from('profiles').select('correo_cambiado').eq('id', req.userId).maybeSingle();
+  if (perfil?.correo_cambiado) return res.status(400).json({ error: 'Solo puedes cambiar tu correo una vez.' });
+
+  const { error } = await req.supabase.auth.updateUser({ email: nuevo_email.trim().toLowerCase() });
+  if (error) return res.status(400).json({ error: error.message });
+
+  // Marcar que ya cambió el correo
+  await supabase.from('profiles').update({ correo_cambiado: true }).eq('id', req.userId);
+  res.json({ mensaje: 'Revisa tu nuevo correo para confirmar el cambio.' });
+});
+
 app.post('/auth/cambiar-password', requireLogin, async (req, res) => {
   const { password_actual, nueva_password } = req.body;
   if (!password_actual || !nueva_password) return res.status(400).json({ error: 'Faltan datos.' });
