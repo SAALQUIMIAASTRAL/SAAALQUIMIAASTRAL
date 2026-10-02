@@ -83,6 +83,39 @@
 [data-theme="dark"] select { background: #1a1230 !important; color: #e8deff !important; border-color: #2d1f4a !important; }
 [data-theme="dark"] h1,[data-theme="dark"] h2,[data-theme="dark"] h3 { color: #e8deff !important; }
 [data-theme="dark"] .band { background: linear-gradient(145deg,#1a0f2e 0%,#0f0a1a 100%) !important; }
+
+/* Regla global: cualquier elemento con fondo blanco o claro se vuelve oscuro */
+[data-theme="dark"] .card-lectura,
+[data-theme="dark"] .acg-line,
+[data-theme="dark"] .ios-modal,
+[data-theme="dark"] .lectura-modal,
+[data-theme="dark"] .auth-overlay,
+[data-theme="dark"] #vista-datos-resumen,
+[data-theme="dark"] [style*="background:#fff"],
+[data-theme="dark"] [style*="background: #fff"],
+[data-theme="dark"] [style*="background:white"],
+[data-theme="dark"] [style*="background:var(--paper)"],
+[data-theme="dark"] [style*="background:var(--page-bg)"] {
+  background: #1a1230 !important;
+  color: #e8deff !important;
+  border-color: #2d1f4a !important;
+}
+[data-theme="dark"] [style*="background:#FAF"],
+[data-theme="dark"] [style*="background:#FBF"],
+[data-theme="dark"] [style*="background:#fff8"],
+[data-theme="dark"] [style*="background: #FAF"],
+[data-theme="dark"] [style*="background: #FBF"] {
+  background: #1a1230 !important;
+}
+/* Evento/aviso de libra y banners */
+[data-theme="dark"] .aviso-evento,
+[data-theme="dark"] [style*="background:var(--blush"] {
+  background: #1a0f2e !important;
+  color: #e8deff !important;
+}
+/* Zoom modal */
+[data-theme="dark"] .zoom-modal-bg svg { background: #1a1230 !important; }
+[data-theme="dark"] .zoom-close-btn { background: #1a1230 !important; color: #e8deff !important; }
 :root{
     /* --- Colores de marca (design system v1) --- */
     --plum:#2D1B4E;
