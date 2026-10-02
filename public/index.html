@@ -801,11 +801,12 @@
           <div class="auth-field"><label>Nombre</label><input type="text" id="perfil-nombre" placeholder="Tu nombre"></div>
           <div class="auth-field"><label>Fecha de nacimiento</label><input type="date" id="perfil-fecha"></div>
           <div class="auth-field"><label>Hora de nacimiento</label><input type="time" id="perfil-hora" placeholder="00:00"><div style="font-size:11px;color:var(--ink-dim);margin-top:3px;">Si no la sabes, pon 12:00</div></div>
-          <div class="auth-field"><label>Ciudad de nacimiento</label>
-            <input type="text" id="perfil-ciudad-input" placeholder="Escribe tu ciudad..." autocomplete="off" oninput="buscarCiudadPerfil(this.value)">
-            <div id="perfil-ciudad-sugerencias" style="display:none;position:absolute;z-index:50;background:var(--paper);border:1px solid var(--line);border-radius:12px;width:100%;max-height:180px;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,0.15);"></div>
+          <div class="auth-field" style="position:relative;">
+            <label>Ciudad de nacimiento</label>
+            <input type="text" id="perfil-ciudad" placeholder="Ej. Mérida" oninput="buscarCiudadEnVivo('perfil')" autocomplete="off" style="-webkit-user-select:auto;user-select:auto;">
+            <div id="perfil-ciudad-sugerencias" style="position:relative;z-index:5;"></div>
+            <div style="font-size:10.5px;color:var(--ink-dim);margin-top:3px;">Escribe y elige tu ciudad de la lista</div>
           </div>
-          <input type="hidden" id="perfil-ciudad">
           <input type="hidden" id="perfil-pais">
           <input type="hidden" id="perfil-lat">
           <input type="hidden" id="perfil-lon">
@@ -921,22 +922,28 @@
         <span>🌟 Quién soy</span><span class="cuenta-chevron" id="chev-quien-soy">▼</span>
       </button>
       <div class="cuenta-seccion-body" id="quien-soy" style="display:none;">
-        <div style="text-align:center;padding:16px 8px;">
-          <div style="font-size:32px;margin-bottom:8px;">🔮</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:var(--plum);margin-bottom:8px;">Samy Hernández</div>
-          <div style="font-size:13px;color:var(--ink-dim);margin-bottom:16px;line-height:1.6;">Astróloga profesional. Te ayudo a entender tu carta natal y los ciclos que moldean tu vida.</div>
+        <div style="padding:16px 8px;">
+          <div style="text-align:center;margin-bottom:16px;">
+            <div style="font-size:36px;margin-bottom:8px;">🔮</div>
+            <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:var(--plum);margin-bottom:6px;">Samantha Hernández</div>
+            <div style="font-size:13px;color:var(--ink-dim);line-height:1.7;">Astróloga profesional y creadora de Sam Alquimia Astral. Creo que cada persona merece entender su mapa cósmico — no como algo rígido, sino como una brújula para vivir con más consciencia, propósito y autenticidad. La astrología no te dice qué va a pasar; te ayuda a entender quién eres y qué ciclos estás atravesando para que puedas elegir mejor.</div>
+          </div>
           <div style="display:flex;flex-direction:column;gap:8px;">
-            <a href="https://www.tiktok.com/@samalquimiaastral" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--neutral-soft);border-radius:12px;text-decoration:none;color:var(--plum);">
-              <span style="font-size:20px;">🎵</span><span style="font-size:13px;">TikTok — @samalquimiaastral</span>
+            <a href="https://www.tiktok.com/@samalquimiaastral" target="_blank" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--neutral-soft);border-radius:14px;text-decoration:none;color:var(--plum);">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.8a8.18 8.18 0 004.77 1.52V6.89a4.85 4.85 0 01-1-.2z"/></svg>
+              <span style="font-size:13px;font-weight:500;">TikTok — @samalquimiaastral</span>
             </a>
-            <a href="https://www.instagram.com/samalquimiaastral" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--neutral-soft);border-radius:12px;text-decoration:none;color:var(--plum);">
-              <span style="font-size:20px;">📸</span><span style="font-size:13px;">Instagram — @samalquimiaastral</span>
+            <a href="https://www.instagram.com/samalquimiaastral" target="_blank" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--neutral-soft);border-radius:14px;text-decoration:none;color:var(--plum);">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+              <span style="font-size:13px;font-weight:500;">Instagram — @samalquimiaastral</span>
             </a>
-            <a href="https://www.facebook.com/samalquimiaastral" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--neutral-soft);border-radius:12px;text-decoration:none;color:var(--plum);">
-              <span style="font-size:20px;">📘</span><span style="font-size:13px;">Facebook — @samalquimiaastral</span>
+            <a href="https://www.facebook.com/samalquimiaastral" target="_blank" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--neutral-soft);border-radius:14px;text-decoration:none;color:var(--plum);">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
+              <span style="font-size:13px;font-weight:500;">Facebook — @samalquimiaastral</span>
             </a>
-            <a href="mailto:soporte@samalquimiaastral.com" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--neutral-soft);border-radius:12px;text-decoration:none;color:var(--plum);">
-              <span style="font-size:20px;">📧</span><span style="font-size:13px;">Citas y sesiones — soporte@samalquimiaastral.com</span>
+            <a href="mailto:soporte@samalquimiaastral.com" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--marigold-soft);border-radius:14px;text-decoration:none;color:var(--plum);">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <span style="font-size:13px;font-weight:500;">Citas y sesiones — soporte@samalquimiaastral.com</span>
             </a>
           </div>
         </div>
