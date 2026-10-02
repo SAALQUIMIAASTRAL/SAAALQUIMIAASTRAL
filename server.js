@@ -29,6 +29,53 @@ const PLANETAS_VSOP = {
   Mercurio: VSOP_MERCURY, Venus: VSOP_VENUS, Marte: VSOP_MARS, Júpiter: VSOP_JUPITER,
   Saturno: VSOP_SATURN, Urano: VSOP_URANUS, Neptuno: VSOP_NEPTUNE,
 };
+
+// Calcular posición real de la Luna con astronomia (Meeus cap. 47)
+// Devuelve { signo, grados, fase, iluminacion, diaLunar }
+function calcularLunaHoy(fecha) {
+  try {
+    const moon = require('astronomia/moonposition');
+    const moonIllum = require('astronomia/moonillum');
+    const hoy = fecha || new Date();
+    const jde = julian.CalendarGregorianToJD(
+      hoy.getUTCFullYear(),
+      hoy.getUTCMonth() + 1,
+      hoy.getUTCDate() + (hoy.getUTCHours() + hoy.getUTCMinutes() / 60) / 24
+    );
+    const pos = moon.position(jde);
+    // Longitud eclíptica → signo
+    const lon = ((pos.lon * 180 / Math.PI) % 360 + 360) % 360;
+    const signo = SIGNOS_12[Math.floor(lon / 30)];
+    const grados = lon % 30;
+
+    // Iluminación y fase
+    const k = moonIllum.phaseAngle(jde);
+    const iluminacion = Math.round(moonIllum.illuminated(k) * 100);
+
+    // Fase por iluminación + dirección
+    let fase;
+    const kRad = k * Math.PI / 180;
+    if (iluminacion <= 3) fase = 'Luna Nueva';
+    else if (iluminacion >= 97) fase = 'Luna Llena';
+    else {
+      // Comparar con ayer para saber si crece o mengua
+      const jdeAyer = jde - 1;
+      const kAyer = moonIllum.phaseAngle(jdeAyer);
+      const ilumAyer = moonIllum.illuminated(kAyer) * 100;
+      const creciendo = iluminacion > ilumAyer;
+      if (iluminacion < 50) fase = creciendo ? 'Creciente' : 'Menguante';
+      else fase = creciendo ? 'Gibosa Creciente' : 'Gibosa Menguante';
+    }
+
+    // Día lunar (días desde luna nueva anterior)
+    const diaLunar = Math.round((1 - Math.cos(kRad)) / 2 * 29.5) + 1;
+
+    return { signo, grados: Math.floor(grados), fase, iluminacion, diaLunar };
+  } catch (e) {
+    console.error('calcularLunaHoy falló:', e.message);
+    return null;
+  }
+}
 const SIGNOS_12 = ['Aries','Tauro','Géminis','Cáncer','Leo','Virgo','Libra','Escorpio','Sagitario','Capricornio','Acuario','Piscis'];
 
 // Longitud eclíptica geocéntrica aparente de un planeta (Meeus cap. 33) — de aquí sale el signo.
@@ -825,36 +872,52 @@ app.post('/resumen-natal', requireLogin, async (req, res) => {
 
 app.post('/luna', requireLogin, async (req, res) => {
   try {
-    const perfil = await leerPerfil(req);
     const ahora = new Date();
-    const cacheKey = cacheHash(req.userId, horaStr());
+    const cacheKey = cacheHash('luna-propia', hoyStr());
     const cached = cacheGet(cacheKey);
     if (cached) return res.json(cached);
 
-    const respuesta = await astrologyApi.post('/analysis/lunar-analysis', {
-      datetime_location: {
-        year: ahora.getUTCFullYear(),
-        month: ahora.getUTCMonth() + 1,
-        day: ahora.getUTCDate(),
-        hour: ahora.getUTCHours(),
-        minute: ahora.getUTCMinutes(),
-        second: 0,
-        city: perfil?.ciudad_nacimiento || 'Mexico City',
-        country_code: perfil?.pais_codigo || 'MX',
-      },
-      report_options: { language: 'es' },
-    });
+    // Usar efemérides propias — más confiable que la API externa
+    const lunaCalc = calcularLunaHoy(ahora);
 
-    const respuestaLuna = { mensaje: 'Datos lunares de hoy', luna: respuesta.data };
-    await traducirInterpretacionesEnObjeto(respuestaLuna);
+    // Obtener interpretación de la API (solo texto, no el signo/fase)
+    let interpretaciones = null;
+    try {
+      const perfil = await leerPerfil(req);
+      const respuesta = await astrologyApi.post('/analysis/lunar-analysis', {
+        datetime_location: {
+          year: ahora.getUTCFullYear(), month: ahora.getUTCMonth() + 1, day: ahora.getUTCDate(),
+          hour: ahora.getUTCHours(), minute: ahora.getUTCMinutes(), second: 0,
+          city: perfil?.ciudad_nacimiento || 'Mexico City', country_code: perfil?.pais_codigo || 'MX',
+        },
+        report_options: { language: 'es' },
+      });
+      interpretaciones = respuesta.data;
+      await traducirInterpretacionesEnObjeto(interpretaciones);
+    } catch (e) { console.error('Luna API falló, usando solo efemérides:', e.message); }
+
+    const respuestaLuna = {
+      mensaje: 'Datos lunares de hoy',
+      luna: {
+        data: {
+          lunar_metrics: {
+            moon_sign: lunaCalc?.signo || null,
+            moon_phase: lunaCalc?.fase || null,
+            moon_illumination: lunaCalc?.iluminacion || null,
+            moon_day: lunaCalc?.diaLunar || null,
+          },
+          interpretations: interpretaciones?.data?.interpretations || [],
+        },
+        // datos de efemérides propias para referencia
+        _efemerides: lunaCalc,
+      }
+    };
+
     cacheSet(cacheKey, respuestaLuna, TTL.LUNA);
     res.json(respuestaLuna);
   } catch (err) {
     console.error(err?.response?.data || err.message);
-    res.status(500).json({
-      error: 'No se pudo obtener la fase lunar.',
-      detalle_tecnico: err?.response?.data || err.message,
-    });
+    res.status(500).json({ error: 'No se pudo obtener la fase lunar.', detalle_tecnico: err?.response?.data || err.message });
   }
 });
 
@@ -1032,7 +1095,14 @@ app.post('/home-summary', requireLogin, async (req, res) => {
       }).catch(() => null),
     ]);
 
-    const luna = lunaData?.data?.data?.lunar_metrics;
+    // Usar efemérides propias para luna — más confiable que API externa
+    const lunaEfem = calcularLunaHoy(hoy);
+    const luna = lunaEfem ? {
+      moon_sign: lunaEfem.signo,
+      moon_phase: lunaEfem.fase,
+      moon_illumination: lunaEfem.iluminacion,
+      moon_day: lunaEfem.diaLunar,
+    } : lunaData?.data?.data?.lunar_metrics;
     const diaPersonal = ciclosData?.data?.data?.personal_day?.number || null;
     const anioPersonal = ciclosData?.data?.data?.personal_year?.number || null;
     const planetasHoy = transitosHoyData?.data?.subject_data;
@@ -2864,6 +2934,12 @@ app.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async (r
 // Arrancar el servidor
 // ============================================================
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Sam Alquimia Astral backend corriendo en http://localhost:${PORT}`);
+  // Limpiar caché de luna y tránsitos al arrancar para evitar datos viejos
+  try {
+    await supabase.from('cache_persistente').delete().like('clave', '%luna%');
+    await supabase.from('transitos_cache').delete().neq('user_id', '00000000-0000-0000-0000-000000000000');
+    console.log('✓ Caché de luna y tránsitos limpiado al arrancar');
+  } catch(e) { console.error('Limpieza de caché falló:', e.message); }
 });
