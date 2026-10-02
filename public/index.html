@@ -3257,21 +3257,21 @@
     }
   }
 
-  function abrirPerfil() {
+  function abrirPerfil(seccionAbierta) {
     if (!SESION.email && SESION.token) SESION.email = decodificarEmailDeToken(SESION.token);
-    document.getElementById('perfil-email-mostrar').textContent = SESION.email || '(correo no disponible)';
-    document.getElementById('perfil-portal-error').textContent = '';
-    const estadoEl = document.getElementById('perfil-estado-sub');
-    if (estadoEl) {
-      const s = SESION.suscripcion || 'ninguna';
-      const labels = { activa:'✅ Suscripción activa', ninguna:'⬜ Sin suscripción', vencida:'⚠️ Pago vencido', cancelada:'❌ Cancelada' };
-      const colors = { activa:'var(--armonia)', ninguna:'var(--ink-dim)', vencida:'#e67e22', cancelada:'#a5442f' };
-      estadoEl.textContent = labels[s] || s;
-      estadoEl.style.color = colors[s] || 'var(--ink-dim)';
-    }
+
+    // Correo en header de Mi cuenta
+    const emailEl = document.getElementById('perfil-email-mostrar');
+    if (emailEl) emailEl.textContent = SESION.email || '';
+
+    // Correo en sección cambiar correo
+    const correoActual = document.getElementById('correo-actual-mostrar');
+    if (correoActual) correoActual.textContent = SESION.email || '';
+
     mostrarPantalla('mi-perfil');
     cargarDatosParaEditar();
-    // Cargar foto de perfil guardada
+
+    // Foto de perfil
     const fotoGuardada = localStorage.getItem('saa_foto_perfil');
     const preview = document.getElementById('foto-perfil-preview');
     const inicialEl = document.getElementById('foto-perfil-inicial');
@@ -3285,6 +3285,17 @@
       inicialEl.style.display = 'block';
       if (preview) preview.style.display = 'none';
     }
+
+    // Abrir sección específica si se pide (ej: desde menú hamburguesa)
+    const seccion = seccionAbierta || 'datos-nacimiento';
+    setTimeout(() => {
+      const body = document.getElementById(seccion);
+      const chev = document.getElementById('chev-' + seccion);
+      if (body && body.style.display === 'none') {
+        body.style.display = 'block';
+        if (chev) chev.classList.add('open');
+      }
+    }, 100);
   }
 
   let _datosNacimientoActuales = null;
