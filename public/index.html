@@ -64,8 +64,14 @@
   --tension-soft: rgba(224,85,85,0.15);
   --neutral-soft: rgba(255,255,255,0.05);
 }
-[data-theme="dark"] body { background: #1a1a1a !important; }
-[data-theme="dark"] .screen { background: var(--page-bg) !important; }
+[data-theme="dark"] body,
+[data-theme="dark"] .screen,
+[data-theme="dark"] .phone,
+[data-theme="dark"] [data-tab],
+[data-theme="dark"] .scroll { background: #1a1a1a !important; color: #e8e0f0 !important; }
+[data-theme="dark"] .section { background: #1a1a1a !important; }
+[data-theme="dark"] h1,[data-theme="dark"] h2,[data-theme="dark"] h3,
+[data-theme="dark"] p,[data-theme="dark"] span,[data-theme="dark"] div { color: #e8e0f0; }
 [data-theme="dark"] .card-lectura,
 [data-theme="dark"] .section > div,
 [data-theme="dark"] .tarjeta-lectura { background: var(--paper) !important; border-color: var(--line) !important; }
