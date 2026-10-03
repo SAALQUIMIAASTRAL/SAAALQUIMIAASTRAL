@@ -2750,51 +2750,214 @@
       const eventosPersonales = m.eventos_destacados || [];
       const areas = m.areas_destacadas || [];
 
-      // Resumen breve visible de entrada, sin acordeón — el mes bien destacado para que no se pierda
+      // Resumen breve visible de entrada
       let html = `<div style="text-align:center;">
-          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14px;color:var(--ink-dim);">Tu mes astrológico</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:24px;color:var(--marigold-dark);margin-bottom:4px;">${NOMBRES_MES[_calMesActual - 1]}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:18px;color:var(--plum);margin-bottom:6px;">Tu mes astrológico</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:36px;color:var(--marigold);margin-bottom:12px;letter-spacing:1px;">${EMOJIS_MESES[_calMesActual - 1]} ${NOMBRES_MES[_calMesActual - 1]}</div>
         </div>`;
       const totalEventos = ingresos.length + retrogrados.length + eventosPersonales.length;
       html += `<div class="disclaimer" style="text-align:center;margin-bottom:14px;">${totalEventos ? `${totalEventos} momentos clave este mes — toca cada bloque para explorarlos.` : 'Un mes sin grandes eventos mayores — buen momento para lo cotidiano.'}</div>`;
 
-      // 1) Panorama del mes
-      html += acordeonItemMes('nivel1-panorama', '🔮 Panorama del mes', m.relato ? `<div style="white-space:pre-line;">${m.relato}</div>` : 'Sin relato disponible este mes.', true);
+      // ===== 1) PANORAMA DEL MES (LUNA NUEVA / CRECIENTE / LLENA / MENGUANTE) =====
+      const diasDelMes = new Date(_calAnioActual, _calMesActual, 0).getDate();
+      const panoramaDetallado = generarPanoramaMes(m.relato, diasDelMes, _calMesActual);
+      html += acordeonItemMes('nivel1-panorama', '🔮 Panorama del mes', panoramaDetallado, true);
 
-      // 2) Eventos clave — ingresos y retrógrados, cada uno expandible individualmente (solo el título, sin subtítulo redundante)
+      // ===== 2) EVENTOS CLAVE CON ANÁLISIS =====
       const eventosClave = [
-        ...ingresos.map(i => ({ id: `ing-${i.fecha}-${i.planeta}`, planeta: i.planeta,
+        ...ingresos.map(i => ({ 
+          id: `ing-${i.fecha}-${i.planeta}`, 
+          planeta: i.planeta,
+          tipo: 'ingreso',
           titulo: `${i.planeta} entra en ${i.signo_nuevo} — ${i.fecha.slice(-2)} ${NOMBRES_MES[_calMesActual-1].slice(0,3)}`,
-          detalle: `<b>Qué significa:</b> ${i.planeta} activa ahora ${TEMA_PLANETA_INGRESO[i.planeta] || 'esta área de tu vida'} con el estilo de ${i.signo_nuevo}.<br><b>Cómo aprovecharlo:</b> Observa cómo cambia tu forma de vivir ${TEMA_PLANETA_INGRESO[i.planeta] || 'esto'} en las próximas semanas.` })),
-        ...retrogrados.map(r => ({ id: `retro-${r.fecha}-${r.planeta}`, planeta: r.planeta,
+          fecha: i.fecha,
+          signo: i.signo_nuevo,
+          detalle: generarDetalleIngreso(i.planeta, i.signo_nuevo, i.signo_anterior)
+        })),
+        ...retrogrados.map(r => ({ 
+          id: `retro-${r.fecha}-${r.planeta}`, 
+          planeta: r.planeta,
+          tipo: 'retrogrado',
           titulo: `${r.planeta} ${r.tipo === 'se_vuelve_retrogrado' ? 'retrógrado' : 'directo'} — ${r.fecha.slice(-2)} ${NOMBRES_MES[_calMesActual-1].slice(0,3)}`,
-          detalle: `<b>Qué activa:</b> ${r.tipo === 'se_vuelve_retrogrado' ? 'Momento de revisar, repensar y no forzar decisiones grandes relacionadas con ' + (TEMA_PLANETA_INGRESO[r.planeta] || r.planeta) + '.' : 'Lo que estuvo detenido puede retomar su curso normal.'}${r.duracion_tipica ? `<br><b>Duración típica:</b> ${r.duracion_tipica}.` : ''}` })),
+          fecha: r.fecha,
+          esRetrogrado: r.tipo === 'se_vuelve_retrogrado',
+          duracion: r.duracion_tipica,
+          detalle: generarDetalleRetrogrado(r.planeta, r.tipo === 'se_vuelve_retrogrado', r.duracion_tipica)
+        })),
       ].slice(0, 10);
+      
       const cuerpoEventosClave = eventosClave.length
         ? eventosClave.map(ev => acordeonItemMes(ev.id, ev.titulo, ev.detalle, false, { planeta: ev.planeta })).join('')
         : '<div class="disclaimer">Sin eventos generales mayores detectados este mes.</div>';
       html += acordeonItemMes('nivel1-eventosclave', '⭐ Eventos clave', cuerpoEventosClave, false);
 
-      // 3) Cómo te afecta a ti — tránsitos personales, ya deduplicados por el backend (un solo día por aspecto)
+      // ===== 3) CÓMO TE AFECTA A TI (ANÁLISIS PERSONALIZADO) =====
       const cuerpoPersonal = eventosPersonales.length
-        ? eventosPersonales.slice(0, 10).map(e => acordeonItemMes(
-            `pers-${e.fecha}-${e.planeta_transito}-${e.punto_natal}`,
-            `${e.planeta_transito} ${e.aspecto} tu ${e.punto_natal} natal — ${e.fecha.slice(-2)} ${NOMBRES_MES[_calMesActual-1].slice(0,3)}`,
-            `${e.casa_natal ? `<b>Casa afectada:</b> Casa ${e.casa_natal}<br>` : ''}${e.area ? `<b>Área de vida:</b> ${e.area}<br>` : ''}<b>Qué significa:</b> ${e.planeta_transito} entra en contacto directo con tu ${e.punto_natal} natal, activando ${e.area || 'esta parte de tu carta'}.`,
-            false,
-            { planeta: e.planeta_transito, tema: e.area || e.aspecto }
-          )).join('')
+        ? `<div style="margin-bottom:20px; padding:14px; background:rgba(45,27,78,0.05); border-radius:8px; border-left:3px solid var(--marigold);">
+            <div style="font-weight:600; color:var(--plum); margin-bottom:8px; font-size:15px;">📊 Tu mes en números</div>
+            <div style="font-size:16px; color:var(--plum); line-height:1.6;">
+              Tienes <strong>${eventosPersonales.length} momentos clave</strong> donde tu carta natal se activa. Los tránsitos te tocan especialmente en <strong>${[...new Set(eventosPersonales.map(e => e.area).filter(Boolean))].slice(0, 3).join(', ')}</strong>.
+            </div>
+          </div>` +
+          eventosPersonales.slice(0, 10).map(e => `
+            <div style="margin-bottom:18px; padding:18px; background:#fff; border:1px solid var(--line); border-radius:8px;">
+              <div style="font-size:16px; color:var(--plum); line-height:1.75; margin-bottom:12px;">
+                ${generarDetalleTransitoPersonal(e)}
+              </div>
+            </div>
+          `).join('')
         : '<div class="disclaimer">Sin tránsitos personales mayores este mes.</div>';
       html += acordeonItemMes('nivel1-personal', '🎯 Cómo te afecta a ti', cuerpoPersonal, false);
-
-      // (Se quitaron "Calendario astrológico", "Áreas más activas" y "Lunaciones del mes" —
-      // redundantes con el relato y con el Calendario lunar que ya existe en otra parte de la app)
 
       contenedor.innerHTML = html;
     } catch (e) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${e.message}</div>`;
     }
   }
+
+  // ===== HELPERS para panorama detallado =====
+  function generarPanoramaMes(relato, diasDelMes, mesNum) {
+    // Parse relato en 3 puntos principales
+    const partes = (relato || 'Un mes de transformación interior').split(/\.(?=\s)/);
+    const frase1 = partes[0] || 'siembra de intenciones';
+    const frase2 = partes[1] || 'eventos que se aceleran';
+    const frase3 = partes[2] || 'integración y cierre';
+
+    return `
+      <div style="padding:18px; line-height:1.85; font-size:16px; color:var(--plum);">
+        <p style="margin:0 0 12px 0;">
+          <strong>Entrando el mes,</strong> la Luna Nueva marca el inicio. Es momento de plantear intenciones claras sobre qué quieres manifestar. Los primeros días invitan a la reflexión, a limpiar energías viejas y a observar con calma qué está naciendo. ${frase1}.
+        </p>
+        <p style="margin:0 0 12px 0;">
+          <strong>A mediados de ${NOMBRES_MES[mesNum-1]},</strong> todo cambia. La Luna Llena trae claridad, culminación y pico energético. Los eventos planetarios se aceleran: ${frase2}. Es el momento de actuar, tomar decisiones y ver resultados de lo plantado. Energía máxima.
+        </p>
+        <p style="margin:0;">
+          <strong>Cerrando el mes,</strong> la Luna Menguante invita a integración. Revisa lo que aprendiste, termina pendientes y suelta lo que no te sirve. La energía se vuelve más tranquila, ideal para organizar, sanar y prepararte para el próximo ciclo. ${frase3}.
+        </p>
+      </div>
+    `;
+  }
+
+  function generarDetalleIngreso(planeta, signoNuevo, signoAnterior) {
+    const temas = {
+      'Sol': 'tu identidad, propósito y expresión personal',
+      'Luna': 'tus emociones, intuición y necesidades de seguridad',
+      'Mercurio': 'tu comunicación, pensamiento y aprendizaje',
+      'Venus': 'tus relaciones, atracción y valores',
+      'Marte': 'tu energía, acción y assertividad',
+      'Júpiter': 'tu expansión, suerte y crecimiento',
+      'Saturno': 'tus límites, responsabilidad y lecciones',
+      'Urano': 'tu originalidad, cambios inesperados',
+      'Neptuno': 'tu imaginación, espiritualidad',
+      'Plutón': 'tu transformación profunda',
+    };
+    const tema = temas[planeta] || 'esta área de tu vida';
+    
+    return `
+      <b>Qué sucede:</b> ${planeta} se traslada de ${signoAnterior || 'su posición anterior'} a ${signoNuevo}.<br>
+      <b>Afecta:</b> ${tema}<br>
+      <b>Con estilo ${signoNuevo}:</b> Los próximas semanas vivirás ${tema} con características de ${signoNuevo}: adaptabilidad, intensidad, lógica, creatividad, según la naturaleza del signo.<br>
+      <b>Consejo:</b> Observa patrones nuevos en cómo te relacionas, actúas o piensas respecto a ${tema}.
+    `;
+  }
+
+  function generarDetalleRetrogrado(planeta, esRetrogrado, duracion) {
+    const explicacion = esRetrogrado
+      ? `${planeta} aparentemente retrocede en el cielo. Este es un momento de revisión, introspección y corrección en áreas relacionadas con ${planeta}.`
+      : `${planeta} retoma su movimiento directo. Lo que estuvo detenido o en revisión ahora avanza nuevamente.`;
+    
+    return `
+      <b>Qué significa:</b> ${explicacion}<br>
+      ${esRetrogrado ? `<b>Momento:</b> Evita iniciar cosas grandes relacionadas con ${planeta}. Mejor para revisar, replantear, cerrar ciclos.<br>` : ''}
+      ${duracion ? `<b>Duración:</b> ${duracion}` : ''}
+      <b>Tu acción:</b> ${esRetrogrado ? 'Haz listas de pendientes, revisa contratos, reconcilia asuntos sin resolver.' : 'Impulsa proyectos que estuvo en pausa y toma decisiones que estaban en espera.'}
+    `;
+  }
+
+  function generarAnalisisPersonal(eventosPersonales, mesActual) {
+    const totalEventos = eventosPersonales.length;
+    const planetasUnicos = [...new Set(eventosPersonales.map(e => e.planeta_transito))];
+    const areasUnicas = [...new Set(eventosPersonales.map(e => e.area).filter(Boolean))];
+    
+    return `
+      <div style="padding:10px; background:rgba(45,27,78,0.05); border-radius:8px; margin-bottom:10px;">
+        <div style="font-weight:600; color:var(--plum); margin-bottom:6px;">📊 Tu panorama personalizado</div>
+        <div style="font-size:12px; color:var(--ink-dim); line-height:1.6;">
+          <b>Eventos para ti:</b> ${totalEventos} tránsitos activos este mes.<br>
+          <b>Planetas en contacto:</b> ${planetasUnicos.join(', ')}<br>
+          ${areasUnicas.length > 0 ? `<b>Áreas más activas:</b> ${areasUnicas.join(', ')}<br>` : ''}
+          <b>Tema del mes en tu carta:</b> Un período de ${totalEventos > 3 ? 'cambios significativos' : 'ajustes importantes'} en los que necesitas prestar atención a los contactos descritos abajo.
+        </div>
+      </div>
+    `;
+  }
+
+  function generarDetalleTransitoPersonal(evento) {
+    // Generar texto corrido empático sin tecnicismos
+    const textoHtml = generarTextoTransitoEmatico(evento);
+    const referencia = `${evento.planeta_transito} ${evento.aspecto} ${evento.punto_natal}${evento.fecha ? ` (${evento.fecha.slice(-2)})` : ''} • Afecta: ${evento.area || 'tu carta'}`;
+    
+    return `
+      ${textoHtml}
+      <div style="font-size:13px; color:var(--ink-dim); font-style:italic; margin-top:10px;">
+        Tránsito activo: ${referencia}
+      </div>
+    `;
+  }
+
+  function generarTextoTransitoEmatico(evento) {
+    // Diccionario de arquetipos por planeta + aspecto + punto natal
+    // Generar narrativa empática corta (5-8 líneas)
+    
+    const planeta = evento.planeta_transito;
+    const punto = evento.punto_natal;
+    const aspecto = evento.aspecto;
+    const area = evento.area || 'tu vida';
+    
+    // Casos comunes
+    if (planeta.includes('Venus') && punto.includes('Saturno') && aspecto.includes('oposi')) {
+      return `Estos días puedes sentir que una relación o tema afectivo se vuelve más serio de lo habitual. Puede aparecer una conversación sobre compromiso, límites o expectativas, o notar cierta distancia que te haga pensar qué quieres realmente. No significa necesariamente una ruptura; puede ser un momento para ver con más claridad qué relación tiene bases sólidas y cuál necesita ajustes. Observa qué te está pidiendo más madurez y honestidad.`;
+    }
+    
+    if (planeta.includes('Marte') && punto.includes('Sol') && aspecto.includes('trígono')) {
+      return `Tienes acceso a una energía diferente. Sientes más confianza de la usual, las cosas fluyen, y hay un impulso natural para actuar, hablar o comenzar algo que llevas posponiéndose. Es como si tuvieras permiso de ser más protagonista de tu vida. Los proyectos o ideas que inicies ahora tienen movimiento. No es el momento de dudar; es el de avanzar. ¿Hay algo que quieras hacer pero has dejado para después? Este es tu momento.`;
+    }
+    
+    if (planeta.includes('Mercurio') && aspecto.includes('cuad')) {
+      return `La comunicación puede sentirse confusa o habrá malentendidos frecuentes durante este período. Conversaciones que querías tener pueden no fluir como esperabas, o información importante puede no llegar clara. Pausa antes de decidir cosas grandes; es mejor tiempo para aclarar, pedir explicaciones y escribir lo importante. Evita asumir que entiendes sin verificar.`;
+    }
+    
+    if (planeta.includes('Plutón')) {
+      return `Algo profundo está cambiando en ${area}. Puedes sentir intensidad emocional, ganas de "sacar" lo que está escondido o una necesidad de transformación. Es incómodo a veces, pero necesario. Observa qué está pidiendo morir y qué quiere nacer nuevo. Este es un período de regeneración, aunque sea turbio.`;
+    }
+    
+    if (planeta.includes('Júpiter')) {
+      return `Hay expansión y oportunidades en ${area}. Puedes notar más suerte, puertas abiertas o ganas de crecer. Es momento para aprender, viajar mentalmente o tomar riesgos calculados. La energía es favorable, pero evita excederte pensando que todo es posible. La moderación sigue siendo tu mejor aliada.`;
+    }
+    
+    if (planeta.includes('Luna') && aspecto.includes('cuad')) {
+      return `Tus emociones pueden estar inestables o conflictivas en estos días. Puede haber tensión entre lo que sientes y lo que necesitas hacer, o entre tu vida emocional y tus responsabilidades. No es el mejor momento para decisiones grandes sobre relaciones o familia. Enfócate en sentir sin juzgar, y toma distancia antes de actuar.`;
+    }
+    
+    // Genérico empático para otros casos
+    return `Hay movimiento en ${area}. Puedes notar cambios en cómo te sientes, reaccionas o ves las cosas. Este es un período para observar, aprender y adaptarte. No es bueno ni malo; es una oportunidad para crecer y entender mejor qué funciona para ti.`;
+  }
+
+  // Mapa auxiliar de temas de casas (si no existe)
+  const TEMAS_CASAS = {
+    '1': 'identidad y apariencia',
+    '2': 'recursos y valores',
+    '3': 'comunicación y hermanos',
+    '4': 'hogar y familia',
+    '5': 'creatividad y romance',
+    '6': 'salud y servicio',
+    '7': 'relaciones y sociedad',
+    '8': 'transformación y finanzas',
+    '9': 'aprendizaje y viajes',
+    '10': 'carrera y reputación',
+    '11': 'amigos y comunidad',
+    '12': 'espiritualidad y lo oculto',
+  };
 
   async function alternarEntradasDiario() {
     const lista = document.getElementById('diario-lista');
@@ -3700,6 +3863,7 @@
   };
   function svgLuna(faseNombre) { return FASE_EMOJI[faseNombre] || '🌙'; }
   const NOMBRES_MES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const EMOJIS_MESES = ['❄️','💕','🌸','🌼','🌻','🌴','⭐','🔥','🍂','💀🌹','☠️👻','🎄'];
   let _calMesActual = new Date().getUTCMonth() + 1;
   let _calAnioActual = new Date().getUTCFullYear();
   let _calDiaSeleccionado = null;
