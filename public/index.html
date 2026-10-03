@@ -666,7 +666,7 @@
       <span>🎂 Mis datos de nacimiento</span><span id="chev-sec-datos">▼</span>
     </button>
     <div id="sec-datos" style="display:none;padding:0 14px 14px;">
-      <div style="background:rgba(201,168,76,0.15);border-radius:10px;padding:10px;margin-bottom:10px;font-size:12px;color:var(--plum);">⚠️ Puedes modificar tu fecha de nacimiento <b>una sola vez</b>. Para otras personas usa la sección <b>Personas</b>.</div>
+      <div style="background:rgba(201,168,76,0.15);border-radius:10px;padding:10px;margin-bottom:10px;font-size:12px;color:var(--plum);">⚠️ Puedes modificar tu fecha de nacimiento <b>una sola vez</b>. Para hacer la carta de alguien más, usa la sección <b>Cartas</b>.</div>
       <div id="vista-datos-resumen" style="background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;font-size:13px;color:var(--plum);line-height:1.9;"></div>
       <div id="editar-datos-form" style="display:none;">
         <div class="auth-error" id="editar-datos-error"></div>
@@ -798,7 +798,7 @@
           <div style="font-size:12px;color:var(--ink-dim);">Astróloga profesional</div>
         </div>
       </div>
-      <div style="font-size:13px;color:var(--plum);line-height:1.7;margin-bottom:10px;">La astrología no te dice qué va a pasar — te ayuda a entender quién eres y qué ciclos estás atravesando para que puedas elegir mejor.</div>
+      <div style="font-size:13px;color:var(--plum);line-height:1.7;margin-bottom:10px;">Soy Sam, astróloga y creadora de AlquimIA.<br><br>Mi camino en la astrología nace de una inquietud muy concreta: entender por qué vivimos ciertos ciclos, repetimos determinados patrones y atravesamos etapas que parecen tener un significado mucho más profundo.<br><br>Con los años, el estudio de la astrología se convirtió en una herramienta de autoconocimiento y observación de los ciclos de vida. De ahí nace AlquimIA: un espacio creado para acercar la astrología a la vida cotidiana de una manera clara, práctica y fácil de comprender.<br><br>Mi intención es que aquí no solo puedas ver tu carta natal o consultar un tránsito, sino aprender a interpretar tu propio proceso: reconocer tus ciclos, registrar lo que estás viviendo y descubrir patrones a través del tiempo.<br><br>AlquimIA une astrología, tecnología y autoconocimiento para ayudarte a comprender mejor tu propio mapa.<br><br><b>Sam | Alquimia Astral</b></div>
       <div style="display:flex;flex-direction:column;gap:7px;">
         <a href="https://www.tiktok.com/@samalquimiaastral" target="_blank" style="display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--plum);font-size:13px;padding:8px;background:var(--paper);border-radius:10px;">🎵 TikTok — @samalquimiaastral</a>
         <a href="https://www.instagram.com/samalquimiaastral" target="_blank" style="display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--plum);font-size:13px;padding:8px;background:var(--paper);border-radius:10px;">📸 Instagram — @samalquimiaastral</a>
@@ -2916,13 +2916,14 @@
   // ===== MI CUENTA - SECCIONES DESPLEGABLES =====
   function cambiarTamanoFuente(valor) {
     const pct = Math.min(120, Math.max(90, parseInt(valor)));
+    const factor = pct / 100;
     let el = document.getElementById('saa-fuente-css');
     if (!el) { el = document.createElement('style'); el.id = 'saa-fuente-css'; document.head.appendChild(el); }
-    el.textContent = `html { font-size: ${pct}% !important; }`;
+    el.textContent = `.scroll *,.section *,.card-lectura *,.tarjeta-lectura *,.auth-overlay * { font-size: calc(1em * ${factor}) !important; }`;
     localStorage.setItem('saa_tamano_fuente', pct);
     const display = document.getElementById('tamano-fuente-valor');
-    const labels = { 90:'Pequeño', 95:'Pequeño', 100:'Normal', 105:'Normal', 110:'Grande', 115:'Grande', 120:'Grande' };
-    if (display) display.textContent = labels[pct] || pct + '%';
+    const labels = { 90:'P', 95:'P', 100:'M', 105:'M', 110:'G', 115:'G', 120:'G' };
+    if (display) display.textContent = labels[pct] || 'M';
     const slider = document.getElementById('slider-tamano-fuente');
     if (slider) slider.value = pct;
   }
