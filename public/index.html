@@ -75,6 +75,43 @@
   body{font-size:var(--texto-cuerpo);line-height:1.55;}
   input, textarea, select{font-size:15px !important;line-height:1.45;}
   .section p, .section li{font-size:15px;line-height:1.6;}
+  /* Resultados de cálculos: misma escala legible que el resto de la app */
+  .section [id$="-resultado"],
+  .section [id$="-contenedor"],
+  .section [id$="-cruda"],
+  .section [id$="-lista"],
+  .section [id$="-detalle"]{
+    font-size:15px;
+    line-height:1.6;
+  }
+  .section [id$="-resultado"] p,
+  .section [id$="-resultado"] li,
+  .section [id$="-contenedor"] p,
+  .section [id$="-contenedor"] li,
+  .section [id$="-cruda"] p,
+  .section [id$="-cruda"] li{
+    font-size:15px !important;
+    line-height:1.6 !important;
+  }
+  .section [id$="-resultado"] .card-titulo,
+  .section [id$="-contenedor"] .card-titulo{
+    font-size:18px !important;
+    line-height:1.25 !important;
+  }
+  .section [id$="-resultado"] .card-cuerpo,
+  .section [id$="-contenedor"] .card-cuerpo{
+    font-size:15.5px !important;
+    line-height:1.65 !important;
+  }
+  .section [id$="-resultado"] button,
+  .section [id$="-contenedor"] button{
+    font-size:14px !important;
+  }
+  .section [id$="-resultado"] pre,
+  .section [id$="-contenedor"] pre{
+    font-size:13px !important;
+    line-height:1.5 !important;
+  }
   html,body{margin:0;padding:0;background:#e9e2da;font-family:'Work Sans',sans-serif;color:var(--plum);}
   h1,h2,h3,.display{font-family:'Cormorant Garamond',serif;font-weight:700;margin:0;}
   .page{display:flex;justify-content:center;padding:36px 12px;}
