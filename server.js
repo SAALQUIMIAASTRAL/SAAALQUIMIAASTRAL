@@ -53,30 +53,56 @@ const TTL = {
   ESTRELLAS: 7 * 24 * 60 * 60 * 1000,    // 7 días (prácticamente estática)
 };
 
-// Helper: obtener hoy en formato YYYY-MM-DD para claves de caché
+// Helpers de tiempo.
+// Regla de arquitectura: UTC para el instante astronómico; zona horaria del dispositivo
+// únicamente para decidir qué fecha/hora ve la persona ("hoy", calendario, numerología, etc.).
 const hoyStr = () => new Date().toISOString().slice(0, 10);
 const horaStr = () => new Date().toISOString().slice(0, 13);
 
-// Fecha local del usuario según timezone (evita que a las 7pm en México ya sea mañana en UTC)
-function fechaLocalMexico(tz) {
+function normalizarZonaHoraria(tz) {
+  const candidata = (tz || '').trim();
+  if (!candidata) return 'America/Mexico_City';
   try {
-    const zona = tz || 'America/Mexico_City';
-    return new Date().toLocaleDateString('en-CA', { timeZone: zona }); // YYYY-MM-DD
-  } catch(e) { return hoyStr(); }
+    new Intl.DateTimeFormat('en-US', { timeZone: candidata }).format(new Date());
+    return candidata;
+  } catch (e) {
+    return 'America/Mexico_City';
+  }
+}
+
+function zonaHorariaDesdeReq(req) {
+  return normalizarZonaHoraria(req.headers['x-timezone'] || req.body?.timezone);
+}
+
+function partesEnZona(tz, instante = new Date()) {
+  const zona = normalizarZonaHoraria(tz);
+  try {
+    const partes = new Intl.DateTimeFormat('en-CA', {
+      timeZone: zona,
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit',
+      hourCycle: 'h23',
+    }).formatToParts(instante);
+    const leer = tipo => parseInt(partes.find(p => p.type === tipo)?.value || '0', 10);
+    return {
+      year: leer('year'), month: leer('month'), day: leer('day'),
+      hour: leer('hour'), minute: leer('minute'), timezone: zona,
+    };
+  } catch (e) {
+    return {
+      year: instante.getUTCFullYear(), month: instante.getUTCMonth()+1, day: instante.getUTCDate(),
+      hour: instante.getUTCHours(), minute: instante.getUTCMinutes(), timezone: 'UTC',
+    };
+  }
+}
+
+function fechaLocalMexico(tz) {
+  const p = partesEnZona(tz);
+  return `${String(p.year).padStart(4,'0')}-${String(p.month).padStart(2,'0')}-${String(p.day).padStart(2,'0')}`;
 }
 
 function ahoraMexico(tz) {
-  try {
-    const zona = tz || 'America/Mexico_City';
-    const fecha = new Date().toLocaleDateString('en-CA', { timeZone: zona });
-    const [y, m, d] = fecha.split('-').map(Number);
-    const hora = parseInt(new Date().toLocaleString('en-US', { timeZone: zona, hour: 'numeric', hour12: false }));
-    const minuto = parseInt(new Date().toLocaleString('en-US', { timeZone: zona, minute: 'numeric' }));
-    return { year: y, month: m, day: d, hour: hora, minute: minuto };
-  } catch(e) {
-    const n = new Date();
-    return { year: n.getUTCFullYear(), month: n.getUTCMonth()+1, day: n.getUTCDate(), hour: n.getUTCHours(), minute: n.getUTCMinutes() };
-  }
+  return partesEnZona(tz);
 }
 
 app.get('/', (req, res) => {
@@ -248,6 +274,37 @@ const astrologyApi = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+// Luna actual GLOBAL: se calcula una vez por bloque de 30 minutos y se comparte.
+// La Luna/fase/signo del instante no depende de la carta natal de cada usuaria.
+// Usamos UTC + Greenwich para representar un instante absoluto y evitar mezclar
+// la hora actual del teléfono con la ciudad de nacimiento.
+async function obtenerLunaGlobalActual() {
+  const bloque30m = Math.floor(Date.now() / TTL.LUNA);
+  const cacheKey = cacheHash('luna-global-v2', bloque30m);
+  const cached = cacheGet(cacheKey);
+  if (cached) return cached;
+
+  const ahora = new Date();
+  const respuesta = await astrologyApi.post('/analysis/lunar-analysis', {
+    datetime_location: {
+      year: ahora.getUTCFullYear(),
+      month: ahora.getUTCMonth() + 1,
+      day: ahora.getUTCDate(),
+      hour: ahora.getUTCHours(),
+      minute: ahora.getUTCMinutes(),
+      second: ahora.getUTCSeconds(),
+      city: 'Greenwich',
+      country_code: 'GB',
+    },
+    report_options: { language: 'es' },
+  });
+
+  const respuestaLuna = { mensaje: 'Datos lunares actuales', luna: respuesta.data };
+  await traducirInterpretacionesEnObjeto(respuestaLuna);
+  cacheSet(cacheKey, respuestaLuna, TTL.LUNA);
+  return respuestaLuna;
+}
 
 // ============================================================
 // Middleware: verifica que la usuaria haya iniciado sesión
@@ -629,30 +686,18 @@ app.post('/resumen-natal', requireLogin, async (req, res) => {
 
 app.post('/luna', requireLogin, async (req, res) => {
   try {
-    const perfil = await leerPerfil(req);
-    const ahora = new Date();
-    const cacheKey = cacheHash(req.userId, horaStr())
-    const cached = cacheGet(cacheKey);
-    if (cached) return res.json(cached);
+    const tz = zonaHorariaDesdeReq(req);
+    const local = partesEnZona(tz);
+    const respuestaLuna = await obtenerLunaGlobalActual();
 
-    const respuesta = await astrologyApi.post('/analysis/lunar-analysis', {
-      datetime_location: {
-        year: ahora.getUTCFullYear(),
-        month: ahora.getUTCMonth() + 1,
-        day: ahora.getUTCDate(),
-        hour: ahora.getUTCHours(),
-        minute: ahora.getUTCMinutes(),
-        second: 0,
-        city: perfil?.ciudad_nacimiento || 'Mexico City',
-        country_code: perfil?.pais_codigo || 'MX',
+    res.json({
+      ...respuestaLuna,
+      contexto_tiempo: {
+        timezone: local.timezone,
+        fecha_local: `${String(local.year).padStart(4,'0')}-${String(local.month).padStart(2,'0')}-${String(local.day).padStart(2,'0')}`,
+        hora_local: `${String(local.hour).padStart(2,'0')}:${String(local.minute).padStart(2,'0')}`,
       },
-      report_options: { language: 'es' },
     });
-
-    const respuestaLuna = { mensaje: 'Datos lunares de hoy', luna: respuesta.data };
-    await traducirInterpretacionesEnObjeto(respuestaLuna);
-    cacheSet(cacheKey, respuestaLuna, TTL.LUNA);
-    res.json(respuestaLuna);
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({
@@ -809,40 +854,42 @@ app.post('/home-summary', requireLogin, async (req, res) => {
     const perfil = await leerPerfil(req);
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
-    const tz = req.body?.timezone || 'America/Mexico_City';
-    const hoy = new Date();
-    const ahora = ahoraMexico(tz);
-    const cacheKey = cacheHash(req.userId, 'home', fechaLocalMexico(tz));
+    const tz = zonaHorariaDesdeReq(req);
+    const ahora = partesEnZona(tz);
+    const fechaLocal = `${String(ahora.year).padStart(4,'0')}-${String(ahora.month).padStart(2,'0')}-${String(ahora.day).padStart(2,'0')}`;
+    const cacheKey = cacheHash(req.userId, 'home-v2', fechaLocal);
     const cached = cacheGet(cacheKey);
     if (cached) return res.json({ ...cached, nombre: perfil.nombre });
 
-    // Lanzar todas las llamadas en paralelo
-    const [lunaData, ciclosData, transitosHoyData] = await Promise.all([
-      astrologyApi.post('/analysis/lunar-analysis', {
-        datetime_location: {
-          year: ahora.year, month: ahora.month, day: ahora.day,
-          hour: ahora.hour, minute: ahora.minute, second: 0,
-          city: perfil.ciudad_nacimiento || 'Mexico City', country_code: perfil.pais_codigo || 'MX',
-        },
-        report_options: { language: 'es' },
-      }).catch(() => null),
+    // Luna global compartida + cálculos realmente personales en paralelo.
+    const [lunaGlobal, ciclosData, transitosHoyData] = await Promise.all([
+      obtenerLunaGlobalActual().catch(() => null),
       astrologyApi.post('/numerology/personal-cycles', {
         subject: birthDataDesdePerfil(perfil),
         target_date: { year: ahora.year, month: ahora.month, day: ahora.day },
         language: 'es',
       }).catch(() => null),
-      astrologyApi.post('/charts/natal', {
-        subject: { name: 'Hoy', birth_data: { year: hoy.getUTCFullYear(), month: hoy.getUTCMonth()+1, day: hoy.getUTCDate(), hour: hoy.getUTCHours(), minute: 0, second: 0, city: 'Greenwich', country_code: 'GB' } },
-        options: { house_system: 'P', zodiac_type: 'Tropic', language: 'es' },
-      }).catch(() => null),
+      (() => {
+        const utc = new Date();
+        return astrologyApi.post('/charts/natal', {
+          subject: {
+            name: 'Cielo actual',
+            birth_data: {
+              year: utc.getUTCFullYear(), month: utc.getUTCMonth()+1, day: utc.getUTCDate(),
+              hour: utc.getUTCHours(), minute: utc.getUTCMinutes(), second: utc.getUTCSeconds(),
+              city: 'Greenwich', country_code: 'GB',
+            },
+          },
+          options: { house_system: 'P', zodiac_type: 'Tropic', language: 'es' },
+        });
+      })().catch(() => null),
     ]);
 
-    const luna = lunaData?.data?.data?.lunar_metrics;
+    const luna = lunaGlobal?.luna?.data?.lunar_metrics;
     const diaPersonal = ciclosData?.data?.data?.personal_day?.number || null;
     const anioPersonal = ciclosData?.data?.data?.personal_year?.number || null;
     const planetasHoy = transitosHoyData?.data?.subject_data;
 
-    // Extraer el tránsito más importante del día
     let transitoPrincipal = null;
     if (planetasHoy) {
       const PESO = { Pluto:1, Neptune:2, Uranus:3, Saturn:4, Jupiter:5, Mars:6, Venus:7, Mercury:8, Sun:9, Moon:10 };
@@ -854,11 +901,18 @@ app.post('/home-summary', requireLogin, async (req, res) => {
     }
 
     const resumen = {
-      luna: luna ? { signo: luna.moon_sign, fase: luna.moon_phase, iluminacion: Math.round(luna.moon_illumination), dia_lunar: luna.moon_day } : null,
+      luna: luna ? {
+        signo: luna.moon_sign,
+        fase: luna.moon_phase,
+        iluminacion: Math.round(luna.moon_illumination),
+        dia_lunar: luna.moon_day,
+      } : null,
       dia_personal: diaPersonal,
       anio_personal: anioPersonal,
       transito_principal: transitoPrincipal,
-      hora_local: hoy.getUTCHours(),
+      fecha_local: fechaLocal,
+      hora_local: ahora.hour,
+      timezone: ahora.timezone,
     };
 
     cacheSet(cacheKey, resumen, TTL.ENERGIA_DIA);
