@@ -153,6 +153,9 @@
   }
   .section h2{font-size:19px !important;font-weight:800 !important;margin-bottom:6px;border-left:3px solid var(--marigold);padding-left:10px;font-family:'Cormorant Garamond',serif;color:var(--plum);}
   .section h3{font-size:16px;font-weight:700;color:var(--plum);}
+  .campo-pass{position:relative;}
+  .campo-pass input{padding-right:44px !important;width:100%;box-sizing:border-box;}
+  .ojo-toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:20px;padding:4px;color:var(--ink-dim);line-height:1;z-index:10;-webkit-tap-highlight-color:transparent;}
   .section .desc{font-size:12px;color:var(--ink-dim);margin-bottom:12px;line-height:1.5;}
   .section .desc{font-size:12.5px;color:var(--ink-dim);margin-bottom:14px;line-height:1.5;}
 
@@ -700,10 +703,7 @@
       <div style="font-size:13px;color:var(--plum);margin-bottom:10px;">Correo actual: <b id="correo-actual-mostrar"></b></div>
       <div style="font-size:12px;color:var(--ink-dim);margin-bottom:10px;">⚠️ Solo puedes cambiar tu correo <b>una vez</b>.</div>
       <div class="auth-field"><label>Nuevo correo</label><input type="email" id="nuevo-correo" placeholder="nuevo@correo.com"></div>
-      <div class="auth-field" style="position:relative;"><label>Contraseña actual</label>
-        <input type="password" id="pass-para-correo" placeholder="Confirma tu contraseña" style="padding-right:44px;">
-        <button type="button" class="ojo-toggle" onclick="alternarOjo('pass-para-correo',this)">👁</button>
-      </div>
+      <div class="auth-field"><label>Contraseña actual</label><div class="campo-pass"><input type="password" id="pass-para-correo" placeholder="Confirma tu contraseña"><button type="button" class="ojo-toggle" onclick="alternarOjo('pass-para-correo',this)">👁</button></div></div>
       <div class="auth-error" id="error-correo"></div>
       <button class="btn-primary" onclick="cambiarCorreo()" style="width:100%;">Actualizar correo</button>
     </div>
@@ -716,18 +716,9 @@
     </button>
     <div id="sec-pass" style="display:none;padding:0 14px 14px;">
       <div class="auth-error" id="cambiar-pass-error"></div>
-      <div class="auth-field" style="position:relative;"><label>Contraseña actual</label>
-        <input type="password" id="cambiar-pass-actual" autocomplete="current-password" style="padding-right:44px;-webkit-user-select:auto;">
-        <button type="button" class="ojo-toggle" onclick="alternarOjo('cambiar-pass-actual',this)">👁</button>
-      </div>
-      <div class="auth-field" style="position:relative;"><label>Nueva contraseña</label>
-        <input type="password" id="cambiar-pass-nueva" placeholder="Mínimo 6 caracteres" autocomplete="new-password" style="padding-right:44px;-webkit-user-select:auto;">
-        <button type="button" class="ojo-toggle" onclick="alternarOjo('cambiar-pass-nueva',this)">👁</button>
-      </div>
-      <div class="auth-field" style="position:relative;"><label>Confirmar nueva contraseña</label>
-        <input type="password" id="cambiar-pass-confirmar" placeholder="Repite la nueva contraseña" autocomplete="new-password" style="padding-right:44px;-webkit-user-select:auto;">
-        <button type="button" class="ojo-toggle" onclick="alternarOjo('cambiar-pass-confirmar',this)">👁</button>
-      </div>
+      <div class="auth-field"><label>Contraseña actual</label><div class="campo-pass"><input type="password" id="cambiar-pass-actual" autocomplete="current-password" style="-webkit-user-select:auto;"><button type="button" class="ojo-toggle" onclick="alternarOjo('cambiar-pass-actual',this)">👁</button></div></div>
+      <div class="auth-field"><label>Nueva contraseña</label><div class="campo-pass"><input type="password" id="cambiar-pass-nueva" placeholder="Mínimo 6 caracteres" autocomplete="new-password" style="-webkit-user-select:auto;"><button type="button" class="ojo-toggle" onclick="alternarOjo('cambiar-pass-nueva',this)">👁</button></div></div>
+      <div class="auth-field"><label>Confirmar nueva contraseña</label><div class="campo-pass"><input type="password" id="cambiar-pass-confirmar" placeholder="Repite la nueva contraseña" autocomplete="new-password" style="-webkit-user-select:auto;"><button type="button" class="ojo-toggle" onclick="alternarOjo('cambiar-pass-confirmar',this)">👁</button></div></div>
       <button class="btn-primary" onclick="accionCambiarPassword()" style="width:100%;">Guardar nueva contraseña</button>
     </div>
   </div>
@@ -744,7 +735,7 @@
           <span style="font-size:13px;font-weight:600;color:var(--plum);">Tamaño de letra</span>
           <span id="tamano-fuente-valor" style="font-size:12px;font-weight:600;color:var(--plum);">100%</span>
         </div>
-        <input type="range" id="slider-tamano-fuente" min="80" max="150" value="100" step="5"
+        <input type="range" id="slider-tamano-fuente" min="90" max="120" value="100" step="5"
           oninput="cambiarTamanoFuente(this.value)" onchange="cambiarTamanoFuente(this.value)" ontouchend="cambiarTamanoFuente(this.value)"
           style="width:100%;height:8px;border-radius:4px;background:linear-gradient(to right,var(--lilac),var(--marigold));outline:none;-webkit-appearance:none;appearance:none;touch-action:pan-x;">
         <style>#slider-tamano-fuente::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:#fff;border:3px solid var(--lilac);cursor:pointer;}</style>
@@ -2923,6 +2914,24 @@
   }
 
   // ===== MI CUENTA - SECCIONES DESPLEGABLES =====
+  function cambiarTamanoFuente(valor) {
+    const pct = Math.min(120, Math.max(90, parseInt(valor)));
+    let el = document.getElementById('saa-fuente-css');
+    if (!el) { el = document.createElement('style'); el.id = 'saa-fuente-css'; document.head.appendChild(el); }
+    el.textContent = `html { font-size: ${pct}% !important; }`;
+    localStorage.setItem('saa_tamano_fuente', pct);
+    const display = document.getElementById('tamano-fuente-valor');
+    const labels = { 90:'Pequeño', 95:'Pequeño', 100:'Normal', 105:'Normal', 110:'Grande', 115:'Grande', 120:'Grande' };
+    if (display) display.textContent = labels[pct] || pct + '%';
+    const slider = document.getElementById('slider-tamano-fuente');
+    if (slider) slider.value = pct;
+  }
+
+  function aplicarTamanoFuenteGuardado() {
+    const tamano = localStorage.getItem('saa_tamano_fuente') || '100';
+    cambiarTamanoFuente(tamano);
+  }
+
   function toggleSeccionCuenta(id) {
     const body = document.getElementById(id);
     const chev = document.getElementById('chev-' + id);
@@ -4883,6 +4892,7 @@
 
     // Al cargar la página: ¿ya hay sesión guardada?
   aplicarTemaGuardado();
+  aplicarTamanoFuenteGuardado();
   cambiarPestana('hoy');
   // ===== SAM LOADING =====
   function samLoading(texto) {
