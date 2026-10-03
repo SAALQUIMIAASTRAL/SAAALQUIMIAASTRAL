@@ -1726,14 +1726,27 @@
   };
 
   // fetchAuth: igual que fetch() pero con renovación automática de token
+  function zonaHorariaDispositivo() {
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Mexico_City';
+    } catch (e) {
+      return 'America/Mexico_City';
+    }
+  }
+
   async function fetchAuth(url, opciones = {}) {
-    const headers = { ...(opciones.headers || {}), Authorization: 'Bearer ' + SESION.token };
+    const headersBase = {
+      ...(opciones.headers || {}),
+      'X-Timezone': zonaHorariaDispositivo(),
+    };
+    const headers = { ...headersBase, Authorization: 'Bearer ' + SESION.token };
     let r = await fetch(apiUrl(url), { ...opciones, headers });
 
     if (r.status === 401 && SESION.refresh) {
       try {
         const rr = await fetch(BACKEND + '/auth/refresh', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Timezone': zonaHorariaDispositivo() },
           body: JSON.stringify({ refresh_token: SESION.refresh }),
         });
         if (rr.ok) {
@@ -1742,8 +1755,7 @@
           SESION.refresh = dd.sesion.refresh_token || SESION.refresh;
           localStorage.setItem('saa_token', SESION.token);
           if (SESION.refresh) localStorage.setItem('saa_refresh', SESION.refresh);
-          // Reintenta con el token nuevo
-          const headers2 = { ...(opciones.headers || {}), Authorization: 'Bearer ' + SESION.token };
+          const headers2 = { ...headersBase, Authorization: 'Bearer ' + SESION.token };
           r = await fetch(apiUrl(url), { ...opciones, headers: headers2 });
         }
       } catch (e) { /* si falla, devuelve el 401 original */ }
@@ -4404,8 +4416,8 @@
   function svgLuna(faseNombre) { return FASE_EMOJI[faseNombre] || '🌙'; }
   const NOMBRES_MES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const EMOJIS_MESES = ['❄️','💕','🌸','🌼','🌻','🌴','⭐','🔥','🍂','💀🌹','☠️👻','🎄'];
-  let _calMesActual = new Date().getUTCMonth() + 1;
-  let _calAnioActual = new Date().getUTCFullYear();
+  let _calMesActual = new Date().getMonth() + 1;
+  let _calAnioActual = new Date().getFullYear();
   let _calDiaSeleccionado = null;
 
   async function renderizarSemanaLunar(mes, anio) {
@@ -4429,16 +4441,16 @@
       (data.detalle_dias || []).forEach(d => { porDia[d.dia] = d; });
 
       const hoy = new Date();
-      const esMesActualReal = hoy.getUTCFullYear() === anio && (hoy.getUTCMonth() + 1) === mes;
-      const primerDiaSemana = new Date(Date.UTC(anio, mes - 1, 1)).getUTCDay(); // 0=Dom
-      const diasEnMes = new Date(Date.UTC(anio, mes, 0)).getUTCDate();
+      const esMesActualReal = hoy.getFullYear() === anio && (hoy.getMonth() + 1) === mes;
+      const primerDiaSemana = new Date(anio, mes - 1, 1).getDay(); // 0=Dom
+      const diasEnMes = new Date(anio, mes, 0).getDate();
 
       let celdas = '';
       for (let i = 0; i < primerDiaSemana; i++) celdas += `<div class="cal-dia vacio"></div>`;
       for (let dia = 1; dia <= diasEnMes; dia++) {
         const info = porDia[dia];
         const emoji = FASE_EMOJI[info?.fase] || '🌙';
-        const esHoy = esMesActualReal && dia === hoy.getUTCDate();
+        const esHoy = esMesActualReal && dia === hoy.getDate();
         celdas += `
           <div class="cal-dia${esHoy ? ' hoy' : ''}" onclick="mostrarDetalleDiaLunar(${dia}, '${info?.signo || ''}', '${info?.fase || ''}')" style="cursor:pointer;text-align:center;padding:6px 2px;border-radius:8px;${esHoy ? 'background:var(--marigold-soft);border:1.5px solid var(--marigold);' : ''}">
             <div style="font-size:10.5px;color:var(--ink-dim);">${dia}</div>
@@ -5584,28 +5596,10 @@
   };
   function faseLunarEs(f) { return FASES_LUNARES_ES[f] || f; }
 
-  // La API a veces manda el nombre de la fase (en inglés) incrustado dentro de los
-  // textos largos de interpretación — por ejemplo el título "Moon Phase: Waning Gibbous"
-  // o dentro del cuerpo del texto — y ese nombre puede no coincidir con el % de
-  // iluminación real (justo antes/después de luna llena o nueva). Esta función corrige
-  // esos textos en el objeto completo de la respuesta, ANTES de traducirlos o mostrarlos.
+  // La fase reportada por la API es la fuente de verdad.
+  // No inferimos Luna Llena/Nueva solo por porcentaje de iluminación:
+  // una Luna gibosa puede estar al 97-99% sin haber alcanzado todavía la lunación exacta.
   function corregirFaseLunarEnRespuesta(lunaData) {
-    if (!lunaData) return lunaData;
-    const m = lunaData.lunar_metrics;
-    if (!m) return lunaData;
-    let faseReal = m.moon_phase;
-    if (m.moon_illumination >= 97) faseReal = 'Full Moon';
-    else if (m.moon_illumination <= 3) faseReal = 'New Moon';
-    if (faseReal === m.moon_phase) return lunaData; // no había nada que corregir
-    const faseVieja = m.moon_phase;
-    m.moon_phase = faseReal;
-    const reemplazarEnTexto = (texto) => (typeof texto === 'string') ? texto.split(faseVieja).join(faseReal) : texto;
-    const corregirLista = (lista) => (lista || []).forEach(item => {
-      if (item.title) item.title = reemplazarEnTexto(item.title);
-      if (item.text) item.text = reemplazarEnTexto(item.text);
-    });
-    corregirLista(lunaData.interpretations);
-    if (lunaData.sections) Object.values(lunaData.sections).forEach(sec => Array.isArray(sec) && corregirLista(sec));
     return lunaData;
   }
 
