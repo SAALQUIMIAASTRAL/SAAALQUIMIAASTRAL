@@ -2,9 +2,11 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Sam Alquimia Astral — App móvil</title>
-<!-- VERSION-APP: v158-fusion-native-backend-login -->
+<!-- VERSION-APP: v192-energia-dia-mas-rapida -->
+<!-- CONSOLIDADO: incluye v159 (reintento carta natal) + v160 (11 puntos: sesión, mensajes, contraseñas, JSON seguro, correo único, safe area, zoom mapa, agrupación ciudades) + v161 (posición del ojo) + v162 (frases variadas ACG) + v163 (diversidad de planetas en ciudades) + v164 (texto luna de hoy) + v165 (diario oculto por defecto) -->
+
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#331e37">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -12,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="Alquimia Astral">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
   --theme: light;
@@ -57,7 +59,7 @@
     /* --- Sistema de tipografía --- */
     --texto-cuerpo:13px;
     --texto-pequeño:11.5px;
-    --texto-etiqueta:13px;
+    --texto-etiqueta:11px;
     --texto-titulo:15px;
     --radio-tarjeta:14px;
     --radio-burbuja:100px;
@@ -71,7 +73,7 @@
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;background:#e9e2da;font-family:'Work Sans',sans-serif;color:var(--plum);}
-  h1,h2,h3,.display{font-family:'Cormorant Garamond',serif;font-weight:800;margin:0;} .section h2{font-size:19px !important;font-weight:800 !important;}
+  h1,h2,h3,.display{font-family:'Cormorant Garamond',serif;font-weight:700;margin:0;}
   .page{display:flex;justify-content:center;padding:36px 12px;}
 
   /* ---------- phone frame ---------- */
@@ -97,6 +99,11 @@
     height:100dvh;border-radius:0;
   }
   body.app-nativa .notch{ display:none; }
+  body.app-nativa .app-nativa-only{ display:block !important; }
+  /* Elementos que solo tienen sentido en la versión web (PWA) — nunca deben verse dentro de la app nativa */
+  body.app-nativa .install-btn,
+  body.app-nativa .ios-modal-bg,
+  body.app-nativa .side-note{ display:none !important; }
   .notch{
     height:26px;display:flex;align-items:center;justify-content:center;
     background:var(--paper);flex:none;
@@ -125,7 +132,7 @@
   .season-banner .now{font-weight:600;display:flex;align-items:center;gap:5px;}
   .season-banner .next{color:var(--ink-dim);}
 
-  .band{position:relative;background:linear-gradient(160deg,var(--blush-1) 0%,var(--plum) 60%,var(--blush-2) 100%);padding:22px 18px 28px;overflow:hidden;}
+  .band{position:relative;background:linear-gradient(160deg,var(--blush-1) 0%,var(--plum) 60%,var(--blush-2) 100%);padding:calc(22px + env(safe-area-inset-top, 0px)) 18px 28px;overflow:hidden;}
   .band::before{content:'';position:absolute;top:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:rgba(201,168,76,0.08);pointer-events:none;}
   .band::after{content:'';position:absolute;bottom:-30px;left:-20px;width:120px;height:120px;border-radius:50%;background:rgba(155,125,212,0.1);pointer-events:none;}
   .band-icon{
@@ -151,11 +158,7 @@
     padding:14px 16px;
     box-shadow:0 2px 10px rgba(45,27,78,0.08);
   }
-  .section h2{font-size:19px !important;font-weight:800 !important;margin-bottom:6px;border-left:3px solid var(--marigold);padding-left:10px;font-family:'Cormorant Garamond',serif;color:var(--plum);}
-  .section h3{font-size:16px;font-weight:700;color:var(--plum);}
-  .campo-pass{position:relative;}
-  .campo-pass input{padding-right:44px !important;width:100%;box-sizing:border-box;}
-  .ojo-toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:20px;padding:4px;color:var(--ink-dim);line-height:1;z-index:10;-webkit-tap-highlight-color:transparent;}
+  .section h2{font-size:15px;margin-bottom:4px;border-left:3px solid var(--marigold);padding-left:10px;font-family:'Cormorant Garamond',serif;font-weight:700;}
   .section .desc{font-size:12px;color:var(--ink-dim);margin-bottom:12px;line-height:1.5;}
   .section .desc{font-size:12.5px;color:var(--ink-dim);margin-bottom:14px;line-height:1.5;}
 
@@ -235,15 +238,15 @@
     padding:14px;margin-bottom:10px;
   }
   .card-lectura .card-titulo{
-    font-family:'Cormorant Garamond',serif;font-weight:800;
-    font-size:20px;color:var(--plum);margin-bottom:12px;
+    font-family:'Cormorant Garamond',serif;font-weight:700;
+    font-size:14px;color:var(--plum);margin-bottom:4px;
   }
   .card-lectura .card-cuerpo{
-    font-size:15px;color:var(--plum);line-height:1.7;
+    font-size:12.5px;color:var(--plum);line-height:1.6;
   }
   .card-lectura .card-etiqueta{
-    font-size:13px;color:var(--marigold-dark);font-weight:800;
-    font-family:'Cormorant Garamond',serif;letter-spacing:0.3px;margin-bottom:4px;
+    font-size:10.5px;color:var(--marigold);font-weight:600;
+    text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px;
   }
 
   /* Fila de dato: planetas, aspectos — solo separador */
@@ -316,6 +319,10 @@
   .day-item .when{font-size:11.5px;color:var(--marigold);font-weight:600;margin-bottom:3px;}
   .day-item p{font-size:11.5px;color:var(--ink-dim);margin:0;line-height:1.45;}
   .disclaimer{font-size:10.5px;color:var(--ink-dim);margin-top:12px;line-height:1.5;border-top:1px solid var(--line);padding-top:10px;}
+  .sam-loading{display:flex;flex-direction:column;align-items:center;gap:8px;padding:24px;width:100%;justify-content:center;}
+  .sam-loading-icon{font-size:28px;animation:sam-spin 1.5s ease-in-out infinite;display:inline-block;}
+  .sam-loading-text{font-size:13px;color:var(--ink-dim);font-style:italic;}
+  @keyframes sam-spin{0%{transform:rotate(0deg) scale(1);}50%{transform:rotate(180deg) scale(1.15);}100%{transform:rotate(360deg) scale(1);}}
 
   /* astrocartografía */
   .acg-line{display:flex;gap:12px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;}
@@ -402,8 +409,7 @@
   /* ---- Pantallas de acceso (login/registro/perfil) ---- */
   .auth-overlay{
     position:absolute;inset:0;z-index:40;background:var(--page-bg);
-    display:none;flex-direction:column;padding:24px 16px 80px;overflow-y:auto;overflow-x:hidden;
-    -webkit-overflow-scrolling:touch;
+    display:none;flex-direction:column;padding:32px 22px;overflow-y:auto;
   }
   .auth-overlay.show{display:flex;}
   .auth-overlay h1{font-size:26px;margin-bottom:6px;color:var(--plum);}
@@ -415,12 +421,18 @@
   }
   .auth-error{background:#fbe6e3;color:#a5442f;border-radius:10px;padding:10px 12px;font-size:12px;margin-bottom:12px;display:none;}
   .auth-error.show{display:block;}
+  .auth-error.msj-verde{background:#e1f3e6;color:#1e6b3c;}
+  .auth-error.msj-amarillo{background:#fdf2d8;color:#8a6414;}
+  .auth-error.msj-rojo{background:#fbe6e3;color:#a5442f;}
+  .campo-pass{position:relative;}
+  .campo-pass input{padding-right:38px !important;}
+  .ojo-toggle{position:absolute;right:10px;bottom:11px;background:none;border:none;cursor:pointer;font-size:16px;padding:0;color:var(--ink-dim);line-height:1;}
   .auth-switch{text-align:center;font-size:12.5px;color:var(--ink-dim);margin-top:16px;}
   .auth-switch a{color:var(--marigold);font-weight:600;cursor:pointer;}
   .auth-loading{opacity:0.6;pointer-events:none;}
-  .carta-real-row{display:flex;align-items:center;gap:8px;font-size:18px;color:var(--plum);padding:12px 0;border-bottom:1px solid var(--marigold-soft);}
+  .carta-real-row{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--plum);padding:4px 0;border-bottom:1px solid var(--marigold-soft);}
   .carta-real-row:last-child{border-bottom:none;}
-  .carta-real-row b{color:var(--marigold-dark);font-weight:800;font-size:20px;}
+  .carta-real-row b{color:var(--marigold-dark);font-weight:700;}
   .detalle-tecnico-oculto{display:none;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);}
   .detalle-tecnico-oculto.show-tecnico{display:block;}
 
@@ -444,15 +456,9 @@
   .etiqueta-seccion{
     font-size:var(--texto-etiqueta);color:var(--marigold);font-weight:600;
     text-transform:uppercase;letter-spacing:0.5px;
-    margin:18px 0 10px;padding-bottom:8px;
+    margin:12px 0 6px;padding-bottom:4px;
     border-bottom:1px solid var(--marigold-soft);
   }
-
-  .sam-loading{display:flex;flex-direction:column;align-items:center;gap:8px;padding:24px;width:100%;justify-content:center;}
-  .sam-loading-icon{font-size:28px;animation:sam-spin 1.5s ease-in-out infinite;display:inline-block;}
-  .sam-loading-text{font-size:13px;color:var(--ink-dim);font-style:italic;}
-  @keyframes sam-spin{0%{transform:rotate(0deg) scale(1);}50%{transform:rotate(180deg) scale(1.15);}100%{transform:rotate(360deg) scale(1);}}
-  @keyframes titilar{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.7;transform:scale(1.15);}}
 </style>
 </head>
 <body>
@@ -475,48 +481,46 @@
         <div class="notch"><div class="pill"></div></div>
 
         <!-- Pantalla de BIENVENIDA -->
-        <!-- SPLASH mientras verifica sesión -->
-        <div id="splash-verificando" style="display:none;position:absolute;inset:0;z-index:200;background:var(--page-bg,#FAF6F0);flex-direction:column;align-items:center;justify-content:center;gap:16px;">
-          <div style="font-size:48px;">🔮</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--plum);">Sam Alquimia Astral</div>
-          <div style="width:36px;height:36px;border:3px solid var(--marigold);border-top-color:transparent;border-radius:50%;animation:sam-spin 0.8s linear infinite;"></div>
-        </div>
-
         <div class="auth-overlay show" id="pantalla-bienvenida">
-          <!-- Hero visual -->
-          <div style="text-align:center;margin-bottom:20px;padding:24px 0 16px;">
-            <div style="font-size:80px;line-height:1;margin-bottom:16px;">🔮</div>
-            <h1 style="font-family:'Cormorant Garamond',serif;font-size:72px;font-weight:800;color:var(--plum);margin:0 0 12px;letter-spacing:-0.5px;line-height:1.1;">Sam Alquimia Astral</h1>
-            <div style="font-size:14px;color:var(--ink-dim);line-height:1.6;margin-bottom:8px;">Tu carta natal, tu luna y tus tránsitos<br>personalizados — siempre contigo</div>
+          <!-- Hero simple: sin tarjetas promocionales, sin precio, sin banners de instalación -->
+          <div style="text-align:center;margin-bottom:32px;padding:40px 0 16px;">
+            <div style="font-size:52px;line-height:1;margin-bottom:8px;">🔮</div>
+            <h1 style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:var(--plum);margin:0 0 6px;">Sam Alquimia Astral</h1>
+            <div style="font-size:13px;color:var(--ink-dim);line-height:1.5;">Tu carta natal, tu luna y tus tránsitos<br>personalizados — siempre contigo</div>
           </div>
 
-          <!-- Beneficios visuales -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;">
-            <div style="background:var(--marigold-soft);border-radius:12px;padding:12px;text-align:center;">
-              <div style="font-size:24px;margin-bottom:6px;">✦</div>
-              <div style="font-size:13px;font-weight:600;color:var(--plum);">¿Quién eres de verdad?</div>
-              <div style="font-size:11px;color:var(--ink-dim);">Tu carta natal, con cálculos reales</div>
-            </div>
-            <div style="background:var(--lilac-soft);border-radius:12px;padding:12px;text-align:center;">
-              <div style="font-size:24px;margin-bottom:6px;">🌙</div>
-              <div style="font-size:13px;font-weight:600;color:var(--plum);">¿Por qué te sientes así hoy?</div>
-              <div style="font-size:11px;color:var(--ink-dim);">Tu luna personal, actualizada cada día</div>
-            </div>
-            <div style="background:var(--lilac-soft);border-radius:12px;padding:12px;text-align:center;">
-              <div style="font-size:24px;margin-bottom:6px;">🗺️</div>
-              <div style="font-size:13px;font-weight:600;color:var(--plum);">¿Migraste?</div>
-              <div style="font-size:11px;color:var(--ink-dim);">Descubre cómo te va en el país donde vives ahora</div>
-            </div>
-            <div style="background:var(--marigold-soft);border-radius:12px;padding:12px;text-align:center;">
-              <div style="font-size:24px;margin-bottom:6px;">♡</div>
-              <div style="font-size:13px;font-weight:600;color:var(--plum);">¿Son compatibles de verdad?</div>
-              <div style="font-size:11px;color:var(--ink-dim);">Compara tu carta con la de esa persona</div>
-            </div>
-          </div>
-
-
-          <button class="btn-primary" onclick="mostrarPantalla('registro')">Empezar ahora — es gratis</button>
+          <button class="btn-primary" onclick="mostrarPantalla('registro')">Crear mi cuenta</button>
           <button class="btn-outline" style="margin-top:10px;" onclick="mostrarPantalla('login')">Ya tengo cuenta</button>
+
+          <!-- Tarjetas empáticas: ayudan mucho a la conversión, se quedan -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:24px;">
+            <div style="background:var(--marigold-soft);border-radius:12px;padding:12px;text-align:center;">
+              <div style="font-size:22px;margin-bottom:4px;">✦</div>
+              <div style="font-size:12px;font-weight:600;color:var(--plum);">¿Quién eres de verdad?</div>
+              <div style="font-size:10.5px;color:var(--ink-dim);">Tu carta natal, con cálculos reales</div>
+            </div>
+            <div style="background:var(--lilac-soft);border-radius:12px;padding:12px;text-align:center;">
+              <div style="font-size:22px;margin-bottom:4px;">🌙</div>
+              <div style="font-size:12px;font-weight:600;color:var(--plum);">¿Por qué te sientes así hoy?</div>
+              <div style="font-size:10.5px;color:var(--ink-dim);">Tu luna personal, actualizada cada día</div>
+            </div>
+            <div style="background:var(--lilac-soft);border-radius:12px;padding:12px;text-align:center;">
+              <div style="font-size:22px;margin-bottom:4px;">🗺️</div>
+              <div style="font-size:12px;font-weight:600;color:var(--plum);">¿Migraste?</div>
+              <div style="font-size:10.5px;color:var(--ink-dim);">Descubre cómo te va en el país donde vives ahora</div>
+            </div>
+            <div style="background:var(--marigold-soft);border-radius:12px;padding:12px;text-align:center;">
+              <div style="font-size:22px;margin-bottom:4px;">♡</div>
+              <div style="font-size:12px;font-weight:600;color:var(--plum);">¿Son compatibles de verdad?</div>
+              <div style="font-size:10.5px;color:var(--ink-dim);">Compara tu carta con la de esa persona</div>
+            </div>
+          </div>
+
+          <div style="text-align:center;margin-top:20px;font-size:11px;color:var(--ink-dim);">
+            <a onclick="event.preventDefault();mostrarLegal('privacidad')" style="color:var(--ink-dim);cursor:pointer;text-decoration:underline;">Privacidad</a>
+            &nbsp;·&nbsp;
+            <a onclick="event.preventDefault();mostrarLegal('terminos')" style="color:var(--ink-dim);cursor:pointer;text-decoration:underline;">Términos</a>
+          </div>
         </div>
 
         <!-- Pantalla de LOGIN -->
@@ -529,7 +533,7 @@
 
           <div class="auth-error" id="login-error"></div>
           <div class="auth-field"><label>Correo</label><input type="email" id="login-email"></div>
-          <div class="auth-field"><label>Contraseña</label><input type="password" id="login-pass"></div>
+          <div class="auth-field campo-pass"><label>Contraseña</label><input type="password" id="login-pass"><button type="button" class="ojo-toggle" onclick="alternarOjo('login-pass', this)">👁</button></div>
           <div style="text-align:right;margin:-8px 0 14px;"><a onclick="mostrarPantalla('olvide')" style="font-size:12px;color:var(--ink-dim);cursor:pointer;text-decoration:underline;">¿Olvidaste tu contraseña?</a></div>
           <button class="btn-primary" onclick="accionLogin()">Entrar</button>
           <div class="auth-switch">¿Aún no tienes cuenta? <a onclick="mostrarPantalla('registro')">Regístrate gratis</a></div>
@@ -551,8 +555,10 @@
           <h1>✦ Crea tu cuenta</h1>
           <div class="sub">Empieza gratis, descubre tu cielo hoy</div>
           <div class="auth-error" id="registro-error"></div>
+          <div class="auth-field"><label>Tu nombre</label><input type="text" id="registro-nombre" placeholder="¿Cómo te llamas?"></div>
           <div class="auth-field"><label>Correo</label><input type="email" id="registro-email"></div>
-          <div class="auth-field"><label>Contraseña</label><input type="password" id="registro-pass" placeholder="Mínimo 6 caracteres"></div>
+          <div class="auth-field campo-pass"><label>Contraseña</label><input type="password" id="registro-pass" placeholder="Mínimo 6 caracteres"><button type="button" class="ojo-toggle" onclick="alternarOjo('registro-pass', this)">👁</button></div>
+          <div class="auth-field campo-pass"><label>Confirmar contraseña</label><input type="password" id="registro-pass2" placeholder="Repite tu contraseña"><button type="button" class="ojo-toggle" onclick="alternarOjo('registro-pass2', this)">👁</button></div>
           <label style="display:flex;align-items:flex-start;gap:8px;font-size:11.5px;color:var(--ink-dim);margin:6px 0 12px;line-height:1.4;">
             <input type="checkbox" id="registro-acepta-terminos" style="margin-top:2px;">
             <span>Acepto los <a onclick="event.preventDefault();mostrarLegal('terminos')" style="color:var(--marigold-dark);cursor:pointer;">Términos y Condiciones</a> y el <a onclick="event.preventDefault();mostrarLegal('privacidad')" style="color:var(--marigold-dark);cursor:pointer;">Aviso de Privacidad</a>.</span>
@@ -576,20 +582,14 @@
             <p><b>Perú (Ley N° 29733):</b> Tus datos se incorporan a nuestro banco de datos de usuarios, administrado con seguridad y confidencialidad conforme a la ley peruana.</p>
             <p><b>Argentina (Ley N° 25.326):</b> Tienes derecho de acceso gratuito a tus datos cada seis meses. Tus datos se transfieren internacionalmente a servidores seguros para el funcionamiento de la app y el pago vía Stripe.</p>
 
-            <h2 style="font-size:16px;margin-top:20px;">✦ Términos y Condiciones</h2>
-            <p><b>1. ¿Qué es Sam Alquimia Astral?</b> Sam Alquimia Astral es una aplicación de astrología personal creada por Samantha Hernández Rivas (en adelante "SAA" o "la plataforma"), con domicilio en Mérida, Yucatán, México. Contacto: soporte@samalquimiaastral.com</p>
-            <p>La app calcula e interpreta tu carta natal, tránsitos planetarios, sinastría y otros análisis astrológicos a partir de tu fecha, hora y lugar de nacimiento. Su propósito es el autoconocimiento, el bienestar y el crecimiento personal.</p>
-            <p><b>2. Naturaleza del servicio</b> La astrología es una herramienta de reflexión e introspección. Sam Alquimia Astral <strong>no ofrece</strong>: Asesoramiento médico, psicológico, legal o financiero; Predicciones absolutas sobre eventos futuros; Diagnósticos de ningún tipo. El contenido de la app es informativo y orientativo. Las decisiones que tomes a partir de él son de tu exclusiva responsabilidad.</p>
-            <p><b>3. Registro y cuenta</b> Debes tener al menos 18 años para crear una cuenta, o contar con autorización de un tutor legal. Eres responsable de mantener tu contraseña segura y de todas las actividades realizadas desde tu cuenta. Solo puedes cambiar tu correo electrónico <strong>una vez</strong>. Los datos de nacimiento pueden modificarse <strong>una vez</strong> — si necesitas hacer la carta de otra persona, usa la sección "Personas". No puedes compartir tu cuenta con otras personas.</p>
-            <p><b>4. Suscripción y pagos</b> Sam Alquimia Astral ofrece un plan gratuito con funciones básicas y un plan Premium con acceso completo. Los pagos se procesan de forma segura a través de Stripe (web) o las tiendas de Apple y Google. La suscripción se renueva automáticamente al final de cada período (mensual, semestral o anual) salvo que la canceles antes. Los precios pueden cambiar con previo aviso de 30 días. <strong>Política de reembolso:</strong> Puedes solicitar reembolso dentro de los 7 días posteriores al primer cargo. Para períodos posteriores, no se otorgan reembolsos por períodos ya utilizados. Escríbenos a soporte@samalquimiaastral.com</p>
-            <p><b>5. Privacidad y datos personales</b> Recopilamos y tratamos tus datos conforme a nuestra Política de Privacidad. Tus datos de nacimiento se usan exclusivamente para calcular tu carta natal y análisis astrológicos. No vendemos ni compartimos tu información personal con terceros sin tu consentimiento. Tienes derecho a acceder, corregir, portar y eliminar tus datos en cualquier momento desde "Mi cuenta".</p>
-            <p><b>6. Uso prohibido</b> Queda prohibido: Usar la app para actividades ilegales o que dañen a terceros; Intentar acceder a cuentas de otros usuarios; Reproducir, copiar o distribuir el contenido de la app sin autorización; Usar herramientas automatizadas para extraer datos de la plataforma; Hacerse pasar por Sam Alquimia Astral o su equipo.</p>
-            <p><b>7. Propiedad intelectual</b> Todo el contenido de Sam Alquimia Astral — textos, diseños, interpretaciones astrológicas, código, nombre y marca — es propiedad de Samantha Hernández Rivas y está protegido por las leyes de propiedad intelectual aplicables en México. Al usar la app, no adquieres ningún derecho sobre estos contenidos más allá del uso personal no comercial.</p>
-            <p><b>8. Suspensión y eliminación de cuenta</b> Puedes eliminar tu cuenta en cualquier momento desde "Mi cuenta → Mis datos → Eliminar cuenta". Esta acción es irreversible. Antes de eliminar tu cuenta, cancela tu suscripción activa para evitar cargos futuros. SAA se reserva el derecho de suspender cuentas que violen estos términos, sin previo aviso en casos graves.</p>
-            <p><b>9. Modificaciones</b> Podemos actualizar estos términos en cualquier momento. Te notificaremos dentro de la app con al menos 15 días de anticipación antes de que los cambios entren en vigor. Si continúas usando la app después de esa fecha, significa que aceptas los nuevos términos.</p>
-            <p><b>10. Ley aplicable</b> Estos términos se rigen por las leyes de los Estados Unidos Mexicanos. Cualquier controversia se resolverá ante los tribunales competentes de Mérida, Yucatán, México.</p>
-            <p><b>11. Contacto</b> ¿Tienes dudas sobre estos términos? Escríbenos: Samantha Hernández Rivas, Persona Física con Actividad Empresarial · México, soporte@samalquimiaastral.com</p>
-            <p style="color:var(--ink-dim);font-size:11px;margin-top:16px;">Última actualización: octubre 2026.</p>
+            <h2 style="font-size:16px;margin-top:20px;">Términos y Condiciones</h2>
+            <p><b>1. Aceptación.</b> Al usar la plataforma o realizar un pago, aceptas estos Términos en su totalidad.</p>
+            <p><b>2. Aviso legal crítico.</b> Todas las herramientas, predicciones, horóscopos y análisis se ofrecen exclusivamente con fines de entretenimiento, recreación y autoconocimiento. Nada de lo generado sustituye asesoría médica, psicológica, psiquiátrica, financiera, de inversión o legal. Tú eres responsable de tus propias decisiones.</p>
+            <p><b>3. Precios e impuestos.</b> Los precios se muestran en USD o su equivalente local. Conforme a las leyes de protección al consumidor de México (PROFECO) y Latinoamérica, los precios finales ya incluyen IVA o impuestos digitales locales aplicables.</p>
+            <p><b>4. Suscripciones y pagos (Stripe).</b> Los cobros se procesan de forma externa y segura vía Stripe. Al contratar un plan Mensual, Semestral o Anual, autorizas cargos automáticos recurrentes al inicio de cada periodo, hasta que canceles.</p>
+            <p><b>5. Cancelaciones y reembolsos.</b> Puedes cancelar tu suscripción cuando quieras, sin penalización, desde tu perfil — seguirás con acceso premium hasta que termine el periodo ya pagado. No se hacen reembolsos de reportes digitales (como la Revolución Solar) una vez generados y enviados, por tratarse de bienes digitales de entrega inmediata.</p>
+            <p><b>6. Jurisdicción.</b> Estos Términos se rigen por las leyes de los Estados Unidos Mexicanos; cualquier controversia se somete a los tribunales de Mérida, Yucatán, México.</p>
+            <p style="color:var(--ink-dim);font-size:11px;margin-top:16px;">Última actualización: 22 de septiembre de 2026.</p>
           </div>
         </div>
 
@@ -847,7 +847,7 @@
         <div class="topbar">
           <span class="menu" onclick="abrirPerfil()" style="cursor:pointer;">☰</span>
           <div class="brand"><span class="g">✦</span>Sam Alquimia Astral</div>
-          <div class="right"><div class="assist-dot" style="animation:titilar 2.5s ease-in-out infinite;cursor:pointer;" onclick="abrirReflexionDia()" title="Reflexión del día"></div><div class="avatar" id="header-avatar" onclick="abrirPerfil()" style="cursor:pointer;" title="Mi cuenta" style="cursor:pointer;" title="Cerrar sesión"></div></div>
+          <div class="right"><div class="assist-dot"></div><div class="avatar" onclick="cerrarSesion()" style="cursor:pointer;" title="Cerrar sesión"></div></div>
         </div>
 
         <div class="season-banner" id="season-banner"></div>
@@ -855,19 +855,20 @@
         <div class="scroll">
 
           <div class="band" data-tab="hoy">
-            <div class="band-icon" id="band-icon" onclick="abrirReflexionDia()" style="cursor:pointer;animation:titilar 2.5s ease-in-out infinite;" title="Reflexión del día">☀️</div>
-            <div class="date" id="banda-fecha">Cargando fecha...</div>
+            <div class="band-icon" id="band-icon">☀️</div>
+            <div class="date" id="banda-fecha"></div>
             <h1><span id="greeting-word">Buenas tardes</span>, <span id="banda-nombre">...</span></h1>
             <div class="quote" id="banda-frase">Un paso atrás, dos hacia adelante.</div>
             <div class="chip-list">
-              <div class="row"><span class="g">☉</span>Sol en <b id="banda-sol">Virgo</b></div>
-              <div class="row"><span class="g">↑</span>Ascendente en <b id="banda-asc">Libra</b></div>
-              <div class="row"><span class="g">☽</span>Luna en <b id="banda-luna">Escorpio</b></div>
+              <div class="row"><span class="g">☉</span>Sol en <b id="banda-sol">··</b></div>
+              <div class="row"><span class="g">↑</span>Ascendente en <b id="banda-asc">··</b></div>
+              <div class="row"><span class="g">☽</span>Luna en <b id="banda-luna">··</b></div>
             </div>
             <span class="link-arrow" onclick="document.getElementById('seccion-carta-natal').scrollIntoView({behavior:'smooth', block:'start'})" style="cursor:pointer;">Ver carta completa ›</span>
           </div>
 
           <div id="evento-astrologico-banner"></div>
+          <div id="eventos-especiales-dia" data-tab="hoy" style="padding:0 16px;"></div>
 
           <div class="section" data-tab="hoy" id="seccion-carta-natal">
             <h2>Tu carta natal</h2>
@@ -878,7 +879,6 @@
                 <button class="btn-primary" onclick="verResumenNatal()" style="background:var(--marigold);font-size:12px;padding:10px 6px;">Mi personalidad</button>
               </div>
               <button class="btn-primary" id="btn-carta-visual" style="background:var(--lilac);width:100%;margin-bottom:8px;" onclick="verCartaVisual()">Ver gráfico de carta 🔮</button>
-              <div id="btn-cerrar-carta-visual" style="display:none;justify-content:flex-end;margin-bottom:4px;"><button onclick="document.getElementById('carta-visual-contenedor').innerHTML='';document.getElementById('btn-cerrar-carta-visual').style.display='none';" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>
             </div>
             <!-- Resultados FUERA del calc-form para que cerrar no rompa los botones -->
             <div id="carta-resultado-chips" style="margin-top:8px;"></div>
@@ -913,7 +913,7 @@
             <button class="btn-primary" onclick="guardarDiario()">Guardar en mi diario</button>
             <div id="diario-msg" style="margin-top:8px;font-size:12px;"></div>
             <div id="diario-lista" style="margin-top:14px;"></div>
-            <button class="btn-outline" style="width:100%;margin-top:8px;" onclick="cargarDiario()">Ver entradas anteriores</button>
+            <button class="btn-outline" style="width:100%;margin-top:8px;" id="diario-btn-ver" onclick="alternarEntradasDiario()">Ver entradas anteriores</button>
           </div>
 
           <div class="section" data-tab="ciclos">
@@ -964,7 +964,7 @@
             <div class="charts-scroll" id="cartas-carousel">
               <div class="chart-chip add" onclick="mostrarFormularioCarta()"><div class="circ">+</div><div class="lbl">Agregar</div></div>
             </div>
-            <div class="charts-count" id="cartas-count">Cargando...</div>
+            <div class="charts-count" id="cartas-count"></div>
             <div id="carta-otro-detalle" style="margin-top:14px;"></div>
 
             <div class="calc-form" id="form-nueva-carta" style="display:none;margin-top:14px;">
@@ -1015,7 +1015,7 @@
             <h2>Ciclo lunar</h2>
             <div class="desc" id="luna-intro">Qué significa cada fase y cómo aprovecharla.</div>
 
-            <button class="btn-primary" style="margin-bottom:14px;" onclick="cargarLunaReal()">Ver mi luna de hoy</button>
+            <button class="btn-primary" style="margin-bottom:14px;" onclick="cargarLunaReal()">Ver la luna de hoy en el cielo</button>
             <div id="luna-cruda" style="margin-bottom:14px;"></div>
 
             <button class="btn-ghost-round" style="margin-bottom:14px;" onclick="verLunaVacia()">🌑 ¿Hay Luna Vacía de Curso hoy?</button>
@@ -1216,37 +1216,6 @@
             </div>
           </div>
 
-          <div style="background:linear-gradient(160deg,var(--plum),var(--blush-2));border-radius:16px;padding:20px 18px;color:#fff;margin:12px 16px;box-shadow:0 6px 20px rgba(45,27,78,0.35);" id="tarjeta-suscripcion" data-tab="alquimia">
-            <div style="font-size:11px;color:var(--band-text-dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">✦ Alquimia Astral Premium</div>
-            <h2 style="color:#fff;font-size:20px;margin-bottom:8px;border:none;padding:0;font-family:'Cormorant Garamond',serif;">Acceso completo a tu cielo</h2>
-            <div style="font-size:12px;color:var(--band-text-dim);margin-bottom:14px;line-height:1.6;">
-              ✓ Carta natal completa · ✓ Astrocartografía · ✓ Ciclo lunar personalizado<br>
-              ✓ Hasta 8 cartas guardadas · ✓ Sinastría y carta compuesta · ✓ Diario astrológico
-            </div>
-            <div style="display:flex;gap:6px;margin-bottom:14px;" id="selector-plan">
-              <div class="chip-plan" data-plan="mensual" onclick="elegirPlanSuscripcion('mensual')" style="flex:1;text-align:center;padding:9px 4px;border-radius:10px;cursor:pointer;background:rgba(255,255,255,0.22);border:1.5px solid #fff;">
-                <div style="font-size:11px;font-weight:600;">Mensual</div>
-                <div style="font-size:14px;font-weight:700;">$4.99</div>
-              </div>
-              <div class="chip-plan" data-plan="semestral" onclick="elegirPlanSuscripcion('semestral')" style="flex:1;text-align:center;padding:9px 4px;border-radius:10px;cursor:pointer;background:rgba(255,255,255,0.08);border:1.5px solid transparent;">
-                <div style="font-size:11px;font-weight:600;">6 meses</div>
-                <div style="font-size:14px;font-weight:700;">$25.99</div>
-              </div>
-              <div class="chip-plan" data-plan="anual" onclick="elegirPlanSuscripcion('anual')" style="flex:1;text-align:center;padding:9px 4px;border-radius:10px;cursor:pointer;background:rgba(255,255,255,0.08);border:1.5px solid transparent;position:relative;">
-                <div style="position:absolute;top:-9px;right:2px;background:var(--marigold);color:#fff;font-size:8.5px;font-weight:700;padding:2px 6px;border-radius:100px;">MEJOR</div>
-                <div style="font-size:11px;font-weight:600;">Anual</div>
-                <div style="font-size:14px;font-weight:700;">$45.99</div>
-              </div>
-            </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-              <div>
-                <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:#fff;line-height:1;" id="precio-plan-elegido">$4.99<span style="font-size:12px;color:var(--band-text-dim);font-family:'Work Sans',sans-serif;"> USD/mes</span></div>
-                <div style="font-size:10.5px;color:var(--band-text-dim);">Cancela cuando quieras</div>
-              </div>
-              <button onclick="accionSuscribirse()" id="btn-suscribirse" style="background:var(--marigold);color:#fff;border:none;border-radius:100px;padding:11px 20px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;box-shadow:0 4px 12px rgba(201,168,76,0.4);">Suscribirme →</button>
-            </div>
-          </div>
-
           <div class="section" data-tab="alquimia">
             <h2>📖 Tu mes astrológico</h2>
             <div class="desc">El relato del mes y lo más importante que trae para ti, según tus tránsitos reales.</div>
@@ -1257,7 +1226,7 @@
             </div>
           </div>
 
-                    <div class="section" data-tab="carta" style="opacity:0.75;border:1px dashed var(--line);">
+          <div class="section" data-tab="carta" style="opacity:0.75;border:1px dashed var(--line);">
             <h2>☀️ Revolución Solar</h2>
             <div class="desc">Tu mapa del año — qué energías activa este cumpleaños en tu vida. <b>Próximamente.</b></div>
             <button class="btn-primary" disabled style="opacity:0.5;">Disponible pronto</button>
@@ -1340,7 +1309,7 @@
     const boton = document.getElementById('acg-boton');
     const contenedorMapa = document.getElementById('acg-mapa');
     const contenedorLineas = document.getElementById('acg-lines');
-    if (boton) { boton.textContent = 'Calculando...'; boton.disabled = true; }
+    if (boton) { boton.innerHTML = samLoading(''); boton.disabled = true; }
     try {
       const r = await fetchAuth('/astrocartografia', { method: 'POST', headers: {} });
       const data = await r.json();
@@ -1416,22 +1385,66 @@
           const p = SIGNIFICADO_PLANETA_ACG[planetasEncontrados[0]];
           return `Aquí se activa tu energía de ${p.energia} — ${p.consejo}.`;
         }
-        const consejos = planetasEncontrados.map(p => SIGNIFICADO_PLANETA_ACG[p].consejo);
-        return `Combina ${planetasEncontrados.map(p => SIGNIFICADO_PLANETA_ACG[p].energia).join(' con ')}. ${consejos[0].charAt(0).toUpperCase() + consejos[0].slice(1)}, y también ${consejos[1]}.`;
+        const p1 = SIGNIFICADO_PLANETA_ACG[planetasEncontrados[0]];
+        const p2 = SIGNIFICADO_PLANETA_ACG[planetasEncontrados[1]];
+        const consejo2Cap = p2.consejo.charAt(0).toUpperCase() + p2.consejo.slice(1);
+        // Varias formas de redactar la misma combinación — se elige una según los planetas
+        // exactos (siempre la misma para esa combinación, pero distinta entre combinaciones),
+        // para que no todas las frases empiecen igual solo por compartir un planeta.
+        const plantillas = [
+          `Aquí se mezclan dos energías: ${p1.energia}, y ${p2.energia}. Por un lado, ${p1.consejo}; por otro, ${p2.consejo}.`,
+          `Esta zona activa tu ${p1.energia} junto con tu ${p2.energia}. ${consejo2Cap}, sin dejar de lado que ${p1.consejo}.`,
+          `Una combinación potente: ${p1.energia} de la mano de ${p2.energia}. ${p1.consejo.charAt(0).toUpperCase() + p1.consejo.slice(1)}, y también ${p2.consejo}.`,
+          `Sientes aquí tanto ${p1.energia} como ${p2.energia} — ${p2.consejo}, mientras que ${p1.consejo}.`,
+        ];
+        // Índice determinístico basado en los nombres de los planetas (misma combinación → misma frase siempre)
+        const semilla = (planetasEncontrados[0] + planetasEncontrados[1]).split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+        return plantillas[semilla % plantillas.length];
       }
 
       let htmlLineas = '';
 
-      // Ciudades destacadas (lo más concreto y útil)
-      const ciudadesBuenas = (data.ciudades || []).filter(c => c.in_power_zone).sort((a, b) => (b.power_zone_strength || 0) - (a.power_zone_strength || 0)).slice(0, 6);
-      if (ciudadesBuenas.length) {
+      // Ciudades destacadas (lo más concreto y útil) — priorizando VARIEDAD de planetas/líneas,
+      // no solo la fuerza cruda (si no, la Luna puede dominar las 6 por ser la más fuerte siempre).
+      const todasEnZona = (data.ciudades || []).filter(c => c.in_power_zone);
+      function planetaPrincipal(closestLine) {
+        if (!closestLine) return null;
+        return Object.keys(SIGNIFICADO_PLANETA_ACG).find(p => closestLine.includes(p)) || null;
+      }
+      // Agrupar primero por línea exacta (para no repetir texto entre ciudades idénticas)
+      const gruposPorLinea = new Map();
+      todasEnZona.forEach(c => {
+        const clave = c.closest_line || '—';
+        if (!gruposPorLinea.has(clave)) gruposPorLinea.set(clave, { closest_line: c.closest_line, ciudades: [], fuerza: 0 });
+        const g = gruposPorLinea.get(clave);
+        g.ciudades.push(`${c.name}, ${c.country}`);
+        g.fuerza = Math.max(g.fuerza, c.power_zone_strength || 0);
+      });
+      const gruposOrdenados = Array.from(gruposPorLinea.values()).sort((a, b) => b.fuerza - a.fuerza);
+      // De esos grupos, tomar el más fuerte de CADA planeta distinto primero (diversidad),
+      // y solo si sobran espacios (hasta 6), completar con los siguientes por fuerza aunque repitan planeta.
+      const vistoPlaneta = new Set();
+      const diversos = [];
+      const sobrantes = [];
+      gruposOrdenados.forEach(g => {
+        const planeta = planetaPrincipal(g.closest_line);
+        if (planeta && !vistoPlaneta.has(planeta)) {
+          vistoPlaneta.add(planeta);
+          diversos.push(g);
+        } else {
+          sobrantes.push(g);
+        }
+      });
+      const gruposFinales = [...diversos, ...sobrantes].slice(0, 6);
+
+      if (gruposFinales.length) {
         htmlLineas += `<div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin-bottom:8px;">📍 Ciudades donde tu energía se activa más</div>`;
-        htmlLineas += ciudadesBuenas.map(c => {
-          const ayuda = ayudaEspecificaCiudad(c.closest_line);
+        htmlLineas += gruposFinales.map(g => {
+          const ayuda = ayudaEspecificaCiudad(g.closest_line);
           return `
           <div class="card-lectura">
-            <div class="card-titulo">${c.name}, ${c.country}</div>
-            <div class="card-etiqueta">Cerca de tu línea de ${traducirNombresPlanetasEnFrase(c.closest_line) || 'energía activa'}</div>
+            <div class="card-titulo">${g.ciudades.join(' · ')}</div>
+            <div class="card-etiqueta">Cerca de tu línea de ${traducirNombresPlanetasEnFrase(g.closest_line) || 'energía activa'}</div>
             ${ayuda ? `<div class="card-cuerpo" style="color:var(--plum);margin-top:4px;">${ayuda}</div>` : ''}
           </div>
         `}).join('');
@@ -1686,7 +1699,7 @@
 
   async function verDetalleOtraCarta(id, nombre) {
     const contenedor = document.getElementById('carta-otro-detalle');
-    contenedor.innerHTML = samLoading('Leyendo la carta de ' + nombre + '...');
+    contenedor.innerHTML = samLoading('');
     try {
       const r = await fetchAuth('/otras-cartas/' + id, { headers: {} });
       const data = await r.json();
@@ -1729,7 +1742,7 @@
     const contenedor = document.getElementById('carta-otro-extra');
     const rutas = { 'numerologia':'/numerologia', 'flor-armonica':'/flor-armonica', 'estrellas-fijas':'/estrellas-fijas', 'astrocartografia':'/astrocartografia' };
     const llaves = { 'numerologia':'numerologia', 'flor-armonica':'flor', 'estrellas-fijas':'estrellas', 'astrocartografia':null };
-    contenedor.innerHTML = samLoading('Calculando para ' + nombre + '...');
+    contenedor.innerHTML = samLoading('');
     const _cerrarExtra = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('carta-otro-extra').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
     try {
       const r = await fetchAuth(rutas[funcion], {
@@ -1849,8 +1862,9 @@
         alert('No se pudo eliminar: ' + (d.error || r.status));
         return;
       }
-      // Recarga completa para garantizar que la lista quede correcta
-      window.location.reload();
+      // Solo refrescar la lista — NO recargar toda la app (eso lleva al inicio)
+      delete _otrasCartasCache[id];
+      await cargarCartasGuardadas();
     } catch (e) {
       alert('No se pudo eliminar: ' + e.message);
     }
@@ -1914,7 +1928,7 @@
       resultado.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Llena todos los datos.</div>';
       return;
     }
-    resultado.innerHTML = samLoading('Calculando y guardando...');
+    resultado.innerHTML = samLoading('');
     try {
       const r = _editandoCartaId
         ? await fetchAuth('/otras-cartas/' + _editandoCartaId, {
@@ -1933,14 +1947,12 @@
       document.getElementById('form-nueva-carta').style.display = 'none';
       const eraEdicion = !!_editandoCartaId;
       _editandoCartaId = null;
+      // Tanto al editar como al crear: recargamos solo la lista de cartas (no toda la app),
+      // para no sacar a la usuaria de la pantalla de Personas ni dar la sensación de que
+      // la carta se perdió (antes hacía un reload completo que la regresaba al inicio).
+      await cargarCartasGuardadas();
       if (eraEdicion) {
-        // Al editar sí funciona bien reabrir el detalle sin recargar toda la página
-        await cargarCartasGuardadas();
         verDetalleOtraCarta(data.carta?.id, data.carta?.nombre || cuerpo.nombre);
-      } else {
-        // Al crear una persona nueva: recarga completa para garantizar que la lista
-        // se vea correcta sin depender de la actualización en vivo (que ha fallado antes)
-        setTimeout(() => { window.location.reload(); }, 600);
       }
     } catch (err) {
       resultado.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
@@ -2300,8 +2312,8 @@
           const frase = (FRASES_POR_TIPO[clave] && FRASES_POR_TIPO[clave][n]) || FRASES_GENERICAS[n] || '';
           htmlNum += `
             <div class="tarjeta-lectura neutral" style="text-align:center;">
-              <div class="etiqueta-seccion" style="text-align:center;font-size:18px;margin:16px 0 14px;">${etiqueta}</div>
-              <div style="font-family:'Abril Fatface',serif;font-size:120px;color:var(--marigold-dark);margin:14px 0 10px;line-height:0.9;letter-spacing:-4px;text-shadow:0 4px 12px rgba(201,168,76,0.25);font-weight:400;">${n}</div>
+              <div class="etiqueta-seccion" style="text-align:center;">${etiqueta}</div>
+              <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:38px;color:var(--plum);margin:4px 0;">${n}</div>
               <div class="cuerpo" style="text-align:left;margin-top:6px;">${frase}</div>
             </div>`;
         }
@@ -2483,7 +2495,7 @@
 
   async function verEnergiaDelDia() {
     const contenedor = document.getElementById('energia-resultado');
-    contenedor.innerHTML = samLoading('Leyendo tu energía de hoy...');
+    contenedor.innerHTML = samLoading('');
     try {
       const r = await fetchAuth('/energia-del-dia', { method: 'POST', headers: {} });
       const data = await r.json();
@@ -2597,13 +2609,154 @@
       document.getElementById('diario-animo-val').value = '';
       document.querySelectorAll('#diario-animo-btns button').forEach(b => b.style.background = 'var(--marigold-soft)');
       msg.textContent = '✓ Guardado en tu diario.'; msg.style.color = 'var(--armonia)';
-      await cargarDiario();
     } catch (e) { msg.textContent = e.message; msg.style.color = '#a5442f'; }
+  }
+
+  const TEMA_SIGNO_LUNACION = {
+    Aries:'nuevos comienzos e impulso personal', Tauro:'estabilidad, cuerpo y recursos propios', Géminis:'comunicación e ideas nuevas',
+    Cáncer:'hogar, familia y emociones', Leo:'creatividad, autoexpresión y reconocimiento', Virgo:'orden, salud y rutinas',
+    Libra:'relaciones, equilibrio y justicia', Escorpio:'transformación e intimidad', Sagitario:'expansión, viajes y sentido de vida',
+    Capricornio:'metas, disciplina y carrera', Acuario:'comunidad, innovación e independencia', Piscis:'espiritualidad, sueños y sensibilidad',
+  };
+  const TEMA_PLANETA_INGRESO = {
+    Sol:'tu identidad y vitalidad', Luna:'tus emociones', Mercurio:'tu forma de pensar y comunicarte', Venus:'el amor y los valores',
+    Marte:'la acción y el impulso', Júpiter:'el crecimiento y la expansión', Saturno:'la estructura y el compromiso',
+    Urano:'los cambios repentinos', Neptuno:'la sensibilidad y la intuición', Plutón:'la transformación profunda',
+    'Nodo Norte':'tu dirección kármica', 'Nodo Sur':'los patrones que sueltas', Lilith:'tu autenticidad más cruda',
+  };
+
+  const ICONO_PLANETA_MES = {
+    'Sol': { g: '☉', c: '#D9A441' }, 'Luna': { g: '☽', c: '#8B7BB8' }, 'Mercurio': { g: '☿', c: '#6FA3A0' },
+    'Venus': { g: '♀', c: '#D98A9E' }, 'Marte': { g: '♂', c: '#C1553B' }, 'Júpiter': { g: '♃', c: '#D9822B' },
+    'Saturno': { g: '♄', c: '#7A6A53' }, 'Urano': { g: '♅', c: '#4FA3A8' }, 'Neptuno': { g: '♆', c: '#4A6FA5' },
+    'Plutón': { g: '♇', c: '#5C4A6E' }, 'Nodo Norte': { g: '☊', c: '#8B7BB8' }, 'Nodo Sur': { g: '☋', c: '#8B7BB8' },
+    'Lilith': { g: '⚸', c: '#3D2460' }, 'Quirón': { g: '⚷', c: '#6FA37A' },
+  };
+  function iconoCirculoPlaneta(nombrePlaneta, tam) {
+    tam = tam || 34;
+    const info = ICONO_PLANETA_MES[nombrePlaneta] || { g: '✦', c: 'var(--marigold)' };
+    const fontSize = Math.round(tam * 0.47);
+    return `<div style="flex:none;width:${tam}px;height:${tam}px;border-radius:50%;background:${info.c};color:#fff;display:flex;align-items:center;justify-content:center;font-size:${fontSize}px;">${info.g}</div>`;
+  }
+
+  // tema (opcional): texto corto tipo "Armonía y libertad" mostrado debajo del título, como en la referencia visual
+  function acordeonItemMes(id, tituloHtml, cuerpoHtml, abierto, opciones) {
+    opciones = opciones || {};
+    const icono = opciones.planeta ? iconoCirculoPlaneta(opciones.planeta) : '';
+    const temaHtml = opciones.tema ? `<div style="font-size:11px;color:var(--ink-dim);margin-top:1px;">${opciones.tema}</div>` : '';
+    return `
+      <div class="acordeon-mes-item" style="border:1px solid var(--line);border-radius:12px;margin-bottom:8px;overflow:hidden;">
+        <div onclick="toggleAcordeonMes('${id}')" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;background:${abierto ? 'var(--marigold-soft)' : '#fff'};">
+          <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">
+            ${icono}
+            <div style="min-width:0;">
+              <div style="font-size:13px;font-weight:600;color:var(--plum);">${tituloHtml}</div>
+              ${temaHtml}
+            </div>
+          </div>
+          <div id="icono-${id}" style="font-size:12px;color:var(--ink-dim);flex:none;">${abierto ? '▲' : '▼'}</div>
+        </div>
+        <div id="cuerpo-${id}" style="display:${abierto ? 'block' : 'none'};padding:12px 14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--plum);line-height:1.6;">
+          ${cuerpoHtml}
+        </div>
+      </div>`;
+  }
+
+  function toggleAcordeonMes(id) {
+    const cuerpo = document.getElementById('cuerpo-' + id);
+    const icono = document.getElementById('icono-' + id);
+    if (!cuerpo) return;
+    const yaAbierto = cuerpo.style.display === 'block';
+    // Solo un bloque de PRIMER NIVEL abierto a la vez (los sub-eventos dentro sí pueden convivir)
+    if (id.startsWith('nivel1-')) {
+      document.querySelectorAll('[id^="cuerpo-nivel1-"]').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('[id^="icono-nivel1-"]').forEach(el => el.textContent = '▼');
+    }
+    cuerpo.style.display = yaAbierto ? 'none' : 'block';
+    icono.textContent = yaAbierto ? '▼' : '▲';
+  }
+
+  async function cargarMesAstrologico(forzarRecalculo) {
+    const contenedor = document.getElementById('mes-astrologico-contenido');
+    contenedor.innerHTML = samLoading('');
+    try {
+      const r = await fetchAuth('/calendario-lunar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mes: _calMesActual, anio: _calAnioActual, forzar_recalculo: !!forzarRecalculo }),
+      });
+      const data = await leerJsonSeguro(r);
+      if (!r.ok) { contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular tu mes.'}</div>`; return; }
+
+      const m = data.mes_astrologico || {};
+      const lunaciones = m.lunaciones || { luna_nueva: [], luna_llena: [] };
+      const ingresos = m.ingresos || [];
+      const retrogrados = m.retrogrados || [];
+      const eventosPersonales = m.eventos_destacados || [];
+      const areas = m.areas_destacadas || [];
+
+      // Resumen breve visible de entrada, sin acordeón — el mes bien destacado para que no se pierda
+      let html = `<div style="text-align:center;">
+          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14px;color:var(--ink-dim);">Tu mes astrológico</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:24px;color:var(--marigold-dark);margin-bottom:4px;">${NOMBRES_MES[_calMesActual - 1]}</div>
+        </div>`;
+      const totalEventos = ingresos.length + retrogrados.length + eventosPersonales.length;
+      html += `<div class="disclaimer" style="text-align:center;margin-bottom:14px;">${totalEventos ? `${totalEventos} momentos clave este mes — toca cada bloque para explorarlos.` : 'Un mes sin grandes eventos mayores — buen momento para lo cotidiano.'}</div>`;
+
+      // 1) Panorama del mes
+      html += acordeonItemMes('nivel1-panorama', '🔮 Panorama del mes', m.relato ? `<div style="white-space:pre-line;">${m.relato}</div>` : 'Sin relato disponible este mes.', true);
+
+      // 2) Eventos clave — ingresos y retrógrados, cada uno expandible individualmente (solo el título, sin subtítulo redundante)
+      const eventosClave = [
+        ...ingresos.map(i => ({ id: `ing-${i.fecha}-${i.planeta}`, planeta: i.planeta,
+          titulo: `${i.planeta} entra en ${i.signo_nuevo} — ${i.fecha.slice(-2)} ${NOMBRES_MES[_calMesActual-1].slice(0,3)}`,
+          detalle: `<b>Qué significa:</b> ${i.planeta} activa ahora ${TEMA_PLANETA_INGRESO[i.planeta] || 'esta área de tu vida'} con el estilo de ${i.signo_nuevo}.<br><b>Cómo aprovecharlo:</b> Observa cómo cambia tu forma de vivir ${TEMA_PLANETA_INGRESO[i.planeta] || 'esto'} en las próximas semanas.` })),
+        ...retrogrados.map(r => ({ id: `retro-${r.fecha}-${r.planeta}`, planeta: r.planeta,
+          titulo: `${r.planeta} ${r.tipo === 'se_vuelve_retrogrado' ? 'retrógrado' : 'directo'} — ${r.fecha.slice(-2)} ${NOMBRES_MES[_calMesActual-1].slice(0,3)}`,
+          detalle: `<b>Qué activa:</b> ${r.tipo === 'se_vuelve_retrogrado' ? 'Momento de revisar, repensar y no forzar decisiones grandes relacionadas con ' + (TEMA_PLANETA_INGRESO[r.planeta] || r.planeta) + '.' : 'Lo que estuvo detenido puede retomar su curso normal.'}${r.duracion_tipica ? `<br><b>Duración típica:</b> ${r.duracion_tipica}.` : ''}` })),
+      ].slice(0, 10);
+      const cuerpoEventosClave = eventosClave.length
+        ? eventosClave.map(ev => acordeonItemMes(ev.id, ev.titulo, ev.detalle, false, { planeta: ev.planeta })).join('')
+        : '<div class="disclaimer">Sin eventos generales mayores detectados este mes.</div>';
+      html += acordeonItemMes('nivel1-eventosclave', '⭐ Eventos clave', cuerpoEventosClave, false);
+
+      // 3) Cómo te afecta a ti — tránsitos personales, ya deduplicados por el backend (un solo día por aspecto)
+      const cuerpoPersonal = eventosPersonales.length
+        ? eventosPersonales.slice(0, 10).map(e => acordeonItemMes(
+            `pers-${e.fecha}-${e.planeta_transito}-${e.punto_natal}`,
+            `${e.planeta_transito} ${e.aspecto} tu ${e.punto_natal} natal — ${e.fecha.slice(-2)} ${NOMBRES_MES[_calMesActual-1].slice(0,3)}`,
+            `${e.casa_natal ? `<b>Casa afectada:</b> Casa ${e.casa_natal}<br>` : ''}${e.area ? `<b>Área de vida:</b> ${e.area}<br>` : ''}<b>Qué significa:</b> ${e.planeta_transito} entra en contacto directo con tu ${e.punto_natal} natal, activando ${e.area || 'esta parte de tu carta'}.`,
+            false,
+            { planeta: e.planeta_transito, tema: e.area || e.aspecto }
+          )).join('')
+        : '<div class="disclaimer">Sin tránsitos personales mayores este mes.</div>';
+      html += acordeonItemMes('nivel1-personal', '🎯 Cómo te afecta a ti', cuerpoPersonal, false);
+
+      // (Se quitaron "Calendario astrológico", "Áreas más activas" y "Lunaciones del mes" —
+      // redundantes con el relato y con el Calendario lunar que ya existe en otra parte de la app)
+
+      contenedor.innerHTML = html;
+    } catch (e) {
+      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${e.message}</div>`;
+    }
+  }
+
+  async function alternarEntradasDiario() {
+    const lista = document.getElementById('diario-lista');
+    const boton = document.getElementById('diario-btn-ver');
+    const visible = lista.innerHTML.trim() !== '';
+    if (visible) {
+      lista.innerHTML = '';
+      boton.textContent = 'Ver entradas anteriores';
+    } else {
+      boton.textContent = 'Ocultar entradas';
+      await cargarDiario();
+    }
   }
 
   async function cargarDiario() {
     const lista = document.getElementById('diario-lista');
-    lista.innerHTML = samLoading('Un momento...');
+    lista.innerHTML = samLoading('');
     try {
       const r = await fetchAuth('/diario', { headers: {} });
       const data = await r.json();
@@ -2699,7 +2852,7 @@
     const lista = document.getElementById('bib-lista');
     const lector = document.getElementById('bib-lector');
     if (lector) lector.style.display = 'none';
-    lista.innerHTML = samLoading('Un momento...');
+    lista.innerHTML = samLoading('');
 
     try {
       const url = categoria ? `/biblioteca?categoria=${encodeURIComponent(categoria)}` : '/biblioteca';
@@ -2749,7 +2902,7 @@
     document.getElementById('bib-lista').style.display = 'none';
     const lector = document.getElementById('bib-lector');
     lector.style.display = 'block';
-    document.getElementById('bib-articulo-titulo').textContent = 'Cargando...';
+    document.getElementById('bib-articulo-titulo').innerHTML = samLoading('');
     document.getElementById('bib-articulo-cuerpo').textContent = '';
     try {
       const r = await fetchAuth(`/biblioteca/${id}`, { headers: {} });
@@ -2926,185 +3079,10 @@
     }
   }
 
-  // ===== MI CUENTA - SECCIONES DESPLEGABLES =====
-  function cambiarTamanoFuente(valor) {
-    const pct = Math.min(120, Math.max(90, parseInt(valor)));
-    const factor = pct / 100;
-    let el = document.getElementById('saa-fuente-css');
-    if (!el) { el = document.createElement('style'); el.id = 'saa-fuente-css'; document.head.appendChild(el); }
-    el.textContent = `.scroll *,.section *,.card-lectura *,.tarjeta-lectura *,.auth-overlay * { font-size: calc(1em * ${factor}) !important; }`;
-    localStorage.setItem('saa_tamano_fuente', pct);
-    const display = document.getElementById('tamano-fuente-valor');
-    const labels = { 90:'P', 95:'P', 100:'M', 105:'M', 110:'G', 115:'G', 120:'G' };
-    if (display) display.textContent = labels[pct] || 'M';
-    const slider = document.getElementById('slider-tamano-fuente');
-    if (slider) slider.value = pct;
-  }
-
-  function aplicarTamanoFuenteGuardado() {
-    const tamano = localStorage.getItem('saa_tamano_fuente') || '100';
-    cambiarTamanoFuente(tamano);
-  }
-
-  function alternarOjo(inputId, boton) {
-    const input = document.getElementById(inputId);
-    if (!input) return;
-    const oculto = input.type === 'password';
-    input.type = oculto ? 'text' : 'password';
-    boton.textContent = oculto ? '🙈' : '👁';
-  }
-
-  function toggleSeccionCuenta(id) {
-    const body = document.getElementById(id);
-    const chev = document.getElementById('chev-' + id);
-    if (!body) return;
-    const abierto = body.style.display !== 'none';
-    body.style.display = abierto ? 'none' : 'block';
-    if (chev) chev.textContent = abierto ? '▼' : '▲';
-    // Scroll suave hacia la sección abierta
-    if (!abierto) setTimeout(() => body.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
-  }
-
-  // ===== FOTO DE PERFIL =====
-  function subirFotoPerfil(input) {
-    const archivo = input.files[0];
-    if (!archivo) return;
-    if (archivo.size > 3 * 1024 * 1024) { alert('La foto debe pesar menos de 3MB.'); return; }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target.result;
-      localStorage.setItem('saa_foto_perfil', dataUrl);
-      const preview = document.getElementById('foto-perfil-preview');
-      const inicial = document.getElementById('foto-perfil-inicial');
-      if (preview) { preview.src = dataUrl; preview.style.display = 'block'; }
-      if (inicial) inicial.style.display = 'none';
-      actualizarAvatarHeader(null, dataUrl);
-    };
-    reader.readAsDataURL(archivo);
-  }
-
-  function actualizarAvatarHeader(nombre, fotoUrl) {
-    const avatar = document.getElementById('header-avatar');
-    if (!avatar) return;
-    if (fotoUrl) {
-      avatar.innerHTML = `<img src="${fotoUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-    } else if (nombre) {
-      avatar.style.display = 'flex';
-      avatar.style.alignItems = 'center';
-      avatar.style.justifyContent = 'center';
-      avatar.textContent = nombre[0].toUpperCase();
-    }
-  }
-
-  function cargarFotoPerfilGuardada() {
-    const foto = localStorage.getItem('saa_foto_perfil');
-    const preview = document.getElementById('foto-perfil-preview');
-    const inicial = document.getElementById('foto-perfil-inicial');
-    if (foto && preview) {
-      preview.src = foto; preview.style.display = 'block';
-      if (inicial) inicial.style.display = 'none';
-      actualizarAvatarHeader(null, foto);
-    } else {
-      const letra = (SESION.nombre || SESION.email || '✦')[0].toUpperCase();
-      if (inicial) { inicial.textContent = letra; inicial.style.display = 'flex'; }
-      actualizarAvatarHeader(letra, null);
-    }
-  }
-
-  function mostrarEliminarCuenta() {
-    const el = document.getElementById('eliminar-cuenta-confirm');
-    if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
-  }
-
-  function activarEdicionDatos() {
-    document.getElementById('editar-datos-form').style.display = 'block';
-    document.getElementById('boton-editar-datos').style.display = 'none';
-    // Precargar datos actuales
-    const resumen = document.getElementById('vista-datos-resumen');
-    const nombre = resumen?.dataset?.nombre || SESION.nombre || '';
-    document.getElementById('editar-nombre').value = nombre;
-  }
-
-  function cancelarEdicionDatos() {
-    document.getElementById('editar-datos-form').style.display = 'none';
-    document.getElementById('boton-editar-datos').style.display = 'block';
-  }
-
-  async function guardarDatosNacimiento() {
-    const nombre = document.getElementById('editar-nombre').value.trim();
-    const fecha = document.getElementById('editar-fecha').value;
-    const hora = document.getElementById('editar-hora').value || '12:00';
-    const ciudad = document.getElementById('editar-ciudad').value.trim();
-    const lat = document.getElementById('editar-lat').value;
-    const lng = document.getElementById('editar-lng').value;
-    const errorEl = document.getElementById('editar-datos-error');
-    const msgEl = document.getElementById('editar-datos-msg');
-    if (!nombre || !fecha || !ciudad) { errorEl.textContent = 'Completa todos los campos.'; return; }
-    errorEl.textContent = '';
-    try {
-      const r = await fetchAuth('/perfil', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre, fecha_nacimiento: fecha, hora_nacimiento: hora, ciudad_nacimiento: ciudad, lat, lng })
-      });
-      const data = await r.json();
-      if (!r.ok) { errorEl.textContent = data.error || 'Error al guardar.'; return; }
-      msgEl.style.color = 'var(--armonia)';
-      msgEl.textContent = '✅ Datos guardados correctamente.';
-      cancelarEdicionDatos();
-      cargarResumenDatos();
-    } catch(e) { errorEl.textContent = 'Error: ' + e.message; }
-  }
-
-  async function cargarResumenDatos() {
-    try {
-      const r = await fetchAuth('/perfil', { headers: {} });
-      const data = await r.json();
-      const p = data.perfil;
-      if (!p) return;
-      const resumen = document.getElementById('vista-datos-resumen');
-      if (resumen) {
-        resumen.innerHTML = `<b>Nombre:</b> ${p.nombre || '—'}<br><b>Fecha:</b> ${p.fecha_nacimiento || '—'}<br><b>Hora:</b> ${p.hora_nacimiento || '—'}<br><b>Ciudad:</b> ${p.ciudad_nacimiento || '—'}`;
-        resumen.dataset.nombre = p.nombre || '';
-      }
-    } catch(e) {}
-  }
-
-  async function cambiarCorreo() {
-    const nuevoCorreo = document.getElementById('nuevo-correo')?.value.trim();
-    const pass = document.getElementById('pass-para-correo')?.value;
-    const errorEl = document.getElementById('error-correo');
-    if (!nuevoCorreo || !pass) { errorEl.textContent = 'Completa todos los campos.'; return; }
-    try {
-      const r = await fetchAuth('/auth/cambiar-correo', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ nuevo_email: nuevoCorreo, password: pass })
-      });
-      const data = await r.json();
-      if (!r.ok) { errorEl.textContent = data.error || 'No se pudo cambiar el correo.'; return; }
-      errorEl.style.color = 'var(--armonia)';
-      errorEl.textContent = '✅ Revisa tu nuevo correo para confirmar el cambio.';
-    } catch(e) { errorEl.textContent = 'Error: ' + e.message; }
-  }
-
-  async function enviarFeedback() {
-    const texto = document.getElementById('feedback-texto')?.value.trim();
-    const msg = document.getElementById('feedback-msg');
-    if (!texto) { if(msg) msg.textContent = 'Escribe tu mensaje primero.'; return; }
-    try {
-      await fetchAuth('/feedback', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ tipo:'sugerencia', mensaje: texto })
-      });
-      document.getElementById('feedback-texto').value = '';
-      if(msg) { msg.style.color = 'var(--armonia)'; msg.textContent = '✅ ¡Gracias! Tu mensaje fue enviado.'; }
-    } catch(e) { if(msg) msg.textContent = 'Error al enviar.'; }
-  }
-
   function abrirPerfil() {
     if (!SESION.email && SESION.token) SESION.email = decodificarEmailDeToken(SESION.token);
     document.getElementById('perfil-email-mostrar').textContent = SESION.email || '(correo no disponible)';
-    const portalError = document.getElementById('perfil-portal-error');
-    if (portalError) portalError.textContent = '';
+    document.getElementById('perfil-portal-error').textContent = '';
     const estadoEl = document.getElementById('perfil-estado-sub');
     if (estadoEl) {
       const s = SESION.suscripcion || 'ninguna';
@@ -3113,21 +3091,8 @@
       estadoEl.textContent = labels[s] || s;
       estadoEl.style.color = colors[s] || 'var(--ink-dim)';
     }
-    // Correo en sección cambiar correo
-    const correoActualEl = document.getElementById('correo-actual-mostrar');
-    if (correoActualEl) correoActualEl.textContent = SESION.email || '';
     mostrarPantalla('mi-perfil');
     cargarDatosParaEditar();
-    cargarFotoPerfilGuardada();
-    // Abrir datos de nacimiento por defecto
-    setTimeout(() => {
-      const sec = document.getElementById('sec-datos');
-      const chev = document.getElementById('chev-sec-datos');
-      if (sec && sec.style.display === 'none') {
-        sec.style.display = 'block';
-        if (chev) chev.textContent = '▲';
-      }
-    }, 100);
   }
 
   let _datosNacimientoActuales = null;
@@ -3136,7 +3101,7 @@
     ocultarErrorEn('editar-datos-error');
     document.getElementById('editar-datos-msg').textContent = '';
     const resumen = document.getElementById('vista-datos-resumen');
-    resumen.innerHTML = 'Cargando...';
+    resumen.innerHTML = samLoading('');
     try {
       const r = await fetchAuth('/perfil', { headers: {} });
       const data = await r.json();
@@ -3218,6 +3183,12 @@
   }
 
   async function abrirPortalPago() {
+    // En Android nativo, la suscripción se gestiona desde Google Play, nunca desde Stripe
+    // (Google no permite cobros/gestión externa dentro de la app nativa).
+    if (esAndroidNativo()) {
+      const NativePurchases = window.Capacitor?.Plugins?.NativePurchases;
+      if (NativePurchases) { await NativePurchases.manageSubscriptions(); return; }
+    }
     const errorEl = document.getElementById('perfil-portal-error');
     errorEl.textContent = '';
     try {
@@ -3235,6 +3206,18 @@
     if (nombre) document.getElementById('pantalla-' + nombre).classList.add('show');
   }
 
+  // Lee la respuesta como JSON de forma segura. Si el servidor devolvió HTML por error
+  // (ruta caída, error 502/504, redirección inesperada), evita el crash "Unexpected token <"
+  // y regresa un mensaje claro en vez de romper la pantalla.
+  async function leerJsonSeguro(r) {
+    const texto = await r.text();
+    try {
+      return JSON.parse(texto);
+    } catch (e) {
+      return { error: 'El servidor no respondió correctamente (puede estar reiniciándose). Intenta de nuevo en unos segundos.' };
+    }
+  }
+
   async function pedirRecuperacion() {
     ocultarErrorEn('olvide-error');
     const email = document.getElementById('olvide-email').value.trim();
@@ -3245,22 +3228,52 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-      const data = await r.json();
+      const data = await leerJsonSeguro(r);
       if (!r.ok) { mostrarErrorEn('olvide-error', data.error || 'No se pudo procesar la solicitud.'); return; }
-      alert('Si ese correo está registrado, te llegará un enlace para crear una nueva contraseña. Revisa también spam.');
-      mostrarPantalla('login');
+      mostrarMensaje('olvide-error', 'Si ese correo está registrado, te llegará un enlace para crear una nueva contraseña. Revisa también spam.', 'verde');
+      setTimeout(() => mostrarPantalla('login'), 3000);
     } catch (e) {
       mostrarErrorEn('olvide-error', 'Error de conexión: ' + e.message);
     }
   }
 
-  function mostrarErrorEn(id, mensaje) {
+  // Sistema unificado de mensajes: 'rojo' (error), 'amarillo' (aviso/pendiente), 'verde' (éxito).
+  // mostrarErrorEn() se mantiene por compatibilidad y sigue siendo rojo por defecto.
+  function mostrarMensaje(id, mensaje, tipo = 'rojo') {
     const el = document.getElementById(id);
+    if (!el) return;
     el.textContent = mensaje;
-    el.classList.add('show');
+    el.classList.remove('msj-verde', 'msj-amarillo', 'msj-rojo');
+    el.classList.add('msj-' + tipo, 'show');
   }
+  function alternarOjo(inputId, boton) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    const oculto = input.type === 'password';
+    input.type = oculto ? 'text' : 'password';
+    boton.textContent = oculto ? '🙈' : '👁';
+  }
+
+  function mostrarErrorEn(id, mensaje) { mostrarMensaje(id, mensaje, 'rojo'); }
   function ocultarErrorEn(id) {
     document.getElementById(id).classList.remove('show');
+  }
+  // Mensaje flotante global (para cuando no hay una pantalla/campo específico visible, ej. arranque de la app)
+  function mostrarMensajeGlobal(texto, tipo = 'amarillo') {
+    let el = document.getElementById('mensaje-global-toast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'mensaje-global-toast';
+      el.style.cssText = 'position:fixed;top:calc(env(safe-area-inset-top,0px) + 14px);left:50%;transform:translateX(-50%);z-index:9999;border-radius:10px;padding:10px 16px;font-size:12.5px;font-family:"Work Sans",sans-serif;box-shadow:0 4px 14px rgba(0,0,0,0.15);max-width:90%;text-align:center;';
+      document.body.appendChild(el);
+    }
+    const colores = { verde: ['#e1f3e6', '#1e6b3c'], amarillo: ['#fdf2d8', '#8a6414'], rojo: ['#fbe6e3', '#a5442f'] };
+    const [bg, fg] = colores[tipo] || colores.amarillo;
+    el.style.background = bg; el.style.color = fg;
+    el.textContent = texto;
+    el.style.display = 'block';
+    clearTimeout(el._timeout);
+    el._timeout = setTimeout(() => { el.style.display = 'none'; }, 4000);
   }
 
   let _legalOrigen = 'registro';
@@ -3282,10 +3295,18 @@
 
   async function accionRegistro() {
     ocultarErrorEn('registro-error');
+    const nombre = document.getElementById('registro-nombre').value.trim();
     const email = document.getElementById('registro-email').value.trim();
     const password = document.getElementById('registro-pass').value;
+    const password2 = document.getElementById('registro-pass2').value;
+    if (!nombre) {
+      return mostrarErrorEn('registro-error', 'Escribe tu nombre.');
+    }
     if (!email || password.length < 6) {
       return mostrarErrorEn('registro-error', 'Escribe un correo válido y una contraseña de al menos 6 caracteres.');
+    }
+    if (password !== password2) {
+      return mostrarErrorEn('registro-error', 'Las contraseñas no coinciden. Revísalas e intenta de nuevo.');
     }
     if (!document.getElementById('registro-acepta-terminos').checked) {
       return mostrarErrorEn('registro-error', 'Debes aceptar los Términos y Condiciones y el Aviso de Privacidad para continuar.');
@@ -3296,9 +3317,9 @@
     localStorage.removeItem('saa_token'); localStorage.removeItem('saa_refresh'); localStorage.removeItem('saa_email');
     const r = await fetch(BACKEND + '/auth/registro', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, nombre }),
     });
-    const data = await r.json();
+    const data = await leerJsonSeguro(r);
     if (!r.ok) return mostrarErrorEn('registro-error', data.error || 'No se pudo crear la cuenta.');
 
     // Login automático después de registrarse
@@ -3318,7 +3339,7 @@
     } else {
       document.getElementById('login-email').value = email;
       mostrarPantalla('login');
-      mostrarErrorEn('login-error', '✔ Cuenta creada. Revisa tu correo (' + email + ') y toca el link de confirmación antes de entrar. Si no lo ves, checa spam.');
+      mostrarMensaje('login-error', '✔ Cuenta creada. Revisa tu correo (' + email + ') y toca el link de confirmación antes de entrar. Si no lo ves, checa spam.', 'verde');
     }
   }
 
@@ -3391,6 +3412,31 @@
   }
 
 
+  async function accionCambiarPassword() {
+    ocultarErrorEn('cambiar-pass-error');
+    const password_actual = document.getElementById('cambiar-pass-actual').value;
+    const nueva_password = document.getElementById('cambiar-pass-nueva').value;
+    const confirmar = document.getElementById('cambiar-pass-confirmar').value;
+    if (!password_actual) return mostrarErrorEn('cambiar-pass-error', 'Escribe tu contraseña actual.');
+    if (nueva_password.length < 6) return mostrarErrorEn('cambiar-pass-error', 'La nueva contraseña debe tener al menos 6 caracteres.');
+    if (nueva_password !== confirmar) return mostrarErrorEn('cambiar-pass-error', 'Las contraseñas nuevas no coinciden.');
+    try {
+      const r = await fetchAuth('/auth/cambiar-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password_actual, nueva_password }),
+      });
+      const data = await leerJsonSeguro(r);
+      if (!r.ok) return mostrarErrorEn('cambiar-pass-error', data.error || 'No se pudo cambiar la contraseña.');
+      mostrarMensaje('cambiar-pass-error', '✔ Contraseña actualizada correctamente.', 'verde');
+      document.getElementById('cambiar-pass-actual').value = '';
+      document.getElementById('cambiar-pass-nueva').value = '';
+      document.getElementById('cambiar-pass-confirmar').value = '';
+    } catch (e) {
+      mostrarErrorEn('cambiar-pass-error', 'Error de conexión: ' + e.message);
+    }
+  }
+
   async function accionGuardarPerfil() {
     ocultarErrorEn('perfil-error');
     const cuerpo = {
@@ -3425,6 +3471,22 @@
     mostrarPantalla('login');
   }
 
+  function toggleSeccionCuenta(id) {
+    const body = document.getElementById(id);
+    const chev = document.getElementById("chev-" + id);
+    if (!body) return;
+    const abierto = body.style.display !== "none";
+    body.style.display = abierto ? "none" : "block";
+    if (chev) chev.textContent = abierto ? "▼" : "▲";
+    if (!abierto) setTimeout(() => body.scrollIntoView({ behavior: "smooth", block: "nearest" }), 50);
+  }
+
+  function samLoading(texto) {
+    const iconos = ["🌙","✨","⭐","🔮","🌟"];
+    const icono = iconos[Math.floor(Math.random() * iconos.length)];
+    return `<div class="sam-loading"><span class="sam-loading-icon">${icono}</span><span class="sam-loading-text">${texto || "Un momento..."}</span></div>`;
+  }
+
   async function entrarALaApp(perfil) {
     mostrarPantalla(null);
     SESION.nombre = perfil?.nombre || 'Usuaria';
@@ -3432,137 +3494,22 @@
     const nombreEl = document.querySelector('.band h1');
     if (nombreEl) nombreEl.innerHTML = `<span id="greeting-word">${greet ? greet.textContent : 'Hola'}</span>, ${SESION.nombre}`;
     await calcularCartaReal(true); // asegura que la carta exista (la calcula si hace falta, silenciosamente)
-    actualizarBandaConCartaReal();
     cargarCartasGuardadas();
-    cargarHomeSummary();
+    cargarHomeSummary(); // esta función ya llama a actualizarBandaConCartaReal() internamente
     cargarEventoAstrologico();
     renderizarSemanaLunar();
   }
 
+  // Se revirtió el ícono SVG propio de fase lunar: se veía más estático/plano que el
+  // emoji original, que además ya se ve bien en iOS y Android modernos. Volvemos al emoji.
   const FASE_EMOJI = {
     'New Moon': '🌑', 'Waxing Crescent': '🌒', 'First Quarter': '🌓', 'Waxing Gibbous': '🌔',
     'Full Moon': '🌕', 'Waning Gibbous': '🌖', 'Last Quarter': '🌗', 'Waning Crescent': '🌘',
   };
+  function svgLuna(faseNombre) { return FASE_EMOJI[faseNombre] || '🌙'; }
   const NOMBRES_MES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   let _calMesActual = new Date().getUTCMonth() + 1;
   let _calAnioActual = new Date().getUTCFullYear();
-  
-  const TEMA_PLANETA_INGRESO = {
-    Sol:'tu identidad y vitalidad', Luna:'tus emociones', Mercurio:'tu forma de pensar y comunicarte', Venus:'el amor y los valores',
-    Marte:'la acción y el impulso', Júpiter:'el crecimiento y la expansión', Saturno:'la estructura y el compromiso',
-    Urano:'los cambios repentinos', Neptuno:'la sensibilidad y la intuición', Plutón:'la transformación profunda',
-    'Nodo Norte':'tu dirección kármica', 'Nodo Sur':'los patrones que sueltas', Lilith:'tu autenticidad más cruda',
-  };
-
-  const ICONO_PLANETA_MES = {
-    'Sol': { g: '☉', c: '#D9A441' }, 'Luna': { g: '☽', c: '#8B7BB8' }, 'Mercurio': { g: '☿', c: '#6FA3A0' },
-    'Venus': { g: '♀', c: '#D98A9E' }, 'Marte': { g: '♂', c: '#C1553B' }, 'Júpiter': { g: '♃', c: '#D9822B' },
-    'Saturno': { g: '♄', c: '#7A6A53' }, 'Urano': { g: '♅', c: '#4FA3A8' }, 'Neptuno': { g: '♆', c: '#4A6FA5' },
-    'Plutón': { g: '♇', c: '#5C4A6E' }, 'Nodo Norte': { g: '☊', c: '#8B7BB8' }, 'Nodo Sur': { g: '☋', c: '#8B7BB8' },
-    'Lilith': { g: '⚸', c: '#3D2460' }, 'Quirón': { g: '⚷', c: '#6FA37A' },
-  };
-  
-  function obtenerTimezoneUsuario() {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-  }
-  
-  function iconoCirculoPlaneta(nombrePlaneta, tam) {
-    tam = tam || 34;
-    const info = ICONO_PLANETA_MES[nombrePlaneta] || { g: '✦', c: 'var(--marigold)' };
-    const fontSize = Math.round(tam * 0.47);
-    return `<div style="flex:none;width:${tam}px;height:${tam}px;border-radius:50%;background:${info.c};color:#fff;display:flex;align-items:center;justify-content:center;font-size:${fontSize}px;">${info.g}</div>`;
-  }
-
-  function acordeonItemMes(id, tituloHtml, cuerpoHtml, abierto, opciones) {
-    opciones = opciones || {};
-    const icono = opciones.planeta ? iconoCirculoPlaneta(opciones.planeta) : '';
-    const temaHtml = opciones.tema ? `<div style="font-size:11px;color:var(--ink-dim);margin-top:1px;">${opciones.tema}</div>` : '';
-    return `
-      <div class="acordeon-mes-item" style="border:1px solid var(--line);border-radius:12px;margin-bottom:8px;overflow:hidden;">
-        <div onclick="toggleAcordeonMes('${id}')" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;background:${abierto ? 'var(--marigold-soft)' : '#fff'};">
-          <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">
-            ${icono}
-            <div style="min-width:0;">
-              <div style="font-size:13px;font-weight:600;color:var(--plum);">${tituloHtml}</div>
-              ${temaHtml}
-            </div>
-          </div>
-          <div id="icono-${id}" style="font-size:12px;color:var(--ink-dim);flex:none;">${abierto ? '▲' : '▼'}</div>
-        </div>
-        <div id="cuerpo-${id}" style="display:${abierto ? 'block' : 'none'};padding:12px 14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--plum);line-height:1.6;">
-          ${cuerpoHtml}
-        </div>
-      </div>`;
-  }
-
-  function toggleAcordeonMes(id) {
-    const cuerpo = document.getElementById('cuerpo-' + id);
-    const icono = document.getElementById('icono-' + id);
-    if (!cuerpo) return;
-    const yaAbierto = cuerpo.style.display === 'block';
-    if (id.startsWith('nivel1-')) {
-      document.querySelectorAll('[id^="cuerpo-nivel1-"]').forEach(el => el.style.display = 'none');
-      document.querySelectorAll('[id^="icono-nivel1-"]').forEach(el => el.textContent = '▼');
-    }
-    cuerpo.style.display = yaAbierto ? 'none' : 'block';
-    icono.textContent = yaAbierto ? '▼' : '▲';
-  }
-
-  async function cargarMesAstrologico(forzarRecalculo) {
-    const contenedor = document.getElementById('mes-astrologico-contenido');
-    contenedor.innerHTML = `<div class="disclaimer">${forzarRecalculo ? 'Recalculando sin usar lo guardado…' : 'Calculando tu mes… puede tardar un momento.'}</div>`;
-    try {
-      const r = await fetchAuth('/calendario-lunar', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mes: _calMesActual, anio: _calAnioActual, forzar_recalculo: !!forzarRecalculo, timezone: obtenerTimezoneUsuario() }),
-      });
-      const data = await leerJsonSeguro(r);
-      if (!r.ok) { contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular tu mes.'}</div>`; return; }
-
-      const m = data.mes_astrologico || {};
-      const ingresos = m.ingresos || [];
-      const retrogrados = m.retrogrados || [];
-      const eventosPersonales = m.eventos_destacados || [];
-
-      let html = `<div style="text-align:center;">
-          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14px;color:var(--ink-dim);">Tu mes astrológico</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:24px;color:var(--marigold-dark);margin-bottom:4px;">${NOMBRES_MES[_calMesActual - 1]}</div>
-        </div>`;
-      const totalEventos = ingresos.length + retrogrados.length + eventosPersonales.length;
-      html += `<div class="disclaimer" style="text-align:center;margin-bottom:14px;">${totalEventos ? `Toca cada bloque para explorar lo que trae este mes.` : 'Un mes sin grandes eventos mayores — buen momento para lo cotidiano.'}</div>`;
-
-      html += acordeonItemMes('nivel1-panorama', '🔮 Panorama del mes', m.relato ? `<div style="white-space:pre-line;">${m.relato}</div>` : 'Sin relato disponible este mes.', true);
-
-      const eventosClave = [
-        ...ingresos.map(i => ({ id: `ing-${i.fecha}-${i.planeta}`, planeta: i.planeta,
-          titulo: `${i.planeta} entra en ${i.signo_nuevo} — ${i.fecha.slice(-2)} ${NOMBRES_MES[_calMesActual-1].slice(0,3)}`,
-          detalle: `<b>Qué significa:</b> ${i.planeta} activa ahora ${TEMA_PLANETA_INGRESO[i.planeta] || 'esta área de tu vida'} con el estilo de ${i.signo_nuevo}.<br><b>Cómo aprovecharlo:</b> Observa cómo cambia tu forma de vivir ${TEMA_PLANETA_INGRESO[i.planeta] || 'esto'} en las próximas semanas.` })),
-        ...retrogrados.map(r => ({ id: `retro-${r.fecha}-${r.planeta}`, planeta: r.planeta,
-          titulo: `${r.planeta} ${r.tipo === 'se_vuelve_retrogrado' ? 'retrógrado' : 'directo'} — ${r.fecha.slice(-2)} ${NOMBRES_MES[_calMesActual-1].slice(0,3)}`,
-          detalle: `<b>Qué activa:</b> ${r.tipo === 'se_vuelve_retrogrado' ? 'Momento de revisar, repensar y no forzar decisiones grandes relacionadas con ' + (TEMA_PLANETA_INGRESO[r.planeta] || r.planeta) + '.' : 'Lo que estuvo detenido puede retomar su curso normal.'}${r.duracion_tipica ? `<br><b>Duración típica:</b> ${r.duracion_tipica}.` : ''}` })),
-      ].slice(0, 10);
-      const cuerpoEventosClave = eventosClave.length
-        ? eventosClave.map(ev => acordeonItemMes(ev.id, ev.titulo, ev.detalle, false, { planeta: ev.planeta })).join('')
-        : '<div class="disclaimer">Sin eventos generales mayores detectados este mes.</div>';
-      html += acordeonItemMes('nivel1-eventosclave', '⭐ Eventos clave', cuerpoEventosClave, false);
-
-      const cuerpoPersonal = eventosPersonales.length
-        ? eventosPersonales.slice(0, 10).map(e => acordeonItemMes(
-            `pers-${e.fecha}-${e.planeta_transito}-${e.punto_natal}`,
-            `${e.planeta_transito} ${e.aspecto} tu ${e.punto_natal} natal — ${e.fecha.slice(-2)} ${NOMBRES_MES[_calMesActual-1].slice(0,3)}`,
-            `${e.casa_natal ? `<b>Casa afectada:</b> Casa ${e.casa_natal}<br>` : ''}${e.area ? `<b>Área de vida:</b> ${e.area}<br>` : ''}<b>Qué significa:</b> ${e.planeta_transito} entra en contacto directo con tu ${e.punto_natal} natal, activando ${e.area || 'esta parte de tu carta'}.`,
-            false,
-            { planeta: e.planeta_transito, tema: e.area || e.aspecto }
-          )).join('')
-        : '<div class="disclaimer">Sin tránsitos personales mayores este mes.</div>';
-      html += acordeonItemMes('nivel1-personal', '🎯 Cómo te afecta a ti', cuerpoPersonal, false);
-
-      contenedor.innerHTML = html;
-    } catch (e) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${e.message}</div>`;
-    }
-  }
   let _calDiaSeleccionado = null;
 
   async function renderizarSemanaLunar(mes, anio) {
@@ -3572,7 +3519,7 @@
     anio = anio || _calAnioActual;
     _calMesActual = mes;
     _calAnioActual = anio;
-    contenedor.innerHTML = samLoading('Leyendo tu mes astrológico...');
+    contenedor.innerHTML = samLoading('');
     try {
       const r = await fetchAuth('/calendario-lunar', {
         method: 'POST',
@@ -3703,19 +3650,55 @@
         const tema = TEMAS_DIA_CORTO[data.dia_personal];
         if (tema && fraseEl) fraseEl.textContent = `Día personal ${data.dia_personal} · ${tema}`;
       }
+
+      // Banda Sol/Asc/Luna — se actualiza aquí mismo con los datos del tránsito principal
+      // que ya vienen en home-summary, sin necesitar una segunda llamada a /carta-natal/ultima.
+      // Así desaparece el "delay" en que se veían Virgo/Libra/Escorpio por defecto.
+      if (data.transito_principal?.signo) {
+        // Si home-summary no trae Sol/Asc/Luna natales, actualizarBandaConCartaReal()
+        // ya los tiene en caché y los actualiza rápido (está en paralelo).
+        // Solo mostramos "··" mientras tanto — no los valores hardcodeados viejos.
+      }
+      // Llama a actualizar la banda inmediatamente (no con setTimeout)
+      actualizarBandaConCartaReal();
+
+      // Eventos especiales del día: un planeta que cambió de signo o empezó/terminó retrógrado
+      const contenedorEventos = document.getElementById('eventos-especiales-dia');
+      if (contenedorEventos) {
+        if (data.eventos_especiales && data.eventos_especiales.length) {
+          const ICONO_EVENTO = { ingreso: '➡️', retrogrado_inicio: '⏪', retrogrado_fin: '⏩' };
+          contenedorEventos.innerHTML = data.eventos_especiales.map(ev => `
+            <div class="tarjeta-lectura neutral" style="margin-bottom:8px;">
+              <div class="titulo">${ICONO_EVENTO[ev.tipo] || '✨'} ${ev.planeta} — hoy es un día especial</div>
+              <div class="cuerpo">${ev.texto}</div>
+            </div>
+          `).join('');
+        } else {
+          contenedorEventos.innerHTML = '';
+        }
+      }
     } catch (e) { /* silencioso */ }
   }
 
-  async function revisarPerfilYArrancar() {
-    const ocultarSplash = () => {
-      const s = document.getElementById('splash-verificando');
-      if (s) s.style.display = 'none';
-    };
-    if (!SESION.token) { ocultarSplash(); return mostrarPantalla('bienvenida'); }
+  async function revisarPerfilYArrancar(reintentos = 3) {
+    if (!SESION.token) return mostrarPantalla('bienvenida');
+
+    let r;
     try {
+      r = await fetchAuth('/perfil', { headers: {} });
+    } catch (e) {
+      // Error de red (sin internet, servidor dormido despertando, etc.) — NO cerramos sesión.
+      // Reintentamos unas veces antes de rendirnos, manteniendo el token intacto.
+      if (reintentos > 0) {
+        setTimeout(() => revisarPerfilYArrancar(reintentos - 1), 2000);
+      } else {
+        mostrarPantalla(null);
+        mostrarMensajeGlobal('No se pudo conectar. Revisa tu internet — seguimos intentando.', 'amarillo');
+      }
+      return;
+    }
 
     // Intentar renovar el token si hay refresh disponible
-    let r = await fetchAuth('/perfil', { headers: {} });
     if (r.status === 401 && SESION.refresh) {
       try {
         const rr = await fetch(BACKEND + '/auth/refresh', {
@@ -3730,21 +3713,33 @@
           if (SESION.refresh) localStorage.setItem('saa_refresh', SESION.refresh);
           r = await fetchAuth('/perfil', { headers: {} });
         }
-      } catch (e) { /* si falla, cae al logout */ }
+      } catch (e) { /* si falla la renovación, seguimos abajo con la lógica de estado real */ }
     }
 
-    if (!r.ok) { ocultarSplash(); cerrarSesion(); return; }
+    // Solo cerramos sesión cuando el servidor de verdad rechaza la autenticación (401),
+    // NUNCA por errores temporales (500, 503, timeouts, Render despertando, etc.)
+    if (r.status === 401) { cerrarSesion(); return; }
+    if (!r.ok) {
+      // Error temporal del servidor — reintentamos sin tocar el token ni expulsar a la usuaria
+      if (reintentos > 0) {
+        setTimeout(() => revisarPerfilYArrancar(reintentos - 1), 2000);
+      } else {
+        mostrarPantalla(null);
+        mostrarMensajeGlobal('El servidor está tardando en responder. Reintentando…', 'amarillo');
+      }
+      return;
+    }
     const data = await r.json();
     SESION.suscripcion = data.suscripcion || 'ninguna';
-    ocultarSplash();
     if (!data.perfil || !data.perfil.ciudad_nacimiento) {
       mostrarPantalla('perfil');
+      // Prellena el nombre con el que ya dio al registrarse, para no pedirlo dos veces
+      if (data.nombre_sugerido) {
+        const campoNombre = document.getElementById('perfil-nombre');
+        if (campoNombre && !campoNombre.value) campoNombre.value = data.nombre_sugerido;
+      }
     } else {
       entrarALaApp(data.perfil);
-    }
-    } catch(e) {
-      document.getElementById('splash-verificando').style.display = 'none';
-      mostrarPantalla('bienvenida');
     }
   }
 
@@ -3837,11 +3832,11 @@
     `;
   }
 
-  async function calcularCartaReal(silencioso = false) {
+  async function calcularCartaReal(silencioso = false, reintentosSilencioso = 1) {
     const boton = document.getElementById('btn-calcular-carta');
     const chips = document.getElementById('carta-resultado-chips');
     if (!silencioso) {
-      boton.textContent = 'Calculando...'; boton.disabled = true;
+      boton.innerHTML = samLoading(''); boton.disabled = true;
       const rn = document.getElementById('resumen-natal-contenedor'); if (rn) rn.innerHTML = '';
       const cv = document.getElementById('carta-visual-contenedor'); if (cv) cv.innerHTML = '';
     }
@@ -3872,7 +3867,7 @@
         if (cd?.aspects?.length) {
           html += '<div class="etiqueta-seccion">Aspectos principales</div>';
           html += cd.aspects.slice(0, 8).map(a => `
-            <div class="carta-real-row" style="font-size:16px;font-weight:700;">${nombrePlanetaEs(a.point1)} ${aspectoEs(a.aspect_type)} ${nombrePlanetaEs(a.point2)} <span style="color:var(--ink-dim);font-weight:400;font-size:13px;">(orbe ${a.orb?.toFixed ? a.orb.toFixed(1) : a.orb}°)</span></div>
+            <div class="carta-real-row" style="font-size:12px;">${nombrePlanetaEs(a.point1)} ${aspectoEs(a.aspect_type)} ${nombrePlanetaEs(a.point2)} <span style="color:var(--ink-dim);font-weight:400;">(orbe ${a.orb?.toFixed ? a.orb.toFixed(1) : a.orb}°)</span></div>
           `).join('');
         }
         chips.innerHTML = htmlSimple + `<div id="carta-detalle-tecnico" class="detalle-tecnico-oculto">${html}</div>`;
@@ -3886,6 +3881,12 @@
       if (!silencioso) {
         chips.innerHTML = `<div class="row" style="color:#a5442f;">${err.message}</div>` +
           (err.detalle ? `<pre style="white-space:pre-wrap;font-size:9px;color:#a5442f;opacity:0.7;padding:8px;">${typeof err.detalle === 'string' ? err.detalle : JSON.stringify(err.detalle, null, 2)}</pre>` : '');
+      } else {
+        console.error('calcularCartaReal (silencioso) falló:', err.message);
+        // Reintenta una vez (común en apps nativas: la red puede tardar en estar lista al arrancar en frío)
+        if (reintentosSilencioso > 0) {
+          setTimeout(() => calcularCartaReal(true, reintentosSilencioso - 1), 1500);
+        }
       }
     }
     if (!silencioso) { boton.textContent = 'Calcular mi carta natal'; boton.disabled = false; }
@@ -3908,9 +3909,8 @@
         return;
       }
       if (data.svg) {
-        const btnCerrar = document.getElementById('btn-cerrar-carta-visual');
-        if (btnCerrar) btnCerrar.style.display = 'flex';
-        contenedor.innerHTML = `<div style="border-radius:14px;overflow:hidden;background:var(--paper);border:1px solid var(--line);">${data.svg}</div>`;
+        const _bcCv = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="event.stopPropagation();document.getElementById('carta-visual-contenedor').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
+        contenedor.innerHTML = _bcCv + `<div style="border-radius:14px;overflow:hidden;background:var(--paper);border:1px solid var(--line);">${data.svg}</div>`;
         document.getElementById('zoom-hint').textContent = '👆 Toca la carta para verla en grande';
         // Hacer que el SVG sea responsive
         const svgEl = contenedor.querySelector('svg');
@@ -3950,7 +3950,35 @@
     document.getElementById('precio-plan-elegido').innerHTML = _PRECIOS_PLAN[plan];
   }
 
+  // ============================================================
+  // COBROS NATIVOS — Android usa Google Play Billing, iOS usa StoreKit (mismo plugin
+  // @capgo/native-purchases para ambos). La versión web sigue usando Stripe.
+  //
+  // ⚠️ PENDIENTE DE CONFIRMAR (Android solamente): reemplazar los "planId" con los reales
+  // una vez creados los "Planes base" en Google Play Console. iOS no necesita este paso.
+  // ============================================================
+  const PLANES_ANDROID = {
+    mensual:   { productId: 'com.samalquimiaastral.app.mensual',    planId: 'PENDIENTE-plan-base-mensual' },
+    semestral: { productId: 'com.samalquimiaastral.app.seismeses',  planId: 'PENDIENTE-plan-base-6-meses' },
+    anual:     { productId: 'com.samalquimiaastral.app.anual',      planId: 'PENDIENTE-plan-base-anual' },
+  };
+  const PLANES_IOS = {
+    mensual:   { productId: 'com.samalquimiaastral.app.monthly' },
+    semestral: { productId: 'com.samalquimiaastral.app.sixmonths' },
+    anual:     { productId: 'com.samalquimiaastral.app.yearly' },
+  };
+
+  function esAndroidNativo() {
+    return !!(window.Capacitor && typeof window.Capacitor.getPlatform === 'function' && window.Capacitor.getPlatform() === 'android');
+  }
+  function esIOSNativo() {
+    return !!(window.Capacitor && typeof window.Capacitor.getPlatform === 'function' && window.Capacitor.getPlatform() === 'ios');
+  }
+
   async function accionSuscribirse() {
+    if (esAndroidNativo() || esIOSNativo()) return accionSuscribirseNativa();
+
+    // Flujo normal (solo web) — sin cambios, sigue usando Stripe
     const boton = document.getElementById('btn-suscribirse');
     boton.textContent = 'Un momento...';
     boton.disabled = true;
@@ -3970,6 +3998,89 @@
     } catch (e) {
       boton.textContent = 'Suscribirme';
       boton.disabled = false;
+    }
+  }
+
+  // Compra real usando Google Play Billing (Android) o StoreKit (iOS) — mismo plugin
+  // @capgo/native-purchases para ambos. Se accede vía el puente estándar Capacitor.Plugins,
+  // que es como se usa cualquier plugin nativo de Capacitor desde HTML plano (sin bundler).
+  async function accionSuscribirseNativa() {
+    const boton = document.getElementById('btn-suscribirse');
+    boton.textContent = 'Un momento...';
+    boton.disabled = true;
+    try {
+      const NativePurchases = window.Capacitor?.Plugins?.NativePurchases;
+      if (!NativePurchases) throw new Error('El módulo de compras no está disponible en esta build.');
+
+      const enAndroid = esAndroidNativo();
+      const config = enAndroid ? PLANES_ANDROID[_planElegido] : PLANES_IOS[_planElegido];
+      const resultado = await NativePurchases.purchaseProduct({
+        productIdentifier: config.productId,
+        ...(enAndroid ? { planIdentifier: config.planId } : {}), // planIdentifier solo aplica en Android
+        productType: 'subs',
+      });
+
+      // Avisamos al backend para activar el acceso premium con este comprobante.
+      // Android manda purchaseToken/orderId; iOS manda receipt/transactionId (campos distintos).
+      const r = await fetchAuth('/suscripcion/validar-compra-nativa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plataforma: enAndroid ? 'google_play' : 'app_store',
+          plan: _planElegido,
+          productId: config.productId,
+          purchaseToken: enAndroid ? resultado.purchaseToken : null,
+          orderId: enAndroid ? resultado.orderId : null,
+          receipt: enAndroid ? null : resultado.receipt,
+          transactionId: enAndroid ? null : resultado.transactionId,
+        }),
+      });
+      const data = await leerJsonSeguro(r);
+      if (!r.ok) throw new Error(data.error || 'No se pudo validar la compra.');
+
+      mostrarMensajeGlobal('¡Suscripción activada! Bienvenida a Premium 🌙', 'verde');
+      SESION.suscripcion = 'activa';
+      boton.textContent = 'Suscrita ✓';
+    } catch (e) {
+      boton.textContent = 'Suscribirme';
+      boton.disabled = false;
+      if (!/cancel/i.test(e.message || '')) {
+        mostrarMensajeGlobal('No se pudo completar la compra: ' + e.message, 'rojo');
+      }
+    }
+  }
+
+  // Restaurar compras (requisito de Google/Apple — botón visible en Mi cuenta)
+  async function accionRestaurarCompras() {
+    try {
+      const NativePurchases = window.Capacitor?.Plugins?.NativePurchases;
+      if (!NativePurchases) return mostrarMensajeGlobal('No disponible en esta versión.', 'amarillo');
+      const enAndroid = esAndroidNativo();
+      await NativePurchases.restorePurchases();
+      const { purchases } = await NativePurchases.getPurchases({ productType: 'subs' });
+      // Android marca compra válida con purchaseState; iOS marca suscripción activa con isActive
+      const activa = enAndroid
+        ? purchases.find(p => p.purchaseState === 'PURCHASED' || p.purchaseState === '1')
+        : purchases.find(p => p.isActive === true);
+      if (activa) {
+        const r = await fetchAuth('/suscripcion/validar-compra-nativa', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            plataforma: enAndroid ? 'google_play' : 'app_store',
+            productId: activa.productIdentifier,
+            purchaseToken: enAndroid ? activa.purchaseToken : null,
+            orderId: enAndroid ? activa.orderId : null,
+            receipt: enAndroid ? null : activa.receipt,
+            transactionId: enAndroid ? null : activa.transactionId,
+          }),
+        });
+        const data = await leerJsonSeguro(r);
+        if (r.ok) { mostrarMensajeGlobal('Compra restaurada correctamente.', 'verde'); SESION.suscripcion = 'activa'; return; }
+      }
+      mostrarMensajeGlobal('No encontramos ninguna compra activa para restaurar.', 'amarillo');
+    } catch (e) {
+      mostrarMensajeGlobal('No se pudo restaurar: ' + e.message, 'rojo');
     }
   }
 
@@ -4080,7 +4191,7 @@
         .sort((a, b) => Math.abs(a.orb ?? 99) - Math.abs(b.orb ?? 99))
         .slice(0, 3);
 
-      html += `<div style="font-family:'Cormorant Garamond',serif;font-weight:800;font-size:18px;color:var(--marigold-dark);margin:16px 0 8px;">${formatearFecha(fecha)}</div>`;
+      html += `<div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14px;color:var(--marigold-dark);margin:14px 0 6px;">${formatearFecha(fecha)}</div>`;
       html += delDia.map(ev => {
         const p1 = nombrePlanetaEs(ev.transiting_planet);
         const p2 = nombrePlanetaEs(ev.stationed_planet);
@@ -4100,7 +4211,7 @@
 
   async function verTransitosReales() {
     const contenedor = document.getElementById('transitos-resultado');
-    contenedor.innerHTML = samLoading('Leyendo tus tránsitos...');
+    contenedor.innerHTML = samLoading('');
     try {
       const r = await fetchAuth('/transitos-personales', { method: 'POST', headers: {} });
       const data = await r.json();
@@ -4117,7 +4228,7 @@
 
   async function verEstrellasFijas() {
     const contenedor = document.getElementById('estrellas-resultado');
-    contenedor.innerHTML = samLoading('Un momento...');
+    contenedor.innerHTML = samLoading('');
     try {
       const r = await fetchAuth('/estrellas-fijas', { method: 'POST', headers: {} });
       const data = await r.json();
@@ -4148,7 +4259,7 @@
 
   async function verNumerologia() {
     const contenedor = document.getElementById('numerologia-resultado');
-    contenedor.innerHTML = samLoading('Un momento...');
+    contenedor.innerHTML = samLoading('');
     try {
       const r = await fetchAuth('/numerologia', { method: 'POST', headers: {} });
       const data = await r.json();
@@ -4212,7 +4323,7 @@
 
   async function verFlorArmonica() {
     const contenedor = document.getElementById('flor-resultado');
-    contenedor.innerHTML = samLoading('Calculando tu flor armónica...');
+    contenedor.innerHTML = samLoading('');
     try {
       const r = await fetchAuth('/flor-armonica', {
         method: 'POST',
@@ -4268,7 +4379,7 @@
       contenedor.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Primero elige a alguien de "Tus personas" arriba, o agrega a esa persona con el botón "+ Agregar".</div>';
       return;
     }
-    contenedor.innerHTML = samLoading('Calculando carta compuesta...');
+    contenedor.innerHTML = samLoading('');
     try {
       const r = await fetchAuth('/carta-compuesta', {
         method: 'POST',
@@ -4346,7 +4457,7 @@
       contenedor.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Primero elige a alguien de "Tus personas" arriba, o agrega a esa persona con el botón "+ Agregar".</div>';
       return;
     }
-    contenedor.innerHTML = samLoading('Calculando compatibilidad...');
+    contenedor.innerHTML = samLoading('');
     try {
       const r = await fetchAuth('/sinastria', {
         method: 'POST',
@@ -4463,7 +4574,7 @@
     const contenedor = document.getElementById('resumen-natal-contenedor');
     const chips = document.getElementById('carta-resultado-chips'); if (chips) chips.innerHTML = '';
     const cv = document.getElementById('carta-visual-contenedor'); if (cv) cv.innerHTML = '';
-    contenedor.innerHTML = samLoading('Leyendo tu personalidad...');
+    contenedor.innerHTML = '<div class="disclaimer">Generando tu resumen...</div>';
     try {
       const r = await fetchAuth('/resumen-natal', { method: 'POST', headers: {} });
       const data = await r.json();
@@ -4512,7 +4623,7 @@
   const MESES_ES = ['', 'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
   async function calcularCalendarioLunar(boton) {
-    boton.textContent = 'Calculando el mes completo...';
+    boton.innerHTML = samLoading('');
     boton.disabled = true;
     try {
       const r = await fetchAuth('/calendario-lunar', { method: 'POST', headers: {} });
@@ -4635,18 +4746,18 @@
       }
       // Consejo práctico según la fase lunar
       const CONSEJOS_FASE = {
-        'New Moon':'🌑 Luna Nueva — siembra intenciones. Ideal para iniciar proyectos y hacer listas de deseos.',
-        'Waxing Crescent':'🌒 Luna Creciente — construye impulso. Toma acción sobre lo que iniciaste.',
-        'First Quarter':'🌓 Cuarto Creciente — supera obstáculos. Empuja con decisión.',
-        'Waxing Gibbous':'🌔 Gibosa Creciente — refina y ajusta antes de la Luna Llena.',
-        'Full Moon':'🌕 Luna Llena — máxima energía. Lo que sembraste se hace visible. Celebra y suelta.',
-        'Waning Gibbous':'🌖 Gibosa Menguante — comparte lo aprendido en este ciclo.',
-        'Last Quarter':'🌗 Cuarto Menguante — suelta y cierra. Haz espacio para lo nuevo.',
-        'Waning Crescent':'🌘 Luna Menguante — descansa y reflexiona. Pronto empieza un ciclo nuevo.',
+        'New Moon':'Luna Nueva — siembra intenciones. Ideal para iniciar proyectos y hacer listas de deseos.',
+        'Waxing Crescent':'Luna Creciente — construye impulso. Toma acción sobre lo que iniciaste.',
+        'First Quarter':'Cuarto Creciente — supera obstáculos. Empuja con decisión.',
+        'Waxing Gibbous':'Gibosa Creciente — refina y ajusta antes de la Luna Llena.',
+        'Full Moon':'Luna Llena — máxima energía. Lo que sembraste se hace visible. Celebra y suelta.',
+        'Waning Gibbous':'Gibosa Menguante — comparte lo aprendido en este ciclo.',
+        'Last Quarter':'Cuarto Menguante — suelta y cierra. Haz espacio para lo nuevo.',
+        'Waning Crescent':'Luna Menguante — descansa y reflexiona. Pronto empieza un ciclo nuevo.',
       };
       const faseLunaHoy = data.luna?.data?.lunar_metrics?.moon_phase || '';
       const consejoDia = CONSEJOS_FASE[faseLunaHoy] || '';
-      const consejoHtml = consejoDia ? `<div style="background:linear-gradient(135deg,var(--blush-2),var(--blush-1));border-radius:12px;padding:12px 14px;color:#fff;margin-bottom:10px;font-size:12.5px;line-height:1.6;">${consejoDia}</div>` : '';
+      const consejoHtml = consejoDia ? `<div style="background:linear-gradient(135deg,var(--blush-2),var(--blush-1));border-radius:12px;padding:12px 14px;color:#fff;margin-bottom:10px;font-size:12.5px;line-height:1.6;display:flex;align-items:center;gap:8px;">${svgLuna(faseLunaHoy, 22)}<span>${consejoDia}</span></div>` : '';
       contenedor.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('luna-cruda').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>` + consejoHtml + resumenHtml + renderizarInforme(data.luna, null);
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
@@ -4709,7 +4820,7 @@
     const pregunta = document.getElementById('horaria-pregunta').value.trim();
     const contenedor = document.getElementById('horaria-resultado');
     if (!pregunta) { contenedor.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Escribe tu pregunta primero.</div>'; return; }
-    contenedor.innerHTML = samLoading('Leyendo la carta del momento...');
+    contenedor.innerHTML = samLoading('');
     const _cerrar = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('horaria-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
     try {
       const r = await fetchAuth('/horaria', {
@@ -4935,7 +5046,7 @@
       contenedor.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Escribe la ciudad y elige el país.</div>';
       return;
     }
-    contenedor.innerHTML = samLoading('Calculando cómo te afecta...');
+    contenedor.innerHTML = samLoading('');
     try {
       const r = await fetchAuth('/relocacion', {
         method: 'POST',
@@ -4972,6 +5083,7 @@
     if (!original) return;
     document.getElementById('zoom-modal-content').innerHTML = original;
     document.getElementById('zoom-modal-bg').classList.add('open');
+    activarPanZoom(document.getElementById('zoom-modal-content'));
   }
 
   function verEnGrande() {
@@ -4979,12 +5091,69 @@
     if (!original) return;
     document.getElementById('zoom-modal-content').innerHTML = original;
     document.getElementById('zoom-modal-bg').classList.add('open');
+    activarPanZoom(document.getElementById('zoom-modal-content'));
   }
   function cerrarZoom() {
     document.getElementById('zoom-modal-bg').classList.remove('open');
   }
 
-  async function actualizarBandaConCartaReal() {
+  // Habilita pellizcar-para-zoom (pinch), arrastrar (pan) y doble-toque para restablecer,
+  // usando SOLO transform (translate+scale) sobre el contenedor — así el SVG/imagen interna
+  // nunca se re-dibuja ni se desalinean las líneas, solo se escala/mueve visualmente.
+  // Solo ACERCAR/ALEJAR (pellizco de dos dedos) — sin arrastre, la imagen no se mueve de lugar,
+  // solo cambia de tamaño centrada en su sitio. Doble toque restablece el tamaño original.
+  function activarPanZoom(contenedor) {
+    let escala = 1;
+    let ultimaDistancia = null;
+
+    contenedor.style.transformOrigin = 'center center';
+    contenedor.style.touchAction = 'none';
+    contenedor.style.willChange = 'transform';
+
+    function aplicar() {
+      contenedor.style.transform = `scale(${escala})`;
+    }
+    function distanciaEntre(t0, t1) {
+      const dx = t0.clientX - t1.clientX, dy = t0.clientY - t1.clientY;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    contenedor.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 2) {
+        ultimaDistancia = distanciaEntre(e.touches[0], e.touches[1]);
+      }
+    }, { passive: true });
+
+    contenedor.addEventListener('touchmove', (e) => {
+      if (e.touches.length === 2 && ultimaDistancia) {
+        e.preventDefault();
+        const nueva = distanciaEntre(e.touches[0], e.touches[1]);
+        const factor = nueva / ultimaDistancia;
+        escala = Math.max(1, Math.min(4, escala * factor));
+        ultimaDistancia = nueva;
+        aplicar();
+      }
+    }, { passive: false });
+
+    contenedor.addEventListener('touchend', (e) => {
+      if (e.touches.length < 2) ultimaDistancia = null;
+    }, { passive: true });
+
+    // Rueda del mouse, solo para pruebas en escritorio
+    contenedor.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      escala = Math.max(1, Math.min(4, escala - e.deltaY * 0.001));
+      aplicar();
+    }, { passive: false });
+
+    // Doble toque/clic para restablecer el tamaño
+    contenedor.addEventListener('dblclick', () => {
+      escala = 1;
+      aplicar();
+    });
+  }
+
+  async function actualizarBandaConCartaReal(reintentos = 2) {
     try {
       const r = await fetchAuth('/carta-natal/ultima', { headers: {} });
       const data = await r.json();
@@ -5006,7 +5175,13 @@
       if (sol?.sign && elSol) elSol.textContent = signoEs(sol.sign) + (sol.degree ? ' ' + Math.floor(sol.degree) + '°' : '');
       if (luna?.sign && elLuna) elLuna.textContent = signoEs(luna.sign) + (luna.degree ? ' ' + Math.floor(luna.degree) + '°' : '');
       if (asc?.sign && elAsc) elAsc.textContent = signoEs(asc.sign) + (asc.degree ? ' ' + Math.floor(asc.degree) + '°' : '');
-    } catch (e) { /* silencioso */ }
+    } catch (e) {
+      console.error('actualizarBandaConCartaReal falló:', e.message);
+      // Reintenta automáticamente (común en apps nativas: la red puede tardar en estar lista al arrancar en frío)
+      if (reintentos > 0) {
+        setTimeout(() => actualizarBandaConCartaReal(reintentos - 1), 1500);
+      }
+    }
   }
 
   // ---- Función global de cerrar sección ----
@@ -5032,72 +5207,7 @@
 
     // Al cargar la página: ¿ya hay sesión guardada?
   aplicarTemaGuardado();
-  aplicarTamanoFuenteGuardado();
   cambiarPestana('hoy');
-  // ===== SAM LOADING =====
-  function samLoading(texto) {
-    const iconos = ['🌙','✨','⭐','🔮','🌟'];
-    const icono = iconos[Math.floor(Math.random() * iconos.length)];
-    return `<div class="sam-loading"><span class="sam-loading-icon">${icono}</span><span class="sam-loading-text">${texto || 'Un momento...'}</span></div>`;
-  }
-
-  // ===== REFLEXIÓN DEL DÍA =====
-  const REFLEXIONES_FALLBACK = [
-    {emoji:'🌙',texto:'Hoy es un buen día para confiar en lo que no puedes ver todavía. El universo trabaja incluso cuando tú descansas.'},
-    {emoji:'✨',texto:'Cada momento difícil que has atravesado te trajo hasta aquí. Eso no es poca cosa.'},
-    {emoji:'🌟',texto:'Tu energía es valiosa. Ponla donde te nutra, no donde te agote.'},
-    {emoji:'☀️',texto:'No tienes que tenerlo todo resuelto hoy. Un paso pequeño también es avanzar.'},
-    {emoji:'🔮',texto:'Lo que sientes hoy tiene un mensaje para ti. Tómate un momento para escucharlo.'},
-    {emoji:'🌸',texto:'Mereces el mismo amor y paciencia que le das a los demás.'},
-    {emoji:'💫',texto:'Hay cosas que solo tú puedes crear en este mundo. No las pospongas.'},
-    {emoji:'🌿',texto:'Tu intuición es tu brújula más confiable. Aprende a escucharla más.'},
-  ];
-
-  async function abrirReflexionDia() {
-    let modal = document.getElementById('reflexion-modal-bg');
-    if (!modal) {
-      modal = document.createElement('div');
-      modal.id = 'reflexion-modal-bg';
-      modal.style.cssText = 'position:fixed;inset:0;background:rgba(15,10,26,0.85);z-index:300;display:flex;align-items:flex-end;justify-content:center;padding:0 0 20px;';
-      modal.innerHTML = `
-        <div style="background:var(--paper,#1a1230);border-radius:24px 24px 16px 16px;padding:28px 22px 24px;width:92%;max-width:380px;text-align:center;box-shadow:0 -4px 40px rgba(45,27,78,0.4);">
-          <span id="reflexion-emoji" style="font-size:44px;margin-bottom:12px;display:block;">🌙</span>
-          <div id="reflexion-texto" style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--plum);line-height:1.65;margin-bottom:16px;">Cargando tu reflexión...</div>
-          <div style="font-size:12px;color:var(--ink-dim);margin-bottom:16px;">✦ Sam Alquimia Astral</div>
-          <button onclick="document.getElementById('reflexion-modal-bg').style.display='none'" style="background:var(--marigold);color:#fff;border:none;border-radius:100px;padding:11px 32px;font-size:14px;font-weight:600;cursor:pointer;">Cerrar</button>
-        </div>`;
-      modal.onclick = e => { if (e.target === modal) modal.style.display = 'none'; };
-      document.querySelector('.screen')?.appendChild(modal);
-    }
-    modal.style.display = 'flex';
-    const fallback = REFLEXIONES_FALLBACK[new Date().getDay() % REFLEXIONES_FALLBACK.length];
-    document.getElementById('reflexion-emoji').textContent = fallback.emoji;
-    document.getElementById('reflexion-texto').textContent = fallback.texto;
-    try {
-      if (!SESION.token) return;
-      const r = await fetchAuth('/asistente-ia', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ pregunta:'Dame una reflexión corta y bonita para este momento del día. Alentadora, cálida y personal. Máximo 3 oraciones cortas. Solo el texto, sin saludos.', historial:[] })
-      });
-      const data = await r.json();
-      if (data.respuesta?.length > 10) document.getElementById('reflexion-texto').textContent = data.respuesta;
-    } catch(e) {}
-  }
-
-  // ===== SPLASH SCREEN =====
-  if (SESION.token) {
-    const splash = document.getElementById('splash-verificando');
-    if (splash) splash.style.display = 'flex';
-    // Timeout máximo 8 segundos - si no responde, mostrar bienvenida
-    setTimeout(() => {
-      const s = document.getElementById('splash-verificando');
-      if (s && s.style.display !== 'none') {
-        s.style.display = 'none';
-        mostrarPantalla('bienvenida');
-      }
-    }, 8000);
-  }
-
   revisarPerfilYArrancar();
 
   // Precarga de la carta natal en caché del navegador
@@ -5111,8 +5221,19 @@
   setTimeout(precargarCarta, 3000);
 
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('service-worker.js').catch(() => {});
+    window.addEventListener('load', async () => {
+      try {
+        // Limpieza única: borra cualquier Service Worker y caché viejos guardados en el
+        // dispositivo (de versiones anteriores) que estuvieran sirviendo una copia vieja
+        // de la app en vez de la actual. Después de esto, registra la versión nueva.
+        const registros = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registros.map(r => r.unregister()));
+        if (window.caches) {
+          const nombresCache = await caches.keys();
+          await Promise.all(nombresCache.map(n => caches.delete(n)));
+        }
+      } catch (e) { /* si falla la limpieza, igual intentamos registrar abajo */ }
+      navigator.serviceWorker.register('service-worker.js?v=185').catch(() => {});
     });
   }
 </script>
