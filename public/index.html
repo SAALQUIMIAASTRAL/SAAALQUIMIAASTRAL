@@ -2932,6 +2932,14 @@
     cambiarTamanoFuente(tamano);
   }
 
+  function alternarOjo(inputId, boton) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    const oculto = input.type === 'password';
+    input.type = oculto ? 'text' : 'password';
+    boton.textContent = oculto ? '🙈' : '👁';
+  }
+
   function toggleSeccionCuenta(id) {
     const body = document.getElementById(id);
     const chev = document.getElementById('chev-' + id);
