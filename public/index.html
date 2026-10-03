@@ -3049,6 +3049,45 @@
     document.getElementById('eliminar-cuenta-confirm').style.display = 'block';
   }
 
+  function subirFotoPerfil(input) {
+    if (!input.files || !input.files[0]) return;
+    const archivo = input.files[0];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const dataUrl = e.target.result;
+      // Mostrar foto en vivo en Mi Cuenta
+      const preview = document.getElementById('foto-perfil-preview');
+      const inicial = document.getElementById('foto-perfil-inicial');
+      if (preview && inicial) {
+        preview.src = dataUrl;
+        preview.style.display = 'block';
+        inicial.style.display = 'none';
+      }
+      // Guardar en localStorage del navegador (persiste en el dispositivo)
+      localStorage.setItem('saa_foto_perfil', dataUrl);
+      // Intentar subir al servidor en background (no bloquea la UI)
+      const formData = new FormData();
+      formData.append('foto', archivo);
+      fetchAuth('/subir-foto-perfil', { method: 'POST', body: formData }).catch(err => {
+        console.log('Foto guardada localmente. Server upload en background:', err.message);
+      });
+    };
+    reader.readAsDataURL(archivo);
+  }
+
+  function cargarFotoPerfilGuardada() {
+    const fotoGuardada = localStorage.getItem('saa_foto_perfil');
+    if (fotoGuardada) {
+      const preview = document.getElementById('foto-perfil-preview');
+      const inicial = document.getElementById('foto-perfil-inicial');
+      if (preview && inicial) {
+        preview.src = fotoGuardada;
+        preview.style.display = 'block';
+        inicial.style.display = 'none';
+      }
+    }
+  }
+
   async function descargarMisDatos() {
     try {
       const r = await fetchAuth('/mis-datos', { headers: {} });
@@ -3136,6 +3175,7 @@
 
   function abrirPerfil() {
     mostrarPantalla('mi-perfil');
+    cargarFotoPerfilGuardada(); // Cargar foto si existe
   }
 
   let _datosNacimientoActuales = null;
@@ -3530,7 +3570,7 @@
     return `<div class="sam-loading"><span class="sam-loading-icon">${icono}</span><span class="sam-loading-text">${texto || "Un momento..."}</span></div>`;
   }
 
-  /* --- REFLEXIONES DEL DÍA --- */
+  /* --- REFLEXIONES DEL DÍA (60+ para no repetir en 60 días) --- */
   const REFLEXIONES_DIARIAS = [
     { texto: "Hay cosas que solo tú puedes crear en este mundo. No las pospongas.", icono: "✨" },
     { texto: "El universo conspira a favor de quien se atreve a soñar en serio.", icono: "🌟" },
@@ -3552,10 +3592,83 @@
     { texto: "Lo que el miedo te susurra, la fe te está gritando. Elige creer.", icono: "🔥" },
     { texto: "Eres más fuerte que la adversidad que enfrentas hoy.", icono: "💪" },
     { texto: "El universo no envía desafíos. Envía invitaciones para crecer.", icono: "🪐" },
+    { texto: "Tu cuerpo es un templo de sabiduría. Escucha lo que te dice.", icono: "🙏" },
+    { texto: "Lo que hoy te parece imposible, mañana será tu historia de éxito.", icono: "📖" },
+    { texto: "La autenticidad es tu superpoder más grande. Úsala sin miedo.", icono: "💎" },
+    { texto: "Tus emociones son mensajeras. Atiéndelas con compasión.", icono: "🌺" },
+    { texto: "Lo que te rodea es un reflejo de lo que crees de ti. Cambia la creencia.", icono: "🪞" },
+    { texto: "Eres capaz de más de lo que tu mente cree posible.", icono: "🎯" },
+    { texto: "Cada gesto de amor hacia ti misma es un acto revolucionario.", icono: "❤️" },
+    { texto: "Tu voz importa. Lo que tienes que decir, el mundo necesita escuchar.", icono: "🎤" },
+    { texto: "Los límites que pones son los que te protegen. Respétalos.", icono: "🛡️" },
+    { texto: "La vida te da exactamente las lecciones que viniste a aprender.", icono: "📚" },
+    { texto: "Tu sensibilidad no es debilidad. Es tu capacidad de transformar el mundo.", icono: "🌸" },
+    { texto: "Hoy es el día perfecto para ser amable contigo misma.", icono: "☀️" },
+    { texto: "Lo que dejas ir, hace espacio para lo que realmente te mereces.", icono: "🍂" },
+    { texto: "Tu luz no disminuye la de otros. Brilla sin culpa.", icono: "💡" },
+    { texto: "Las personas correctas reconocerán tu valor. No gastes energía convenciendo.", icono: "✨" },
+    { texto: "Tu pasado no define tu futuro. Tu siguiente decisión sí.", icono: "🔄" },
+    { texto: "La soledad a veces es la paz que tu alma estaba pidiendo.", icono: "🕊️" },
+    { texto: "No necesitas permiso de nadie. Tu intuición es suficiente brújula.", icono: "🧭" },
+    { texto: "Lo que te hace diferente es lo que te hace especial.", icono: "🌈" },
+    { texto: "Hoy eres más sabia que ayer. Hoy eres suficiente.", icono: "👸" },
+    { texto: "Tu vida es el lienzo. Dibuja el cuadro que deseas ver.", icono: "🎨" },
+    { texto: "La gratitud atrae más momentos dignos de ser agradecidos.", icono: "🙌" },
+    { texto: "No eres lo que pasó. Eres lo que elegiste hacer después.", icono: "🌟" },
+    { texto: "Tu cuerpo es sabio. Tu mente es creativa. Tu espíritu es libre.", icono: "✦" },
+    { texto: "Mereces el amor que das. Mereces el cuidado que ofreces.", icono: "🌹" },
+    { texto: "La vida fluye con más facilidad cuando confías en el proceso.", icono: "💧" },
+    { texto: "Tu versión 2.0 ya existe. Solo activa lo que ya sabes.", icono: "🔑" },
+    { texto: "Los ciclos largos dan fruto más dulce. Sé paciente contigo misma.", icono: "🍯" },
+    { texto: "Lo que crees de ti es lo que manifestarás en el mundo.", icono: "🌌" },
+    { texto: "Hoy decides: ¿Qué versión de ti quieres ser?", icono: "💫" },
+    { texto: "Tu intuición es el GPS de tu alma. Síguelo.", icono: "📍" },
+    { texto: "No tienes que tenerlo todo resuelto. El viaje es la meta.", icono: "🛤️" },
+    { texto: "Tus miedos son solo invitaciones a crecer. Acéptalas.", icono: "🦋" },
+    { texto: "Eres un ser de luz disimulado en piel humana. Recuérdalo.", icono: "🌠" },
+    { texto: "Hoy es el día más importante de tu vida. Vívelo así.", icono: "🎁" },
+    { texto: "Tu energía es valiosa. Gástala solo en lo que te suma.", icono: "⚡" },
+    { texto: "Lo que hoy te duele, mañana te dará sabiduría.", icono: "🌊" },
+    { texto: "Eres exacto/a. Tal como eres. Hoy y siempre.", icono: "✨" },
+    { texto: "La vida no espera a que estés lista. Sé valiente ahora.", icono: "🔥" },
+    { texto: "Tu legado no será lo que tuviste. Será lo que diste.", icono: "💝" },
   ];
 
+  function obtenerReflexionDeHoy() {
+    const hoy = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const ultimas = JSON.parse(localStorage.getItem('saa_reflexiones_ultimas') || '[]');
+    
+    // Limpiar reflexiones más viejas de 60 días
+    const haceSesentaDias = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const limpias = ultimas.filter(r => r.fecha >= haceSesentaDias);
+    
+    // Buscar si ya existe una reflexión para hoy
+    const reflexionHoy = limpias.find(r => r.fecha === hoy);
+    if (reflexionHoy) return reflexionHoy.reflexion;
+    
+    // Si no existe, seleccionar una al azar que NO esté en los últimos 60 días
+    const indicesUsados = new Set(limpias.map(r => r.indice));
+    const indicesDisponibles = Array.from({length: REFLEXIONES_DIARIAS.length}, (_, i) => i)
+      .filter(i => !indicesUsados.has(i));
+    
+    if (indicesDisponibles.length === 0) {
+      // Si todas fueron usadas (raro pero posible), limpiar todo y empezar de nuevo
+      localStorage.removeItem('saa_reflexiones_ultimas');
+      indicesDisponibles = Array.from({length: REFLEXIONES_DIARIAS.length}, (_, i) => i);
+    }
+    
+    const indiceAleatorio = indicesDisponibles[Math.floor(Math.random() * indicesDisponibles.length)];
+    const reflexionElegida = REFLEXIONES_DIARIAS[indiceAleatorio];
+    
+    // Guardar en localStorage
+    limpias.push({ fecha: hoy, indice: indiceAleatorio, reflexion: reflexionElegida });
+    localStorage.setItem('saa_reflexiones_ultimas', JSON.stringify(limpias));
+    
+    return reflexionElegida;
+  }
+
   function abrirReflexionDia() {
-    const reflexion = REFLEXIONES_DIARIAS[Math.floor(Math.random() * REFLEXIONES_DIARIAS.length)];
+    const reflexion = obtenerReflexionDeHoy();
     document.getElementById('reflexion-texto').textContent = reflexion.texto;
     document.getElementById('reflexion-icon').textContent = reflexion.icono;
     document.getElementById('reflexion-modal').classList.add('open');
@@ -3571,6 +3684,7 @@
     const greet = document.getElementById('greeting-word');
     const nombreEl = document.querySelector('.band h1');
     if (nombreEl) nombreEl.innerHTML = `<span id="greeting-word">${greet ? greet.textContent : 'Hola'}</span>, ${SESION.nombre}`;
+    cargarFotoPerfilGuardada(); // Cargar foto de perfil si existe (guardada localmente)
     await calcularCartaReal(true); // asegura que la carta exista (la calcula si hace falta, silenciosamente)
     cargarCartasGuardadas();
     cargarHomeSummary(); // esta función ya llama a actualizarBandaConCartaReal() internamente
