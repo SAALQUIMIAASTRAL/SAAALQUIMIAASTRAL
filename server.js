@@ -57,6 +57,28 @@ const TTL = {
 const hoyStr = () => new Date().toISOString().slice(0, 10);
 const horaStr = () => new Date().toISOString().slice(0, 13);
 
+// Fecha local del usuario según timezone (evita que a las 7pm en México ya sea mañana en UTC)
+function fechaLocalMexico(tz) {
+  try {
+    const zona = tz || 'America/Mexico_City';
+    return new Date().toLocaleDateString('en-CA', { timeZone: zona }); // YYYY-MM-DD
+  } catch(e) { return hoyStr(); }
+}
+
+function ahoraMexico(tz) {
+  try {
+    const zona = tz || 'America/Mexico_City';
+    const fecha = new Date().toLocaleDateString('en-CA', { timeZone: zona });
+    const [y, m, d] = fecha.split('-').map(Number);
+    const hora = parseInt(new Date().toLocaleString('en-US', { timeZone: zona, hour: 'numeric', hour12: false }));
+    const minuto = parseInt(new Date().toLocaleString('en-US', { timeZone: zona, minute: 'numeric' }));
+    return { year: y, month: m, day: d, hour: hora, minute: minuto };
+  } catch(e) {
+    const n = new Date();
+    return { year: n.getUTCFullYear(), month: n.getUTCMonth()+1, day: n.getUTCDate(), hour: n.getUTCHours(), minute: n.getUTCMinutes() };
+  }
+}
+
 app.get('/', (req, res) => {
   res.json({ estado: 'Sam Alquimia Astral backend funcionando ✅', prueba: '/probar.html' });
 });
@@ -787,8 +809,10 @@ app.post('/home-summary', requireLogin, async (req, res) => {
     const perfil = await leerPerfil(req);
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
+    const tz = req.body?.timezone || 'America/Mexico_City';
     const hoy = new Date();
-    const cacheKey = cacheHash(req.userId, 'home', hoyStr());
+    const ahora = ahoraMexico(tz);
+    const cacheKey = cacheHash(req.userId, 'home', fechaLocalMexico(tz));
     const cached = cacheGet(cacheKey);
     if (cached) return res.json({ ...cached, nombre: perfil.nombre });
 
@@ -796,15 +820,15 @@ app.post('/home-summary', requireLogin, async (req, res) => {
     const [lunaData, ciclosData, transitosHoyData] = await Promise.all([
       astrologyApi.post('/analysis/lunar-analysis', {
         datetime_location: {
-          year: hoy.getUTCFullYear(), month: hoy.getUTCMonth()+1, day: hoy.getUTCDate(),
-          hour: hoy.getUTCHours(), minute: hoy.getUTCMinutes(), second: 0,
+          year: ahora.year, month: ahora.month, day: ahora.day,
+          hour: ahora.hour, minute: ahora.minute, second: 0,
           city: perfil.ciudad_nacimiento || 'Mexico City', country_code: perfil.pais_codigo || 'MX',
         },
         report_options: { language: 'es' },
       }).catch(() => null),
       astrologyApi.post('/numerology/personal-cycles', {
         subject: birthDataDesdePerfil(perfil),
-        target_date: { year: hoy.getUTCFullYear(), month: hoy.getUTCMonth()+1, day: hoy.getUTCDate() },
+        target_date: { year: ahora.year, month: ahora.month, day: ahora.day },
         language: 'es',
       }).catch(() => null),
       astrologyApi.post('/charts/natal', {
