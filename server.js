@@ -514,6 +514,14 @@ app.get('/buscar-ciudad', async (req, res) => {
 app.post('/perfil', requireLogin, async (req, res) => {
   const { nombre, fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo, latitud, longitud } = req.body;
 
+  // Leemos el perfil anterior antes de guardar. Así distinguimos una edición del nombre
+  // de un cambio real en los datos natales y no borramos/recalculamos la carta sin necesidad.
+  const { data: perfilAnterior } = await req.supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', req.userId)
+    .maybeSingle();
+
   const datosAGuardar = {
     id: req.userId,
     nombre,
@@ -534,23 +542,35 @@ app.post('/perfil', requireLogin, async (req, res) => {
 
   if (error) return res.status(400).json({ error: error.message });
 
-  // Invalidar TODO lo que depende de los datos de nacimiento al editarlos —
-  // si no, quedan resultados viejos calculados con la fecha/ciudad anterior.
-  const hoy = new Date();
-  const anioActual = hoy.getUTCFullYear();
-  const mesActual = hoy.getUTCMonth() + 1;
   memoriaCache.delete(cacheHash('perfil', req.userId));
-  memoriaCache.delete(cacheHash(req.userId, 'acg', 'propia'));
-  memoriaCache.delete(cacheHash(req.userId, 'estrellas', 'propia'));
-  memoriaCache.delete(cacheHash(req.userId, 'calendario-lunar', `${anioActual}-${mesActual}`));
-  memoriaCache.delete(cacheHash(req.userId, 'home', hoyStr()));
-  memoriaCache.delete(cacheHash(req.userId, 'numerologia', 'propia', hoyStr()));
-  memoriaCache.delete(cacheHash(req.userId, 'energia', hoyStr()));
-  memoriaCache.delete(cacheHash(req.userId, 'horoscopo', hoyStr()));
-  memoriaCache.delete(cacheHash(req.userId, 'transitos', horaStr()));
-  await req.supabase.from('natal_charts').delete().eq('user_id', req.userId);
 
-  res.json({ mensaje: 'Perfil guardado', perfil: data });
+  const normalizarNumero = v => (v === null || v === undefined || v === '' ? null : Number(v));
+  const cambioNatal = !perfilAnterior || [
+    ['fecha_nacimiento', perfilAnterior?.fecha_nacimiento, fecha_nacimiento],
+    ['hora_nacimiento', perfilAnterior?.hora_nacimiento, hora_nacimiento],
+    ['ciudad_nacimiento', perfilAnterior?.ciudad_nacimiento, ciudad_nacimiento],
+    ['pais_codigo', perfilAnterior?.pais_codigo, pais_codigo],
+    ['latitud', normalizarNumero(perfilAnterior?.latitud), normalizarNumero(latitud ?? perfilAnterior?.latitud)],
+    ['longitud', normalizarNumero(perfilAnterior?.longitud), normalizarNumero(longitud ?? perfilAnterior?.longitud)],
+  ].some(([, anterior, nuevo]) => String(anterior ?? '') !== String(nuevo ?? ''));
+
+  // Solo una modificación REAL de nacimiento invalida carta y cálculos derivados.
+  // Cambiar nombre, foto u otros datos de perfil ya no destruye una carta natal válida.
+  if (cambioNatal) {
+    const hoy = new Date();
+    const anioActual = hoy.getUTCFullYear();
+    const mesActual = hoy.getUTCMonth() + 1;
+    memoriaCache.delete(cacheHash(req.userId, 'acg', 'propia'));
+    memoriaCache.delete(cacheHash(req.userId, 'estrellas', 'propia'));
+    memoriaCache.delete(cacheHash(req.userId, 'calendario-lunar', `${anioActual}-${mesActual}`));
+    memoriaCache.delete(cacheHash(req.userId, 'home', hoyStr()));
+    memoriaCache.delete(cacheHash(req.userId, 'numerologia', 'propia', hoyStr()));
+    memoriaCache.delete(cacheHash(req.userId, 'energia', hoyStr()));
+    memoriaCache.delete(cacheHash(req.userId, 'horoscopo', hoyStr()));
+    await req.supabase.from('natal_charts').delete().eq('user_id', req.userId);
+  }
+
+  res.json({ mensaje: 'Perfil guardado', perfil: data, cambio_natal: cambioNatal });
 });
 
 // RUTA: Leer el perfil actual de la usuaria
