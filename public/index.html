@@ -3072,7 +3072,8 @@
   function abrirPerfil() {
     if (!SESION.email && SESION.token) SESION.email = decodificarEmailDeToken(SESION.token);
     document.getElementById('perfil-email-mostrar').textContent = SESION.email || '(correo no disponible)';
-    document.getElementById('perfil-portal-error').textContent = '';
+    const portalError = document.getElementById('perfil-portal-error');
+    if (portalError) portalError.textContent = '';
     const estadoEl = document.getElementById('perfil-estado-sub');
     if (estadoEl) {
       const s = SESION.suscripcion || 'ninguna';
