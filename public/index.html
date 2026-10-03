@@ -5272,7 +5272,7 @@
         .sort((a, b) => Math.abs(a.orb ?? 99) - Math.abs(b.orb ?? 99))
         .slice(0, 3);
 
-      html += `<div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14px;color:var(--marigold-dark);margin:14px 0 6px;">${formatearFecha(fecha)}</div>`;
+      html += `<div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:17px;line-height:1.25;color:var(--marigold-dark);margin:16px 0 8px;">${formatearFecha(fecha)}</div>`;
       html += delDia.map(ev => {
         const p1 = nombrePlanetaEs(ev.transiting_planet);
         const p2 = nombrePlanetaEs(ev.stationed_planet);
@@ -5281,8 +5281,8 @@
         const interp = (ev.interpretation || '').split(/(?<=[.!?])\s+/).slice(0, 2).join(' ');
         return `
           <div class="card-lectura" style="margin-bottom:8px;">
-            <div class="card-titulo" style="font-size:13px;">${p1} ${asp} ${p2}</div>
-            <div class="card-cuerpo" style="color:var(--plum);margin-top:4px;">${interp}</div>
+            <div class="card-titulo" style="font-size:16px !important;line-height:1.35;font-weight:700;">${p1} ${asp} ${p2}</div>
+            <div class="card-cuerpo" style="color:var(--plum);margin-top:6px;font-size:15.5px !important;line-height:1.65;">${interp}</div>
           </div>
         `;
       }).join('');
