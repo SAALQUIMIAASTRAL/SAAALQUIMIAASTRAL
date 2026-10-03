@@ -398,7 +398,8 @@
   /* ---- Pantallas de acceso (login/registro/perfil) ---- */
   .auth-overlay{
     position:absolute;inset:0;z-index:40;background:var(--page-bg);
-    display:none;flex-direction:column;padding:32px 22px;overflow-y:auto;
+    display:none;flex-direction:column;padding:24px 16px 80px;overflow-y:auto;overflow-x:hidden;
+    -webkit-overflow-scrolling:touch;
   }
   .auth-overlay.show{display:flex;}
   .auth-overlay h1{font-size:26px;margin-bottom:6px;color:var(--plum);}
@@ -656,7 +657,7 @@
   <!-- SECCIONES DESPLEGABLES -->
 
   <!-- 1. MIS DATOS DE NACIMIENTO -->
-  <div style="background:var(--marigold-soft);border-radius:14px;margin-bottom:10px;overflow:hidden;">
+  <div style="background:var(--marigold-soft);border-radius:14px;margin-bottom:10px;">
     <button onclick="toggleSeccionCuenta('sec-datos')" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:transparent;border:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--plum);font-family:'Work Sans',sans-serif;">
       <span>🎂 Mis datos de nacimiento</span><span id="chev-sec-datos">▼</span>
     </button>
@@ -690,7 +691,7 @@
   </div>
 
   <!-- 2. MI CORREO -->
-  <div style="background:var(--marigold-soft);border-radius:14px;margin-bottom:10px;overflow:hidden;">
+  <div style="background:var(--marigold-soft);border-radius:14px;margin-bottom:10px;">
     <button onclick="toggleSeccionCuenta('sec-correo')" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:transparent;border:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--plum);font-family:'Work Sans',sans-serif;">
       <span>📧 Mi correo</span><span id="chev-sec-correo">▼</span>
     </button>
@@ -708,7 +709,7 @@
   </div>
 
   <!-- 3. MI CONTRASEÑA -->
-  <div style="background:var(--marigold-soft);border-radius:14px;margin-bottom:10px;overflow:hidden;">
+  <div style="background:var(--marigold-soft);border-radius:14px;margin-bottom:10px;">
     <button onclick="toggleSeccionCuenta('sec-pass')" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:transparent;border:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--plum);font-family:'Work Sans',sans-serif;">
       <span>🔒 Mi contraseña</span><span id="chev-sec-pass">▼</span>
     </button>
@@ -731,7 +732,7 @@
   </div>
 
   <!-- 4. SUSCRIPCIÓN -->
-  <div style="background:var(--marigold-soft);border-radius:14px;margin-bottom:10px;overflow:hidden;">
+  <div style="background:var(--marigold-soft);border-radius:14px;margin-bottom:10px;">
     <button onclick="toggleSeccionCuenta('sec-sub')" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:transparent;border:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--plum);font-family:'Work Sans',sans-serif;">
       <span>⭐ Mi suscripción</span><span id="chev-sec-sub">▼</span>
     </button>
@@ -743,7 +744,7 @@
   </div>
 
   <!-- 5. APARIENCIA -->
-  <div style="background:var(--marigold-soft);border-radius:14px;margin-bottom:10px;overflow:hidden;">
+  <div style="background:var(--marigold-soft);border-radius:14px;margin-bottom:10px;">
     <button onclick="toggleSeccionCuenta('sec-apariencia')" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:transparent;border:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--plum);font-family:'Work Sans',sans-serif;">
       <span>🎨 Apariencia</span><span id="chev-sec-apariencia">▼</span>
     </button>
@@ -771,7 +772,7 @@
   </div>
 
   <!-- 6. IDIOMA -->
-  <div style="background:var(--marigold-soft);border-radius:14px;margin-bottom:10px;overflow:hidden;">
+  <div style="background:var(--marigold-soft);border-radius:14px;margin-bottom:10px;">
     <button onclick="toggleSeccionCuenta('sec-idioma')" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:transparent;border:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--plum);font-family:'Work Sans',sans-serif;">
       <span>🌐 Idioma</span><span id="chev-sec-idioma">▼</span>
     </button>
@@ -786,7 +787,7 @@
   </div>
 
   <!-- 7. SUGERENCIAS -->
-  <div style="background:var(--marigold-soft);border-radius:14px;margin-bottom:10px;overflow:hidden;">
+  <div style="background:var(--marigold-soft);border-radius:14px;margin-bottom:10px;">
     <button onclick="toggleSeccionCuenta('sec-sugerencias')" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:transparent;border:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--plum);font-family:'Work Sans',sans-serif;">
       <span>💬 Sugerencias y ayuda</span><span id="chev-sec-sugerencias">▼</span>
     </button>
@@ -799,7 +800,7 @@
   </div>
 
   <!-- 8. LEGAL -->
-  <div style="background:var(--marigold-soft);border-radius:14px;margin-bottom:10px;overflow:hidden;">
+  <div style="background:var(--marigold-soft);border-radius:14px;margin-bottom:10px;">
     <button onclick="toggleSeccionCuenta('sec-legal')" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:transparent;border:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--plum);font-family:'Work Sans',sans-serif;">
       <span>📜 Legal</span><span id="chev-sec-legal">▼</span>
     </button>
@@ -810,7 +811,7 @@
   </div>
 
   <!-- 9. QUIÉN SOY -->
-  <div style="background:var(--marigold-soft);border-radius:14px;margin-bottom:10px;overflow:hidden;">
+  <div style="background:var(--marigold-soft);border-radius:14px;margin-bottom:10px;">
     <button onclick="toggleSeccionCuenta('sec-quien')" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:transparent;border:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--plum);font-family:'Work Sans',sans-serif;">
       <span>🌟 Quién soy</span><span id="chev-sec-quien">▼</span>
     </button>
@@ -835,7 +836,7 @@
   </div>
 
   <!-- 10. NOTIFICACIONES -->
-  <div style="background:var(--marigold-soft);border-radius:14px;margin-bottom:10px;overflow:hidden;">
+  <div style="background:var(--marigold-soft);border-radius:14px;margin-bottom:10px;">
     <button onclick="toggleSeccionCuenta('sec-notif')" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:transparent;border:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--plum);font-family:'Work Sans',sans-serif;">
       <span>🔔 Notificaciones</span><span id="chev-sec-notif">▼</span>
     </button>
