@@ -235,15 +235,15 @@
     padding:14px;margin-bottom:10px;
   }
   .card-lectura .card-titulo{
-    font-family:'Cormorant Garamond',serif;font-weight:700;
-    font-size:14px;color:var(--plum);margin-bottom:4px;
+    font-family:'Cormorant Garamond',serif;font-weight:800;
+    font-size:17px;color:var(--plum);margin-bottom:6px;
   }
   .card-lectura .card-cuerpo{
-    font-size:12.5px;color:var(--plum);line-height:1.6;
+    font-size:14px;color:var(--plum);line-height:1.7;
   }
   .card-lectura .card-etiqueta{
-    font-size:10.5px;color:var(--marigold);font-weight:600;
-    text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px;
+    font-size:13px;color:var(--marigold-dark);font-weight:800;
+    font-family:'Cormorant Garamond',serif;letter-spacing:0.3px;margin-bottom:4px;
   }
 
   /* Fila de dato: planetas, aspectos — solo separador */
@@ -418,9 +418,9 @@
   .auth-switch{text-align:center;font-size:12.5px;color:var(--ink-dim);margin-top:16px;}
   .auth-switch a{color:var(--marigold);font-weight:600;cursor:pointer;}
   .auth-loading{opacity:0.6;pointer-events:none;}
-  .carta-real-row{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--plum);padding:4px 0;border-bottom:1px solid var(--marigold-soft);}
+  .carta-real-row{display:flex;align-items:center;gap:8px;font-size:15px;color:var(--plum);padding:6px 0;border-bottom:1px solid var(--marigold-soft);}
   .carta-real-row:last-child{border-bottom:none;}
-  .carta-real-row b{color:var(--marigold-dark);font-weight:700;}
+  .carta-real-row b{color:var(--marigold-dark);font-weight:800;font-size:16px;}
   .detalle-tecnico-oculto{display:none;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);}
   .detalle-tecnico-oculto.show-tecnico{display:block;}
 
@@ -876,6 +876,7 @@
                 <button class="btn-primary" onclick="verResumenNatal()" style="background:var(--marigold);font-size:12px;padding:10px 6px;">Mi personalidad</button>
               </div>
               <button class="btn-primary" id="btn-carta-visual" style="background:var(--lilac);width:100%;margin-bottom:8px;" onclick="verCartaVisual()">Ver gráfico de carta 🔮</button>
+              <div id="btn-cerrar-carta-visual" style="display:none;justify-content:flex-end;margin-bottom:4px;"><button onclick="document.getElementById('carta-visual-contenedor').innerHTML='';document.getElementById('btn-cerrar-carta-visual').style.display='none';" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>
             </div>
             <!-- Resultados FUERA del calc-form para que cerrar no rompa los botones -->
             <div id="carta-resultado-chips" style="margin-top:8px;"></div>
@@ -3778,8 +3779,9 @@
         return;
       }
       if (data.svg) {
-        const _bcCv = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="event.stopPropagation();document.getElementById('carta-visual-contenedor').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
-        contenedor.innerHTML = _bcCv + `<div style="border-radius:14px;overflow:hidden;background:var(--paper);border:1px solid var(--line);">${data.svg}</div>`;
+        const btnCerrar = document.getElementById('btn-cerrar-carta-visual');
+        if (btnCerrar) btnCerrar.style.display = 'flex';
+        contenedor.innerHTML = `<div style="border-radius:14px;overflow:hidden;background:var(--paper);border:1px solid var(--line);">${data.svg}</div>`;
         document.getElementById('zoom-hint').textContent = '👆 Toca la carta para verla en grande';
         // Hacer que el SVG sea responsive
         const svgEl = contenedor.querySelector('svg');
@@ -3949,7 +3951,7 @@
         .sort((a, b) => Math.abs(a.orb ?? 99) - Math.abs(b.orb ?? 99))
         .slice(0, 3);
 
-      html += `<div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14px;color:var(--marigold-dark);margin:14px 0 6px;">${formatearFecha(fecha)}</div>`;
+      html += `<div style="font-family:'Cormorant Garamond',serif;font-weight:800;font-size:18px;color:var(--marigold-dark);margin:16px 0 8px;">${formatearFecha(fecha)}</div>`;
       html += delDia.map(ev => {
         const p1 = nombrePlanetaEs(ev.transiting_planet);
         const p2 = nombrePlanetaEs(ev.stationed_planet);
@@ -4332,7 +4334,7 @@
     const contenedor = document.getElementById('resumen-natal-contenedor');
     const chips = document.getElementById('carta-resultado-chips'); if (chips) chips.innerHTML = '';
     const cv = document.getElementById('carta-visual-contenedor'); if (cv) cv.innerHTML = '';
-    contenedor.innerHTML = '<div class="disclaimer">Generando tu resumen...</div>';
+    contenedor.innerHTML = samLoading('Leyendo tu personalidad...');
     try {
       const r = await fetchAuth('/resumen-natal', { method: 'POST', headers: {} });
       const data = await r.json();
