@@ -891,8 +891,10 @@
         <div class="topbar">
           <span class="menu" onclick="abrirPerfil()" style="cursor:pointer;">☰</span>
           <div class="brand"><span class="g">✦</span>Sam Alquimia Astral</div>
-          <div class="right"><div class="assist-dot"></div><div class="avatar" onclick="cerrarSesion()" style="cursor:pointer;" title="Cerrar sesión"></div></div>
+          <div class="right"><div id="foto-circulo"></div></div>
         </div>
+
+        <div id="season-banner"></div>
 
         <!-- MODAL DE REFLEXIÓN DEL DÍA -->
         <div class="reflexion-modal-overlay" id="reflexion-modal">
@@ -904,8 +906,6 @@
             <button class="reflexion-modal-cerrar" onclick="cerrarReflexionDia()">Entendido</button>
           </div>
         </div>
-
-        <div class="season-banner" id="season-banner"></div>
 
         <div class="scroll">
 
@@ -1622,25 +1622,41 @@
   }
 
   (function renderSeasonBanner(){
-    const el = document.getElementById('season-banner');
-    if (!el || typeof getCurrentSeason !== 'function') return;
-    const now = new Date();
-    const current = getCurrentSeason(now);
-    const { next, days, hours } = getNextSeasonChange(now);
-    const esEquinoccioOSolsticio = ['Aries','Cáncer','Libra','Capricornio'].includes(next.sign);
-    const palabra = esEquinoccioOSolsticio ? (next.sign === 'Aries' || next.sign === 'Libra' ? 'equinoccio' : 'solsticio') : 'entrada';
-    let textoFaltante = '';
-    if (hours < 1) textoFaltante = `¡Es hoy! Faltan ${Math.round(hours * 60)} minutos para el ${palabra}/entrada a ${next.sign} ${next.emoji}`;
-    else if (hours < 24) textoFaltante = `¡Es hoy! Faltan ${Math.round(hours)} horas para el ${palabra}/entrada a ${next.sign} ${next.emoji}`;
-    else if (days <= 10) textoFaltante = `Faltan ${days} días para el ${palabra}/entrada a ${next.sign} ${next.emoji}`;
-    // si faltan más de 10 días, no mostramos nada del siguiente signo todavía
+    // Banner en su lugar
+    const elBanner = document.getElementById('season-banner');
+    if (elBanner && typeof getCurrentSeason === 'function') {
+      const now = new Date();
+      const current = getCurrentSeason(now);
+      const { next, days, hours } = getNextSeasonChange(now);
+      const esEquinoccioOSolsticio = ['Aries','Cáncer','Libra','Capricornio'].includes(next.sign);
+      const palabra = esEquinoccioOSolsticio ? (next.sign === 'Aries' || next.sign === 'Libra' ? 'equinoccio' : 'solsticio') : 'entrada';
+      let textoFaltante = '';
+      if (hours < 1) textoFaltante = `¡Es hoy! Faltan ${Math.round(hours * 60)} minutos para el ${palabra}/entrada a ${next.sign} ${next.emoji}`;
+      else if (hours < 24) textoFaltante = `¡Es hoy! Faltan ${Math.round(hours)} horas para el ${palabra}/entrada a ${next.sign} ${next.emoji}`;
+      else if (days <= 10) textoFaltante = `Faltan ${days} días para el ${palabra}/entrada a ${next.sign} ${next.emoji}`;
 
-    const tituloActual = `${current.emoji} ¡Feliz temporada ${current.sign}! Feliz retorno solar a todos los ${current.sign} ✨`;
+      const tituloActual = `${current.emoji} ¡Feliz temporada ${current.sign}! Feliz retorno solar a todos los ${current.sign} ✨`;
 
-    el.innerHTML = `
-      <span class="now">${tituloActual}</span>
-      ${textoFaltante ? `<span class="next">${textoFaltante}</span>` : ''}
-    `;
+      elBanner.innerHTML = `
+        <span class="now">${tituloActual}</span>
+        ${textoFaltante ? `<span class="next">${textoFaltante}</span>` : ''}
+      `;
+    }
+
+    // Círculo de foto en el topbar
+    const elFoto = document.getElementById('foto-circulo');
+    if (elFoto) {
+      const fotoGuardada = localStorage.getItem('saa_foto_perfil');
+      let fotoHTML = '';
+      
+      if (fotoGuardada) {
+        fotoHTML = `<img src="${fotoGuardada}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+      } else {
+        fotoHTML = `<div style="width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,var(--lilac),var(--marigold));display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;">✦</div>`;
+      }
+
+      elFoto.innerHTML = `<div style="width:48px;height:48px;border-radius:50%;overflow:hidden;cursor:pointer;" onclick="document.getElementById('input-foto-perfil').click()" title="Cambiar foto">${fotoHTML}</div>`;
+    }
   })();
 
   // Frase dinámica de la banda (rota cada día)
