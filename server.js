@@ -712,28 +712,39 @@ app.post('/luna', requireLogin, async (req, res) => {
 // ============================================================
 app.post('/luna-vacia', requireLogin, async (req, res) => {
   try {
-    const perfil = await leerPerfil(req);
-    const ahora = new Date();
-    const cacheKey = cacheHash(req.userId, 'luna-vacia', hoyStr());
-    const cached = cacheGet(cacheKey);
-    if (cached) return res.json(cached);
+    const tz = zonaHorariaDesdeReq(req);
+    const local = partesEnZona(tz);
+    const fechaLocal = `${String(local.year).padStart(4,'0')}-${String(local.month).padStart(2,'0')}-${String(local.day).padStart(2,'0')}`;
 
+    // La Luna Vacía de Curso es un fenómeno del cielo actual, no de la ciudad de nacimiento.
+    // La clave incluye la fecha local solo para que la interfaz no "salte" de día por UTC.
+    const bloque30m = Math.floor(Date.now() / TTL.LUNA);
+    const cacheKey = cacheHash('luna-vacia-global-v2', bloque30m);
+    const cached = cacheGet(cacheKey);
+    if (cached) {
+      return res.json({ ...cached, contexto_tiempo: { timezone: local.timezone, fecha_local: fechaLocal } });
+    }
+
+    const ahora = new Date();
     const respuesta = await astrologyApi.post('/lunar/void-of-course', {
       datetime_location: {
         year: ahora.getUTCFullYear(),
         month: ahora.getUTCMonth() + 1,
         day: ahora.getUTCDate(),
-        hour: 0,
-        minute: 0,
-        second: 0,
-        city: perfil?.ciudad_nacimiento || 'Mexico City',
-        country_code: perfil?.pais_codigo || 'MX',
+        hour: ahora.getUTCHours(),
+        minute: ahora.getUTCMinutes(),
+        second: ahora.getUTCSeconds(),
+        city: 'Greenwich',
+        country_code: 'GB',
       },
     });
 
-    const respuestaVoC = { mensaje: 'Luna vacía de hoy', voc: respuesta.data };
+    const respuestaVoC = { mensaje: 'Luna vacía actual', voc: respuesta.data };
     cacheSet(cacheKey, respuestaVoC, TTL.LUNA);
-    res.json(respuestaVoC);
+    res.json({
+      ...respuestaVoC,
+      contexto_tiempo: { timezone: local.timezone, fecha_local: fechaLocal },
+    });
   } catch (err) {
     console.error('luna-vacia falló:', err?.response?.data || err.message);
     res.status(500).json({
@@ -1509,53 +1520,69 @@ app.post('/eclipses-natal', requireLogin, async (req, res) => {
 app.post('/calendario-lunar', requireLogin, async (req, res) => {
   try {
     const perfil = await leerPerfil(req);
-    const hoy = new Date();
-    const anio = parseInt(req.body?.anio) || hoy.getUTCFullYear();
-    const mes = parseInt(req.body?.mes) || (hoy.getUTCMonth() + 1);
+    const tz = zonaHorariaDesdeReq(req);
+    const local = partesEnZona(tz);
+    const anio = parseInt(req.body?.anio) || local.year;
+    const mes = parseInt(req.body?.mes) || local.month;
     const diasEnMes = new Date(Date.UTC(anio, mes, 0)).getUTCDate();
 
-    // Caché por usuario + mes/año — este cálculo cuesta ~32 créditos de API, no debe repetirse en cada clic
-    const cacheKey = cacheHash(req.userId, 'calendario-lunar', `${anio}-${mes}`);
-    const cached = cacheGet(cacheKey);
-    if (cached) return res.json(cached);
+    // 1) EFEMÉRIDES LUNARES GLOBALES DEL MES
+    // No dependen de la carta natal: una sola serie mensual sirve a todos los usuarios.
+    const cacheLunaMesKey = cacheHash('calendario-lunar-global-v2', `${anio}-${mes}`);
+    let resultados = cacheGet(cacheLunaMesKey);
 
-    const dias = Array.from({ length: diasEnMes }, (_, i) => i + 1);
-
-    const [resultados, chartHoy, transitosMes] = await Promise.all([
-      Promise.all(dias.map(async (dia) => {
+    if (!resultados) {
+      const dias = Array.from({ length: diasEnMes }, (_, i) => i + 1);
+      resultados = await Promise.all(dias.map(async (dia) => {
         try {
           const r = await astrologyApi.post('/analysis/lunar-analysis', {
             datetime_location: {
               year: anio, month: mes, day: dia, hour: 12, minute: 0, second: 0,
-              city: perfil?.ciudad_nacimiento || 'Mexico City', country_code: perfil?.pais_codigo || 'MX',
+              city: 'Greenwich', country_code: 'GB',
             },
             report_options: { language: 'es' },
           });
           const m = r.data?.data?.lunar_metrics;
-          return { dia, signo: m?.moon_sign, fase: m?.moon_phase };
+          return {
+            dia,
+            signo: m?.moon_sign || null,
+            fase: m?.moon_phase || null,
+            iluminacion: typeof m?.moon_illumination === 'number' ? Math.round(m.moon_illumination) : null,
+          };
         } catch (e) {
-          return { dia, signo: null, fase: null };
+          return { dia, signo: null, fase: null, iluminacion: null };
         }
-      })),
-      astrologyApi.post('/charts/natal', {
-        subject: { name: 'Hoy', birth_data: { year: anio, month: mes, day: hoy.getUTCDate(), hour: 12, minute: 0, second: 0, city: perfil?.ciudad_nacimiento || 'Mexico City', country_code: perfil?.pais_codigo || 'MX' } },
-        options: { house_system: 'P', zodiac_type: 'Tropic' },
-      }).catch(() => null),
-      // ---- Días de poder PERSONALES: cruzamos el mes completo contra la carta natal real ----
-      perfil ? astrologyApi.post('/analysis/natal-transit-report', {
-        subject: birthDataDesdePerfil(perfil),
-        transit_time: {
-          date_range: {
-            start_date: { year: anio, month: mes, day: 1 },
-            end_date: { year: anio, month: mes, day: diasEnMes },
-          },
-        },
-        orb: 2,
-        report_options: { tradition: 'psychological', language: 'es' },
-      }).catch(e => { console.error('natal-transit-report (calendario) falló:', e?.response?.data || e.message); return { _error_debug: e?.response?.data || e.message }; }) : Promise.resolve(null),
-    ]);
+      }));
+      // Un mes lunar pasado/futuro no cambia: 7 días en memoria reduce llamadas repetidas.
+      cacheSet(cacheLunaMesKey, resultados, 7 * 24 * 60 * 60 * 1000);
+    }
 
-    const mercurioRetrogrado = chartHoy?.data?.subject_data?.mercury?.retrograde || false;
+    // 2) DATOS PERSONALES DEL MES
+    // Solo esto depende de la carta natal de la usuaria.
+    const cachePersonalKey = cacheHash(req.userId, 'calendario-personal-v2', `${anio}-${mes}`);
+    const cachedPersonal = cacheGet(cachePersonalKey);
+    if (cachedPersonal) {
+      return res.json({
+        ...cachedPersonal,
+        detalle_dias: resultados,
+        contexto_tiempo: { timezone: local.timezone },
+      });
+    }
+
+    const transitosMes = perfil ? await astrologyApi.post('/analysis/natal-transit-report', {
+      subject: birthDataDesdePerfil(perfil),
+      transit_time: {
+        date_range: {
+          start_date: { year: anio, month: mes, day: 1 },
+          end_date: { year: anio, month: mes, day: diasEnMes },
+        },
+      },
+      orb: 2,
+      report_options: { tradition: 'psychological', language: 'es' },
+    }).catch(e => {
+      console.error('natal-transit-report (calendario) falló:', e?.response?.data || e.message);
+      return { _error_debug: e?.response?.data || e.message };
+    }) : null;
 
     const creciente = f => f && f.includes('Waxing');
     const menguante = f => f && f.includes('Waning');
@@ -1570,6 +1597,10 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
       firmar_contrato: resultados.filter(d => creciente(d.fase) && ['Vir', 'Lib', 'Cap'].includes(d.signo)).map(d => d.dia),
       entrevista_trabajo: resultados.filter(d => creciente(d.fase) && ['Leo', 'Cap', 'Sag'].includes(d.signo)).map(d => d.dia),
     };
+
+    // Ya no inferimos "Mercurio retrógrado durante todo el mes" desde una sola fecha.
+    // Se deja null hasta implementar el rango exacto mensual, evitando mostrar información falsa.
+    const mercurioRetrogrado = null;
 
     // ---- Procesar días de poder personal ----
     const PLANETAS_BENEFICOS = ['Sun', 'Venus', 'Jupiter'];
@@ -1633,14 +1664,18 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
       diasPoderError = 'La respuesta no tuvo el campo "events" esperado. Estructura recibida: ' + JSON.stringify(Object.keys(transitosMes?.data || {}));
     }
 
-    const respuestaCalendario = {
-      mes, anio, calendario, detalle_dias: resultados, mercurio_retrogrado: mercurioRetrogrado,
+    const respuestaPersonal = {
+      mes, anio, calendario, mercurio_retrogrado: mercurioRetrogrado,
       dias_poder_personal: diasPoderPersonal,
       dias_poder_personal_error: diasPoderError,
       dias_poder_personal_diagnostico: diasPoderDiagnostico,
     };
-    cacheSet(cacheKey, respuestaCalendario, TTL.CALENDARIO_LUNAR);
-    res.json(respuestaCalendario);
+    cacheSet(cachePersonalKey, respuestaPersonal, TTL.CALENDARIO_LUNAR);
+    res.json({
+      ...respuestaPersonal,
+      detalle_dias: resultados,
+      contexto_tiempo: { timezone: local.timezone },
+    });
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo calcular el calendario lunar.', detalle_tecnico: err?.response?.data || err.message });
