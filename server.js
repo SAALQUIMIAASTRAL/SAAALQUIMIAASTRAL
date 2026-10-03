@@ -306,6 +306,38 @@ async function obtenerLunaGlobalActual() {
   return respuestaLuna;
 }
 
+
+// Cielo actual GLOBAL: posiciones planetarias del instante, compartidas por todas las usuarias.
+// Se calcula una vez por bloque de 30 minutos para evitar repetir la misma llamada externa.
+async function obtenerCieloGlobalActual() {
+  const bloque30m = Math.floor(Date.now() / TTL.TRANSITOS_HOY);
+  const cacheKey = cacheHash('cielo-global-v1', bloque30m);
+  const cached = cacheGet(cacheKey);
+  if (cached) return cached;
+
+  const ahora = new Date();
+  const respuesta = await astrologyApi.post('/charts/natal', {
+    subject: {
+      name: 'Cielo actual',
+      birth_data: {
+        year: ahora.getUTCFullYear(),
+        month: ahora.getUTCMonth() + 1,
+        day: ahora.getUTCDate(),
+        hour: ahora.getUTCHours(),
+        minute: ahora.getUTCMinutes(),
+        second: ahora.getUTCSeconds(),
+        city: 'Greenwich',
+        country_code: 'GB',
+      },
+    },
+    options: { house_system: 'P', zodiac_type: 'Tropic', language: 'es' },
+  });
+
+  const cielo = { mensaje: 'Cielo actual', datos_hoy: respuesta.data };
+  cacheSet(cacheKey, cielo, TTL.TRANSITOS_HOY);
+  return cielo;
+}
+
 // ============================================================
 // Middleware: verifica que la usuaria haya iniciado sesión
 // ============================================================
@@ -880,26 +912,13 @@ app.post('/home-summary', requireLogin, async (req, res) => {
         target_date: { year: ahora.year, month: ahora.month, day: ahora.day },
         language: 'es',
       }).catch(() => null),
-      (() => {
-        const utc = new Date();
-        return astrologyApi.post('/charts/natal', {
-          subject: {
-            name: 'Cielo actual',
-            birth_data: {
-              year: utc.getUTCFullYear(), month: utc.getUTCMonth()+1, day: utc.getUTCDate(),
-              hour: utc.getUTCHours(), minute: utc.getUTCMinutes(), second: utc.getUTCSeconds(),
-              city: 'Greenwich', country_code: 'GB',
-            },
-          },
-          options: { house_system: 'P', zodiac_type: 'Tropic', language: 'es' },
-        });
-      })().catch(() => null),
+      obtenerCieloGlobalActual().catch(() => null),
     ]);
 
     const luna = lunaGlobal?.luna?.data?.lunar_metrics;
     const diaPersonal = ciclosData?.data?.data?.personal_day?.number || null;
     const anioPersonal = ciclosData?.data?.data?.personal_year?.number || null;
-    const planetasHoy = transitosHoyData?.data?.subject_data;
+    const planetasHoy = transitosHoyData?.datos_hoy?.subject_data || transitosHoyData?.datos_hoy?.data?.subject_data || null;
 
     let transitoPrincipal = null;
     if (planetasHoy) {
@@ -939,35 +958,14 @@ app.post('/mensaje-del-dia', requireLogin, async (req, res) => {
     const perfil = await leerPerfil(req);
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
-    const ahora = new Date();
-    const cacheKey = cacheHash('transitos-hoy', horaStr());
-    const cached = cacheGet(cacheKey);
-    if (cached) return res.json({ ...cached, nombre: perfil.nombre });
-
-    const respuesta = await astrologyApi.post('/charts/natal', {
-      subject: {
-        name: 'Hoy',
-        birth_data: {
-          year: ahora.getUTCFullYear(), month: ahora.getUTCMonth() + 1, day: ahora.getUTCDate(),
-          hour: ahora.getUTCHours(), minute: ahora.getUTCMinutes(), second: 0,
-          city: 'Greenwich', country_code: 'GB',
-        },
-      },
-      options: { house_system: 'P', zodiac_type: 'Tropic', language: 'es' },
-    });
-
-    const base = { mensaje: 'Mensaje del día', datos_hoy: respuesta.data };
-    cacheSet(cacheKey, base, TTL.TRANSITOS_HOY);
-    res.json({ ...base, nombre: perfil.nombre });
+    const cielo = await obtenerCieloGlobalActual();
+    res.json({ ...cielo, nombre: perfil.nombre });
   } catch (err) {
     console.error(err?.response?.data || err.message);
-    res.status(500).json({ error: 'No se pudo generar el mensaje del día.', detalle_tecnico: err?.response?.data || err.message });
+    res.status(500).json({ error: 'No se pudo obtener el cielo de hoy.' });
   }
 });
 
-// ============================================================
-// RUTA: Astrocartografía (mapa mundial de líneas planetarias)
-// ============================================================
 app.post('/astrocartografia', requireLogin, async (req, res) => {
   try {
     const otraCartaId = req.body?.otra_carta_id || null;
@@ -1888,7 +1886,8 @@ app.post('/transitos-personales', requireLogin, async (req, res) => {
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
     const hoy = new Date();
-    const cacheKey = cacheHash(req.userId, 'transitos', horaStr());
+    const bloque2h = Math.floor(Date.now() / TTL.TRANSITOS_PERSONALES);
+    const cacheKey = cacheHash(req.userId, 'transitos-v2', bloque2h);
     const cached = cacheGet(cacheKey);
     if (cached) return res.json(cached);
 
