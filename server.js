@@ -883,8 +883,19 @@ app.post('/astrocartografia', requireLogin, async (req, res) => {
   try {
     const otraCartaId = req.body?.otra_carta_id || null;
     const cacheKey = cacheHash(req.userId, 'acg', otraCartaId || 'propia');
+    
+    // Primero caché en memoria
     const cached = cacheGet(cacheKey);
     if (cached) return res.json(cached);
+    
+    // Luego caché persistente en Supabase
+    const { data: cachedPers } = await supabase.from('cache_persistente')
+      .select('valor').eq('clave', cacheKey).maybeSingle();
+    if (cachedPers?.valor) {
+      const parsed = JSON.parse(cachedPers.valor);
+      cacheSet(cacheKey, parsed, 30 * 24 * 60 * 60 * 1000);
+      return res.json(parsed);
+    }
 
     let datosSubject;
     if (otraCartaId) {
@@ -926,6 +937,8 @@ app.post('/astrocartografia', requireLogin, async (req, res) => {
     };
     await traducirInterpretacionesEnObjeto(respuestaACG);
     cacheSet(cacheKey, respuestaACG, TTL.ASTROCARTOGRAFIA);
+    // Guardar en Supabase para sobrevivir reinicios de Render
+    supabase.from('cache_persistente').upsert({ clave: cacheKey, valor: JSON.stringify(respuestaACG) }).then(() => {}).catch(() => {});
     res.json(respuestaACG);
   } catch (err) {
     console.error(err?.response?.data || err.message);
