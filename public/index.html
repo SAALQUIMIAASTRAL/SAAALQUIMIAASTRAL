@@ -459,6 +459,50 @@
     margin:12px 0 6px;padding-bottom:4px;
     border-bottom:1px solid var(--marigold-soft);
   }
+  
+  /* --- Modal de Reflexión del Día --- */
+  .reflexion-modal-overlay{
+    display:none;position:fixed;inset:0;background:rgba(45,27,78,0.6);z-index:100;
+    align-items:center;justify-content:center;padding:20px;
+  }
+  .reflexion-modal-overlay.open{display:flex;}
+  .reflexion-modal{
+    background:linear-gradient(135deg,var(--paper),var(--marigold-soft));
+    border-radius:20px;max-width:360px;width:100%;padding:28px 24px;
+    box-shadow:0 20px 60px rgba(45,27,78,0.25);
+    text-align:center;animation:reflexion-pop 0.3s ease-out;
+  }
+  @keyframes reflexion-pop{
+    from{transform:scale(0.8);opacity:0;}
+    to{transform:scale(1);opacity:1;}
+  }
+  .reflexion-modal-icon{
+    font-size:48px;margin-bottom:16px;animation:reflexion-float 2s ease-in-out infinite;
+  }
+  @keyframes reflexion-float{
+    0%,100%{transform:translateY(0);}
+    50%{transform:translateY(-8px);}
+  }
+  .reflexion-modal h3{
+    font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;
+    color:var(--plum);margin:0 0 14px;line-height:1.5;
+  }
+  .reflexion-modal-texto{
+    font-size:13.5px;color:var(--plum);line-height:1.7;margin-bottom:18px;
+    font-style:italic;letter-spacing:0.3px;
+  }
+  .reflexion-modal-firma{
+    font-family:'Cormorant Garamond',serif;font-size:12px;color:var(--marigold-dark);
+    font-weight:600;margin-bottom:16px;
+  }
+  .reflexion-modal-cerrar{
+    background:var(--plum);color:#fff;border:none;border-radius:100px;
+    padding:10px 24px;font-size:13px;font-weight:600;cursor:pointer;
+    font-family:'Work Sans',sans-serif;transition:all 0.2s;
+  }
+  .reflexion-modal-cerrar:hover{
+    background:var(--plum-light);transform:translateY(-2px);
+  }
 </style>
 </head>
 <body>
@@ -850,12 +894,23 @@
           <div class="right"><div class="assist-dot"></div><div class="avatar" onclick="cerrarSesion()" style="cursor:pointer;" title="Cerrar sesión"></div></div>
         </div>
 
+        <!-- MODAL DE REFLEXIÓN DEL DÍA -->
+        <div class="reflexion-modal-overlay" id="reflexion-modal">
+          <div class="reflexion-modal">
+            <div class="reflexion-modal-icon" id="reflexion-icon">🔮</div>
+            <h3 id="reflexion-titulo">Reflexión del día</h3>
+            <div class="reflexion-modal-texto" id="reflexion-texto">Hay cosas que solo tú puedes crear en este mundo.</div>
+            <div class="reflexion-modal-firma">Sam | Alquimia Astral</div>
+            <button class="reflexion-modal-cerrar" onclick="cerrarReflexionDia()">Entendido</button>
+          </div>
+        </div>
+
         <div class="season-banner" id="season-banner"></div>
 
         <div class="scroll">
 
           <div class="band" data-tab="hoy">
-            <div class="band-icon" id="band-icon">☀️</div>
+            <div class="band-icon" id="band-icon" onclick="abrirReflexionDia()" style="cursor:pointer;transition:transform 0.2s;user-select:none;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">☀️</div>
             <div class="date" id="banda-fecha"></div>
             <h1><span id="greeting-word">Buenas tardes</span>, <span id="banda-nombre">...</span></h1>
             <div class="quote" id="banda-frase">Un paso atrás, dos hacia adelante.</div>
@@ -3473,6 +3528,41 @@
     const iconos = ["🌙","✨","⭐","🔮","🌟"];
     const icono = iconos[Math.floor(Math.random() * iconos.length)];
     return `<div class="sam-loading"><span class="sam-loading-icon">${icono}</span><span class="sam-loading-text">${texto || "Un momento..."}</span></div>`;
+  }
+
+  /* --- REFLEXIONES DEL DÍA --- */
+  const REFLEXIONES_DIARIAS = [
+    { texto: "Hay cosas que solo tú puedes crear en este mundo. No las pospongas.", icono: "✨" },
+    { texto: "El universo conspira a favor de quien se atreve a soñar en serio.", icono: "🌟" },
+    { texto: "Tu ciclo es perfecto tal como es. No compares tu comienzo con el final de otro.", icono: "🌙" },
+    { texto: "Las adversidades son semillas plantadas en el lugar exacto de tu crecimiento.", icono: "🌱" },
+    { texto: "Tu intuición es más sabia que tu lógica. Escúchala hoy.", icono: "🔮" },
+    { texto: "Lo que te asusta es lo que te está llamando a transformarte.", icono: "🌊" },
+    { texto: "Eres exactamente donde necesitas estar en este momento preciso.", icono: "✦" },
+    { texto: "La paciencia no es inacción. Es el acto de confiar mientras actúas.", icono: "⏳" },
+    { texto: "Tus ciclos oscuros son tan sagrados como tus momentos de luz.", icono: "🌑" },
+    { texto: "El tiempo es el regalo que el universo te da para reinventarte.", icono: "⌛" },
+    { texto: "No viniste aquí a ser pequeña. Expande tu presencia hoy.", icono: "💫" },
+    { texto: "Lo que sientes es información. Síguelo, no lo rechaces.", icono: "💗" },
+    { texto: "Cada error fue una clase. Cada caída fue una oportunidad de levantarte diferente.", icono: "🌅" },
+    { texto: "Tu poder no viene de lo que tienes. Viene de lo que sabes de ti misma.", icono: "👑" },
+    { texto: "Hoy es un buen día para activar lo que llevabas postergando.", icono: "🚀" },
+    { texto: "La verdadera magia está en hacer de lo ordinario, extraordinario.", icono: "✨" },
+    { texto: "Tus ciclos de reposo son tan productivos como tus ciclos de acción.", icono: "🌿" },
+    { texto: "Lo que el miedo te susurra, la fe te está gritando. Elige creer.", icono: "🔥" },
+    { texto: "Eres más fuerte que la adversidad que enfrentas hoy.", icono: "💪" },
+    { texto: "El universo no envía desafíos. Envía invitaciones para crecer.", icono: "🪐" },
+  ];
+
+  function abrirReflexionDia() {
+    const reflexion = REFLEXIONES_DIARIAS[Math.floor(Math.random() * REFLEXIONES_DIARIAS.length)];
+    document.getElementById('reflexion-texto').textContent = reflexion.texto;
+    document.getElementById('reflexion-icon').textContent = reflexion.icono;
+    document.getElementById('reflexion-modal').classList.add('open');
+  }
+
+  function cerrarReflexionDia() {
+    document.getElementById('reflexion-modal').classList.remove('open');
   }
 
   async function entrarALaApp(perfil) {
