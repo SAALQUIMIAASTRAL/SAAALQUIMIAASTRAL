@@ -151,7 +151,8 @@
     padding:14px 16px;
     box-shadow:0 2px 10px rgba(45,27,78,0.08);
   }
-  .section h2{font-size:19px;font-weight:800;margin-bottom:4px;border-left:3px solid var(--marigold);padding-left:10px;font-family:'Cormorant Garamond',serif;font-weight:700;}
+  .section h2{font-size:19px !important;font-weight:800 !important;margin-bottom:6px;border-left:3px solid var(--marigold);padding-left:10px;font-family:'Cormorant Garamond',serif;color:var(--plum);}
+  .section h3{font-size:16px;font-weight:700;color:var(--plum);}
   .section .desc{font-size:12px;color:var(--ink-dim);margin-bottom:12px;line-height:1.5;}
   .section .desc{font-size:12.5px;color:var(--ink-dim);margin-bottom:14px;line-height:1.5;}
 
@@ -731,32 +732,13 @@
     </div>
   </div>
 
-  <!-- 4. SUSCRIPCIÓN -->
-  <div style="background:var(--marigold-soft);border-radius:14px;margin-bottom:10px;">
-    <button onclick="toggleSeccionCuenta('sec-sub')" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:transparent;border:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--plum);font-family:'Work Sans',sans-serif;">
-      <span>⭐ Mi suscripción</span><span id="chev-sec-sub">▼</span>
-    </button>
-    <div id="sec-sub" style="display:none;padding:0 14px 14px;">
-      <div id="perfil-estado-sub" style="font-size:13px;font-weight:600;margin-bottom:10px;"></div>
-      <button class="btn-primary" style="background:var(--lilac);width:100%;margin-bottom:8px;" onclick="abrirPortalPago()">Gestionar suscripción / método de pago</button>
-      <div id="perfil-portal-error" style="font-size:12px;color:#a5442f;"></div>
-    </div>
-  </div>
-
   <!-- 5. APARIENCIA -->
   <div style="background:var(--marigold-soft);border-radius:14px;margin-bottom:10px;">
     <button onclick="toggleSeccionCuenta('sec-apariencia')" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:transparent;border:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--plum);font-family:'Work Sans',sans-serif;">
       <span>🎨 Apariencia</span><span id="chev-sec-apariencia">▼</span>
     </button>
     <div id="sec-apariencia" style="display:none;padding:0 14px 14px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:var(--paper);border-radius:12px;margin-bottom:10px;">
-        <div><div style="font-size:13px;font-weight:600;color:var(--plum);">Modo oscuro</div><div style="font-size:11px;color:var(--ink-dim);">Cambia entre fondo claro y oscuro</div></div>
-        <label style="position:relative;display:inline-block;width:46px;height:26px;cursor:pointer;">
-          <input type="checkbox" id="toggle-dark" onchange="cambiarTema(this.checked)" style="opacity:0;width:0;height:0;">
-          <span style="position:absolute;inset:0;background:#ccc;border-radius:26px;transition:0.3s;" id="toggle-dark-span"></span>
-          <span style="position:absolute;height:20px;width:20px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:0.3s;" id="toggle-dark-knob"></span>
-        </label>
-      </div>
+
       <div style="padding:10px;background:var(--paper);border-radius:12px;">
         <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
           <span style="font-size:13px;font-weight:600;color:var(--plum);">Tamaño de letra</span>
@@ -880,7 +862,7 @@
         <div class="scroll">
 
           <div class="band" data-tab="hoy">
-            <div class="band-icon" id="band-icon">☀️</div>
+            <div class="band-icon" id="band-icon" onclick="abrirReflexionDia()" style="cursor:pointer;animation:titilar 2.5s ease-in-out infinite;" title="Reflexión del día">☀️</div>
             <div class="date" id="banda-fecha">Cargando fecha...</div>
             <h1><span id="greeting-word">Buenas tardes</span>, <span id="banda-nombre">...</span></h1>
             <div class="quote" id="banda-frase">Un paso atrás, dos hacia adelante.</div>
@@ -1700,7 +1682,7 @@
 
   async function verDetalleOtraCarta(id, nombre) {
     const contenedor = document.getElementById('carta-otro-detalle');
-    contenedor.innerHTML = '<div class="disclaimer">Cargando la carta de ' + nombre + '...</div>';
+    contenedor.innerHTML = samLoading('Leyendo la carta de ' + nombre + '...');
     try {
       const r = await fetchAuth('/otras-cartas/' + id, { headers: {} });
       const data = await r.json();
@@ -1743,7 +1725,7 @@
     const contenedor = document.getElementById('carta-otro-extra');
     const rutas = { 'numerologia':'/numerologia', 'flor-armonica':'/flor-armonica', 'estrellas-fijas':'/estrellas-fijas', 'astrocartografia':'/astrocartografia' };
     const llaves = { 'numerologia':'numerologia', 'flor-armonica':'flor', 'estrellas-fijas':'estrellas', 'astrocartografia':null };
-    contenedor.innerHTML = '<div class="disclaimer">Calculando para ' + nombre + '...</div>';
+    contenedor.innerHTML = samLoading('Calculando para ' + nombre + '...');
     const _cerrarExtra = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('carta-otro-extra').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
     try {
       const r = await fetchAuth(rutas[funcion], {
@@ -1928,7 +1910,7 @@
       resultado.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Llena todos los datos.</div>';
       return;
     }
-    resultado.innerHTML = '<div class="disclaimer">Calculando y guardando...</div>';
+    resultado.innerHTML = samLoading('Calculando y guardando...');
     try {
       const r = _editandoCartaId
         ? await fetchAuth('/otras-cartas/' + _editandoCartaId, {
@@ -2497,7 +2479,7 @@
 
   async function verEnergiaDelDia() {
     const contenedor = document.getElementById('energia-resultado');
-    contenedor.innerHTML = '<div class="disclaimer">Calculando tu energía de hoy...</div>';
+    contenedor.innerHTML = samLoading('Leyendo tu energía de hoy...');
     try {
       const r = await fetchAuth('/energia-del-dia', { method: 'POST', headers: {} });
       const data = await r.json();
@@ -2617,7 +2599,7 @@
 
   async function cargarDiario() {
     const lista = document.getElementById('diario-lista');
-    lista.innerHTML = '<div class="disclaimer">Cargando...</div>';
+    lista.innerHTML = samLoading('Un momento...');
     try {
       const r = await fetchAuth('/diario', { headers: {} });
       const data = await r.json();
@@ -2713,7 +2695,7 @@
     const lista = document.getElementById('bib-lista');
     const lector = document.getElementById('bib-lector');
     if (lector) lector.style.display = 'none';
-    lista.innerHTML = '<div class="disclaimer">Cargando...</div>';
+    lista.innerHTML = samLoading('Un momento...');
 
     try {
       const url = categoria ? `/biblioteca?categoria=${encodeURIComponent(categoria)}` : '/biblioteca';
@@ -3441,7 +3423,7 @@
     anio = anio || _calAnioActual;
     _calMesActual = mes;
     _calAnioActual = anio;
-    contenedor.innerHTML = '<div class="disclaimer">Calculando el mes...</div>';
+    contenedor.innerHTML = samLoading('Leyendo tu mes astrológico...');
     try {
       const r = await fetchAuth('/calendario-lunar', {
         method: 'POST',
@@ -3576,7 +3558,12 @@
   }
 
   async function revisarPerfilYArrancar() {
-    if (!SESION.token) return mostrarPantalla('bienvenida');
+    const ocultarSplash = () => {
+      const s = document.getElementById('splash-verificando');
+      if (s) s.style.display = 'none';
+    };
+    if (!SESION.token) { ocultarSplash(); return mostrarPantalla('bienvenida'); }
+    try {
 
     // Intentar renovar el token si hay refresh disponible
     let r = await fetchAuth('/perfil', { headers: {} });
@@ -3597,13 +3584,18 @@
       } catch (e) { /* si falla, cae al logout */ }
     }
 
-    if (!r.ok) { cerrarSesion(); return; }
+    if (!r.ok) { ocultarSplash(); cerrarSesion(); return; }
     const data = await r.json();
     SESION.suscripcion = data.suscripcion || 'ninguna';
+    ocultarSplash();
     if (!data.perfil || !data.perfil.ciudad_nacimiento) {
       mostrarPantalla('perfil');
     } else {
       entrarALaApp(data.perfil);
+    }
+    } catch(e) {
+      document.getElementById('splash-verificando').style.display = 'none';
+      mostrarPantalla('bienvenida');
     }
   }
 
@@ -3958,7 +3950,7 @@
 
   async function verTransitosReales() {
     const contenedor = document.getElementById('transitos-resultado');
-    contenedor.innerHTML = '<div class="disclaimer">Calculando tus tránsitos...</div>';
+    contenedor.innerHTML = samLoading('Leyendo tus tránsitos...');
     try {
       const r = await fetchAuth('/transitos-personales', { method: 'POST', headers: {} });
       const data = await r.json();
@@ -3975,7 +3967,7 @@
 
   async function verEstrellasFijas() {
     const contenedor = document.getElementById('estrellas-resultado');
-    contenedor.innerHTML = '<div class="disclaimer">Calculando...</div>';
+    contenedor.innerHTML = samLoading('Un momento...');
     try {
       const r = await fetchAuth('/estrellas-fijas', { method: 'POST', headers: {} });
       const data = await r.json();
@@ -4006,7 +3998,7 @@
 
   async function verNumerologia() {
     const contenedor = document.getElementById('numerologia-resultado');
-    contenedor.innerHTML = '<div class="disclaimer">Calculando...</div>';
+    contenedor.innerHTML = samLoading('Un momento...');
     try {
       const r = await fetchAuth('/numerologia', { method: 'POST', headers: {} });
       const data = await r.json();
@@ -4070,7 +4062,7 @@
 
   async function verFlorArmonica() {
     const contenedor = document.getElementById('flor-resultado');
-    contenedor.innerHTML = '<div class="disclaimer">Calculando tu flor armónica...</div>';
+    contenedor.innerHTML = samLoading('Calculando tu flor armónica...');
     try {
       const r = await fetchAuth('/flor-armonica', {
         method: 'POST',
@@ -4126,7 +4118,7 @@
       contenedor.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Primero elige a alguien de "Tus personas" arriba, o agrega a esa persona con el botón "+ Agregar".</div>';
       return;
     }
-    contenedor.innerHTML = '<div class="disclaimer">Calculando carta compuesta...</div>';
+    contenedor.innerHTML = samLoading('Calculando carta compuesta...');
     try {
       const r = await fetchAuth('/carta-compuesta', {
         method: 'POST',
@@ -4204,7 +4196,7 @@
       contenedor.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Primero elige a alguien de "Tus personas" arriba, o agrega a esa persona con el botón "+ Agregar".</div>';
       return;
     }
-    contenedor.innerHTML = '<div class="disclaimer">Calculando compatibilidad...</div>';
+    contenedor.innerHTML = samLoading('Calculando compatibilidad...');
     try {
       const r = await fetchAuth('/sinastria', {
         method: 'POST',
@@ -4567,7 +4559,7 @@
     const pregunta = document.getElementById('horaria-pregunta').value.trim();
     const contenedor = document.getElementById('horaria-resultado');
     if (!pregunta) { contenedor.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Escribe tu pregunta primero.</div>'; return; }
-    contenedor.innerHTML = '<div class="disclaimer">Calculando la carta del momento...</div>';
+    contenedor.innerHTML = samLoading('Leyendo la carta del momento...');
     const _cerrar = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('horaria-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
     try {
       const r = await fetchAuth('/horaria', {
@@ -4793,7 +4785,7 @@
       contenedor.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Escribe la ciudad y elige el país.</div>';
       return;
     }
-    contenedor.innerHTML = '<div class="disclaimer">Calculando cómo te afecta...</div>';
+    contenedor.innerHTML = samLoading('Calculando cómo te afecta...');
     try {
       const r = await fetchAuth('/relocacion', {
         method: 'POST',
@@ -4945,6 +4937,14 @@
   if (SESION.token) {
     const splash = document.getElementById('splash-verificando');
     if (splash) splash.style.display = 'flex';
+    // Timeout máximo 8 segundos - si no responde, mostrar bienvenida
+    setTimeout(() => {
+      const s = document.getElementById('splash-verificando');
+      if (s && s.style.display !== 'none') {
+        s.style.display = 'none';
+        mostrarPantalla('bienvenida');
+      }
+    }, 8000);
   }
 
   revisarPerfilYArrancar();
