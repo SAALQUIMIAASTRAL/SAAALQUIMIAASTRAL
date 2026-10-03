@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="Alquimia Astral">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
   --theme: light;
@@ -2301,7 +2301,7 @@
           htmlNum += `
             <div class="tarjeta-lectura neutral" style="text-align:center;">
               <div class="etiqueta-seccion" style="text-align:center;">${etiqueta}</div>
-              <div style="font-family:'Abril Fatface',serif;font-size:92px;color:var(--marigold-dark);margin:14px 0 10px;line-height:0.95;letter-spacing:-3px;text-shadow:0 3px 8px rgba(201,168,76,0.2);font-weight:400;">${n}</div>
+              <div style="font-family:'Cormorant Garamond',serif;font-weight:800;font-size:80px;color:var(--marigold-dark);margin:14px 0 10px;line-height:1;letter-spacing:-2px;text-shadow:0 2px 4px rgba(201,168,76,0.15);">${n}</div>
               <div class="cuerpo" style="text-align:left;margin-top:6px;">${frase}</div>
             </div>`;
         }
@@ -3563,7 +3563,6 @@
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${e.message}</div>`;
     }
   }
-  let _calAnioActual = new Date().getUTCFullYear();
   let _calDiaSeleccionado = null;
 
   async function renderizarSemanaLunar(mes, anio) {
