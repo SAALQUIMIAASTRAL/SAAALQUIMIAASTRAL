@@ -57,7 +57,7 @@
     /* --- Sistema de tipografía --- */
     --texto-cuerpo:13px;
     --texto-pequeño:11.5px;
-    --texto-etiqueta:11px;
+    --texto-etiqueta:13px;
     --texto-titulo:15px;
     --radio-tarjeta:14px;
     --radio-burbuja:100px;
@@ -236,10 +236,10 @@
   }
   .card-lectura .card-titulo{
     font-family:'Cormorant Garamond',serif;font-weight:800;
-    font-size:17px;color:var(--plum);margin-bottom:6px;
+    font-size:20px;color:var(--plum);margin-bottom:12px;
   }
   .card-lectura .card-cuerpo{
-    font-size:14px;color:var(--plum);line-height:1.7;
+    font-size:15px;color:var(--plum);line-height:1.7;
   }
   .card-lectura .card-etiqueta{
     font-size:13px;color:var(--marigold-dark);font-weight:800;
@@ -418,9 +418,9 @@
   .auth-switch{text-align:center;font-size:12.5px;color:var(--ink-dim);margin-top:16px;}
   .auth-switch a{color:var(--marigold);font-weight:600;cursor:pointer;}
   .auth-loading{opacity:0.6;pointer-events:none;}
-  .carta-real-row{display:flex;align-items:center;gap:8px;font-size:15px;color:var(--plum);padding:6px 0;border-bottom:1px solid var(--marigold-soft);}
+  .carta-real-row{display:flex;align-items:center;gap:8px;font-size:18px;color:var(--plum);padding:12px 0;border-bottom:1px solid var(--marigold-soft);}
   .carta-real-row:last-child{border-bottom:none;}
-  .carta-real-row b{color:var(--marigold-dark);font-weight:800;font-size:16px;}
+  .carta-real-row b{color:var(--marigold-dark);font-weight:800;font-size:20px;}
   .detalle-tecnico-oculto{display:none;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);}
   .detalle-tecnico-oculto.show-tecnico{display:block;}
 
@@ -444,7 +444,7 @@
   .etiqueta-seccion{
     font-size:var(--texto-etiqueta);color:var(--marigold);font-weight:600;
     text-transform:uppercase;letter-spacing:0.5px;
-    margin:12px 0 6px;padding-bottom:4px;
+    margin:18px 0 10px;padding-bottom:8px;
     border-bottom:1px solid var(--marigold-soft);
   }
 
@@ -485,32 +485,32 @@
         <div class="auth-overlay show" id="pantalla-bienvenida">
           <!-- Hero visual -->
           <div style="text-align:center;margin-bottom:20px;padding:24px 0 16px;">
-            <div style="font-size:52px;line-height:1;margin-bottom:8px;">🔮</div>
-            <h1 style="font-family:'Cormorant Garamond',serif;font-size:52px;font-weight:800;color:var(--plum);margin:0 0 8px;letter-spacing:0.5px;line-height:1.1;">Sam Alquimia Astral</h1>
-            <div style="font-size:13px;color:var(--ink-dim);line-height:1.5;">Tu carta natal, tu luna y tus tránsitos<br>personalizados — siempre contigo</div>
+            <div style="font-size:80px;line-height:1;margin-bottom:16px;">🔮</div>
+            <h1 style="font-family:'Cormorant Garamond',serif;font-size:72px;font-weight:800;color:var(--plum);margin:0 0 12px;letter-spacing:-0.5px;line-height:1.1;">Sam Alquimia Astral</h1>
+            <div style="font-size:14px;color:var(--ink-dim);line-height:1.6;margin-bottom:8px;">Tu carta natal, tu luna y tus tránsitos<br>personalizados — siempre contigo</div>
           </div>
 
           <!-- Beneficios visuales -->
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;">
             <div style="background:var(--marigold-soft);border-radius:12px;padding:12px;text-align:center;">
-              <div style="font-size:22px;margin-bottom:4px;">✦</div>
-              <div style="font-size:12px;font-weight:600;color:var(--plum);">¿Quién eres de verdad?</div>
-              <div style="font-size:10.5px;color:var(--ink-dim);">Tu carta natal, con cálculos reales</div>
+              <div style="font-size:24px;margin-bottom:6px;">✦</div>
+              <div style="font-size:13px;font-weight:600;color:var(--plum);">¿Quién eres de verdad?</div>
+              <div style="font-size:11px;color:var(--ink-dim);">Tu carta natal, con cálculos reales</div>
             </div>
             <div style="background:var(--lilac-soft);border-radius:12px;padding:12px;text-align:center;">
-              <div style="font-size:22px;margin-bottom:4px;">🌙</div>
-              <div style="font-size:12px;font-weight:600;color:var(--plum);">¿Por qué te sientes así hoy?</div>
-              <div style="font-size:10.5px;color:var(--ink-dim);">Tu luna personal, actualizada cada día</div>
+              <div style="font-size:24px;margin-bottom:6px;">🌙</div>
+              <div style="font-size:13px;font-weight:600;color:var(--plum);">¿Por qué te sientes así hoy?</div>
+              <div style="font-size:11px;color:var(--ink-dim);">Tu luna personal, actualizada cada día</div>
             </div>
             <div style="background:var(--lilac-soft);border-radius:12px;padding:12px;text-align:center;">
-              <div style="font-size:22px;margin-bottom:4px;">🗺️</div>
-              <div style="font-size:12px;font-weight:600;color:var(--plum);">¿Migraste?</div>
-              <div style="font-size:10.5px;color:var(--ink-dim);">Descubre cómo te va en el país donde vives ahora</div>
+              <div style="font-size:24px;margin-bottom:6px;">🗺️</div>
+              <div style="font-size:13px;font-weight:600;color:var(--plum);">¿Migraste?</div>
+              <div style="font-size:11px;color:var(--ink-dim);">Descubre cómo te va en el país donde vives ahora</div>
             </div>
             <div style="background:var(--marigold-soft);border-radius:12px;padding:12px;text-align:center;">
-              <div style="font-size:22px;margin-bottom:4px;">♡</div>
-              <div style="font-size:12px;font-weight:600;color:var(--plum);">¿Son compatibles de verdad?</div>
-              <div style="font-size:10.5px;color:var(--ink-dim);">Compara tu carta con la de esa persona</div>
+              <div style="font-size:24px;margin-bottom:6px;">♡</div>
+              <div style="font-size:13px;font-weight:600;color:var(--plum);">¿Son compatibles de verdad?</div>
+              <div style="font-size:11px;color:var(--ink-dim);">Compara tu carta con la de esa persona</div>
             </div>
           </div>
 
@@ -2300,8 +2300,8 @@
           const frase = (FRASES_POR_TIPO[clave] && FRASES_POR_TIPO[clave][n]) || FRASES_GENERICAS[n] || '';
           htmlNum += `
             <div class="tarjeta-lectura neutral" style="text-align:center;">
-              <div class="etiqueta-seccion" style="text-align:center;">${etiqueta}</div>
-              <div style="font-family:'Abril Fatface',serif;font-size:92px;color:var(--marigold-dark);margin:14px 0 10px;line-height:0.95;letter-spacing:-3px;text-shadow:0 3px 8px rgba(201,168,76,0.2);font-weight:400;">${n}</div>
+              <div class="etiqueta-seccion" style="text-align:center;font-size:18px;margin:16px 0 14px;">${etiqueta}</div>
+              <div style="font-family:'Abril Fatface',serif;font-size:120px;color:var(--marigold-dark);margin:14px 0 10px;line-height:0.9;letter-spacing:-4px;text-shadow:0 4px 12px rgba(201,168,76,0.25);font-weight:400;">${n}</div>
               <div class="cuerpo" style="text-align:left;margin-top:6px;">${frase}</div>
             </div>`;
         }
