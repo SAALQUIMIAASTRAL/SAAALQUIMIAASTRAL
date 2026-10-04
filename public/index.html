@@ -1614,6 +1614,16 @@
         </div>
 
 
+        <div class="auth-overlay" id="pantalla-confirmar-correo">
+          <h1>Revisa tu correo</h1>
+          <div class="sub">Ya casi estás en Sam Alquimia Astral.</div>
+          <p style="color:var(--plum);font-size:15px;line-height:1.6;">Abre el correo de bienvenida y toca <b>Confirmar mi correo</b> para activar tu cuenta.</p>
+          <p id="confirmar-correo-destino" style="font-weight:600;color:var(--marigold-dark);overflow-wrap:anywhere;"></p>
+          <p class="disclaimer">Si no lo encuentras, revisa spam o correo no deseado.</p>
+          <button type="button" class="btn-primary" onclick="mostrarPantalla('login')">Ya confirmé · Iniciar sesión</button>
+          <div class="auth-switch"><a onclick="mostrarPantalla('registro')">Corregir mi correo</a></div>
+        </div>
+
         <!-- Pantalla de REGISTRO -->
         <div class="auth-overlay" id="pantalla-registro">
           <h1>✦ Crea tu cuenta</h1>
@@ -1627,7 +1637,8 @@
             <input type="checkbox" id="registro-acepta-terminos" style="margin-top:2px;">
             <span>Acepto los <a onclick="event.preventDefault();mostrarLegal('terminos')" style="color:var(--marigold-dark);cursor:pointer;">Términos y Condiciones</a> y el <a onclick="event.preventDefault();mostrarLegal('privacidad')" style="color:var(--marigold-dark);cursor:pointer;">Aviso de Privacidad</a>.</span>
           </label>
-          <button class="btn-primary" onclick="accionRegistro()">Crear cuenta</button>
+          <p class="disclaimer">Para activar tu cuenta, confirma tu correo desde el enlace que recibirás al registrarte.</p>
+          <button id="registro-enviar" class="btn-primary" onclick="accionRegistro()">Crear cuenta</button>
           <div class="auth-switch">¿Ya tienes cuenta? <a onclick="mostrarPantalla('login')">Inicia sesión</a></div>
         </div>
 
@@ -5181,7 +5192,7 @@
       const data = await leerJsonSeguro(r);
       if (!r.ok) { mostrarErrorEn('olvide-error', data.error || 'No se pudo procesar la solicitud.'); return; }
       mostrarMensaje('olvide-error', 'Si ese correo está registrado, te llegará un enlace para crear una nueva contraseña. Revisa también spam.', 'verde');
-      setTimeout(() => mostrarPantalla('login'), 3000);
+      // Mantener el aviso visible hasta que la persona decida regresar.
     } catch (e) {
       mostrarErrorEn('olvide-error', 'Error de conexión: ' + e.message);
     }
@@ -5243,7 +5254,9 @@
     else mostrarPantalla('registro');
   }
 
+  let registroEnCurso = false;
   async function accionRegistro() {
+    if (registroEnCurso) return;
     ocultarErrorEn('registro-error');
     const nombre = document.getElementById('registro-nombre').value.trim();
     const email = document.getElementById('registro-email').value.trim();
@@ -5261,6 +5274,10 @@
     if (!document.getElementById('registro-acepta-terminos').checked) {
       return mostrarErrorEn('registro-error', 'Debes aceptar los Términos y Condiciones y el Aviso de Privacidad para continuar.');
     }
+    registroEnCurso = true;
+    const botonRegistro = document.getElementById('registro-enviar');
+    if (botonRegistro) botonRegistro.disabled = true;
+    try {
     // Candado de seguridad: si ya había una sesión activa en este navegador, la limpiamos
     // ANTES de registrar la cuenta nueva, para que nunca se mezclen datos de dos cuentas.
     SESION.token = null; SESION.refresh = null; SESION.email = null;
@@ -5272,24 +5289,26 @@
     const data = await leerJsonSeguro(r);
     if (!r.ok) return mostrarErrorEn('registro-error', data.error || 'No se pudo crear la cuenta.');
 
-    // Login automático después de registrarse
-    const rLogin = await fetch(BACKEND + '/auth/login', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-    const dataLogin = await rLogin.json();
-    if (rLogin.ok && dataLogin.sesion) {
-      SESION.token = dataLogin.sesion.access_token;
-      SESION.refresh = dataLogin.sesion.refresh_token || null;
-      SESION.email = email;
-      localStorage.setItem('saa_token', SESION.token);
-      if (SESION.refresh) localStorage.setItem('saa_refresh', SESION.refresh);
-      localStorage.setItem('saa_email', email);
-      await revisarPerfilYArrancar();
-    } else {
+    document.getElementById('registro-pass').value = '';
+    document.getElementById('registro-pass2').value = '';
+    if (data.necesita_confirmacion || !data.sesion) {
+      document.getElementById('confirmar-correo-destino').textContent = email;
       document.getElementById('login-email').value = email;
-      mostrarPantalla('login');
-      mostrarMensaje('login-error', '✔ Cuenta creada. Revisa tu correo (' + email + ') y toca el link de confirmación antes de entrar. Si no lo ves, checa spam.', 'verde');
+      mostrarPantalla('confirmar-correo');
+      return;
+    }
+    SESION.token = data.sesion.access_token;
+    SESION.refresh = data.sesion.refresh_token || null;
+    SESION.email = data.usuario?.email || email;
+    localStorage.setItem('saa_token', SESION.token);
+    if (SESION.refresh) localStorage.setItem('saa_refresh', SESION.refresh);
+    localStorage.setItem('saa_email', SESION.email);
+    await revisarPerfilYArrancar();
+    } catch (_) {
+      mostrarErrorEn('registro-error', 'No se pudo conectar. Intenta de nuevo.');
+    } finally {
+      registroEnCurso = false;
+      if (botonRegistro) botonRegistro.disabled = false;
     }
   }
 
