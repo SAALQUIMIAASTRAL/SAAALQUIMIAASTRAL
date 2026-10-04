@@ -1563,7 +1563,7 @@ function normalizarEventosGeneralesMes(payload, anio, mes, tz) {
     const tipo = e.event_type || e.type;
     const planetaRaw = e.body || e.planet;
     const planeta = NOMBRES_PLANETAS_MES[planetaRaw] || planetaRaw;
-    const signoRaw = e.to_sign || e.sign;
+    const signoRaw = e.to_sign || e.moon_sign || e.sign;
     const signo = SIGNOS_MES_ES[signoRaw] || signoRaw;
     let titulo, texto;
     if (tipo === 'sign_ingress') {
@@ -1573,7 +1573,7 @@ function normalizarEventosGeneralesMes(payload, anio, mes, tz) {
       texto = `Comienza el paso de ${planeta} por ${signo}. Es un movimiento del cielo compartido por todos; su efecto personal depende de la casa y los aspectos que active en tu carta.`;
     } else if (tipo === 'station') {
       if (!planeta) throw new Error('Una estación llegó sin planeta.');
-      const direccion = String(e.station_type || e.direction || e.motion || e.to_motion || '').toLowerCase();
+      const direccion = String(e.station_kind || e.station_type || e.direction || e.motion || e.to_motion || '').toLowerCase();
       const retro = /retro/.test(direccion) || e.is_retrograde === true;
       const directo = /direct/.test(direccion) || e.is_retrograde === false;
       titulo = retro ? `${planeta} comienza su retrogradación` : directo ? `${planeta} retoma su movimiento directo` : `${planeta}: cambio de movimiento`;
@@ -1589,7 +1589,29 @@ function normalizarEventosGeneralesMes(payload, anio, mes, tz) {
       if (signo) titulo += ` en ${signo}`;
       texto = 'Su relevancia personal depende de si toca tus planetas o ángulos natales. La fecha del evento no implica que sea visible desde tu ciudad.';
     } else continue;
-    salida.push({ tipo, titulo, texto, fecha:fecha.fecha, hora:fecha.hora });
+    const temas = {
+      Sun:{ foco:'Tu manera de mostrarte, dirigir y expresar lo que quieres.', accion:'Define una prioridad y da un paso concreto para hacerla visible.' },
+      Mercury:{ foco:'Conversaciones, documentos, estudios y acuerdos.', accion:'Revisa lo pendiente y confirma fechas, mensajes y condiciones.' },
+      Venus:{ foco:'Vínculos, disfrute, gastos y lo que valoras.', accion:'Observa qué recibes, qué das y qué acuerdos quieres revisar.' },
+      Mars:{ foco:'Iniciativa, esfuerzo y la forma de manejar el desacuerdo.', accion:'Elige dónde poner tu energía y evita actuar solo por impulso.' },
+      Jupiter:{ foco:'Aprendizaje, oportunidades y proyectos de expansión.', accion:'Compara las posibilidades con el tiempo y los recursos que tienes.' },
+      Saturn:{ foco:'Compromisos, límites y responsabilidades.', accion:'Distingue qué puedes sostener y qué necesita una estructura más clara.' },
+      Uranus:{ foco:'Cambios, independencia y formas distintas de hacer las cosas.', accion:'Prueba un ajuste concreto antes de cambiar todo de golpe.' },
+      Neptune:{ foco:'Inspiración, expectativas y claridad de límites.', accion:'Distingue lo que deseas de lo que puedes confirmar con hechos.' },
+      Pluto:{ foco:'Control, poder personal y procesos de cambio profundo.', accion:'Observa dónde necesitas recuperar autonomía o renegociar un límite.' },
+    };
+    let enfoque = temas[planetaRaw]?.foco || '';
+    let accion = temas[planetaRaw]?.accion || '';
+    if (tipo === 'lunation') {
+      enfoque = /new/.test(String(e.phase || '')) ? 'Un tema que quieres empezar a cultivar.' : 'Un proceso que necesita balance, claridad o cierre.';
+      accion = /new/.test(String(e.phase || '')) ? 'Escribe una intención y una acción pequeña para acompañarla.' : 'Revisa lo que ocurrió durante el ciclo y elige qué mantener o ajustar.';
+    } else if (tipo === 'solar_eclipse' || tipo === 'lunar_eclipse') {
+      enfoque = 'Los temas de la casa y los puntos natales que contacte el eclipse.';
+      accion = 'Consulta sus contactos con tu carta antes de sacar conclusiones personales.';
+    }
+    const grado = tipo === 'lunation' ? e.moon_degree : typeof e.longitude === 'number' ? e.longitude % 30 : e.degree;
+    const posicion = signo && typeof grado === 'number' ? `${signo} ${Math.floor(grado)}°${String(Math.floor((grado % 1) * 60)).padStart(2,'0')}′` : signo || '';
+    salida.push({ tipo, titulo, texto, enfoque, accion, posicion, fecha:fecha.fecha, hora:fecha.hora });
   }
   return salida.sort((a,b) => (a.fecha + (a.hora || '')).localeCompare(b.fecha + (b.hora || '')));
 }
@@ -1641,10 +1663,10 @@ app.post('/mes-astrologico', requireLogin, async (req, res) => {
     const eventosGenerales = general.status === 'fulfilled' ? normalizarEventosGeneralesMes(general.value,anio,mes,tz) : [];
     const nombreAspecto = { conjunction:'conjunción',sextile:'sextil',square:'cuadratura',trine:'trígono',opposition:'oposición' };
     const eventosPersonales = personal.status === 'fulfilled' ? personal.value.flatMap(e => {
-      const fecha = fechaEventoMes(e.date || e.exact_date || e.datetime || e.timestamp || e.start_date, tz);
+      const fecha = fechaEventoMes(e.exact_time || e.exact_date || e.datetime || e.timestamp || e.date || e.start_date, tz);
       if (!fecha || fecha.year !== anio || fecha.month !== mes) return [];
       return [{
-        fecha:fecha.fecha, planeta_transito:NOMBRES_PLANETAS_MES[e.transiting_planet] || e.transiting_planet,
+        fecha:fecha.fecha, hora:fecha.hora, planeta_transito:NOMBRES_PLANETAS_MES[e.transiting_planet] || e.transiting_planet,
         punto_natal:NOMBRES_PLANETAS_MES[e.stationed_planet || e.natal_planet] || e.stationed_planet || e.natal_planet,
         aspecto:nombreAspecto[String(e.aspect_type || '').toLowerCase()] || e.aspect_type,
         area:e.area || e.life_area || '', interpretacion:e.interpretation || e.description || '',
