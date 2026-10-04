@@ -6603,22 +6603,47 @@
   function activarPanZoom(contenedor) {
     let escala = 1;
     let ultimaDistancia = null;
+    let desplazamientoX = 0;
+    let desplazamientoY = 0;
+    let ultimoX = null;
+    let ultimoY = null;
 
     contenedor.style.transformOrigin = 'center center';
     contenedor.style.touchAction = 'none';
     contenedor.style.willChange = 'transform';
 
-    function aplicar() {
-      contenedor.style.transform = `scale(${escala})`;
+    function limitarDesplazamiento() {
+      if (escala <= 1) {
+        desplazamientoX = 0;
+        desplazamientoY = 0;
+        return;
+      }
+      const maxX = contenedor.clientWidth * (escala - 1) * 0.5;
+      const maxY = contenedor.clientHeight * (escala - 1) * 0.5;
+      desplazamientoX = Math.max(-maxX, Math.min(maxX, desplazamientoX));
+      desplazamientoY = Math.max(-maxY, Math.min(maxY, desplazamientoY));
     }
+
+    function aplicar() {
+      limitarDesplazamiento();
+      contenedor.style.transform =
+        `translate(${desplazamientoX}px, ${desplazamientoY}px) scale(${escala})`;
+    }
+
     function distanciaEntre(t0, t1) {
-      const dx = t0.clientX - t1.clientX, dy = t0.clientY - t1.clientY;
+      const dx = t0.clientX - t1.clientX;
+      const dy = t0.clientY - t1.clientY;
       return Math.sqrt(dx * dx + dy * dy);
     }
 
     contenedor.addEventListener('touchstart', (e) => {
       if (e.touches.length === 2) {
         ultimaDistancia = distanciaEntre(e.touches[0], e.touches[1]);
+        ultimoX = null;
+        ultimoY = null;
+      } else if (e.touches.length === 1 && escala > 1) {
+        ultimoX = e.touches[0].clientX;
+        ultimoY = e.touches[0].clientY;
       }
     }, { passive: true });
 
@@ -6630,23 +6655,63 @@
         escala = Math.max(1, Math.min(4, escala * factor));
         ultimaDistancia = nueva;
         aplicar();
+      } else if (e.touches.length === 1 && escala > 1 && ultimoX !== null && ultimoY !== null) {
+        e.preventDefault();
+        const x = e.touches[0].clientX;
+        const y = e.touches[0].clientY;
+        desplazamientoX += x - ultimoX;
+        desplazamientoY += y - ultimoY;
+        ultimoX = x;
+        ultimoY = y;
+        aplicar();
       }
     }, { passive: false });
 
     contenedor.addEventListener('touchend', (e) => {
       if (e.touches.length < 2) ultimaDistancia = null;
+      if (e.touches.length === 1 && escala > 1) {
+        ultimoX = e.touches[0].clientX;
+        ultimoY = e.touches[0].clientY;
+      } else {
+        ultimoX = null;
+        ultimoY = null;
+      }
     }, { passive: true });
 
-    // Rueda del mouse, solo para pruebas en escritorio
+    // Escritorio: rueda para zoom y arrastre con el mouse cuando está ampliada.
     contenedor.addEventListener('wheel', (e) => {
       e.preventDefault();
       escala = Math.max(1, Math.min(4, escala - e.deltaY * 0.001));
       aplicar();
     }, { passive: false });
 
-    // Doble toque/clic para restablecer el tamaño
+    let mouseArrastrando = false;
+    contenedor.addEventListener('mousedown', (e) => {
+      if (escala <= 1) return;
+      mouseArrastrando = true;
+      ultimoX = e.clientX;
+      ultimoY = e.clientY;
+      e.preventDefault();
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (!mouseArrastrando || escala <= 1) return;
+      desplazamientoX += e.clientX - ultimoX;
+      desplazamientoY += e.clientY - ultimoY;
+      ultimoX = e.clientX;
+      ultimoY = e.clientY;
+      aplicar();
+    });
+    window.addEventListener('mouseup', () => {
+      mouseArrastrando = false;
+      ultimoX = null;
+      ultimoY = null;
+    });
+
+    // Doble toque/clic: restablecer zoom y posición.
     contenedor.addEventListener('dblclick', () => {
       escala = 1;
+      desplazamientoX = 0;
+      desplazamientoY = 0;
       aplicar();
     });
   }
