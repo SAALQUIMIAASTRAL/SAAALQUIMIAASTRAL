@@ -883,6 +883,104 @@
     font-size:12.5px;line-height:1.5;color:var(--plum);
   }
   .zoom-close-btn{position:fixed;top:16px;right:16px;background:#fff;border:none;border-radius:50%;width:36px;height:36px;font-size:18px;z-index:61;cursor:pointer;}
+  .acg-fullscreen{
+    width:min(96vw,980px);
+    max-height:88vh;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .acg-fullscreen-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    color:#fff;
+    padding:0 2px;
+  }
+  .acg-fullscreen-title{
+    font-family:'Cormorant Garamond',serif;
+    font-size:22px;
+    font-weight:700;
+  }
+  .acg-fullscreen-sub{
+    font-family:'Work Sans',sans-serif;
+    font-size:11.5px;
+    color:#d7cfe0;
+    margin-top:2px;
+  }
+  .acg-fullscreen-tools{
+    display:flex;
+    gap:7px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+  .acg-fullscreen-tools button{
+    border:1px solid rgba(255,255,255,.28);
+    background:rgba(255,255,255,.12);
+    color:#fff;
+    border-radius:100px;
+    min-width:38px;
+    height:38px;
+    padding:0 12px;
+    font-family:'Work Sans',sans-serif;
+    font-size:13px !important;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .acg-fullscreen-tools button:active{transform:scale(.97);}
+  .acg-map-viewport{
+    position:relative;
+    background:#fff;
+    border-radius:20px;
+    overflow:hidden;
+    width:100%;
+    height:min(68vh,620px);
+    min-height:360px;
+    box-shadow:0 18px 45px rgba(0,0,0,.28);
+  }
+  .acg-map-stage{
+    width:100%;
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transform-origin:center center;
+    cursor:grab;
+  }
+  .acg-map-stage:active{cursor:grabbing;}
+  .acg-map-stage .acg-map-shell{
+    width:100%;
+    height:100%;
+    border:0;
+    border-radius:0;
+    box-shadow:none;
+    padding:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#fff;
+  }
+  .acg-map-stage svg{
+    width:100% !important;
+    height:100% !important;
+    max-width:none !important;
+    object-fit:contain;
+    border-radius:0 !important;
+  }
+  .acg-fullscreen-tip{
+    color:#d7cfe0;
+    font-size:11.5px;
+    text-align:center;
+    font-family:'Work Sans',sans-serif;
+  }
+  @media(max-width:600px){
+    .zoom-modal-bg{padding:10px;}
+    .acg-fullscreen{width:100%;max-height:94vh;}
+    .acg-fullscreen-head{align-items:flex-start;flex-direction:column;}
+    .acg-fullscreen-tools{width:100%;justify-content:flex-start;}
+    .acg-map-viewport{height:68vh;min-height:420px;border-radius:16px;}
+  }
   .lectura-modal-bg{display:none;position:fixed;inset:0;background:var(--page-bg);z-index:62;padding:0;overflow:hidden;flex-direction:column;}
   .lectura-modal-bg.open{display:flex;}
   .lectura-topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;background:var(--paper);border-bottom:1px solid var(--line);flex:none;}
@@ -2003,9 +2101,16 @@
           ? `<div class="acg-map-shell">${data.svg}</div>`
           : '';
         const svgEl = contenedorMapa.querySelector('svg');
-        if (svgEl) { svgEl.style.width = '100%'; svgEl.style.height = 'auto'; svgEl.removeAttribute('width'); svgEl.removeAttribute('height'); }
+        if (svgEl) {
+          svgEl.style.width = '100%';
+          svgEl.style.height = 'auto';
+          svgEl.style.display = 'block';
+          svgEl.removeAttribute('width');
+          svgEl.removeAttribute('height');
+          svgEl.setAttribute('preserveAspectRatio','xMidYMid meet');
+        }
         const hint = document.getElementById('acg-zoom-hint');
-        if (hint) hint.innerHTML = data.svg ? '<div class="acg-map-legend"><span>🗺️ Tus líneas alrededor del mundo</span><span>↗ Toca para ampliar</span></div>' : '';
+        if (hint) hint.innerHTML = data.svg ? '<div class="acg-map-legend"><span>🗺️ Explora tus líneas</span><span>↗ Toca para ampliar, mover y hacer zoom</span></div>' : '';
       }
 
       const iconos = { Sun:'☀️', Moon:'🌙', Venus:'💗', Mars:'🔥', Jupiter:'🚀', Saturn:'🪐', Mercury:'☿️' };
@@ -7044,9 +7149,50 @@
   function verMapaEnGrande() {
     const original = document.getElementById('acg-mapa').innerHTML;
     if (!original) return;
-    document.getElementById('zoom-modal-content').innerHTML = original;
+
+    const modal = document.getElementById('zoom-modal-content');
+    modal.innerHTML = `
+      <div class="acg-fullscreen">
+        <div class="acg-fullscreen-head">
+          <div>
+            <div class="acg-fullscreen-title">Tu mapa de astrocartografía</div>
+            <div class="acg-fullscreen-sub">Acerca, aleja y mueve el mapa para explorar tus líneas.</div>
+          </div>
+          <div class="acg-fullscreen-tools">
+            <button type="button" onclick="acgZoomMas()" aria-label="Acercar">＋</button>
+            <button type="button" onclick="acgZoomMenos()" aria-label="Alejar">−</button>
+            <button type="button" onclick="acgZoomReset()">Restablecer</button>
+          </div>
+        </div>
+        <div class="acg-map-viewport">
+          <div class="acg-map-stage" id="acg-map-stage-full">${original}</div>
+        </div>
+        <div class="acg-fullscreen-tip">Pellizca con dos dedos para hacer zoom · arrastra con un dedo cuando esté ampliado · doble toque para restablecer</div>
+      </div>`;
+
+    const stage = document.getElementById('acg-map-stage-full');
+    const svgEl = stage?.querySelector('svg');
+    if (svgEl) {
+      svgEl.removeAttribute('width');
+      svgEl.removeAttribute('height');
+      svgEl.style.width = '100%';
+      svgEl.style.height = '100%';
+      svgEl.style.display = 'block';
+      svgEl.setAttribute('preserveAspectRatio','xMidYMid meet');
+    }
+
     document.getElementById('zoom-modal-bg').classList.add('open');
-    activarPanZoom(document.getElementById('zoom-modal-content'));
+    if (stage) activarPanZoom(stage);
+  }
+
+  function acgZoomMas() {
+    document.getElementById('acg-map-stage-full')?._panZoomControls?.zoomIn();
+  }
+  function acgZoomMenos() {
+    document.getElementById('acg-map-stage-full')?._panZoomControls?.zoomOut();
+  }
+  function acgZoomReset() {
+    document.getElementById('acg-map-stage-full')?._panZoomControls?.reset();
   }
 
   function verEnGrande() {
@@ -7092,8 +7238,10 @@
         desplazamientoY = 0;
         return;
       }
-      const maxX = contenedor.clientWidth * (escala - 1) * 0.5;
-      const maxY = contenedor.clientHeight * (escala - 1) * 0.5;
+      const w = contenedor.parentElement?.clientWidth || contenedor.clientWidth;
+      const h = contenedor.parentElement?.clientHeight || contenedor.clientHeight;
+      const maxX = w * (escala - 1) * 0.48;
+      const maxY = h * (escala - 1) * 0.48;
       desplazamientoX = Math.max(-maxX, Math.min(maxX, desplazamientoX));
       desplazamientoY = Math.max(-maxY, Math.min(maxY, desplazamientoY));
     }
@@ -7103,6 +7251,24 @@
       contenedor.style.transform =
         `translate(${desplazamientoX}px, ${desplazamientoY}px) scale(${escala})`;
     }
+
+    function setEscala(nueva) {
+      escala = Math.max(1, Math.min(5, nueva));
+      aplicar();
+    }
+
+    function reset() {
+      escala = 1;
+      desplazamientoX = 0;
+      desplazamientoY = 0;
+      aplicar();
+    }
+
+    contenedor._panZoomControls = {
+      zoomIn: () => setEscala(escala * 1.28),
+      zoomOut: () => setEscala(escala / 1.28),
+      reset
+    };
 
     function distanciaEntre(t0, t1) {
       const dx = t0.clientX - t1.clientX;
@@ -7126,9 +7292,8 @@
         e.preventDefault();
         const nueva = distanciaEntre(e.touches[0], e.touches[1]);
         const factor = nueva / ultimaDistancia;
-        escala = Math.max(1, Math.min(4, escala * factor));
+        setEscala(escala * factor);
         ultimaDistancia = nueva;
-        aplicar();
       } else if (e.touches.length === 1 && escala > 1 && ultimoX !== null && ultimoY !== null) {
         e.preventDefault();
         const x = e.touches[0].clientX;
@@ -7152,11 +7317,9 @@
       }
     }, { passive: true });
 
-    // Escritorio: rueda para zoom y arrastre con el mouse cuando está ampliada.
     contenedor.addEventListener('wheel', (e) => {
       e.preventDefault();
-      escala = Math.max(1, Math.min(4, escala - e.deltaY * 0.001));
-      aplicar();
+      setEscala(escala * (e.deltaY < 0 ? 1.12 : 0.89));
     }, { passive: false });
 
     let mouseArrastrando = false;
@@ -7181,13 +7344,7 @@
       ultimoY = null;
     });
 
-    // Doble toque/clic: restablecer zoom y posición.
-    contenedor.addEventListener('dblclick', () => {
-      escala = 1;
-      desplazamientoX = 0;
-      desplazamientoY = 0;
-      aplicar();
-    });
+    contenedor.addEventListener('dblclick', reset);
   }
 
   async function actualizarBandaConCartaReal(reintentos = 2) {
