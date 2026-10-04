@@ -5076,23 +5076,25 @@
   async function guardarNotificacionesDiarias() {
     if (_notificacionesGuardando) return;
     const clave = claveNotificaciones();
-    if (!clave) return mostrarMensaje('notif-diaria-msg','Inicia sesión para guardar tu preferencia.','amarillo');
+    if (!clave) return mostrarResultadoGuardado('notif-diaria-msg','Inicia sesión para guardar tu preferencia.','amarillo');
     const p = { activa:document.getElementById('notif-diaria-activa').checked, hora:document.getElementById('notif-diaria-hora').value };
-    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(p.hora)) return mostrarMensaje('notif-diaria-msg','Elige una hora válida.','rojo');
+    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(p.hora)) return mostrarResultadoGuardado('notif-diaria-msg','Elige una hora válida.','rojo');
     _notificacionesGuardando = true;
     const boton = document.getElementById('notif-guardar');
+    const etiqueta = boton.textContent;
     boton.disabled = true;
+    boton.textContent = 'Guardando…';
     try {
       const estado = await programarRecordatorioDiario(p,true);
       localStorage.setItem(clave,JSON.stringify(p));
-      if (estado === 'sin_modulo') mostrarMensaje('notif-diaria-msg','Hora guardada. Los avisos se activarán al instalar la nueva versión de iOS o Android y dar permiso.','amarillo');
-      else if (estado === 'sin_permiso') mostrarMensaje('notif-diaria-msg','Hora guardada. Activa el permiso de notificaciones en los ajustes de tu teléfono para recibir el aviso.','amarillo');
-      else if (estado === 'apagado' || !p.activa) mostrarMensaje('notif-diaria-msg','Recordatorio diario desactivado.','verde');
-      else mostrarMensaje('notif-diaria-msg','Recordatorio guardado para las ' + p.hora + '. La entrega depende de los ajustes de tu teléfono.',estado === 'con_advertencia' ? 'amarillo' : 'verde');
+      if (estado === 'sin_modulo') mostrarResultadoGuardado('notif-diaria-msg','Hora guardada. Los avisos se activarán al instalar la nueva versión de iOS o Android y dar permiso.','amarillo');
+      else if (estado === 'sin_permiso') mostrarResultadoGuardado('notif-diaria-msg','Hora guardada. Activa el permiso de notificaciones en los ajustes de tu teléfono para recibir el aviso.','amarillo');
+      else if (estado === 'apagado' || !p.activa) mostrarResultadoGuardado('notif-diaria-msg','Recordatorio diario desactivado.','verde');
+      else mostrarResultadoGuardado('notif-diaria-msg','Recordatorio guardado para las ' + p.hora + '. La entrega depende de los ajustes de tu teléfono.',estado === 'con_advertencia' ? 'amarillo' : 'verde');
       await escucharNotificacionesDiarias();
     } catch (_) {
-      mostrarMensaje('notif-diaria-msg','No se pudo guardar el recordatorio. Intenta de nuevo.','rojo');
-    } finally { _notificacionesGuardando = false; boton.disabled = false; }
+      mostrarResultadoGuardado('notif-diaria-msg','No se pudo guardar el recordatorio. Intenta de nuevo.','rojo');
+    } finally { _notificacionesGuardando = false; boton.disabled = false; boton.textContent = etiqueta; }
   }
   async function escucharNotificacionesDiarias() {
     const plugin = pluginNotificaciones();
@@ -5321,7 +5323,7 @@
       cancelarEdicionDatos();
       await cargarDatosParaEditar();
       document.getElementById('editar-datos-msg').style.color = 'var(--armonia)';
-      mostrarMensaje('editar-datos-msg', 'Guardado. Tu carta natal se recalculará la próxima vez que la abras.', 'verde');
+      mostrarResultadoGuardado('editar-datos-msg', 'Cambios guardados. Tu carta natal se recalculará la próxima vez que la abras.', 'verde');
     } catch (e) {
       mostrarErrorEn('editar-datos-error', 'No se pudo conectar. Intenta de nuevo.');
     }
@@ -5398,6 +5400,10 @@
   }
   function mostrarMensaje(id, mensaje, tipo = 'rojo') {
     pintarAviso(document.getElementById(id), mensaje, tipo);
+  }
+  function mostrarResultadoGuardado(id, mensaje, tipo = 'verde') {
+    mostrarMensaje(id, mensaje, tipo);
+    mostrarMensajeGlobal(mensaje, tipo);
   }
   function alternarOjo(inputId, boton) {
     const input = document.getElementById(inputId);
@@ -5586,7 +5592,7 @@
       });
       const data = await leerJsonSeguro(r);
       if (!r.ok) return mostrarErrorEn('cambiar-pass-error', data.error || 'No se pudo cambiar la contraseña.');
-      mostrarMensaje('cambiar-pass-error', '✔ Contraseña actualizada correctamente.', 'verde');
+      mostrarResultadoGuardado('cambiar-pass-error', 'Contraseña guardada correctamente.', 'verde');
       document.getElementById('cambiar-pass-actual').value = '';
       document.getElementById('cambiar-pass-nueva').value = '';
       document.getElementById('cambiar-pass-confirmar').value = '';
