@@ -463,6 +463,59 @@
   .moon-now .m{font-size:30px;}
   .moon-now h4{font-size:16px;margin:0 0 3px;font-family:'Cormorant Garamond',serif;font-weight:700;}
   .moon-now p{font-size:11.5px;color:#c9bfe0;margin:0;}
+  .moon-now{align-items:flex-start;}
+  .moon-main{min-width:0;flex:1;}
+  .moon-kicker{font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:#d7c8ef;margin-bottom:4px;}
+  .moon-guide{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:7px;
+    margin-top:10px;
+  }
+  .moon-guide-item{
+    background:rgba(255,255,255,.10);
+    border:1px solid rgba(255,255,255,.14);
+    border-radius:11px;
+    padding:8px 9px;
+    min-width:0;
+  }
+  .moon-guide-item .k{
+    font-size:10px;
+    font-weight:700;
+    color:#e8b978;
+    margin-bottom:2px;
+    text-transform:uppercase;
+    letter-spacing:.35px;
+  }
+  .moon-guide-item .v{
+    font-size:11.5px;
+    line-height:1.4;
+    color:#fff;
+  }
+  .moon-voc-line{
+    margin-top:9px;
+    padding-top:9px;
+    border-top:1px solid rgba(255,255,255,.14);
+  }
+  .luna-lectura-hoy{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:12px 14px;
+    margin:0 0 14px;
+  }
+  .luna-lectura-hoy .titulo{
+    font-family:'Cormorant Garamond',serif;
+    font-weight:700;
+    font-size:17px;
+    color:var(--plum);
+    margin-bottom:5px;
+  }
+  .luna-lectura-hoy .texto{
+    font-size:13px;
+    line-height:1.55;
+    color:var(--ink-dim);
+  }
   .moon-sphere{width:56px;height:56px;border-radius:50%;flex:none;position:relative;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,0.5), inset -6px -6px 12px rgba(0,0,0,0.35);background:radial-gradient(circle at 35% 30%, #fdfaf3, #d8d3c5 55%, #9c9788 100%);}
   .moon-sphere .sombra{position:absolute;top:0;left:0;height:100%;width:100%;background:#1b1730;}
 
@@ -1511,15 +1564,26 @@
             <h2>Ciclo lunar</h2>
             <div class="desc" id="luna-intro">Fase, signo, calendario mensual y cómo usar el ciclo lunar como guía.</div>
 
-            <button class="btn-primary" style="margin-bottom:14px;" onclick="cargarLunaReal()">Ver la luna de hoy en el cielo</button>
+            <button class="btn-primary" style="margin-bottom:14px;" onclick="cargarLunaReal()">Actualizar Luna de hoy</button>
 
             <div class="moon-now" id="moon-now">
               <div class="moon-sphere" id="moon-now-esfera" style="background:radial-gradient(circle at 35% 30%, #4a4560, #1b1730 70%);"></div>
-              <div style="min-width:0;">
-                <h4 id="moon-now-title">Luna de hoy</h4>
-                <p id="moon-now-sub">Toca el botón para ver fase, signo y cómo aprovecharla.</p>
-                <div id="moon-now-meaning" style="font-size:12px;line-height:1.45;color:#f2e6ec;margin-top:7px;"></div>
-                <div id="moon-voc-mini" style="margin-top:8px;"></div>
+              <div class="moon-main">
+                <div class="moon-kicker">Luna de hoy</div>
+                <h4 id="moon-now-title">Consulta la Luna actual</h4>
+                <p id="moon-now-sub">Fase, signo y guía práctica del día.</p>
+                <div id="moon-now-meaning" style="font-size:12.5px;line-height:1.5;color:#f2e6ec;margin-top:7px;"></div>
+                <div class="moon-guide" id="moon-guide" style="display:none;">
+                  <div class="moon-guide-item">
+                    <div class="k">Favorece</div>
+                    <div class="v" id="moon-guide-favorece"></div>
+                  </div>
+                  <div class="moon-guide-item">
+                    <div class="k">Cuida</div>
+                    <div class="v" id="moon-guide-cuida"></div>
+                  </div>
+                </div>
+                <div class="moon-voc-line" id="moon-voc-mini"></div>
               </div>
             </div>
 
@@ -6316,14 +6380,24 @@
       }
       // Consejo práctico según la fase lunar
       const CONSEJOS_FASE = {
-        'New Moon':'Luna Nueva — siembra intenciones. Ideal para iniciar proyectos y hacer listas de deseos.',
-        'Waxing Crescent':'Luna Creciente — construye impulso. Toma acción sobre lo que iniciaste.',
-        'First Quarter':'Cuarto Creciente — supera obstáculos. Empuja con decisión.',
-        'Waxing Gibbous':'Gibosa Creciente — refina y ajusta antes de la Luna Llena.',
-        'Full Moon':'Luna Llena — máxima energía. Lo que sembraste se hace visible. Celebra y suelta.',
-        'Waning Gibbous':'Gibosa Menguante — comparte lo aprendido en este ciclo.',
-        'Last Quarter':'Cuarto Menguante — suelta y cierra. Haz espacio para lo nuevo.',
-        'Waning Crescent':'Luna Menguante — descansa y reflexiona. Pronto empieza un ciclo nuevo.',
+        'New Moon':'Siembra intenciones y define qué quieres comenzar.',
+        'Waxing Crescent':'Da los primeros pasos y construye impulso.',
+        'First Quarter':'Toma decisiones y resuelve lo que frena el avance.',
+        'Waxing Gibbous':'Refina, corrige y prepara lo que está por culminar.',
+        'Full Moon':'Observa resultados, reconoce lo visible y libera excesos.',
+        'Waning Gibbous':'Integra lo aprendido y comparte lo que ya maduró.',
+        'Last Quarter':'Cierra pendientes y deja espacio para lo que sigue.',
+        'Waning Crescent':'Baja el ritmo, descansa y revisa antes del nuevo ciclo.',
+      };
+      const GUIA_FASE = {
+        'New Moon': { favorece:'iniciar · planear · sembrar', cuida:'forzar resultados inmediatos' },
+        'Waxing Crescent': { favorece:'avanzar · practicar · construir', cuida:'abandonar por impaciencia' },
+        'First Quarter': { favorece:'decidir · actuar · destrabar', cuida:'reaccionar sin pensar' },
+        'Waxing Gibbous': { favorece:'ajustar · ordenar · mejorar', cuida:'querer perfección' },
+        'Full Moon': { favorece:'ver resultados · conversar · culminar', cuida:'sobrecargarte emocionalmente' },
+        'Waning Gibbous': { favorece:'integrar · agradecer · compartir', cuida:'seguir acumulando pendientes' },
+        'Last Quarter': { favorece:'cerrar · depurar · simplificar', cuida:'aferrarte a lo que ya terminó' },
+        'Waning Crescent': { favorece:'descansar · revisar · soltar', cuida:'empezar por ansiedad' },
       };
       const faseLunaHoy = data.luna?.data?.lunar_metrics?.moon_phase || '';
       const consejoDia = CONSEJOS_FASE[faseLunaHoy] || '';
@@ -6335,10 +6409,30 @@
         const significadoLuna = document.getElementById('moon-now-meaning');
         if (tituloLuna) tituloLuna.textContent = `${faseLunarEs(m.moon_phase)} en ${signoEs(m.moon_sign)}`;
         if (subLuna) subLuna.textContent = `Día lunar ${m.moon_day} · ${Math.round(m.moon_illumination)}% iluminada`;
-        if (significadoLuna) significadoLuna.textContent = consejoDia.replace(/^.*?—\s*/, '');
+        if (significadoLuna) significadoLuna.textContent = consejoDia;
+        const guia = GUIA_FASE[m.moon_phase];
+        const guiaWrap = document.getElementById('moon-guide');
+        const favorece = document.getElementById('moon-guide-favorece');
+        const cuida = document.getElementById('moon-guide-cuida');
+        if (guiaWrap && guia) guiaWrap.style.display = 'grid';
+        if (favorece && guia) favorece.textContent = guia.favorece;
+        if (cuida && guia) cuida.textContent = guia.cuida;
       }
-      const consejoHtml = consejoDia ? `<div style="background:linear-gradient(135deg,var(--blush-2),var(--blush-1));border-radius:12px;padding:12px 14px;color:#fff;margin-bottom:10px;font-size:12.5px;line-height:1.6;display:flex;align-items:center;gap:8px;">${svgLuna(faseLunaHoy, 22)}<span>${consejoDia}</span></div>` : '';
-      contenedor.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('luna-cruda').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>` + consejoHtml + resumenHtml + renderizarInforme(data.luna, null);
+
+      // Una sola lectura breve debajo, evitando repetir fase/signo/porcentaje otra vez.
+      const interpretaciones = data.luna?.data?.interpretations || [];
+      let textoLectura = '';
+      for (const item of interpretaciones) {
+        if (typeof item === 'string' && item.trim()) { textoLectura = item.trim(); break; }
+        if (item && typeof item === 'object') {
+          textoLectura = item.interpretation || item.text || item.description || item.meaning || '';
+          if (textoLectura) break;
+        }
+      }
+      textoLectura = limpiarTextoAPI(textoLectura || '');
+      contenedor.innerHTML = textoLectura
+        ? `<div class="luna-lectura-hoy"><div class="titulo">Cómo se puede sentir hoy</div><div class="texto">${textoLectura}</div></div>`
+        : '';
       await verLunaVacia(true);
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
