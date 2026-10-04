@@ -1928,7 +1928,7 @@
           <div class="section alquimia-tarjeta" data-tab="alquimia" id="rituales-section">
             <div class="carta-etiqueta">Del cielo a tu día a día</div>
             <h2 id="rituales-titulo">Tus tres rituales del mes</h2>
-            <div class="desc">Velas, piedras y canela: elige un ritual y sigue sus pasos. Las intenciones cambian cada mes.</div>
+            <div class="desc">Tres rituales con velas, piedras y canela para este mes. Abre el que quieras hacer.</div>
             <div id="rituales-contenedor" style="margin-top:14px;"></div>
           </div>
 
@@ -4137,46 +4137,264 @@
 
   // ===== RITUALES PARA EL MES =====
   function generarRitualesDelMes(mesNum) {
-    // Prácticas simbólicas por mes; no dependen de cálculos ni atribuyen efectos a las gemas.
-    const intenciones = [
-      ['Empezar con claridad','Cuidar tu energía','Ordenar tus recursos'],
-      ['Abrirte al cariño','Reconocer tu valor','Compartir con intención'],
-      ['Dar el primer paso','Sostener tu decisión','Preparar un nuevo proyecto'],
-      ['Renovar tus hábitos','Volver a tu centro','Hacer espacio para lo nuevo'],
-      ['Dar lugar al disfrute','Tratarte con cariño','Valorar lo que tienes'],
-      ['Expresar lo que necesitas','Escuchar tus emociones','Cuidar tu hogar'],
-      ['Reconocer tus logros','Confiar en ti','Organizar tus metas'],
-      ['Mostrar tu creatividad','Recordar tu valor','Dar forma a una idea'],
-      ['Simplificar tu rutina','Elegir tus prioridades','Ordenar tu espacio de trabajo'],
-      ['Revisar tus vínculos','Cuidar tus límites','Revisar tus gastos'],
-      ['Cerrar un ciclo','Acompañar un cambio','Agradecer lo aprendido'],
-      ['Reconocer tu recorrido','Guardar una intención','Preparar el próximo año']
-    ];
+    const meses = [
+  [
+    [
+      "Vela para abrir un nuevo ciclo",
+      "Elige una meta que quieras comenzar este mes. Escribe el primer paso y la fecha para hacerlo.",
+      "Lee tu meta despacio y dedica un minuto a imaginarte dando ese primer paso.",
+      "Coloca el papel en tu agenda y cumple la fecha que elegiste."
+    ],
+    [
+      "Cuarzo para elegir tu prioridad",
+      "Escribe tres asuntos que te están quitando tiempo.",
+      "Sostén el cuarzo y elige cuál atenderás primero. Tacha los otros dos de la lista de hoy.",
+      "Deja el cuarzo junto a tu agenda hasta resolver esa prioridad."
+    ],
+    [
+      "Canela para tu meta de ahorro",
+      "Escribe cuánto quieres ahorrar este mes y para qué.",
+      "Coloca el papel bajo un platito con una rama de canela y una moneda.",
+      "Haz tu primer ahorro, aunque sea pequeño, y anota cuánto falta para tu meta."
+    ]
+  ],
+  [
+    [
+      "Vela rosa para el amor que deseas",
+      "Escribe tres formas en las que quieres dar y recibir cariño.",
+      "Lee tu lista frente a la vela y elige una que puedas practicar sin esperar nada a cambio.",
+      "Guarda el papel y dedica esta semana un momento a ese gesto de cariño."
+    ],
+    [
+      "Cuarzo rosa para tratarte mejor",
+      "Anota una frase dura que sueles decirte cuando te equivocas.",
+      "Sostén el cuarzo rosa y escribe cómo se lo dirías a una persona que quieres.",
+      "Deja esa nueva frase junto al cuarzo y léela cuando vuelvas a exigirte de más."
+    ],
+    [
+      "Canela para agradecer lo compartido",
+      "Escribe el nombre de alguien que te haya apoyado y qué hizo por ti.",
+      "Coloca el papel y una rama de canela en un recipiente en tu mesa.",
+      "Agradece a esa persona con un mensaje o un gesto concreto."
+    ]
+  ],
+  [
+    [
+      "Vela para comenzar un proyecto",
+      "Escribe el nombre de un proyecto pendiente y una tarea que puedas hacer en veinte minutos.",
+      "Mira la llama un momento y lee la tarea que elegiste.",
+      "Reserva esos veinte minutos en tu agenda y guarda el papel allí."
+    ],
+    [
+      "Jaspe para sostener una decisión",
+      "Anota una decisión que sigues posponiendo y la razón que más pesa para tomarla.",
+      "Sostén el jaspe y lee esa razón tres veces, sin añadir más argumentos.",
+      "Coloca la piedra sobre la nota y da hoy el primer paso de esa decisión."
+    ],
+    [
+      "Canela para una oportunidad de trabajo",
+      "Escribe una oportunidad laboral que quieras explorar y a quién necesitas contactar.",
+      "Pon el papel con una rama de canela en tu escritorio.",
+      "Envía el mensaje, actualiza tu perfil o prepara la propuesta que anotaste."
+    ]
+  ],
+  [
+    [
+      "Vela para soltar un hábito",
+      "Escribe un hábito que quieres dejar y qué harás en su lugar cuando aparezca.",
+      "Lee ambas acciones frente a la vela y dobla el papel hacia afuera, como gesto de despedida.",
+      "Guarda la alternativa en tu agenda y pruébala una vez esta semana."
+    ],
+    [
+      "Amatista para una pausa sin pantallas",
+      "Apaga las notificaciones y coloca la amatista delante de ti.",
+      "Sostén la piedra y cuenta diez respiraciones sin revisar el teléfono.",
+      "Déjala donde sueles cargar el móvil como recordatorio de tu próxima pausa."
+    ],
+    [
+      "Canela para renovar un rincón",
+      "Elige un rincón de tu casa y retira tres cosas que ya no uses.",
+      "Limpia la superficie y coloca una rama de canela en un recipiente pequeño.",
+      "Deja ese espacio libre para algo que sí quieras disfrutar este mes."
+    ]
+  ],
+  [
+    [
+      "Vela para recuperar el disfrute",
+      "Escribe una actividad sencilla que disfrutas y que has dejado de hacer.",
+      "Lee tu nota y dedica un minuto a recordar cómo te sientes al hacerla.",
+      "Ponle día y hora esta semana y guarda el papel en tu agenda."
+    ],
+    [
+      "Cuarzo rosa para reconocer tu valor",
+      "Escribe tres cualidades tuyas con un ejemplo real de cada una.",
+      "Sostén el cuarzo rosa y lee los ejemplos sin restarles importancia.",
+      "Deja la lista junto a la piedra para volver a ella cuando dudes de ti."
+    ],
+    [
+      "Canela para valorar lo que tienes",
+      "Anota tres cosas de tu vida que hoy te sostienen.",
+      "Coloca la lista con una rama de canela en un recipiente de tu casa.",
+      "Elige una de esas cosas y haz algo concreto para cuidarla esta semana."
+    ]
+  ],
+  [
+    [
+      "Vela para una conversación pendiente",
+      "Escribe qué necesitas decir y qué acuerdo te gustaría proponer.",
+      "Lee tu propuesta frente a la vela y elimina los reproches para dejar una petición clara.",
+      "Elige un momento tranquilo para conversar y lleva tu petición por escrito."
+    ],
+    [
+      "Piedra de luna para escuchar lo que sientes",
+      "Sostén la piedra de luna y pon nombre a la emoción que está más presente.",
+      "Escribe qué ocurrió y qué necesitas ahora, en dos frases.",
+      "Deja la piedra junto a la nota y atiende esa necesidad con una acción concreta."
+    ],
+    [
+      "Canela para un hogar acogedor",
+      "Ordena una pequeña mesa o repisa de tu casa.",
+      "Coloca una rama de canela y un papel con el nombre de una costumbre que quieras compartir en casa.",
+      "Propón esa costumbre: una comida juntos, una charla o un rato sin pantallas."
+    ]
+  ],
+  [
+    [
+      "Vela para reconocer tus avances",
+      "Escribe algo que lograste y que te costó esfuerzo.",
+      "Lee la nota frente a la vela y reconoce qué hiciste tú para conseguirlo.",
+      "Guárdala con una foto o un recuerdo de ese logro."
+    ],
+    [
+      "Ojo de tigre para dar un paso visible",
+      "Anota una situación en la que quieras expresar una idea o mostrar tu trabajo.",
+      "Sostén el ojo de tigre y ensaya en voz alta la primera frase que dirás.",
+      "Deja la piedra junto a tu material y acuerda una fecha para presentarlo."
+    ],
+    [
+      "Canela para organizar un ingreso extra",
+      "Escribe una habilidad que puedas ofrecer y a quién le sería útil.",
+      "Coloca la nota con una rama de canela y una moneda en tu escritorio.",
+      "Prepara una propuesta sencilla con precio y compártela con una persona."
+    ]
+  ],
+  [
+    [
+      "Vela para una idea creativa",
+      "Escribe una idea que te entusiasme, aunque todavía esté incompleta.",
+      "Mira la llama un minuto y dibuja o anota lo primero que se te ocurra para desarrollarla.",
+      "Guarda el papel y dedica diez minutos a crear una primera versión."
+    ],
+    [
+      "Citrino para mostrar tu trabajo",
+      "Elige algo que hayas creado y que aún no te hayas animado a compartir.",
+      "Coloca el citrino junto a ello y escribe una frase sencilla para presentarlo.",
+      "Compártelo con una persona de confianza y escucha su opinión."
+    ],
+    [
+      "Canela para darle lugar a tu proyecto",
+      "Despeja un espacio pequeño para trabajar en tu idea.",
+      "Coloca allí una rama de canela y una nota con el siguiente paso del proyecto.",
+      "Haz ese paso antes de añadir nuevas tareas a la lista."
+    ]
+  ],
+  [
+    [
+      "Vela para ordenar tu semana",
+      "Anota tres pendientes y rodea el único que realmente necesita resolverse primero.",
+      "Lee ese pendiente frente a la vela y elige un día para atenderlo.",
+      "Coloca el papel en tu agenda y reserva un horario concreto."
+    ],
+    [
+      "Fluorita para concentrarte en una tarea",
+      "Elige una sola tarea y aparta el teléfono.",
+      "Coloca la fluorita junto a tu cuaderno y trabaja quince minutos sin cambiar de actividad.",
+      "Al terminar, anota cuánto avanzaste y decide si necesitas otra sesión."
+    ],
+    [
+      "Canela para ordenar tu espacio de trabajo",
+      "Retira papeles y objetos que ya no necesitas en tu escritorio.",
+      "Coloca una rama de canela en un platito junto a una lista con tus tres tareas de la semana.",
+      "Marca cada tarea al terminarla y cambia la lista la semana siguiente."
+    ]
+  ],
+  [
+    [
+      "Vela rosa para un amor recíproco",
+      "En un papel, escribe tres gestos que te hacen sentir querida y uno que quieres ofrecer.",
+      "Enciende la vela y lee la lista en voz alta. Dobla el papel hacia ti y déjalo lejos de la llama.",
+      "Guárdalo en un lugar especial y conversa sobre uno de esos gestos con la persona que quieres."
+    ],
+    [
+      "Cuarzo rosa para cerrar una herida",
+      "Escribe lo que ya no quieres seguir cargando de una relación, sin nombres ni reproches.",
+      "Sostén el cuarzo rosa a la altura del pecho, respira despacio y rompe el papel en trozos pequeños.",
+      "Desecha los trozos y deja la piedra en tu mesita como recordatorio del límite que quieres cuidar."
+    ],
+    [
+      "Canela y moneda para tu prosperidad",
+      "Escribe una meta de dinero concreta para este mes: ahorrar una cantidad, cobrar un pendiente o vender un servicio.",
+      "Dobla el papel hacia ti y ponlo bajo un platito con una moneda y una rama de canela.",
+      "Colócalo donde organizas tu dinero y realiza hoy una acción para esa meta. Revisa tu avance cada semana."
+    ]
+  ],
+  [
+    [
+      "Vela para despedir una etapa",
+      "Escribe qué etapa quieres cerrar y una cosa que agradeces de ella.",
+      "Lee el papel frente a la vela y dóblalo hacia afuera como gesto de despedida.",
+      "Guárdalo en un sobre y retira de tu espacio un objeto que te mantenga atada a esa etapa."
+    ],
+    [
+      "Obsidiana para recordar un límite",
+      "Escribe una situación en la que necesitas dejar de decir sí por compromiso.",
+      "Sostén la obsidiana y ensaya una respuesta breve que puedas decir con respeto.",
+      "Deja la piedra junto a la nota y usa esa respuesta cuando la situación vuelva a aparecer."
+    ],
+    [
+      "Canela para reconocer tu abundancia",
+      "Anota una ayuda recibida, una habilidad tuya y un recurso con el que cuentas hoy.",
+      "Pon la lista junto a una rama de canela en un recipiente pequeño.",
+      "Elige cómo aprovechar uno de esos recursos durante esta semana."
+    ]
+  ],
+  [
+    [
+      "Vela para agradecer el año",
+      "Escribe tres momentos del año que quieras conservar en tu memoria.",
+      "Lee cada uno frente a la vela y reconoce qué aprendiste en ese momento.",
+      "Guarda la lista con una foto o un recuerdo del año."
+    ],
+    [
+      "Cuarzo para elegir el próximo rumbo",
+      "Escribe una prioridad para el próximo año y algo que dejarás de hacer para darle espacio.",
+      "Sostén el cuarzo y lee ambas decisiones despacio.",
+      "Coloca la piedra junto a tu agenda y reserva tiempo para esa prioridad."
+    ],
+    [
+      "Canela para preparar una meta nueva",
+      "Escribe una meta de dinero para el próximo año y la primera cantidad que puedes apartar.",
+      "Coloca el papel con una rama de canela y una moneda en un recipiente.",
+      "Haz ese primer ahorro y anota una fecha para revisar la meta."
+    ]
+  ]
+];
+    const piedras = ["Cuarzo transparente","Cuarzo rosa","Jaspe","Amatista","Cuarzo rosa","Piedra de luna","Ojo de tigre","Citrino","Fluorita","Cuarzo rosa","Obsidiana","Cuarzo transparente"];
     const indice = Number.isInteger(Number(mesNum)) && Number(mesNum) >= 1 && Number(mesNum) <= 12 ? Number(mesNum)-1 : new Date().getMonth();
-    const [vela, piedra, canela] = intenciones[indice];
-    const practicas = [
-      { titulo:'Vela · ' + vela, tiempo:'5 minutos', materiales:'Una vela blanca, un portavelas y papel.', pasos:[
-        'Escribe una intención relacionada con “' + vela.toLowerCase() + '”. Deja el papel separado de la vela.',
-        'Enciende la vela en un portavelas estable, lejos de telas. Quédate presente y lee tu intención.',
-        'Elige una acción pequeña para acompañarla esta semana. Apaga la vela antes de retirarte.'
-      ]},
-      { titulo:'Piedra · ' + piedra, tiempo:'5 minutos', materiales:'Un cuarzo, una amatista o una piedra que ya tengas.', pasos:[
-        'Sostén tu piedra y haz tres respiraciones pausadas.',
-        'Piensa qué significa para ti “' + piedra.toLowerCase() + '” y escribe una decisión concreta.',
-        'Deja la piedra a la vista como recordatorio de esa decisión durante el mes.'
-      ]},
-      { titulo:'Canela · ' + canela, tiempo:'5 minutos', materiales:'Una rama de canela, papel y un recipiente pequeño.', pasos:[
-        'Escribe una intención relacionada con “' + canela.toLowerCase() + '”.',
-        'Dobla el papel y colócalo con la rama de canela en el recipiente, como símbolo de tu intención.',
-        'Déjalo en tu escritorio o en un rincón especial. Cada semana revisa qué paso has dado.'
-      ]}
-    ];
-    return '<p class="disclaimer">Tres rituales simbólicos para dedicar un momento a tus intenciones este mes.</p>' + practicas.map(p => `
-      <details class="alquimia-practica">
-        <summary><span>${p.titulo}<small>${p.tiempo}</small></span><span class="alquimia-flecha" aria-hidden="true">⌄</span></summary>
-        <p class="desc"><b>Necesitas:</b> ${p.materiales}</p>
-        <ol>${p.pasos.map(paso => '<li>' + paso + '</li>').join('')}</ol>
-      </details>`).join('');
+    return meses[indice].map((ritual, i) => {
+      const [titulo, ...pasos] = ritual;
+      const materiales = i === 0
+        ? ((titulo.includes('rosa') ? 'Una vela rosa' : 'Una vela blanca') + ', portavelas, papel y lápiz.')
+        : i === 1 ? piedras[indice] + ', papel y lápiz. Si no tienes esa piedra, usa una que ya tengas como símbolo.'
+        : 'Una rama de canela, un platito, una moneda, papel y lápiz.';
+      return `
+        <details class="alquimia-practica">
+          <summary><span>${titulo}<small>5 a 10 minutos</small></span><span class="alquimia-flecha" aria-hidden="true">⌄</span></summary>
+          <p class="desc"><b>Necesitas:</b> ${materiales}</p>
+          <ol>${pasos.map(paso => '<li>' + paso + '</li>').join('')}</ol>
+          ${i === 0 ? '<p class="disclaimer">Usa un portavelas estable, lejos de telas y papel. Quédate presente y apaga la vela al terminar.</p>' : ''}
+        </details>`;
+    }).join('');
   }
 
   // Mapa auxiliar de temas de casas (si no existe)
