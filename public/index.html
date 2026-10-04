@@ -882,6 +882,88 @@
     background:var(--marigold-soft);border-radius:11px;padding:9px 10px;margin-top:8px;
     font-size:12.5px;line-height:1.5;color:var(--plum);
   }
+  .reloc-explica{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    margin:12px 0 14px;
+  }
+  .reloc-explica-item{
+    display:flex;
+    gap:8px;
+    align-items:flex-start;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:13px;
+    padding:10px;
+  }
+  .reloc-explica-item>span{font-size:18px;line-height:1.1;}
+  .reloc-explica-item b{
+    display:block;
+    color:var(--plum);
+    font-size:12.5px;
+    margin-bottom:2px;
+  }
+  .reloc-explica-item small{
+    display:block;
+    color:var(--ink-dim);
+    font-size:10.8px;
+    line-height:1.35;
+  }
+  .reloc-resumen{
+    background:linear-gradient(135deg,rgba(151,116,205,.13),rgba(201,168,76,.10));
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:14px;
+    margin-bottom:10px;
+  }
+  .reloc-resumen .titulo{
+    font-family:'Cormorant Garamond',serif;
+    color:var(--plum);
+    font-size:19px;
+    font-weight:700;
+    margin-bottom:4px;
+  }
+  .reloc-resumen .texto{
+    color:var(--ink-dim);
+    font-size:12.5px;
+    line-height:1.55;
+  }
+  .reloc-factor{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:12px 13px;
+    margin-bottom:8px;
+  }
+  .reloc-factor .head{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    color:var(--plum);
+    font-weight:700;
+    font-size:13.5px;
+    margin-bottom:5px;
+  }
+  .reloc-factor .body{
+    color:var(--ink-dim);
+    font-size:12.8px;
+    line-height:1.55;
+  }
+  .reloc-tech{
+    margin-top:12px;
+    border-top:1px solid var(--line);
+    padding-top:10px;
+  }
+  .reloc-tech summary{
+    cursor:pointer;
+    color:var(--marigold-dark);
+    font-size:11.5px;
+    font-weight:700;
+  }
+  @media(max-width:420px){
+    .reloc-explica{grid-template-columns:1fr;}
+  }
   .zoom-close-btn{position:fixed;top:16px;right:16px;background:#fff;border:none;border-radius:50%;width:36px;height:36px;font-size:18px;z-index:61;cursor:pointer;}
   .acg-fullscreen{
     width:min(96vw,980px);
@@ -1908,13 +1990,21 @@
           </div>
 
           <div class="section carta-destacada" data-tab="carta" id="carta-relocacion">
-            <div class="carta-etiqueta">Tu carta al mudarte</div>
+            <div class="carta-etiqueta">Tu carta en otra ciudad</div>
             <h2>Relocación</h2>
-            <div class="desc">Compara tu lugar de nacimiento con la ciudad donde vives ahora y mira qué áreas de tu carta cambian de énfasis.</div>
+            <div class="desc">Tu carta natal no cambia, pero al vivir en otra ciudad cambian las casas y el énfasis de algunas áreas de vida. Aquí puedes ver <b>qué se vuelve más importante para ti en ese lugar</b>.</div>
+
+            <div class="reloc-explica">
+              <div class="reloc-explica-item"><span>💼</span><div><b>Trabajo</b><small>Si aumenta la visibilidad, ambición o foco profesional.</small></div></div>
+              <div class="reloc-explica-item"><span>💖</span><div><b>Relaciones</b><small>Si pareja, vínculos o vida social toman más peso.</small></div></div>
+              <div class="reloc-explica-item"><span>🏠</span><div><b>Hogar</b><small>Si familia, raíces y vida privada se vuelven centrales.</small></div></div>
+              <div class="reloc-explica-item"><span>✨</span><div><b>Identidad</b><small>Si el lugar cambia cómo te muestras o cómo te perciben.</small></div></div>
+            </div>
+
             <div class="calc-form">
-              <label>Ciudad donde vives ahora<input type="text" id="reloc-ciudad" placeholder="Ej. Ciudad de México"></label>
+              <label>¿Qué ciudad quieres explorar?<input type="text" id="reloc-ciudad" placeholder="Ej. Madrid"></label>
               <label>País<select id="reloc-pais" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;"><option value="">Selecciona el país</option></select></label>
-              <button class="btn-primary" onclick="calcularRelocacion()">Ver cómo me afecta</button>
+              <button class="btn-primary" onclick="calcularRelocacion()">Ver mi carta en esta ciudad</button>
               <div id="reloc-resultado" style="margin-top:14px;"></div>
             </div>
           </div>
@@ -7111,10 +7201,11 @@
     const ciudad = document.getElementById('reloc-ciudad').value.trim();
     const pais_codigo = document.getElementById('reloc-pais').value;
     if (!ciudad || !pais_codigo) {
-      contenedor.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Escribe la ciudad y elige el país.</div>';
+      contenedor.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Escribe una ciudad y elige el país.</div>';
       return;
     }
-    contenedor.innerHTML = samLoading('');
+
+    contenedor.innerHTML = samLoading('Comparando tu carta con esta ciudad...');
     try {
       const r = await fetchAuth('/relocacion', {
         method: 'POST',
@@ -7124,22 +7215,66 @@
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
-        contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}</div>`;
         return;
       }
-      const _cerrar_reloc_ok = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('reloc-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
-      let htmlReloc = _cerrar_reloc_ok;
+
       const factores = data.relocacion?.data?.key_factors || [];
-      if (factores.length) {
-        htmlReloc += `<div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin-bottom:8px;">Qué significa esta mudanza para ti</div>`;
-        htmlReloc += factores.map(f => `
-          <div class="card-lectura" style="margin-bottom:8px;">
-            <div class="card-cuerpo" style="color:var(--plum);">${f.interpretation || f.factor || ''}</div>
-          </div>
-        `).join('');
-        htmlReloc += '<div style="font-family:\'Cormorant Garamond\',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin:14px 0 8px;">Detalle técnico</div>';
+      const ICONOS_RELOC = [
+        { re:/career|profession|public|midheaven|medio cielo|trabajo|carrera|vocaci/i, icon:'💼', titulo:'Trabajo y proyección' },
+        { re:/relationship|partner|descendant|pareja|relaci|vínculo|social/i, icon:'💖', titulo:'Relaciones y vínculos' },
+        { re:/home|family|roots|imum|hogar|familia|raíces|casa 4/i, icon:'🏠', titulo:'Hogar y vida privada' },
+        { re:/identity|ascendant|self|identidad|ascendente|imagen personal/i, icon:'✨', titulo:'Identidad y presencia' },
+        { re:/money|finance|resource|dinero|recursos|econom/i, icon:'💰', titulo:'Dinero y recursos' },
+        { re:/study|travel|belief|education|viaje|estudio|creencia|casa 9/i, icon:'🌍', titulo:'Expansión y aprendizaje' },
+        { re:/creative|children|romance|creativ|hijos|romance|casa 5/i, icon:'🎨', titulo:'Creatividad y disfrute' },
+        { re:/health|routine|service|salud|rutina|casa 6/i, icon:'🌿', titulo:'Rutina y bienestar' },
+        { re:/transform|power|intim|crisis|transform|poder|intimidad|casa 8/i, icon:'🔥', titulo:'Cambios profundos' },
+        { re:/spirit|inner|retreat|espirit|interior|retiro|casa 12/i, icon:'🌙', titulo:'Vida interior' }
+      ];
+
+      const clasificar = (f) => {
+        const texto = [f?.factor, f?.title, f?.interpretation, f?.description].filter(Boolean).join(' ');
+        return ICONOS_RELOC.find(x => x.re.test(texto)) || { icon:'✦', titulo:'Área destacada' };
+      };
+
+      const limpiarReloc = (txt) => limpiarTextoAPI(String(txt || '').replace(/\s+/g,' ').trim());
+
+      const cards = factores.map(f => {
+        const c = clasificar(f);
+        const texto = limpiarReloc(f.interpretation || f.description || f.factor || '');
+        return `
+          <div class="reloc-factor">
+            <div class="head"><span>${c.icon}</span><span>${c.titulo}</span></div>
+            <div class="body">${texto}</div>
+          </div>`;
+      }).join('');
+
+      const intro = factores.length
+        ? `En <b>${ciudad}</b> algunas áreas de tu carta toman más protagonismo. No significa que todo vaya a cambiar, sino que ciertos temas pueden sentirse más presentes en tu experiencia cotidiana.`
+        : `No aparecen cambios especialmente destacados para <b>${ciudad}</b> en este cálculo.`;
+
+      let htmlReloc = `
+        <div style="display:flex;justify-content:flex-end;margin-bottom:6px;">
+          <button onclick="document.getElementById('reloc-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button>
+        </div>
+        <div class="reloc-resumen">
+          <div class="titulo">Tu carta en ${ciudad}</div>
+          <div class="texto">${intro}</div>
+        </div>
+        ${cards || '<div class="disclaimer">No se encontraron factores destacados para mostrar.</div>'}
+      `;
+
+      // Conservamos el detalle técnico, pero fuera del recorrido principal.
+      const detalle = renderizarInforme(data.relocacion, 'reloc-resultado');
+      if (detalle) {
+        htmlReloc += `
+          <details class="reloc-tech">
+            <summary>Ver detalle astrológico</summary>
+            <div style="margin-top:8px;">${detalle}</div>
+          </details>`;
       }
-      htmlReloc += renderizarInforme(data.relocacion, 'reloc-resultado');
+
       contenedor.innerHTML = htmlReloc;
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
