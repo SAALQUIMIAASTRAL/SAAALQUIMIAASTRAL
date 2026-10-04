@@ -617,6 +617,72 @@
     padding-bottom:24px;
     -webkit-overflow-scrolling:touch;
   }
+
+  /* Mi cuenta: acordeones limpios, legibles y consistentes */
+  #pantalla-mi-perfil .cuenta-acordeon{
+    background:#fff !important;
+    border:1px solid var(--line);
+    border-radius:14px;
+    margin-bottom:10px;
+    overflow:hidden;
+    box-shadow:0 2px 8px rgba(45,27,78,0.035);
+  }
+  #pantalla-mi-perfil .cuenta-acordeon > button{
+    min-height:52px;
+    padding:14px 15px !important;
+    font-size:15px !important;
+    font-weight:600 !important;
+    text-align:left;
+    background:#fff !important;
+  }
+  #pantalla-mi-perfil .cuenta-etiqueta{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    min-width:0;
+  }
+  #pantalla-mi-perfil .cuenta-simbolo{
+    width:22px;
+    height:22px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    flex:none;
+    border-radius:50%;
+    background:var(--marigold-soft);
+    color:var(--marigold-dark);
+    font-size:12px !important;
+    font-weight:700;
+  }
+  #pantalla-mi-perfil .cuenta-chev{
+    width:28px;
+    height:28px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    flex:none;
+    border-radius:50%;
+    color:var(--plum);
+    background:var(--lilac-soft);
+    font-size:18px !important;
+    line-height:1;
+    font-weight:500;
+  }
+  #pantalla-mi-perfil [id^="sec-"]{
+    border-top:1px solid var(--line);
+    padding:14px !important;
+    background:var(--page-bg);
+  }
+  #pantalla-mi-perfil .auth-field label{
+    font-size:13px !important;
+    font-weight:600;
+    color:var(--plum);
+  }
+  #pantalla-mi-perfil .auth-field input,
+  #pantalla-mi-perfil .auth-field select,
+  #pantalla-mi-perfil textarea{
+    font-size:16px !important;
+  }
   .auth-overlay h1{font-size:26px;margin-bottom:6px;color:var(--plum);}
   .auth-overlay .sub{font-size:13px;color:var(--ink-dim);margin-bottom:22px;}
   .auth-field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;font-size:12px;color:var(--ink-dim);}
@@ -912,9 +978,9 @@
   <!-- SECCIONES DESPLEGABLES -->
 
   <!-- 1. MIS DATOS DE NACIMIENTO -->
-  <div style="background:var(--marigold-soft);border-radius:14px;margin-bottom:10px;">
+  <div class="cuenta-acordeon">
     <button onclick="toggleSeccionCuenta('sec-datos')" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:transparent;border:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--plum);font-family:'Work Sans',sans-serif;">
-      <span>🎂 Mis datos de nacimiento</span><span id="chev-sec-datos">▼</span>
+      <span class="cuenta-etiqueta"><span class="cuenta-simbolo">✦</span>Mis datos de nacimiento</span><span class="cuenta-chev" id="chev-sec-datos">+</span>
     </button>
     <div id="sec-datos" style="display:none;padding:0 14px 14px;">
       <div style="background:rgba(201,168,76,0.15);border-radius:10px;padding:10px;margin-bottom:10px;font-size:12px;color:var(--plum);">⚠️ Puedes modificar tu fecha de nacimiento <b>una sola vez</b>. Para hacer la carta de alguien más, usa la sección <b>Cartas</b>.</div>
@@ -946,9 +1012,9 @@
   </div>
 
   <!-- 2. MI CORREO -->
-  <div style="background:var(--marigold-soft);border-radius:14px;margin-bottom:10px;">
+  <div class="cuenta-acordeon">
     <button onclick="toggleSeccionCuenta('sec-correo')" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:transparent;border:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--plum);font-family:'Work Sans',sans-serif;">
-      <span>📧 Mi correo</span><span id="chev-sec-correo">▼</span>
+      <span class="cuenta-etiqueta"><span class="cuenta-simbolo">@</span>Mi correo</span><span class="cuenta-chev" id="chev-sec-correo">+</span>
     </button>
     <div id="sec-correo" style="display:none;padding:0 14px 14px;">
       <div style="font-size:13px;color:var(--plum);margin-bottom:10px;">Correo actual: <b id="correo-actual-mostrar"></b></div>
@@ -961,9 +1027,9 @@
   </div>
 
   <!-- 3. MI CONTRASEÑA -->
-  <div style="background:var(--marigold-soft);border-radius:14px;margin-bottom:10px;">
+  <div class="cuenta-acordeon">
     <button onclick="toggleSeccionCuenta('sec-pass')" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:transparent;border:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--plum);font-family:'Work Sans',sans-serif;">
-      <span>🔒 Mi contraseña</span><span id="chev-sec-pass">▼</span>
+      <span class="cuenta-etiqueta"><span class="cuenta-simbolo">•</span>Mi contraseña</span><span class="cuenta-chev" id="chev-sec-pass">+</span>
     </button>
     <div id="sec-pass" style="display:none;padding:0 14px 14px;">
       <div class="auth-error" id="cambiar-pass-error"></div>
@@ -975,9 +1041,9 @@
   </div>
 
   <!-- 5. APARIENCIA -->
-  <div style="background:var(--marigold-soft);border-radius:14px;margin-bottom:10px;">
+  <div class="cuenta-acordeon">
     <button onclick="toggleSeccionCuenta('sec-apariencia')" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:transparent;border:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--plum);font-family:'Work Sans',sans-serif;">
-      <span>🎨 Apariencia</span><span id="chev-sec-apariencia">▼</span>
+      <span class="cuenta-etiqueta"><span class="cuenta-simbolo">Aa</span>Apariencia</span><span class="cuenta-chev" id="chev-sec-apariencia">+</span>
     </button>
     <div id="sec-apariencia" style="display:none;padding:0 14px 14px;">
 
@@ -996,9 +1062,9 @@
   </div>
 
   <!-- 6. IDIOMA -->
-  <div style="background:var(--marigold-soft);border-radius:14px;margin-bottom:10px;">
+  <div class="cuenta-acordeon">
     <button onclick="toggleSeccionCuenta('sec-idioma')" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:transparent;border:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--plum);font-family:'Work Sans',sans-serif;">
-      <span>🌐 Idioma</span><span id="chev-sec-idioma">▼</span>
+      <span class="cuenta-etiqueta"><span class="cuenta-simbolo">A</span>Idioma</span><span class="cuenta-chev" id="chev-sec-idioma">+</span>
     </button>
     <div id="sec-idioma" style="display:none;padding:0 14px 14px;">
       <select style="width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-family:'Work Sans',sans-serif;font-size:13.5px;color:var(--plum);background:var(--paper);margin-bottom:8px;">
@@ -1011,9 +1077,9 @@
   </div>
 
   <!-- 7. SUGERENCIAS -->
-  <div style="background:var(--marigold-soft);border-radius:14px;margin-bottom:10px;">
+  <div class="cuenta-acordeon">
     <button onclick="toggleSeccionCuenta('sec-sugerencias')" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:transparent;border:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--plum);font-family:'Work Sans',sans-serif;">
-      <span>💬 Sugerencias y ayuda</span><span id="chev-sec-sugerencias">▼</span>
+      <span class="cuenta-etiqueta"><span class="cuenta-simbolo">?</span>Sugerencias y ayuda</span><span class="cuenta-chev" id="chev-sec-sugerencias">+</span>
     </button>
     <div id="sec-sugerencias" style="display:none;padding:0 14px 14px;">
       <a href="mailto:soporte@samalquimiaastral.com" style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--paper);border-radius:10px;text-decoration:none;color:var(--plum);font-size:13px;margin-bottom:10px;">📧 soporte@samalquimiaastral.com</a>
@@ -1024,9 +1090,9 @@
   </div>
 
   <!-- 8. LEGAL -->
-  <div style="background:var(--marigold-soft);border-radius:14px;margin-bottom:10px;">
+  <div class="cuenta-acordeon">
     <button onclick="toggleSeccionCuenta('sec-legal')" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:transparent;border:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--plum);font-family:'Work Sans',sans-serif;">
-      <span>📜 Legal</span><span id="chev-sec-legal">▼</span>
+      <span class="cuenta-etiqueta"><span class="cuenta-simbolo">§</span>Legal</span><span class="cuenta-chev" id="chev-sec-legal">+</span>
     </button>
     <div id="sec-legal" style="display:none;padding:0 14px 14px;">
       <a href="#" onclick="event.preventDefault();mostrarLegal('privacidad')" style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:var(--paper);border-radius:10px;text-decoration:none;color:var(--plum);font-size:13px;margin-bottom:8px;">🔐 Aviso de Privacidad <span>›</span></a>
@@ -1035,9 +1101,9 @@
   </div>
 
   <!-- 9. QUIÉN SOY -->
-  <div style="background:var(--marigold-soft);border-radius:14px;margin-bottom:10px;">
+  <div class="cuenta-acordeon">
     <button onclick="toggleSeccionCuenta('sec-quien')" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:transparent;border:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--plum);font-family:'Work Sans',sans-serif;">
-      <span>🌟 Quién soy</span><span id="chev-sec-quien">▼</span>
+      <span class="cuenta-etiqueta"><span class="cuenta-simbolo">✦</span>Quién soy</span><span class="cuenta-chev" id="chev-sec-quien">+</span>
     </button>
     <div id="sec-quien" style="display:none;padding:0 14px 14px;">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
@@ -1060,7 +1126,7 @@
   </div>
 
   <!-- 10. NOTIFICACIONES -->
-  <div style="background:var(--marigold-soft);border-radius:14px;margin-bottom:10px;">
+  <div class="cuenta-acordeon">
     <button onclick="toggleSeccionCuenta('sec-notif')" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:transparent;border:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--plum);font-family:'Work Sans',sans-serif;">
       <span>🔔 Notificaciones</span><span id="chev-sec-notif">▼</span>
     </button>
@@ -4490,8 +4556,17 @@
     const chev = document.getElementById("chev-" + id);
     if (!body) return;
     const abierto = body.style.display !== "none";
+
+    // Cierra las demás para que Mi cuenta se mantenga ordenada y corta.
+    document.querySelectorAll('#pantalla-mi-perfil [id^="sec-"]').forEach(sec => {
+      if (sec.id !== id) sec.style.display = 'none';
+    });
+    document.querySelectorAll('#pantalla-mi-perfil .cuenta-chev').forEach(icono => {
+      if (icono !== chev) icono.textContent = '+';
+    });
+
     body.style.display = abierto ? "none" : "block";
-    if (chev) chev.textContent = abierto ? "▼" : "▲";
+    if (chev) chev.textContent = abierto ? "+" : "−";
     if (!abierto && id === 'sec-datos') cargarDatosParaEditar();
     if (!abierto) setTimeout(() => body.scrollIntoView({ behavior: "smooth", block: "nearest" }), 50);
   }
