@@ -57,4 +57,13 @@ Referencias:
 - https://www.revenuecat.com/docs/getting-started/installation/capacitor
 
 ## Regla comercial confirmada por Sam
-Mensual US$4.99, semestral y anual dan el mismo acceso completo a todas las funciones. Solo varían duración y precio. El código contiene semestral US$25.99 y anual US$45.99, pendientes de confirmar con Sam y las tiendas. No son niveles de funciones. No cambiar cantidades ni duración del periodo gratis sin confirmar los productos configurados.
+Mensual US$4.99, semestral y anual dan el mismo acceso completo a todas las funciones. Solo varían duración y precio. Sam confirmó mensual US$4.99, semestral US$25.99 y anual US$45.99. Falta comprobar esos precios contra los productos de las tiendas. No son niveles de funciones. Prueba gratis de 3 días aprobada por Sam. La prueba empieza al aceptar la suscripción, para usuarios elegibles; después se renueva al precio del plan elegido si no cancelan y el pago se autoriza.
+
+## Revisión de prueba y cobro
+- Web/Stripe: trial_period_days cambió de 7 a 3 en pruebas.
+- Se comprueba el precio real de Stripe: USD 499/mes, 2599/6 meses y 4599/año (centavos), precio activo y recurrente por unidad.
+- Se rechazan planes desconocidos en vez de sustituirlos silenciosamente por mensual.
+- Un servicio cuyo host contiene pruebas o BILLING_ENV distinto de production no inicia Checkout con un precio livemode.
+- Las notificaciones Stripe requieren firma y secreto; no se aceptan eventos sin verificar.
+- Esto no modifica ofertas de Apple/Google: configurarlas en ambas consolas y comprobar elegibilidad, duración, renovación y precio localizado.
+- Las pruebas realizadas aquí son simuladas; no verifican credenciales, ofertas, impuestos/regiones ni entrega de notificaciones reales.
