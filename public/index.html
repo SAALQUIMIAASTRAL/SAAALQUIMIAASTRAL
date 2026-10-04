@@ -1410,6 +1410,10 @@
   .alquimia-practica li { margin-bottom:10px; }
   .alquimia-practica summary:focus-visible { outline:2px solid var(--marigold);outline-offset:2px;border-radius:14px; }
 
+
+  .alquimia-mes-selector { display:block;font:400 14px/1.5 'Work Sans',sans-serif;color:var(--plum);margin:12px 0 16px; }
+  .alquimia-mes-selector input { display:block;width:100%;box-sizing:border-box;margin-top:6px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;min-height:44px; }
+  .mes-evento-fecha { color:var(--marigold-dark);font:600 14px/1.5 'Work Sans',sans-serif;margin-bottom:8px; }
 </style>
 </head>
 <body>
@@ -1910,6 +1914,7 @@
             <div class="carta-etiqueta">Lo que viene para ti</div>
             <h2>Tu mes astrológico</h2>
             <div class="desc">Consulta los movimientos del mes y los temas que activan en tu carta. Abre cada bloque para ver las fechas y su explicación.</div>
+            <label class="alquimia-mes-selector">Mes que quieres explorar<input type="month" id="alquimia-mes-elegido"></label>
             <div id="mes-astrologico-contenido"><div class="disclaimer">Elige «Ver mi mes» para consultar sus fechas y movimientos.</div></div>
             <div style="display:flex;gap:8px;margin-top:10px;">
               <button class="btn-outline" style="flex:1;" onclick="cargarMesAstrologico()">Ver mi mes</button>
@@ -3831,16 +3836,27 @@
     icono.textContent = yaAbierto ? '▼' : '▲';
   }
 
+  let _solicitudMesAlquimia = 0;
+  function escaparTextoMes(valor) {
+    return String(valor || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
   async function cargarMesAstrologico(forzarRecalculo) {
     const contenedor = document.getElementById('mes-astrologico-contenido');
+    const selectorMes = document.getElementById('alquimia-mes-elegido');
+    const seleccionado = selectorMes?.value || `${_calAnioActual}-${String(_calMesActual).padStart(2,'0')}`;
+    const [anioConsulta, mesConsulta] = seleccionado.split('-').map(Number);
+    if (selectorMes) selectorMes.value = seleccionado;
+    const solicitud = ++_solicitudMesAlquimia;
     contenedor.innerHTML = samLoading('');
     try {
       const r = await fetchAuth('/mes-astrologico', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mes: _calMesActual, anio: _calAnioActual, forzar_recalculo: !!forzarRecalculo }),
+        body: JSON.stringify({ mes: mesConsulta, anio: anioConsulta, forzar_recalculo: !!forzarRecalculo }),
       });
       const data = await leerJsonSeguro(r);
+      if (solicitud !== _solicitudMesAlquimia) return;
       if (!r.ok) { contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular tu mes.'}</div>`; return; }
 
       const m = data.mes_astrologico || {};
@@ -3853,7 +3869,7 @@
       // Resumen breve visible de entrada
       let html = `<div style="text-align:center;">
           <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:18px;color:var(--plum);margin-bottom:6px;">Tu mes astrológico</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:36px;color:var(--marigold);margin-bottom:12px;letter-spacing:1px;">${NOMBRES_MES[_calMesActual - 1]} ${_calAnioActual}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:36px;color:var(--marigold);margin-bottom:12px;letter-spacing:1px;">${NOMBRES_MES[mesConsulta - 1]} ${anioConsulta}</div>
         </div>`;
       const zona = data.contexto_tiempo?.timezone || 'UTC';
       const totalEventos = generales.length + eventosPersonales.length;
@@ -3873,8 +3889,14 @@
           ? generales.map((e,i) => {
             const fecha = formatearFechaEs(e.fecha);
             const cuando = fecha + (e.hora ? ' · ' + e.hora : '');
-            const detalle = `<div class="cuerpo"><p>${e.texto}</p><div class="disclaimer">${cuando} · ${zona}</div></div>`;
-            return acordeonItemMes('evento-mes-' + i, e.titulo + ' · ' + e.fecha.slice(-2), detalle, false);
+            const detalle = `<div class="cuerpo">
+              <div class="mes-evento-fecha">${escaparTextoMes(cuando)} · ${escaparTextoMes(zona)}</div>
+              ${e.posicion ? '<div class="disclaimer">Posición: ' + escaparTextoMes(e.posicion) + '</div>' : ''}
+              <p>${escaparTextoMes(e.texto)}</p>
+              ${e.enfoque ? '<p><b>Qué tema mueve:</b> ' + escaparTextoMes(e.enfoque) + '</p>' : ''}
+              ${e.accion ? '<p><b>Para acompañarlo:</b> ' + escaparTextoMes(e.accion) + '</p>' : ''}
+            </div>`;
+            return acordeonItemMes('evento-mes-' + i, escaparTextoMes(e.titulo), detalle, false, { tema:escaparTextoMes(cuando) });
           }).join('')
           : '<div class="disclaimer">La consulta no devolvió eventos para este rango. Puedes actualizar para volver a consultarlo.</div>';
       html += acordeonItemMes('nivel1-eventosclave', '⭐ Eventos clave', cuerpoEventosClave, false);
@@ -3885,7 +3907,7 @@
         : eventosPersonales.length
           ? eventosPersonales.map(e => `
             <div class="tarjeta-lectura neutral" style="margin-bottom:10px;">
-              <div class="titulo">${formatearFechaEs(e.fecha)}</div>
+              <div class="titulo">${formatearFechaEs(e.fecha)}${e.hora ? ' · ' + e.hora : ''}</div>
               <div class="cuerpo">${e.planeta_transito || 'Un planeta'} en ${e.aspecto || 'aspecto'} con tu ${e.punto_natal || 'carta natal'}${e.area ? ' · ' + e.area : ''}</div>
               ${e.interpretacion ? '<div class="cuerpo" style="margin-top:8px;">' + limpiarTextoAPI(e.interpretacion) + '</div>' : ''}
             </div>`).join('')
@@ -3900,10 +3922,11 @@
       if (ritualesContenedor && ritualesTitulo) {
         const emojis = ['❄️','💕','🌸','🌼','🌻','🌴','⭐','🔥','🍂','💀🌹','☠️👻','🎄'];
         ritualesTitulo.textContent = 'Rituales para ti';
-        ritualesContenedor.innerHTML = generarRitualesDelMes(_calMesActual);
+        ritualesContenedor.innerHTML = generarRitualesDelMes(mesConsulta);
       }
 
     } catch (e) {
+      if (solicitud !== _solicitudMesAlquimia) return;
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${e.message}</div>`;
     }
   }
@@ -6899,6 +6922,8 @@
 
   function cambiarPestana(nombre) {
     if (nombre === 'alquimia') {
+      const selectorMes = document.getElementById('alquimia-mes-elegido');
+      if (selectorMes && !selectorMes.value) selectorMes.value = `${_calAnioActual}-${String(_calMesActual).padStart(2,'0')}`;
       const practicas = document.getElementById('rituales-contenedor');
       if (practicas && !practicas.innerHTML.trim()) practicas.innerHTML = generarRitualesDelMes(_calMesActual);
     }
