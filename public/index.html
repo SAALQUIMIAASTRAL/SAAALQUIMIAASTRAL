@@ -211,6 +211,16 @@
   }
   body.app-nativa .topbar .right{flex:0 0 26px;justify-content:flex-end;}
   body.app-nativa .topbar .avatar{width:24px;height:24px;}
+  /* iOS ya aplica el safe area al WebView: no volver a sumarlo con env() en las barras. */
+  body.app-ios .topbar{min-height:48px;padding:0 12px;}
+  body.app-ios .topbar .menu,
+  body.app-ios .topbar .right{min-width:44px;min-height:44px;}
+  body.app-ios .bottomnav{padding:0;}
+  body.app-ios .bottomnav .it{min-height:48px;padding:0 2px;gap:1px;}
+  /* Android conserva sus insets del WebView y usa una barra compacta de 56 dp. */
+  body.app-android .topbar{min-height:56px;padding:env(safe-area-inset-top,0px) 12px 0;}
+  body.app-android .bottomnav{padding:0 max(4px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(4px,env(safe-area-inset-left,0px));}
+  body.app-android .bottomnav .it{min-height:48px;padding:0 2px;gap:1px;}
   .topbar .menu{font-size:18px;color:var(--plum);}
   .topbar .brand{display:flex;align-items:center;gap:6px;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:17px;color:var(--plum);}
   .topbar .brand .g{color:var(--marigold);}
@@ -1648,7 +1658,12 @@
     try {
       esNativo = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform());
     } catch (e) {}
-    if (esNativo) document.body.classList.add('app-nativa');
+    if (esNativo) {
+      document.body.classList.add('app-nativa');
+      var plataforma = typeof window.Capacitor.getPlatform === 'function' ? window.Capacitor.getPlatform() : '';
+      if (plataforma === 'ios') document.body.classList.add('app-ios');
+      if (plataforma === 'android') document.body.classList.add('app-android');
+    }
   })();
 </script>
 
