@@ -6312,9 +6312,22 @@
     alert(nombre + ' está en construcción — muy pronto estará disponible en tu app 🔮');
   }
 
+  function hashTextoSimple(texto) {
+    let hash = 2166136261;
+    for (let i = 0; i < texto.length; i++) {
+      hash ^= texto.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    return hash >>> 0;
+  }
+
   function revelarCartaTarot() {
     const hoy = new Date();
-    const semilla = hoy.getFullYear() * 366 + hoy.getMonth() * 31 + hoy.getDate();
+    const fechaLocal = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}-${String(hoy.getDate()).padStart(2,'0')}`;
+    // La carta es estable durante el día, pero personalizada por cuenta.
+    // Así dos personas que usan la app el mismo día no reciben automáticamente la misma carta.
+    const identidad = (SESION.email || SESION.nombre || 'usuaria').trim().toLowerCase();
+    const semilla = hashTextoSimple(`${identidad}|${fechaLocal}|tarot-diario-v2`);
     const carta = TAROT_ARCANOS[semilla % TAROT_ARCANOS.length];
     document.getElementById('tarot-resultado').innerHTML = `
       <div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('tarot-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>
