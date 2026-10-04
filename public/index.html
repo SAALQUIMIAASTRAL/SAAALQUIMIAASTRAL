@@ -2320,7 +2320,7 @@
           <div class="acg-city-card">
             <div class="city">📍 ${g.ciudades.join(' · ')}</div>
             <div class="line">${traducirNombresPlanetasEnFrase(g.closest_line) || 'Línea activa'} · ${resumen.area}</div>
-            <div class="use"><b>Te puede ayudar con:</b> ${resumen.ayuda}</div>
+            <div class="use">${resumen.ayuda}</div>
             ${resumen.cuida ? `<div class="watch"><b>Ten en cuenta:</b> ${resumen.cuida}</div>` : ''}
           </div>
         `}).join('');
