@@ -1534,6 +1534,136 @@ app.post('/eclipses-natal', requireLogin, async (req, res) => {
   }
 });
 
+
+const NOMBRES_PLANETAS_MES = { Sun:'Sol', Moon:'Luna', Mercury:'Mercurio', Venus:'Venus', Mars:'Marte', Jupiter:'Júpiter', Saturn:'Saturno', Uranus:'Urano', Neptune:'Neptuno', Pluto:'Plutón' };
+const SIGNOS_MES_ES = { Ari:'Aries', Tau:'Tauro', Gem:'Géminis', Can:'Cáncer', Leo:'Leo', Vir:'Virgo', Lib:'Libra', Sco:'Escorpio', Sag:'Sagitario', Cap:'Capricornio', Aqu:'Acuario', Pis:'Piscis', Aries:'Aries', Taurus:'Tauro', Gemini:'Géminis', Cancer:'Cáncer', Virgo:'Virgo', Libra:'Libra', Scorpio:'Escorpio', Sagittarius:'Sagitario', Capricorn:'Capricornio', Aquarius:'Acuario', Pisces:'Piscis' };
+
+function fechaEventoMes(valor, tz) {
+  if (valor && typeof valor === 'object' && valor.year && valor.month && valor.day) {
+    return { fecha: `${valor.year}-${String(valor.month).padStart(2,'0')}-${String(valor.day).padStart(2,'0')}`, hora:null, year:Number(valor.year), month:Number(valor.month) };
+  }
+  if (typeof valor !== 'string') return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(valor)) return { fecha:valor, hora:null, year:Number(valor.slice(0,4)), month:Number(valor.slice(5,7)) };
+  // El campo datetime_utc representa UTC incluso si el proveedor omite la Z.
+  const instante = new Date(/[zZ]$|[+-]\d{2}:?\d{2}$/.test(valor) ? valor : valor + 'Z');
+  if (isNaN(instante)) return null;
+  const p = partesEnZona(tz, instante);
+  return { fecha:`${p.year}-${String(p.month).padStart(2,'0')}-${String(p.day).padStart(2,'0')}`, hora:`${String(p.hour).padStart(2,'0')}:${String(p.minute).padStart(2,'0')}`, year:p.year, month:p.month };
+}
+
+function normalizarEventosGeneralesMes(payload, anio, mes, tz) {
+  const eventos = payload?.data?.events || payload?.events;
+  if (!Array.isArray(eventos)) throw new Error('La consulta mensual no incluyó su lista de eventos.');
+  const salida = [];
+  for (const original of eventos) {
+    const e = { ...original, ...(original.details || {}) };
+    const fecha = fechaEventoMes(e.datetime_utc || e.datetime || e.date, tz);
+    if (!fecha) throw new Error('Un evento mensual llegó sin una fecha válida.');
+    if (fecha.year !== anio || fecha.month !== mes) continue;
+    const tipo = e.event_type || e.type;
+    const planetaRaw = e.body || e.planet;
+    const planeta = NOMBRES_PLANETAS_MES[planetaRaw] || planetaRaw;
+    const signoRaw = e.to_sign || e.sign;
+    const signo = SIGNOS_MES_ES[signoRaw] || signoRaw;
+    let titulo, texto;
+    if (tipo === 'sign_ingress') {
+      if (!planeta || !signo) throw new Error('Un ingreso llegó sin planeta o signo.');
+      if (planetaRaw === 'Moon') continue;
+      titulo = `${planeta} entra en ${signo}`;
+      texto = `Comienza el paso de ${planeta} por ${signo}. Es un movimiento del cielo compartido por todos; su efecto personal depende de la casa y los aspectos que active en tu carta.`;
+    } else if (tipo === 'station') {
+      if (!planeta) throw new Error('Una estación llegó sin planeta.');
+      const direccion = String(e.station_type || e.direction || e.motion || e.to_motion || '').toLowerCase();
+      const retro = /retro/.test(direccion) || e.is_retrograde === true;
+      const directo = /direct/.test(direccion) || e.is_retrograde === false;
+      titulo = retro ? `${planeta} comienza su retrogradación` : directo ? `${planeta} retoma su movimiento directo` : `${planeta}: cambio de movimiento`;
+      texto = retro ? `Empieza la fase retrógrada de ${planeta}: un período asociado a revisar y retomar sus temas.` : directo ? `${planeta} termina su fase retrógrada y vuelve al movimiento directo.` : 'El planeta cambia entre movimiento directo y retrógrado. Consulta el detalle de tu carta para entender qué temas activa.';
+    } else if (tipo === 'lunation') {
+      const fase = String(e.phase || e.lunation_phase || '').toLowerCase().replace(/[ -]/g,'_');
+      const fases = { new:'Luna nueva', new_moon:'Luna nueva', full:'Luna llena', full_moon:'Luna llena', first_quarter:'Cuarto creciente', last_quarter:'Cuarto menguante' };
+      titulo = fases[fase] || 'Lunación';
+      if (signo) titulo += ` en ${signo}`;
+      texto = /new/.test(fase) ? 'Inicio de un ciclo lunar. Observa qué tema quieres empezar a trabajar.' : /full/.test(fase) ? 'Culminación del ciclo lunar. Observa qué se hace visible y qué necesita un ajuste.' : 'Un punto de cambio dentro del ciclo lunar.';
+    } else if (tipo === 'solar_eclipse' || tipo === 'lunar_eclipse') {
+      titulo = tipo === 'solar_eclipse' ? 'Eclipse solar' : 'Eclipse lunar';
+      if (signo) titulo += ` en ${signo}`;
+      texto = 'Su relevancia personal depende de si toca tus planetas o ángulos natales. La fecha del evento no implica que sea visible desde tu ciudad.';
+    } else continue;
+    salida.push({ tipo, titulo, texto, fecha:fecha.fecha, hora:fecha.hora });
+  }
+  return salida.sort((a,b) => (a.fecha + (a.hora || '')).localeCompare(b.fecha + (b.hora || '')));
+}
+
+// Resumen mensual independiente del calendario de días propicios.
+// Los eventos globales se comparten; los tránsitos conservan el cálculo natal existente.
+app.post('/mes-astrologico', requireLogin, async (req, res) => {
+  try {
+    const perfil = await leerPerfil(req);
+    if (!perfil) return res.status(400).json({ error:'Primero guarda tus datos de nacimiento.' });
+    const tz = zonaHorariaDesdeReq(req);
+    const actual = partesEnZona(tz);
+    const anio = Number(req.body?.anio || actual.year);
+    const mes = Number(req.body?.mes || actual.month);
+    if (!Number.isInteger(anio) || anio < 1900 || anio > 2100 || !Number.isInteger(mes) || mes < 1 || mes > 12) return res.status(400).json({ error:'Elige un mes y un año válidos.' });
+    const dias = new Date(Date.UTC(anio,mes,0)).getUTCDate();
+    const refrescar = req.body?.forzar_recalculo === true;
+    const globalKey = cacheHash('eventos-mensuales-v1', anio, mes);
+    const personalKey = cacheHash(req.userId, 'transitos-mensuales-v1', anio, mes);
+    async function consultarGeneral() {
+      const guardado = cacheGet(globalKey);
+      if (guardado && !refrescar) return guardado;
+      const desde = new Date(Date.UTC(anio,mes-1,0)).toISOString().slice(0,10);
+      const hasta = new Date(Date.UTC(anio,mes,2)).toISOString().slice(0,10);
+      const r = await astrologyApi.post('/mundane/events/search', {
+        date_from:desde, date_to:hasta,
+        event_types:['sign_ingress','station','lunation','solar_eclipse','lunar_eclipse'],
+        bodies:['Sun','Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto'],
+      });
+      // Validar antes de guardar: una respuesta incompleta nunca se convierte en "sin eventos".
+      normalizarEventosGeneralesMes(r.data, anio, mes, tz);
+      cacheSet(globalKey, r.data, TTL.CALENDARIO_LUNAR);
+      return r.data;
+    }
+    async function consultarPersonal() {
+      const guardado = cacheGet(personalKey);
+      if (guardado && !refrescar) return guardado;
+      const r = await astrologyApi.post('/analysis/natal-transit-report', {
+        subject:birthDataDesdePerfil(perfil),
+        transit_time:{ date_range:{ start_date:{year:anio,month:mes,day:1},end_date:{year:anio,month:mes,day:dias} } },
+        orb:2, report_options:{tradition:'psychological',language:'es'},
+      });
+      const eventos = r.data?.data?.events || r.data?.events;
+      if (!Array.isArray(eventos)) throw new Error('La consulta personal no incluyó su lista de tránsitos.');
+      cacheSet(personalKey,eventos,TTL.CALENDARIO_LUNAR);
+      return eventos;
+    }
+    const [general, personal] = await Promise.allSettled([consultarGeneral(), consultarPersonal()]);
+    const eventosGenerales = general.status === 'fulfilled' ? normalizarEventosGeneralesMes(general.value,anio,mes,tz) : [];
+    const nombreAspecto = { conjunction:'conjunción',sextile:'sextil',square:'cuadratura',trine:'trígono',opposition:'oposición' };
+    const eventosPersonales = personal.status === 'fulfilled' ? personal.value.flatMap(e => {
+      const fecha = fechaEventoMes(e.date || e.exact_date || e.datetime || e.timestamp || e.start_date, tz);
+      if (!fecha || fecha.year !== anio || fecha.month !== mes) return [];
+      return [{
+        fecha:fecha.fecha, planeta_transito:NOMBRES_PLANETAS_MES[e.transiting_planet] || e.transiting_planet,
+        punto_natal:NOMBRES_PLANETAS_MES[e.stationed_planet || e.natal_planet] || e.stationed_planet || e.natal_planet,
+        aspecto:nombreAspecto[String(e.aspect_type || '').toLowerCase()] || e.aspect_type,
+        area:e.area || e.life_area || '', interpretacion:e.interpretation || e.description || '',
+      }];
+    }) : [];
+    if (general.status === 'rejected') console.error('Eventos mensuales:', general.reason?.response?.status || general.reason?.message);
+    if (personal.status === 'rejected') console.error('Tránsitos mensuales:', personal.reason?.response?.status || personal.reason?.message);
+    res.json({ mes,anio,contexto_tiempo:{timezone:tz},mes_astrologico:{
+      eventos_generales:eventosGenerales, eventos_destacados:eventosPersonales,
+      estado_general:general.status === 'fulfilled' ? 'disponible' : 'no_disponible',
+      estado_personal:personal.status === 'fulfilled' ? 'disponible' : 'no_disponible',
+    } });
+  } catch (err) {
+    console.error('Resumen mensual:', err.message);
+    res.status(500).json({error:'No se pudo cargar tu mes. Vuelve a intentarlo.'});
+  }
+});
+
+
 // RUTA: Calendario lunar del mes — mejores días específicos por actividad
 app.post('/calendario-lunar', requireLogin, async (req, res) => {
   try {
