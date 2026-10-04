@@ -3835,7 +3835,7 @@
     const contenedor = document.getElementById('mes-astrologico-contenido');
     contenedor.innerHTML = samLoading('');
     try {
-      const r = await fetchAuth('/calendario-lunar', {
+      const r = await fetchAuth('/mes-astrologico', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mes: _calMesActual, anio: _calAnioActual, forzar_recalculo: !!forzarRecalculo }),
@@ -3844,9 +3844,9 @@
       if (!r.ok) { contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular tu mes.'}</div>`; return; }
 
       const m = data.mes_astrologico || {};
-      const lunaciones = m.lunaciones || { luna_nueva: [], luna_llena: [] };
-      const ingresos = m.ingresos || [];
-      const retrogrados = m.retrogrados || [];
+      const generales = m.eventos_generales || [];
+      const estadoGeneral = m.estado_general === 'disponible';
+      const estadoPersonal = m.estado_personal === 'disponible';
       const eventosPersonales = m.eventos_destacados || [];
       const areas = m.areas_destacadas || [];
 
@@ -3855,58 +3855,41 @@
           <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:18px;color:var(--plum);margin-bottom:6px;">Tu mes astrológico</div>
           <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:36px;color:var(--marigold);margin-bottom:12px;letter-spacing:1px;">${NOMBRES_MES[_calMesActual - 1]} ${_calAnioActual}</div>
         </div>`;
-      const totalEventos = ingresos.length + retrogrados.length + eventosPersonales.length;
-      html += `<div class="disclaimer" style="text-align:center;margin-bottom:14px;">${totalEventos ? `${totalEventos} momentos clave este mes — toca cada bloque para explorarlos.` : 'Un mes sin grandes eventos mayores — buen momento para lo cotidiano.'}</div>`;
+      const zona = data.contexto_tiempo?.timezone || 'UTC';
+      const totalEventos = generales.length + eventosPersonales.length;
+      html += `<div class="disclaimer" style="text-align:center;margin-bottom:14px;">${totalEventos ? totalEventos + ' movimientos para explorar este mes.' : 'Consulta el estado de cada bloque.'}<br>Fechas y horas en ${zona}.</div>`;
 
-      // ===== 1) PANORAMA DEL MES (LUNA NUEVA / CRECIENTE / LLENA / MENGUANTE) =====
-      const diasDelMes = new Date(_calAnioActual, _calMesActual, 0).getDate();
-      const panoramaDetallado = generarPanoramaMes(m.relato, diasDelMes, _calMesActual);
+      const grupos = {};
+      generales.forEach(e => {
+        const tema = e.tipo === 'sign_ingress' ? 'Cambios de signo' : e.tipo === 'station' ? 'Cambios de movimiento' : e.tipo === 'lunation' ? 'Lunas del mes' : 'Eclipses';
+        grupos[tema] = (grupos[tema] || 0) + 1;
+      });
+      const panoramaDetallado = `<div class="cuerpo">${Object.entries(grupos).map(([tema,n]) => '<p>' + tema + ': <b>' + n + '</b></p>').join('') || (estadoGeneral ? 'No se devolvieron eventos generales para este rango.' : 'Los eventos generales todavía no están disponibles. Usa el botón de actualizar para reintentar.')}<p>${estadoPersonal ? 'Tránsitos que tocan tu carta: <b>' + eventosPersonales.length + '</b>.' : 'La consulta de tránsitos personales no pudo completarse.'}</p></div>`;
       html += acordeonItemMes('nivel1-panorama', 'Panorama del mes', panoramaDetallado, false);
 
-      // ===== 2) EVENTOS CLAVE CON ANÁLISIS =====
-      const eventosClave = [
-        ...ingresos.map(i => ({ 
-          id: `ing-${i.fecha}-${i.planeta}`, 
-          planeta: i.planeta,
-          tipo: 'ingreso',
-          titulo: `${i.planeta} entra en ${i.signo_nuevo} — ${i.fecha.slice(-2)} ${NOMBRES_MES[_calMesActual-1].slice(0,3)}`,
-          fecha: i.fecha,
-          signo: i.signo_nuevo,
-          detalle: generarDetalleIngreso(i.planeta, i.signo_nuevo, i.signo_anterior)
-        })),
-        ...retrogrados.map(r => ({ 
-          id: `retro-${r.fecha}-${r.planeta}`, 
-          planeta: r.planeta,
-          tipo: 'retrogrado',
-          titulo: `${r.planeta} ${r.tipo === 'se_vuelve_retrogrado' ? 'retrógrado' : 'directo'} — ${r.fecha.slice(-2)} ${NOMBRES_MES[_calMesActual-1].slice(0,3)}`,
-          fecha: r.fecha,
-          esRetrogrado: r.tipo === 'se_vuelve_retrogrado',
-          duracion: r.duracion_tipica,
-          detalle: generarDetalleRetrogrado(r.planeta, r.tipo === 'se_vuelve_retrogrado', r.duracion_tipica)
-        })),
-      ].slice(0, 10);
-      
-      const cuerpoEventosClave = eventosClave.length
-        ? eventosClave.map(ev => acordeonItemMes(ev.id, ev.titulo, ev.detalle, false, { planeta: ev.planeta })).join('')
-        : '<div class="disclaimer">Sin eventos generales mayores detectados este mes.</div>';
+      const cuerpoEventosClave = !estadoGeneral
+        ? '<div class="disclaimer">No se pudieron cargar los eventos del mes. Toca actualizar para volver a consultar.</div>'
+        : generales.length
+          ? generales.map((e,i) => {
+            const fecha = formatearFechaEs(e.fecha);
+            const cuando = fecha + (e.hora ? ' · ' + e.hora : '');
+            const detalle = `<div class="cuerpo"><p>${e.texto}</p><div class="disclaimer">${cuando} · ${zona}</div></div>`;
+            return acordeonItemMes('evento-mes-' + i, e.titulo + ' · ' + e.fecha.slice(-2), detalle, false);
+          }).join('')
+          : '<div class="disclaimer">La consulta no devolvió eventos para este rango. Puedes actualizar para volver a consultarlo.</div>';
       html += acordeonItemMes('nivel1-eventosclave', '⭐ Eventos clave', cuerpoEventosClave, false);
 
       // ===== 3) CÓMO TE AFECTA A TI (ANÁLISIS PERSONALIZADO) =====
-      const cuerpoPersonal = eventosPersonales.length
-        ? `<div style="margin-bottom:20px; padding:14px; background:rgba(45,27,78,0.05); border-radius:8px; border-left:3px solid var(--marigold);">
-            <div style="font-weight:600; color:var(--plum); margin-bottom:8px; font-size:15px;">📊 Tu mes en números</div>
-            <div style="font-size:16px; color:var(--plum); line-height:1.6;">
-              Tienes <strong>${eventosPersonales.length} momentos clave</strong> donde tu carta natal se activa. Los tránsitos te tocan especialmente en <strong>${[...new Set(eventosPersonales.map(e => e.area).filter(Boolean))].slice(0, 3).join(', ')}</strong>.
-            </div>
-          </div>` +
-          eventosPersonales.slice(0, 10).map(e => `
-            <div style="margin-bottom:18px; padding:18px; background:#fff; border:1px solid var(--line); border-radius:8px;">
-              <div style="font-size:16px; color:var(--plum); line-height:1.75; margin-bottom:12px;">
-                ${generarDetalleTransitoPersonal(e)}
-              </div>
-            </div>
-          `).join('')
-        : '<div class="disclaimer">Sin tránsitos personales mayores este mes.</div>';
+      const cuerpoPersonal = !estadoPersonal
+        ? '<div class="disclaimer">No se pudieron cargar tus tránsitos personales. Toca actualizar para volver a consultar.</div>'
+        : eventosPersonales.length
+          ? eventosPersonales.map(e => `
+            <div class="tarjeta-lectura neutral" style="margin-bottom:10px;">
+              <div class="titulo">${formatearFechaEs(e.fecha)}</div>
+              <div class="cuerpo">${e.planeta_transito || 'Un planeta'} en ${e.aspecto || 'aspecto'} con tu ${e.punto_natal || 'carta natal'}${e.area ? ' · ' + e.area : ''}</div>
+              ${e.interpretacion ? '<div class="cuerpo" style="margin-top:8px;">' + limpiarTextoAPI(e.interpretacion) + '</div>' : ''}
+            </div>`).join('')
+          : '<div class="disclaimer">La consulta no devolvió tránsitos personales con el orbe de 2° para este mes.</div>';
       html += acordeonItemMes('nivel1-personal', '🎯 Cómo te afecta a ti', cuerpoPersonal, false);
 
       contenedor.innerHTML = html;
