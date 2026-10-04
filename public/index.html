@@ -15,26 +15,32 @@
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script>
+  // Restaurar antes de dibujar la pantalla para evitar un destello claro.
+  (() => {
+    let preferencia = 'light';
+    try { preferencia = localStorage.getItem('saa_tema') || 'light'; } catch (_) {}
+    const oscuro = preferencia === 'dark' || (preferencia === 'system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.setAttribute('data-theme', oscuro ? 'dark' : 'light');
+  })();
+</script>
 <style>
   :root{
   --theme: light;
 }
-[data-theme="dark"]{
-  --blush-1: #1a0f2e;
-  --blush-2: #2d1b4e;
-  --paper: #1e1230;
-  --line: #3d2460;
-  --ink: #f0e8ff;
-  --ink-dim: #a89bc2;
-  --marigold-soft: #2a1a1f;
-  --plum: #d4b8ff;
-  --band-text: #fff;
-  --band-text-dim: rgba(255,255,255,0.65);
-  --moon-navy: #0d0820;
-}
 :root{
     /* --- Colores de marca (design system v1) --- */
     --plum:#2D1B4E;
+    --plum-solid:#2D1B4E;
+    --outer-bg:#e9e2da;
+    --synastry-bg:#faf3f5;
+    --lilac-bg:#F0EAFB;
+    --error-text:#a5442f;
+    --error-bg:#fbe6e3;
+    --warning-text:#8a6414;
+    --warning-bg:#fdf2d8;
+    --success-text:#1e6b3c;
+    --success-bg:#e1f3e6;
     --plum-light:#6B4FA0;
     --ink-dim:#7A6B9A;
     --marigold:#C9A84C;
@@ -112,7 +118,7 @@
     font-size:13px !important;
     line-height:1.5 !important;
   }
-  html,body{margin:0;padding:0;background:#e9e2da;font-family:'Work Sans',sans-serif;color:var(--plum);}
+  html,body{margin:0;padding:0;background:var(--outer-bg);font-family:'Work Sans',sans-serif;color:var(--plum);}
   h1,h2,h3,.display{font-family:'Cormorant Garamond',serif;font-weight:700;margin:0;}
   /* Tipografía refinada: títulos elegantes, cuerpo limpio y legible */
   h1,h2,h3,.display{
@@ -211,7 +217,7 @@
   .season-banner .now{font-weight:600;display:flex;align-items:center;gap:5px;}
   .season-banner .next{color:var(--ink-dim);}
 
-  .band{position:relative;background:linear-gradient(160deg,var(--blush-1) 0%,var(--plum) 60%,var(--blush-2) 100%);padding:calc(22px + env(safe-area-inset-top, 0px)) 18px 28px;overflow:hidden;}
+  .band{position:relative;background:linear-gradient(160deg,var(--blush-1) 0%,var(--plum-solid) 60%,var(--blush-2) 100%);padding:calc(22px + env(safe-area-inset-top, 0px)) 18px 28px;overflow:hidden;}
   .band::before{content:'';position:absolute;top:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:rgba(201,168,76,0.08);pointer-events:none;}
   .band::after{content:'';position:absolute;bottom:-30px;left:-20px;width:120px;height:120px;border-radius:50%;background:rgba(155,125,212,0.1);pointer-events:none;}
   .band-icon{
@@ -243,7 +249,7 @@
   /* mis cartas (multi-perfil) */
   .charts-scroll{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px;}
   .chart-chip{flex:none;width:72px;text-align:center;cursor:pointer;}
-  .chart-chip .circ{width:58px;height:58px;border-radius:50%;margin:0 auto 6px;background:linear-gradient(135deg,var(--lilac),var(--plum));display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:20px;box-shadow:0 4px 10px rgba(45,27,78,0.25);transition:transform 0.15s,box-shadow 0.15s;}
+  .chart-chip .circ{width:58px;height:58px;border-radius:50%;margin:0 auto 6px;background:linear-gradient(135deg,var(--lilac),var(--plum-solid));display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:20px;box-shadow:0 4px 10px rgba(45,27,78,0.25);transition:transform 0.15s,box-shadow 0.15s;}
   .chart-chip:hover .circ{transform:scale(1.06);box-shadow:0 6px 14px rgba(45,27,78,0.35);}
   .chart-chip .lbl{font-size:13px;color:var(--plum);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:72px;}
   .chart-chip.add .circ{background:var(--paper);border:1.5px dashed var(--lilac);color:var(--lilac);box-shadow:none;}
@@ -264,7 +270,7 @@
   .calc-form label{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--ink-dim);}
   .calc-form input{
     border:1px solid var(--line);border-radius:10px;padding:10px 12px;
-    font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;
+    font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:var(--paper);
   }
   .calc-row{display:flex;gap:10px;}
   .calc-row label{flex:1;}
@@ -282,7 +288,7 @@
   .wd .m{font-size:16px;}
 
   /* sinastria */
-  .synastry-card{background:#faf3f5;border-radius:16px;padding:16px;}
+  .synastry-card{background:var(--synastry-bg);border-radius:16px;padding:16px;}
   .synastry-select{display:flex;align-items:center;justify-content:space-between;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:13.5px;margin-bottom:12px;}
   .synastry-glyphs{display:flex;gap:6px;margin-bottom:10px;}
   .synastry-glyphs span{width:26px;height:26px;border-radius:50%;background:var(--lilac);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;}
@@ -312,7 +318,7 @@
   /* ====== TARJETAS DE CONTENIDO UNIFICADAS ====== */
   /* Tarjeta de lectura: para informes, interpretaciones, resúmenes */
   .card-lectura{
-    background:#fff;border:1px solid var(--line);border-radius:12px;
+    background:var(--paper);border:1px solid var(--line);border-radius:12px;
     padding:14px;margin-bottom:10px;
   }
   .card-lectura .card-titulo{
@@ -498,7 +504,7 @@
     border-top:1px solid rgba(255,255,255,.14);
   }
   .luna-lectura-hoy{
-    background:#fff;
+    background:var(--paper);
     border:1px solid var(--line);
     border-radius:14px;
     padding:12px 14px;
@@ -538,7 +544,7 @@
   .tag.favorable{background:#6a8f5e;}
   .tag.tenso{background:#b5652f;}
   .how-to-use{
-    background:#fff;border:1px solid var(--line);border-radius:12px;
+    background:var(--paper);border:1px solid var(--line);border-radius:12px;
     padding:12px 14px;font-size:12px;line-height:1.55;color:var(--plum);margin-bottom:16px;
   }
   .how-to-use b{color:var(--marigold);}
@@ -557,7 +563,7 @@
   .day-item p{font-size:11.5px;color:var(--ink-dim);margin:0;line-height:1.4;}
   .day-item:last-child{border-bottom:none;}
   .dia-proposito{
-    background:#fff;
+    background:var(--paper);
     border:1px solid var(--line);
     border-radius:14px;
     padding:12px 13px;
@@ -599,7 +605,7 @@
   @keyframes sam-spin{0%{transform:rotate(0deg) scale(1);}50%{transform:rotate(180deg) scale(1.15);}100%{transform:rotate(360deg) scale(1);}}
 
   /* astrocartografía */
-  .acg-line{display:flex;gap:12px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;}
+  .acg-line{display:flex;gap:12px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;}
   .acg-line .em{font-size:20px;flex:none;}
   .acg-line h4{font-size:13px;margin:0 0 2px;}
   .acg-line .cat{font-size:10.5px;color:var(--marigold);font-weight:600;margin-bottom:4px;}
@@ -661,7 +667,7 @@
     align-items:center;justify-content:center;z-index:50;
   }
   .ios-modal-bg.open{display:flex;}
-  .ios-modal{background:#fff;border-radius:16px;padding:22px;max-width:300px;width:90%;}
+  .ios-modal{background:var(--paper);border-radius:16px;padding:22px;max-width:300px;width:90%;}
   .ios-modal h3{font-size:17px;margin:0 0 12px;color:var(--plum);}
   .ios-modal ol{padding-left:18px;margin:0 0 16px;font-size:12.5px;color:var(--plum);line-height:1.7;}
   .ios-modal button{width:100%;}
@@ -670,9 +676,9 @@
 
   .zoom-modal-bg{display:none;position:fixed;inset:0;background:rgba(20,14,20,0.92);z-index:60;align-items:center;justify-content:center;padding:20px;overflow:auto;}
   .zoom-modal-bg.open{display:flex;}
-  .zoom-modal-bg svg{width:100%;height:auto;background:#fff;border-radius:18px;}
+  .zoom-modal-bg svg{width:100%;height:auto;background:var(--paper);border-radius:18px;}
   .carta-rueda-card{
-    background:linear-gradient(180deg,#fff 0%,var(--page-bg) 100%);
+    background:linear-gradient(180deg,var(--paper) 0%,var(--page-bg) 100%);
     border:1px solid var(--line);
     border-radius:20px;
     padding:14px;
@@ -700,7 +706,7 @@
     margin-top:3px;
   }
   .carta-rueda-frame{
-    background:#fff;
+    background:var(--paper);
     border:1px solid var(--line);
     border-radius:18px;
     padding:8px;
@@ -710,7 +716,7 @@
     width:100% !important;
     height:auto !important;
     display:block;
-    background:#fff;
+    background:var(--paper);
   }
   .carta-rueda-leyenda{
     display:grid;
@@ -767,7 +773,7 @@
   }
   .ciclos-nav button{
     border:1px solid var(--line);
-    background:#fff;
+    background:var(--paper);
     color:var(--plum);
     border-radius:14px;
     padding:10px 11px;
@@ -786,7 +792,7 @@
   [data-tab="ciclos"].ciclo-destacado{
     border:1px solid var(--line);
     border-radius:18px;
-    background:#fff;
+    background:var(--paper);
     box-shadow:0 5px 18px rgba(45,27,78,.045);
   }
   .ciclos-etiqueta{
@@ -826,7 +832,7 @@
   }
   .carta-nav button{
     border:1px solid var(--line);
-    background:#fff;
+    background:var(--paper);
     color:var(--plum);
     border-radius:14px;
     padding:10px 11px;
@@ -845,7 +851,7 @@
   [data-tab="carta"].carta-destacada{
     border:1px solid var(--line);
     border-radius:18px;
-    background:#fff;
+    background:var(--paper);
     box-shadow:0 5px 18px rgba(45,27,78,.045);
   }
   .carta-etiqueta{
@@ -858,7 +864,7 @@
     margin-bottom:6px;
   }
   .acg-map-shell{
-    background:linear-gradient(180deg,#fff,var(--paper));
+    background:linear-gradient(180deg,var(--paper),var(--paper));
     border:1px solid var(--line);
     border-radius:18px;
     padding:8px;
@@ -871,7 +877,7 @@
     margin:8px 2px 14px;font-size:11.5px;color:var(--ink-dim);
   }
   .acg-city-card{
-    background:#fff;border:1px solid var(--line);border-radius:16px;
+    background:var(--paper);border:1px solid var(--line);border-radius:16px;
     padding:13px 14px;margin-bottom:9px;
   }
   .acg-city-card .city{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:var(--plum);}
@@ -930,7 +936,7 @@
     line-height:1.55;
   }
   .reloc-factor{
-    background:#fff;
+    background:var(--paper);
     border:1px solid var(--line);
     border-radius:14px;
     padding:12px 13px;
@@ -989,7 +995,7 @@
   @media(max-width:420px){
     .reloc-explica{grid-template-columns:1fr;}
   }
-  .zoom-close-btn{position:fixed;top:16px;right:16px;background:#fff;border:none;border-radius:50%;width:36px;height:36px;font-size:18px;z-index:61;cursor:pointer;}
+  .zoom-close-btn{position:fixed;top:16px;right:16px;background:var(--paper);border:none;border-radius:50%;width:36px;height:36px;font-size:18px;z-index:61;cursor:pointer;}
   .acg-fullscreen{
     width:min(96vw,980px);
     max-height:88vh;
@@ -1038,7 +1044,7 @@
   .acg-fullscreen-tools button:active{transform:scale(.97);}
   .acg-map-viewport{
     position:relative;
-    background:#fff;
+    background:var(--paper);
     border-radius:20px;
     overflow:hidden;
     width:100%;
@@ -1066,7 +1072,7 @@
     display:flex;
     align-items:center;
     justify-content:center;
-    background:#fff;
+    background:var(--paper);
   }
   .acg-map-stage svg{
     width:100% !important;
@@ -1128,7 +1134,7 @@
   #pantalla-mi-perfil textarea{font-size:16px !important;}
 
   #pantalla-mi-perfil .cuenta-menu-card{
-    background:#fff;
+    background:var(--paper);
     border:1px solid var(--line);
     border-radius:22px;
     overflow:hidden;
@@ -1144,7 +1150,7 @@
     gap:12px;
     border:0;
     border-bottom:1px solid var(--line);
-    background:#fff;
+    background:var(--paper);
     padding:0 17px;
     color:var(--plum);
     font-family:'Work Sans',sans-serif;
@@ -1188,7 +1194,7 @@
   }
   #pantalla-mi-perfil .cuenta-detalle-activo{
     display:block !important;
-    background:#fff !important;
+    background:var(--paper) !important;
     border:1px solid var(--line);
     border-radius:18px !important;
     margin:0 !important;
@@ -1215,13 +1221,13 @@
   .auth-field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;font-size:12px;color:var(--ink-dim);}
   .auth-field input,.auth-field select{
     border:1px solid var(--line);border-radius:10px;padding:11px 12px;
-    font-family:'Work Sans',sans-serif;font-size:13.5px;color:var(--plum);background:#fff;
+    font-family:'Work Sans',sans-serif;font-size:13.5px;color:var(--plum);background:var(--paper);
   }
-  .auth-error{background:#fbe6e3;color:#a5442f;border-radius:10px;padding:10px 12px;font-size:12px;margin-bottom:12px;display:none;}
+  .auth-error{background:var(--error-bg);color:var(--error-text);border-radius:10px;padding:10px 12px;font-size:12px;margin-bottom:12px;display:none;}
   .auth-error.show{display:block;}
-  .auth-error.msj-verde{background:#e1f3e6;color:#1e6b3c;}
-  .auth-error.msj-amarillo{background:#fdf2d8;color:#8a6414;}
-  .auth-error.msj-rojo{background:#fbe6e3;color:#a5442f;}
+  .auth-error.msj-verde{background:var(--success-bg);color:var(--success-text);}
+  .auth-error.msj-amarillo{background:var(--warning-bg);color:var(--warning-text);}
+  .auth-error.msj-rojo{background:var(--error-bg);color:var(--error-text);}
   .campo-pass{position:relative;}
   .campo-pass input{width:100%;padding-right:48px !important;}
   .ojo-toggle{position:absolute;right:12px;top:50%;bottom:auto;transform:translateY(-50%);width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer;font-size:17px;padding:0;color:var(--ink-dim);line-height:1;}
@@ -1418,6 +1424,68 @@
   .mes-panorama-lectura { font:400 14px/1.6 'Work Sans',sans-serif;color:var(--plum); }
   .mes-panorama-lectura p { margin:0 0 12px; }
   .mes-panorama-lectura p:last-child { margin-bottom:0; }
+
+  /* Apariencia: el modo claro conserva los colores originales. */
+  html[data-theme="dark"]{
+    color-scheme:dark;
+    --theme:dark;
+    --outer-bg:#100d16;
+    --page-bg:#17121f;
+    --paper:#241c30;
+    --line:#483952;
+    --plum:#f2ebfa;
+    --plum-light:#c6aae8;
+    --plum-solid:#35214f;
+    --ink:#f2ebfa;
+    --ink-dim:#c4b4d5;
+    --marigold:#e0c171;
+    --marigold-dark:#e0c171;
+    --marigold-soft:rgba(224,193,113,.12);
+    --marigold-mid:rgba(224,193,113,.22);
+    --lilac:#ba9ae6;
+    --lilac-soft:rgba(186,154,230,.14);
+    --blush-1:#38244e;
+    --blush-2:#1b1425;
+    --band-text:#f2ebfa;
+    --band-text-dim:#c4b4d5;
+    --neutral-soft:rgba(186,154,230,.09);
+    --synastry-bg:#2b2237;
+    --lilac-bg:#352843;
+    --armonia:#8ed7a6;
+    --armonia-soft:rgba(142,215,166,.12);
+    --tension:#f29d95;
+    --tension-soft:rgba(242,157,149,.12);
+    --error-text:#ffb5aa;
+    --error-bg:#41242b;
+    --warning-text:#ebcb7d;
+    --warning-bg:#392f21;
+    --success-text:#a0e0b6;
+    --success-bg:#20382c;
+  }
+  html[data-theme="light"]{color-scheme:light;}
+  .apariencia-opciones{border:0;padding:0;margin:0 0 14px;}
+  .apariencia-opciones legend{font-size:14px;font-weight:600;margin-bottom:9px;color:var(--plum);}
+  .apariencia-opcion{display:flex;align-items:center;gap:10px;padding:11px 12px;margin-bottom:7px;border:1px solid var(--line);border-radius:12px;background:var(--paper);cursor:pointer;}
+  .apariencia-opcion:has(input:checked){border-color:var(--marigold);background:var(--marigold-soft);}
+  .apariencia-opcion input{accent-color:var(--marigold-dark);width:18px;height:18px;flex:none;}
+  .apariencia-opcion b{display:block;font-size:14px;color:var(--plum);}
+  .apariencia-opcion small{display:block;font-size:12px;color:var(--ink-dim);}
+  .apariencia-opcion:focus-within{outline:2px solid var(--lilac);outline-offset:2px;}
+  html[data-theme="dark"] :is(input:not([type="range"]):not([type="radio"]):not([type="checkbox"]),textarea,select){
+    background:var(--paper);color:var(--plum);border-color:var(--line);
+  }
+  html[data-theme="dark"] :is(input,textarea)::placeholder{color:var(--ink-dim);opacity:1;}
+  html[data-theme="dark"] .btn-primary,
+  html[data-theme="dark"] [style*="background:var(--marigold)"]{color:#21182c !important;}
+  html[data-theme="dark"] .btn-ghost-round{background:var(--plum-solid);}
+  html[data-theme="dark"] .side-note{color:var(--ink-dim);}
+  html[data-theme="dark"] .tarot-card{background:var(--paper);border-color:var(--line);}
+  html[data-theme="dark"] [style*="background:#fdeceb"]{background:var(--error-bg) !important;}
+  html[data-theme="dark"] .notch .pill{background:var(--line);}
+  /* Los gráficos mantienen su lienzo claro para conservar sus signos y líneas. */
+  .carta-rueda-frame,.carta-rueda-frame svg,.zoom-modal-bg svg{background:#fff;}
+  html[data-theme="dark"] :is(.carta-rueda-frame,.acg-map-shell) svg{background:#fff;border-radius:12px;}
+
 </style>
 </head>
 <body>
@@ -1576,7 +1644,7 @@
             <div style="font-size:10.5px;color:var(--ink-dim);margin-top:3px;">Escribe y elige tu ciudad de la lista para que la ubicación sea exacta</div>
           </div>
           <div class="auth-field"><label>País</label>
-            <select id="perfil-pais" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;width:100%;">
+            <select id="perfil-pais" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:var(--paper);width:100%;">
               <option value="">Selecciona tu país</option>
             </select>
           </div>
@@ -1693,6 +1761,16 @@
       <span>🎨 Apariencia</span><span id="chev-sec-apariencia">▼</span>
     </button>
     <div id="sec-apariencia" style="display:none;padding:0 14px 14px;">
+      <fieldset class="apariencia-opciones">
+        <legend>Modo de pantalla</legend>
+        <label class="apariencia-opcion"><input type="radio" name="saa-apariencia" value="light" onchange="elegirApariencia(this.value)">
+          <span><b>Claro</b><small>Blanco, lavanda y dorado.</small></span></label>
+        <label class="apariencia-opcion"><input type="radio" name="saa-apariencia" value="dark" onchange="elegirApariencia(this.value)">
+          <span><b>Oscuro</b><small>Morado profundo, lavanda y dorado suave.</small></span></label>
+        <label class="apariencia-opcion"><input type="radio" name="saa-apariencia" value="system" onchange="elegirApariencia(this.value)">
+          <span><b>Automático</b><small>Sigue el modo de tu teléfono.</small></span></label>
+      </fieldset>
+
 
       <div style="padding:10px;background:var(--paper);border-radius:12px;">
         <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
@@ -1702,7 +1780,7 @@
         <input type="range" id="slider-tamano-fuente" min="90" max="120" value="100" step="5"
           oninput="cambiarTamanoFuente(this.value)" onchange="cambiarTamanoFuente(this.value)" ontouchend="cambiarTamanoFuente(this.value)"
           style="width:100%;height:8px;border-radius:4px;background:linear-gradient(to right,var(--lilac),var(--marigold));outline:none;-webkit-appearance:none;appearance:none;touch-action:pan-x;">
-        <style>#slider-tamano-fuente::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:#fff;border:3px solid var(--lilac);cursor:pointer;}</style>
+        <style>#slider-tamano-fuente::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:var(--paper);border:3px solid var(--lilac);cursor:pointer;}</style>
         <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-dim);margin-top:6px;"><span>Pequeño</span><span>Normal</span><span>Grande</span></div>
       </div>
     </div>
@@ -1790,9 +1868,9 @@
     <div id="sec-datos-privados" style="display:none;padding:0 14px 14px;">
       <button onclick="descargarMisDatos()" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--plum);font-size:13px;cursor:pointer;margin-bottom:8px;text-align:left;">📥 Descargar mis datos</button>
       <button onclick="mostrarEliminarCuenta()" style="width:100%;padding:10px;border:1px solid #e74c3c;border-radius:10px;background:var(--paper);color:#c0392b;font-size:13px;cursor:pointer;text-align:left;">🗑️ Eliminar mi cuenta y datos</button>
-      <div id="eliminar-cuenta-confirm" style="display:none;background:#fbe6e3;border-radius:12px;padding:14px;margin-top:10px;">
+      <div id="eliminar-cuenta-confirm" style="display:none;background:var(--error-bg);border-radius:12px;padding:14px;margin-top:10px;">
         <div style="font-size:12.5px;color:#c0392b;font-weight:600;margin-bottom:8px;">¿Estás segura? Esta acción es permanente.</div>
-        <div style="font-size:12px;color:#a5442f;margin-bottom:10px;">Se eliminarán tu perfil, carta natal, diario y todos tus datos.</div>
+        <div style="font-size:12px;color:var(--error-text);margin-bottom:10px;">Se eliminarán tu perfil, carta natal, diario y todos tus datos.</div>
         <div style="display:flex;gap:8px;">
           <button onclick="document.getElementById('eliminar-cuenta-confirm').style.display='none'" style="flex:1;background:var(--paper);border:1px solid var(--line);border-radius:100px;padding:8px;font-size:12px;color:var(--plum);cursor:pointer;">Cancelar</button>
           <button onclick="eliminarMiCuenta()" style="flex:1;background:#c0392b;border:none;border-radius:100px;padding:8px;font-size:12px;color:#fff;font-weight:600;cursor:pointer;">Sí, eliminar todo</button>
@@ -1962,7 +2040,7 @@
               <div class="etiqueta-seccion">+ Agregar artículo</div>
               <div class="auth-field"><label>Título</label><input type="text" id="bib-titulo" placeholder="Ej. Saturno en Casa 4"></div>
               <div class="auth-field"><label>Categoría</label>
-                <select id="bib-categoria" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;">
+                <select id="bib-categoria" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:var(--paper);">
                   <option>Planetas</option><option>Casas</option><option>Aspectos</option><option>Signos</option>
                   <option>Tránsitos</option><option>Luna</option><option>Sinastría</option><option>General</option>
                 </select>
@@ -1976,7 +2054,7 @@
               <div class="disclaimer" style="margin-bottom:8px;">Este aviso aparece en el inicio de las usuarias cuando su signo solar coincide (o a todas, si dejas los signos vacíos) y la fecha de hoy cae dentro del rango.</div>
               <div class="auth-field"><label>Título</label><input type="text" id="ev-titulo" placeholder="Ej. Equinoccio de Otoño"></div>
               <div class="auth-field"><label>Tipo</label>
-                <select id="ev-tipo" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;">
+                <select id="ev-tipo" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:var(--paper);">
                   <option value="equinoccio">Equinoccio / Solsticio</option>
                   <option value="eclipse">Eclipse</option>
                   <option value="cambio_planeta">Cambio de planeta de signo</option>
@@ -2092,7 +2170,7 @@
                 <input type="hidden" id="nc-lng">
                 <div id="nc-ciudad-sugerencias" style="position:relative;z-index:5;"></div>
               </label>
-              <label>País<select id="nc-pais" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;"><option value="">Selecciona el país</option></select></label>
+              <label>País<select id="nc-pais" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:var(--paper);"><option value="">Selecciona el país</option></select></label>
               <button class="btn-primary" onclick="guardarNuevaCarta()">Calcular y guardar</button>
               <div id="nc-resultado"></div>
             </div>
@@ -2103,7 +2181,7 @@
             <div class="desc">Explora cómo se relacionan: cómo expresan cariño, qué necesita cada uno y dónde conectan o chocan. También sirve para vínculos familiares y amistades.</div>
             <div class="calc-form">
               <label>¿Con quién?
-                <select id="sin-carta-guardada" onchange="cambiarModoSinastria()" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;">
+                <select id="sin-carta-guardada" onchange="cambiarModoSinastria()" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:var(--paper);">
                   <option value="">Selecciona una persona</option>
                 </select>
               </label>
@@ -2277,7 +2355,7 @@
 
             <div class="calc-form">
               <label>¿Qué ciudad quieres explorar?<input type="text" id="reloc-ciudad" placeholder="Ej. Madrid"></label>
-              <label>País<select id="reloc-pais" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;"><option value="">Selecciona el país</option></select></label>
+              <label>País<select id="reloc-pais" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:var(--paper);"><option value="">Selecciona el país</option></select></label>
               <button class="btn-primary" onclick="calcularRelocacion()">Ver mi carta en esta ciudad</button>
               <div id="reloc-resultado" style="margin-top:14px;"></div>
             </div>
@@ -2370,7 +2448,7 @@
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedorLineas.innerHTML = mensajeLimiteExcedido(); return; }
-        contenedorLineas.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        contenedorLineas.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
 
@@ -2550,7 +2628,7 @@
         contenedorLineas.innerHTML = _cerrar_acg + '<div class="disclaimer">No se encontraron líneas para mostrar.</div>';
       }
     } catch (err) {
-      contenedorLineas.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+      contenedorLineas.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
     }
     if (boton) { boton.textContent = 'Ver mis líneas reales'; boton.disabled = false; }
   }
@@ -2821,7 +2899,7 @@
         <div style="background:var(--marigold-soft);border-radius:12px;padding:14px;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
             <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:16px;color:var(--plum);">Carta de ${nombre}</div>
-            <button onclick="document.getElementById('carta-otro-detalle').innerHTML='';" style="background:#fff;border:none;border-radius:100px;padding:5px 12px;font-size:11px;color:var(--plum);cursor:pointer;">Cerrar ✕</button>
+            <button onclick="document.getElementById('carta-otro-detalle').innerHTML='';" style="background:var(--paper);border:none;border-radius:100px;padding:5px 12px;font-size:11px;color:var(--plum);cursor:pointer;">Cerrar ✕</button>
           </div>
           ${filasPlanetas}
           <button class="btn-primary" style="background:var(--lilac);margin-top:10px;" onclick="verVisualOtraCarta('${id}')">Ver su carta en rueda 🔮</button>
@@ -2837,7 +2915,7 @@
         </div>
       `;
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
     }
   }
 
@@ -2856,18 +2934,18 @@
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = _cerrarExtra + mensajeLimiteExcedido(); return; }
-        contenedor.innerHTML = _cerrarExtra + `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        contenedor.innerHTML = _cerrarExtra + `<div class="disclaimer" style="color:var(--error-text);">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
       if (funcion === 'astrocartografia') {
         contenedor.innerHTML = _cerrarExtra + (data.svg
-          ? `<div style="background:#fff;border-radius:14px;padding:8px;border:1px solid var(--line);overflow:hidden;">${data.svg}</div>`
+          ? `<div style="background:var(--paper);border-radius:14px;padding:8px;border:1px solid var(--line);overflow:hidden;">${data.svg}</div>`
           : '<div class="disclaimer">No se pudo generar el mapa.</div>');
       } else {
         contenedor.innerHTML = _cerrarExtra + renderizarInforme(data[llaves[funcion]], 'carta-otro-extra');
       }
     } catch (err) {
-      contenedor.innerHTML = _cerrarExtra + `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+      contenedor.innerHTML = _cerrarExtra + `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
     }
   }
 
@@ -2884,7 +2962,7 @@
       }
       contenedor.innerHTML = _cerrarResumen + renderizarInforme(data.reporte, 'carta-otro-resumen');
     } catch (err) {
-      contenedor.innerHTML = _cerrarResumen + `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+      contenedor.innerHTML = _cerrarResumen + `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
     }
   }
 
@@ -2904,7 +2982,7 @@
         contenedor.innerHTML = '<div class="disclaimer">No se pudo generar el dibujo.</div>';
       }
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
     }
   }
 
@@ -2925,7 +3003,7 @@
       if (!r.ok) {
         console.error('cargarCartasGuardadas: respuesta no OK', r.status);
         const carousel = document.getElementById('cartas-carousel');
-        if (carousel) carousel.insertAdjacentHTML('afterbegin', `<div style="font-size:10px;color:#a5442f;">Error ${r.status} al cargar la lista, recarga la página.</div>`);
+        if (carousel) carousel.insertAdjacentHTML('afterbegin', `<div style="font-size:10px;color:var(--error-text);">Error ${r.status} al cargar la lista, recarga la página.</div>`);
         return;
       }
       const data = await r.json();
@@ -2994,7 +3072,7 @@
     } catch (e) {
       console.error('cargarCartasGuardadas falló:', e.message);
       const carousel = document.getElementById('cartas-carousel');
-      if (carousel) carousel.insertAdjacentHTML('afterbegin', `<div style="font-size:10px;color:#a5442f;">No se pudo cargar la lista: ${e.message}</div>`);
+      if (carousel) carousel.insertAdjacentHTML('afterbegin', `<div style="font-size:10px;color:var(--error-text);">No se pudo cargar la lista: ${e.message}</div>`);
     }
   }
 
@@ -3037,10 +3115,10 @@
     const contenedor = document.getElementById('carta-otro-detalle');
     contenedor.innerHTML += `
       <div id="confirmar-eliminar-carta" style="background:#fdeceb;border:1px solid #e8b4ac;border-radius:12px;padding:14px;margin-top:10px;">
-        <div style="font-size:13px;color:#a5442f;margin-bottom:10px;">¿Eliminar la carta de ${nombre}? Esto no se puede deshacer.</div>
+        <div style="font-size:13px;color:var(--error-text);margin-bottom:10px;">¿Eliminar la carta de ${nombre}? Esto no se puede deshacer.</div>
         <div style="display:flex;gap:8px;">
           <button onclick="confirmarEliminarOtraCarta('${id}')" style="flex:1;background:#a5442f;color:#fff;border:none;border-radius:100px;padding:9px;font-size:12.5px;cursor:pointer;">Sí, eliminar</button>
-          <button onclick="document.getElementById('confirmar-eliminar-carta').remove()" style="flex:1;background:#fff;border:1px solid var(--line);border-radius:100px;padding:9px;font-size:12.5px;color:var(--plum);cursor:pointer;">Cancelar</button>
+          <button onclick="document.getElementById('confirmar-eliminar-carta').remove()" style="flex:1;background:var(--paper);border:1px solid var(--line);border-radius:100px;padding:9px;font-size:12.5px;color:var(--plum);cursor:pointer;">Cancelar</button>
         </div>
       </div>
     `;
@@ -3055,7 +3133,7 @@
       document.getElementById('carta-otro-detalle').innerHTML = '';
       cargarCartasGuardadas();
     } catch (err) {
-      if (cajaConfirmar) cajaConfirmar.innerHTML = `<div style="font-size:12px;color:#a5442f;">${err.message}</div>`;
+      if (cajaConfirmar) cajaConfirmar.innerHTML = `<div style="font-size:12px;color:var(--error-text);">${err.message}</div>`;
     }
   }
 
@@ -3073,7 +3151,7 @@
     if (!isNaN(latVal)) cuerpo.latitud = latVal;
     if (!isNaN(lngVal)) cuerpo.longitud = lngVal;
     if (!cuerpo.nombre || !cuerpo.fecha_nacimiento || !cuerpo.ciudad_nacimiento || !cuerpo.pais_codigo) {
-      resultado.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Llena todos los datos.</div>';
+      resultado.innerHTML = '<div class="disclaimer" style="color:var(--error-text);">Llena todos los datos.</div>';
       return;
     }
     resultado.innerHTML = samLoading('');
@@ -3103,7 +3181,7 @@
         verDetalleOtraCarta(data.carta?.id, data.carta?.nombre || cuerpo.nombre);
       }
     } catch (err) {
-      resultado.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+      resultado.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
     }
   }
 
@@ -3202,7 +3280,7 @@
         contenedor.innerHTML = `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(data, null, 2)}</pre>`;
       }
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
     }
   }
 
@@ -3665,7 +3743,7 @@
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
         const _cerrar_energia_resultado = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('energia-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
-      contenedor.innerHTML = _cerrar_energia_resultado + `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+      contenedor.innerHTML = _cerrar_energia_resultado + `<div class="disclaimer" style="color:var(--error-text);">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
 
@@ -3744,7 +3822,7 @@
         contenedor.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('energia-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>` + renderizarInforme(data.ciclos, null);
       }
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
     }
   }
 
@@ -3808,7 +3886,7 @@
     const icono = opciones.planeta ? iconoCirculoPlaneta(opciones.planeta) : '';
     const temaHtml = opciones.tema ? `<div style="font-family:'Work Sans',sans-serif;font-size:14px;color:var(--ink-dim);margin-top:3px;line-height:1.45;">${opciones.tema}</div>` : '';
     return `
-      <div class="acordeon-mes-item" style="border:1px solid var(--line);border-radius:14px;margin-bottom:10px;overflow:hidden;background:#fff;box-shadow:0 3px 10px rgba(45,27,78,0.04);">
+      <div class="acordeon-mes-item" style="border:1px solid var(--line);border-radius:14px;margin-bottom:10px;overflow:hidden;background:var(--paper);box-shadow:0 3px 10px rgba(45,27,78,0.04);">
         <div onclick="toggleAcordeonMes('${id}')" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 15px;cursor:pointer;background:${abierto ? 'var(--marigold-soft)' : '#fff'};">
           <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">
             ${icono}
@@ -3819,7 +3897,7 @@
           </div>
           <div id="icono-${id}" style="font-family:'Work Sans',sans-serif;font-size:13px;color:var(--marigold-dark);flex:none;">${abierto ? '▲' : '▼'}</div>
         </div>
-        <div id="cuerpo-${id}" style="display:${abierto ? 'block' : 'none'};padding:15px;border-top:1px solid var(--line);font-family:'Work Sans',sans-serif;font-size:15.5px;color:var(--plum);line-height:1.7;background:#fff;">
+        <div id="cuerpo-${id}" style="display:${abierto ? 'block' : 'none'};padding:15px;border-top:1px solid var(--line);font-family:'Work Sans',sans-serif;font-size:15.5px;color:var(--plum);line-height:1.7;background:var(--paper);">
           ${cuerpoHtml}
         </div>
       </div>`;
@@ -3936,7 +4014,7 @@
       });
       const data = await leerJsonSeguro(r);
       if (solicitud !== _solicitudMesAlquimia) return;
-      if (!r.ok) { contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular tu mes.'}</div>`; return; }
+      if (!r.ok) { contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${data.error || 'No se pudo calcular tu mes.'}</div>`; return; }
 
       const mesConsulta = data.mes;
       const anioConsulta = data.anio;
@@ -4003,7 +4081,7 @@
 
     } catch (e) {
       if (solicitud !== _solicitudMesAlquimia) return;
-      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${e.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${e.message}</div>`;
     }
   }
 
@@ -4442,7 +4520,7 @@
           <div class="cuerpo" id="diario-cuerpo-${idx}" style="display:none;">${e.texto}</div>
         </div>
       `).join('');
-    } catch (e) { lista.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${e.message}</div>`; }
+    } catch (e) { lista.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${e.message}</div>`; }
   }
 
   async function eliminarEntradaDiario(id) {
@@ -4505,7 +4583,7 @@
 
       contenedor.innerHTML = html ? botonCerrar + html : renderizarInforme(data.horoscopo, 'horoscopo-resultado');
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
     }
   }
 
@@ -4566,7 +4644,7 @@
         if (adminDiv) adminDiv.style.display = 'block';
       }
     } catch (e) {
-      lista.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${e.message}</div>`;
+      lista.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${e.message}</div>`;
     }
   }
 
@@ -4795,7 +4873,7 @@
       chat.scrollTop = chat.scrollHeight;
     } catch (e) {
       cargando.style.display = 'none';
-      chat.innerHTML += `<div style="font-size:12px;color:#a5442f;padding:8px;">Error: ${e.message}</div>`;
+      chat.innerHTML += `<div style="font-size:12px;color:var(--error-text);padding:8px;">Error: ${e.message}</div>`;
     }
   }
 
@@ -4954,7 +5032,7 @@
         <div><b>País:</b> ${p.pais_codigo || '—'}</div>
       `;
     } catch (e) {
-      resumen.innerHTML = '<span style="color:#a5442f;">No se pudieron cargar tus datos.</span>';
+      resumen.innerHTML = '<span style="color:var(--error-text);">No se pudieron cargar tus datos.</span>';
     }
   }
 
@@ -5222,7 +5300,7 @@
         const resultados = data.resultados || [];
         if (!resultados.length) { contenedor.innerHTML = ''; return; }
         contenedor.innerHTML = `
-          <div style="position:absolute;left:0;right:0;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 4px 14px rgba(0,0,0,0.12);max-height:180px;overflow-y:auto;">
+          <div style="position:absolute;left:0;right:0;background:var(--paper);border:1px solid var(--line);border-radius:10px;box-shadow:0 4px 14px rgba(0,0,0,0.12);max-height:180px;overflow-y:auto;">
             ${resultados.map((c, i) => `
               <div onclick='elegirCiudad("${prefijo}", ${i})' style="padding:9px 12px;font-size:12.5px;color:var(--plum);cursor:pointer;border-bottom:1px solid var(--line);">${c.etiqueta}</div>
             `).join('')}
@@ -5500,7 +5578,7 @@
         body: JSON.stringify({ mes, anio }),
       });
       const data = await r.json();
-      if (!r.ok) { contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo cargar el calendario.'}</div>`; return; }
+      if (!r.ok) { contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${data.error || 'No se pudo cargar el calendario.'}</div>`; return; }
 
       const porDia = {};
       (data.detalle_dias || []).forEach(d => { porDia[d.dia] = d; });
@@ -5537,7 +5615,7 @@
         <div id="cal-lunar-detalle-dia" style="margin-top:12px;"></div>
       `;
     } catch (e) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">No se pudo cargar el calendario: ${e.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">No se pudo cargar el calendario: ${e.message}</div>`;
     }
   }
 
@@ -5573,7 +5651,7 @@
       if (!data.evento) { contenedor.innerHTML = ''; return; }
       const ev = data.evento;
       contenedor.innerHTML = `
-        <div style="background:linear-gradient(135deg,var(--lilac),var(--plum));border-radius:14px;padding:16px;margin:0 16px 14px;color:#fff;box-shadow:0 4px 16px rgba(45,27,78,0.3);">
+        <div style="background:linear-gradient(135deg,var(--lilac),var(--plum-solid));border-radius:14px;padding:16px;margin:0 16px 14px;color:#fff;box-shadow:0 4px 16px rgba(45,27,78,0.3);">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;">
             <div style="font-size:11px;letter-spacing:0.5px;text-transform:uppercase;opacity:0.85;margin-bottom:4px;">${ICONO_TIPO_EVENTO[ev.tipo] || '✨'} ${ev.titulo}</div>
             <span onclick="document.getElementById('evento-astrologico-banner').innerHTML=''" style="cursor:pointer;opacity:0.7;font-size:13px;">✕</span>
@@ -5852,8 +5930,8 @@
       }
     } catch (err) {
       if (!silencioso) {
-        chips.innerHTML = `<div class="row" style="color:#a5442f;">${err.message}</div>` +
-          (err.detalle ? `<pre style="white-space:pre-wrap;font-size:9px;color:#a5442f;opacity:0.7;padding:8px;">${typeof err.detalle === 'string' ? err.detalle : JSON.stringify(err.detalle, null, 2)}</pre>` : '');
+        chips.innerHTML = `<div class="row" style="color:var(--error-text);">${err.message}</div>` +
+          (err.detalle ? `<pre style="white-space:pre-wrap;font-size:9px;color:var(--error-text);opacity:0.7;padding:8px;">${typeof err.detalle === 'string' ? err.detalle : JSON.stringify(err.detalle, null, 2)}</pre>` : '');
       } else {
         console.error('calcularCartaReal (silencioso) falló:', err.message);
         // Reintenta una vez (común en apps nativas: la red puede tardar en estar lista al arrancar en frío)
@@ -5888,7 +5966,7 @@
         </div>
         <div class="carta-rueda-acciones">
           <button type="button" onclick="event.stopPropagation();verEnGrande()" style="background:var(--lilac);color:#fff;border:none;">Ampliar rueda</button>
-          <button type="button" onclick="event.stopPropagation();cerrarCartaVisual()" style="background:#fff;color:var(--plum);border:1px solid var(--line);">Cerrar</button>
+          <button type="button" onclick="event.stopPropagation();cerrarCartaVisual()" style="background:var(--paper);color:var(--plum);border:1px solid var(--line);">Cerrar</button>
         </div>
       </div>`;
 
@@ -5929,7 +6007,7 @@
       const r = await fetchAuth('/carta-visual', { method: 'POST', headers: {} });
       const data = await r.json();
       if (!r.ok) {
-        contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo abrir tu rueda natal.'}</div>`;
+        contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${data.error || 'No se pudo abrir tu rueda natal.'}</div>`;
         return;
       }
       if (data.svg) {
@@ -5939,7 +6017,7 @@
         contenedor.innerHTML = '<div class="disclaimer">No se recibió el gráfico de la carta.</div>';
       }
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
     } finally {
       boton.textContent = 'Ver rueda natal';
       boton.disabled = false;
@@ -6156,8 +6234,8 @@
             return `
               <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:${idx % 2 === 0 ? '#FFFFFF' : '#F7F5FC'};">
                 <span style="display:flex;align-items:center;gap:10px;">
-                  <span style="width:26px;height:26px;flex:none;border-radius:50%;background:#F0EAFB;display:flex;align-items:center;justify-content:center;font-size:13px;color:#2D1B4E;">${glifoPlaneta}</span>
-                  <span style="font-size:13px;color:#2D1B4E;font-weight:500;">${nombre}${p.retrograde ? ' <span style="color:#a5442f;font-size:10.5px;font-weight:700;" title="Retrógrado">R</span>' : ''}</span>
+                  <span style="width:26px;height:26px;flex:none;border-radius:50%;background:var(--lilac-bg);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--plum);">${glifoPlaneta}</span>
+                  <span style="font-size:13px;color:var(--plum);font-weight:500;">${nombre}${p.retrograde ? ' <span style="color:var(--error-text);font-size:10.5px;font-weight:700;" title="Retrógrado">R</span>' : ''}</span>
                 </span>
                 <span style="display:flex;align-items:center;gap:7px;">
                   <span style="font-size:13px;color:${colorTextoSigno(p.sign)};">${glifoSigno(p.sign)}</span>
@@ -6167,12 +6245,12 @@
               </div>
             `;
           }).join('');
-        contenedor.innerHTML = botonCerrarLocal + `<div style="background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;">${filas}</div>`;
+        contenedor.innerHTML = botonCerrarLocal + `<div style="background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden;">${filas}</div>`;
       } else {
         contenedor.innerHTML = botonCerrarLocal + `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(hoy, null, 2)}</pre>`;
       }
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
     }
   }
 
@@ -6237,7 +6315,7 @@
       const _cerrar_transitos_ok = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('transitos-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
       contenedor.innerHTML = _cerrar_transitos_ok + renderizarTransitosPersonales(data.transitos);
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
     }
   }
 
@@ -6249,7 +6327,7 @@
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
-        contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
       const d = data.estrellas?.data || {};
@@ -6287,7 +6365,7 @@
       }
       contenedor.innerHTML = htmlEstrellas;
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
     }
   }
 
@@ -6300,12 +6378,12 @@
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
         const _cerrar_numerologia_error = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('numerologia-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
-      contenedor.innerHTML = _cerrar_numerologia_error + `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+      contenedor.innerHTML = _cerrar_numerologia_error + `<div class="disclaimer" style="color:var(--error-text);">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
       contenedor.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('numerologia-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>` + renderizarInforme(data.numerologia, null);
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
     }
   }
 
@@ -6367,7 +6445,7 @@
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
-        contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
 
@@ -6381,7 +6459,7 @@
       if (cd?.planetary_positions?.length) {
         let svgFlor = '';
         try { svgFlor = dibujarFlorArmonica(cd.planetary_positions, cd.aspects); }
-        catch(e) { svgFlor = `<div class="disclaimer" style="color:#a5442f;">Error dibujando: ${e.message}</div>`; }
+        catch(e) { svgFlor = `<div class="disclaimer" style="color:var(--error-text);">Error dibujando: ${e.message}</div>`; }
 
         const posiciones = cd.planetary_positions.map(p => `
           <div class="carta-real-row">${nombrePlanetaEs(p.name)} en <b>${signoEs(p.sign)} ${p.degree !== undefined ? Math.floor(p.degree)+'°' : ''}</b></div>
@@ -6399,7 +6477,7 @@
         contenedor.innerHTML = botonCerrar + `<pre style="white-space:pre-wrap;font-size:9px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify({keys_flor:Object.keys(flor||{}), keys_cd:Object.keys(cd||{}), pos_count:cd?.planetary_positions?.length}, null, 2)}</pre>`;
       }
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
     }
   }
 
@@ -6410,7 +6488,7 @@
     if (idGuardada) {
       cuerpo = { otra_carta_id: idGuardada };
     } else {
-      contenedor.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Primero elige a alguien de "Tus personas" arriba, o agrega a esa persona con el botón "+ Agregar".</div>';
+      contenedor.innerHTML = '<div class="disclaimer" style="color:var(--error-text);">Primero elige a alguien de "Tus personas" arriba, o agrega a esa persona con el botón "+ Agregar".</div>';
       return;
     }
     contenedor.innerHTML = samLoading('');
@@ -6424,7 +6502,7 @@
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
         const _cerrar_compuesta_resultado = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('compuesta-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
-      contenedor.innerHTML = _cerrar_compuesta_resultado + `<div class="disclaimer" style="color:#a5442f;">${data.error}<br><pre style="font-size:9px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+      contenedor.innerHTML = _cerrar_compuesta_resultado + `<div class="disclaimer" style="color:var(--error-text);">${data.error}<br><pre style="font-size:9px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
       const botonCerrar = `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button onclick="cerrar('compuesta-resultado')" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
@@ -6471,7 +6549,7 @@
       if (!html) html = renderizarInforme(data.carta_compuesta, 'compuesta-resultado');
       contenedor.innerHTML = botonCerrar + (html || '<div class="disclaimer">Sin datos disponibles.</div>');
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
     }
   }
 
@@ -6509,7 +6587,7 @@
     if (idGuardada) {
       cuerpo = { otra_carta_id: idGuardada };
     } else {
-      contenedor.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Primero elige a alguien de "Tus personas" arriba, o agrega a esa persona con el botón "+ Agregar".</div>';
+      contenedor.innerHTML = '<div class="disclaimer" style="color:var(--error-text);">Primero elige a alguien de "Tus personas" arriba, o agrega a esa persona con el botón "+ Agregar".</div>';
       return;
     }
     contenedor.innerHTML = samLoading('');
@@ -6528,7 +6606,7 @@
       const nombreOtra = document.getElementById('sin-carta-guardada').selectedOptions[0]?.textContent || 'esta persona';
       contenedor.innerHTML = _bcSin + renderizarSinastriaSimple(data.reporte, nombreOtra);
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
     }
   }
 
@@ -6576,7 +6654,7 @@
     let html = '';
     if (typeof score === 'number') {
       html += `
-        <div style="background:linear-gradient(135deg,var(--lilac),var(--plum));border-radius:14px;padding:16px;color:#fff;margin-bottom:14px;text-align:center;">
+        <div style="background:linear-gradient(135deg,var(--lilac),var(--plum-solid));border-radius:14px;padding:16px;color:#fff;margin-bottom:14px;text-align:center;">
           <div style="font-size:11px;opacity:0.85;text-transform:uppercase;letter-spacing:0.5px;">Compatibilidad general</div>
           <div style="font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:700;">${Math.round(score * 100)}%</div>
         </div>
@@ -6636,7 +6714,7 @@
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
         const _cerrar_resumen_natal_error = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('resumen-natal-contenedor').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
-      contenedor.innerHTML = _cerrar_resumen_natal_error + `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo generar.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+      contenedor.innerHTML = _cerrar_resumen_natal_error + `<div class="disclaimer" style="color:var(--error-text);">${data.error || 'No se pudo generar.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
       const _cerrar_resumen_natal_ok = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('resumen-natal-contenedor').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
@@ -6671,7 +6749,7 @@
       contenedor.innerHTML = htmlPersonalidad;
     } catch (err) {
       const _cerrar_resumen_natal_contenedor = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('resumen-natal-contenedor').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
-      contenedor.innerHTML = _cerrar_resumen_natal_contenedor + `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+      contenedor.innerHTML = _cerrar_resumen_natal_contenedor + `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
     }
   }
 
@@ -6953,7 +7031,7 @@
         : '';
       await verLunaVacia(true);
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
     }
   }
 
@@ -6968,7 +7046,7 @@
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = _cerrar + mensajeLimiteExcedido(); return; }
-        contenedor.innerHTML = _cerrar + `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo consultar.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        contenedor.innerHTML = _cerrar + `<div class="disclaimer" style="color:var(--error-text);">${data.error || 'No se pudo consultar.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
       const cs = data.voc?.data?.current_status || data.voc?.current_status || {};
@@ -6994,11 +7072,11 @@
               ${inicio && fin ? `Hoy la Luna está vacía de <b style="color:#fff;">${fmtHora(inicio)}</b> a <b style="color:#fff;">${fmtHora(fin)}</b> — evita firmar contratos, tomar decisiones importantes o iniciar algo nuevo en esa ventana.` : 'Hoy hay Luna Vacía en algún momento del día — evita firmar contratos o iniciar algo nuevo mientras dure.'}
             </div>
           </div>
-          <div style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px;">
+          <div style="background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px;">
             <div style="font-size:11.5px;color:var(--marigold-dark);font-weight:600;margin-bottom:3px;">✅ Sí sirve para</div>
             <div style="font-size:12.5px;color:var(--plum);">Descansar, meditar, cerrar pendientes chicos, reflexionar sin presión.</div>
           </div>
-          <div class="disclaimer" style="background:#fbe6e3;color:#a5442f;border-radius:10px;padding:10px 12px;">
+          <div class="disclaimer" style="background:var(--error-bg);color:var(--error-text);border-radius:10px;padding:10px 12px;">
             <b>⚠️ Evita en esa ventana:</b> firmar contratos, mandar ese mensaje importante, comprar algo grande, dar el "sí" definitivo.
           </div>
         `;
@@ -7011,14 +7089,14 @@
         contenedor.innerHTML = _cerrar + `<pre style="white-space:pre-wrap;font-size:9px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(data.voc, null, 2)}</pre>`;
       }
     } catch (err) {
-      contenedor.innerHTML = _cerrar + `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+      contenedor.innerHTML = _cerrar + `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
     }
   }
 
   async function preguntarHoraria() {
     const pregunta = document.getElementById('horaria-pregunta').value.trim();
     const contenedor = document.getElementById('horaria-resultado');
-    if (!pregunta) { contenedor.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Escribe tu pregunta primero.</div>'; return; }
+    if (!pregunta) { contenedor.innerHTML = '<div class="disclaimer" style="color:var(--error-text);">Escribe tu pregunta primero.</div>'; return; }
     contenedor.innerHTML = samLoading('');
     const _cerrar = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('horaria-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
     try {
@@ -7030,7 +7108,7 @@
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = _cerrar + mensajeLimiteExcedido(); return; }
-        contenedor.innerHTML = _cerrar + `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        contenedor.innerHTML = _cerrar + `<div class="disclaimer" style="color:var(--error-text);">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
       const h = data.horaria?.data || data.horaria || {};
@@ -7067,7 +7145,7 @@
       }
       cargarHorariasGuardadas();
     } catch (err) {
-      contenedor.innerHTML = _cerrar + `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+      contenedor.innerHTML = _cerrar + `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
     }
   }
 
@@ -7077,7 +7155,7 @@
     try {
       const r = await fetchAuth('/horarias-guardadas', { headers: {} });
       const data = await r.json();
-      if (!r.ok) { contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo cargar.'}</div>`; return; }
+      if (!r.ok) { contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${data.error || 'No se pudo cargar.'}</div>`; return; }
       const preguntas = data.preguntas || [];
       if (!preguntas.length) { contenedor.innerHTML = '<div class="disclaimer">Todavía no has guardado ninguna pregunta.</div>'; return; }
       contenedor.innerHTML = preguntas.map(p => `
@@ -7092,7 +7170,7 @@
         </div>
       `).join('');
     } catch (e) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${e.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${e.message}</div>`;
     }
   }
 
@@ -7289,7 +7367,7 @@
     const ciudad = document.getElementById('reloc-ciudad').value.trim();
     const pais_codigo = document.getElementById('reloc-pais').value;
     if (!ciudad || !pais_codigo) {
-      contenedor.innerHTML = '<div class="disclaimer" style="color:#a5442f;">Escribe una ciudad y elige el país.</div>';
+      contenedor.innerHTML = '<div class="disclaimer" style="color:var(--error-text);">Escribe una ciudad y elige el país.</div>';
       return;
     }
 
@@ -7303,7 +7381,7 @@
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
-        contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular.'}</div>`;
+        contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${data.error || 'No se pudo calcular.'}</div>`;
         return;
       }
 
@@ -7405,7 +7483,7 @@
 
       contenedor.innerHTML = htmlReloc;
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
     }
   }
 
@@ -7462,7 +7540,7 @@
     const frame = document.getElementById('carta-rueda-frame');
     if (!frame || !frame.innerHTML.trim()) return;
     const modal = document.getElementById('zoom-modal-content');
-    modal.innerHTML = '<div style="background:#fff;border-radius:18px;padding:8px;max-width:760px;width:min(92vw,760px);margin:auto;">' + frame.innerHTML + '</div>';
+    modal.innerHTML = '<div style="background:var(--paper);border-radius:18px;padding:8px;max-width:760px;width:min(92vw,760px);margin:auto;">' + frame.innerHTML + '</div>';
     const svgEl = modal.querySelector('svg');
     if (svgEl) {
       svgEl.removeAttribute('width');
@@ -7642,23 +7720,32 @@
   }
 
   // ---- Función global de cerrar sección ----
-  function cambiarTema(oscuro) {
+  const mediaApariencia = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  let preferenciaApariencia = 'light';
+  function actualizarApariencia() {
+    const oscuro = preferenciaApariencia === 'dark' || (preferenciaApariencia === 'system' && !!mediaApariencia?.matches);
     document.documentElement.setAttribute('data-theme', oscuro ? 'dark' : 'light');
-    localStorage.setItem('saa_tema', oscuro ? 'dark' : 'light');
-    const span = document.getElementById('toggle-dark-span');
-    const knob = document.getElementById('toggle-dark-knob');
-    if (span) span.style.background = oscuro ? 'var(--marigold)' : '#ccc';
-    if (knob) knob.style.transform = oscuro ? 'translateX(20px)' : 'translateX(0)';
+    document.querySelectorAll('input[name="saa-apariencia"]').forEach(input => {
+      input.checked = input.value === preferenciaApariencia;
+    });
+    const barra = document.querySelector('meta[name="theme-color"]');
+    if (barra) barra.setAttribute('content', oscuro ? '#17121f' : '#331e37');
   }
-
+  function elegirApariencia(preferencia) {
+    preferenciaApariencia = ['light','dark','system'].includes(preferencia) ? preferencia : 'light';
+    try { localStorage.setItem('saa_tema', preferenciaApariencia); } catch (_) {}
+    actualizarApariencia();
+  }
+  function cambiarTema(oscuro) { elegirApariencia(oscuro ? 'dark' : 'light'); }
   function aplicarTemaGuardado() {
-    const tema = localStorage.getItem('saa_tema') || 'light';
-    const oscuro = tema === 'dark';
-    document.documentElement.setAttribute('data-theme', tema);
-    const chk = document.getElementById('toggle-dark');
-    if (chk) chk.checked = oscuro;
-    cambiarTema(oscuro);
+    let guardado = 'light';
+    try { guardado = localStorage.getItem('saa_tema') || 'light'; } catch (_) {}
+    preferenciaApariencia = ['light','dark','system'].includes(guardado) ? guardado : 'light';
+    actualizarApariencia();
   }
+  if (mediaApariencia?.addEventListener) mediaApariencia.addEventListener('change', actualizarApariencia);
+  else if (mediaApariencia?.addListener) mediaApariencia.addListener(actualizarApariencia);
+  window.addEventListener('storage', evento => { if (evento.key === 'saa_tema') aplicarTemaGuardado(); });
 
   function cerrar(id) { const el = document.getElementById(id); if (el) el.innerHTML = ''; }
 
