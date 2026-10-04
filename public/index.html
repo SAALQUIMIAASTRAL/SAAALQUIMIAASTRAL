@@ -186,13 +186,6 @@
   body.app-nativa .screen{
     height:100dvh;border-radius:0;
   }
-  /* En móvil se usa la pantalla completa, sin el margen del marco de vista previa. */
-  @media(max-width:600px){
-    .page{width:100%;min-height:100dvh;padding:0;background:var(--page-bg);}
-    .phone{width:100%;background:transparent;border-radius:0;padding:0;box-shadow:none;}
-    .screen{height:100dvh;border-radius:0;}
-    .topbar{padding:calc(6px + env(safe-area-inset-top,0px)) 18px 12px;}
-  }
 
   body.app-nativa .notch{ display:none; }
   body.app-nativa .app-nativa-only{ display:block !important; }
@@ -676,11 +669,6 @@
   .bottomnav .it .g{font-size:18px;line-height:1;transition:transform 0.18s;}
   .bottomnav .it.active{color:var(--marigold);background:var(--marigold-soft);}
   .bottomnav .it.active .g{transform:scale(1.1);}
-  /* La barra conserva la posición y el área táctil de los botones; se reduce el margen superior. */
-  @media(max-width:600px){
-    .bottomnav{padding:4px 4px calc(12px + env(safe-area-inset-bottom,0px));}
-    .bottomnav .it{min-height:48px;padding:4px 2px;gap:3px;}
-  }
   [data-tab]{display:none;}
   [data-tab].tab-activa{display:block;}
 
@@ -1597,9 +1585,9 @@
   @media(max-width:699px){
     html,body{background:var(--paper);}
     .bottomnav{
-      padding:2px max(4px,env(safe-area-inset-right,0px)) calc(2px + env(safe-area-inset-bottom,0px)) max(4px,env(safe-area-inset-left,0px));
+      padding:2px max(4px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(4px,env(safe-area-inset-left,0px));
     }
-    .bottomnav .it{min-height:42px;padding:2px;gap:1px;font-size:10px;line-height:1.15;}
+    .bottomnav .it{min-height:48px;padding:2px;gap:1px;font-size:10px;line-height:1.15;}
     .bottomnav .it .g{font-size:16px;}
   }
   /* Menos altura en la app nativa, conservando el área segura y botones táctiles cómodos. */
