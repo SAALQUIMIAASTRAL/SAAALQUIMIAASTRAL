@@ -600,6 +600,23 @@
     display:none;flex-direction:column;padding:32px 22px;overflow-y:auto;
   }
   .auth-overlay.show{display:flex;}
+  /* Mi Cuenta / Legal: respetar safe area y permitir ver todo el contenido */
+  #pantalla-mi-perfil,
+  #pantalla-legal{
+    padding-top:max(22px, env(safe-area-inset-top));
+    padding-bottom:max(24px, env(safe-area-inset-bottom));
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+  }
+  #pantalla-legal{overflow:hidden;}
+  #pantalla-legal #legal-contenido{
+    flex:1;
+    min-height:0;
+    max-height:none !important;
+    overflow-y:auto;
+    padding-bottom:24px;
+    -webkit-overflow-scrolling:touch;
+  }
   .auth-overlay h1{font-size:26px;margin-bottom:6px;color:var(--plum);}
   .auth-overlay .sub{font-size:13px;color:var(--ink-dim);margin-bottom:22px;}
   .auth-field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;font-size:12px;color:var(--ink-dim);}
@@ -802,9 +819,9 @@
         <!-- Pantalla legal: Términos y Aviso de Privacidad -->
         <div class="auth-overlay" id="pantalla-legal" style="text-align:left;">
           <button onclick="volverDeLegal()" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;margin-bottom:14px;">← Volver</button>
-          <div id="legal-contenido" style="font-size:12.5px;color:var(--plum);line-height:1.7;max-height:65vh;overflow-y:auto;padding-right:4px;">
+          <div id="legal-contenido" style="font-size:13.5px;color:var(--plum);line-height:1.75;overflow-y:auto;padding-right:4px;">
             <h2 style="font-size:16px;">Aviso de Privacidad</h2>
-            <p><b>1. Responsable del tratamiento.</b> Samantha Jossely Hernández Rivas, Persona Física con Actividad Empresarial (México), domicilio en Calle 110 y 111 Amavita Caucel, 53Q, C.P. 97305, Mérida, Yucatán, México. Contacto: soporte@samalquimiaastral.com.</p>
+            <p><b>1. Responsable del tratamiento.</b> Samantha Jossely Hernández Rivas, Persona Física con Actividad Empresarial en México. Contacto para privacidad y derechos ARCO: soporte@samalquimiaastral.com.</p>
             <p><b>2. Datos que recolectamos.</b> Nombre de usuario y correo electrónico; fecha, hora y ciudad/país de nacimiento; cookies e identificadores de dispositivo; información de pago procesada de forma independiente por Stripe (nunca almacenamos datos de tarjetas).</p>
             <p><b>3. Para qué los usamos.</b> Registrar tu cuenta; calcular tu Carta Natal, tránsitos, horóscopos y demás análisis; procesar tus solicitudes mediante modelos de Inteligencia Artificial (Anthropic Claude) de forma cifrada y segura; enviarte reportes a tu correo; gestionar cobros y suscripciones vía Stripe. Opcionalmente, y solo si lo autorizas, enviarte promociones y novedades (puedes cancelar cuando quieras).</p>
             <p><b>4. Transferencia de datos y procesamiento con IA.</b> Para generar tus reportes, las posiciones planetarias (nunca tu nombre ni tu correo) se envían de forma cifrada a proveedores de Inteligencia Artificial (Anthropic) únicamente con fines de procesamiento técnico. Nunca vendemos, rentamos ni compartimos tus datos con terceros para fines comerciales o publicitarios.</p>
@@ -914,7 +931,7 @@
           <div id="editar-ciudad-sugerencias" style="position:relative;z-index:5;"></div>
         </div>
         <div class="auth-field"><label>País</label>
-          <select id="editar-pais" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:var(--paper);width:100%;">
+          <select id="editar-pais" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:16px;color:var(--plum);background:var(--paper);width:100%;">
             <option value="">Selecciona tu país</option>
           </select>
         </div>
@@ -1844,7 +1861,7 @@
       fotoHTML = `<div style="width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,var(--lilac),var(--marigold));display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;">✦</div>`;
     }
 
-    elFoto.innerHTML = `<div class="avatar" style="cursor:pointer;" onclick="document.getElementById('input-foto-perfil').click()" title="Cambiar foto">${fotoHTML}</div>`;
+    elFoto.innerHTML = `<div class="avatar" style="cursor:pointer;" onclick="abrirPerfil()" title="Mi cuenta">${fotoHTML}</div>`;
   })();
 
   // Frase dinámica de la banda (rota cada día)
@@ -3953,21 +3970,38 @@
     document.getElementById('eliminar-cuenta-confirm').style.display = 'block';
   }
 
+  function renderizarFotoPerfil(dataUrl) {
+    const preview = document.getElementById('foto-perfil-preview');
+    const inicial = document.getElementById('foto-perfil-inicial');
+    if (preview && inicial) {
+      if (dataUrl) {
+        preview.src = dataUrl;
+        preview.style.display = 'block';
+        inicial.style.display = 'none';
+      } else {
+        preview.removeAttribute('src');
+        preview.style.display = 'none';
+        inicial.style.display = 'flex';
+      }
+    }
+
+    const circulo = document.getElementById('foto-circulo');
+    if (circulo) {
+      const contenido = dataUrl
+        ? `<img src="${dataUrl}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`
+        : '<div style="width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,var(--lilac),var(--marigold));display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;">✦</div>';
+      circulo.innerHTML = `<div class="avatar" style="cursor:pointer;" onclick="abrirPerfil()" title="Mi cuenta">${contenido}</div>`;
+    }
+  }
+
   function subirFotoPerfil(input) {
     if (!input.files || !input.files[0]) return;
     const archivo = input.files[0];
     const reader = new FileReader();
     reader.onload = function(e) {
       const dataUrl = e.target.result;
-      // Mostrar foto en vivo en Mi Cuenta
-      const preview = document.getElementById('foto-perfil-preview');
-      const inicial = document.getElementById('foto-perfil-inicial');
-      if (preview && inicial) {
-        preview.src = dataUrl;
-        preview.style.display = 'block';
-        inicial.style.display = 'none';
-      }
-      // Guardar en localStorage del navegador (persiste en el dispositivo)
+      // Actualiza sin salir de Mi Cuenta y refleja la misma foto en el círculo superior.
+      renderizarFotoPerfil(dataUrl);
       localStorage.setItem('saa_foto_perfil', dataUrl);
       // Intentar subir al servidor en background (no bloquea la UI)
       const formData = new FormData();
@@ -3981,15 +4015,7 @@
 
   function cargarFotoPerfilGuardada() {
     const fotoGuardada = localStorage.getItem('saa_foto_perfil');
-    if (fotoGuardada) {
-      const preview = document.getElementById('foto-perfil-preview');
-      const inicial = document.getElementById('foto-perfil-inicial');
-      if (preview && inicial) {
-        preview.src = fotoGuardada;
-        preview.style.display = 'block';
-        inicial.style.display = 'none';
-      }
-    }
+    renderizarFotoPerfil(fotoGuardada || null);
   }
 
   async function descargarMisDatos() {
@@ -4079,7 +4105,8 @@
 
   function abrirPerfil() {
     mostrarPantalla('mi-perfil');
-    cargarFotoPerfilGuardada(); // Cargar foto si existe
+    cargarFotoPerfilGuardada();
+    cargarDatosParaEditar();
   }
 
   let _datosNacimientoActuales = null;
@@ -4465,7 +4492,33 @@
     const abierto = body.style.display !== "none";
     body.style.display = abierto ? "none" : "block";
     if (chev) chev.textContent = abierto ? "▼" : "▲";
+    if (!abierto && id === 'sec-datos') cargarDatosParaEditar();
     if (!abierto) setTimeout(() => body.scrollIntoView({ behavior: "smooth", block: "nearest" }), 50);
+  }
+
+  function cambiarTamanoFuente(valor) {
+    const porcentaje = Math.max(90, Math.min(120, Number(valor) || 100));
+    const factor = porcentaje / 100;
+    localStorage.setItem('saa_tamano_fuente', String(porcentaje));
+
+    const valorEl = document.getElementById('tamano-fuente-valor');
+    const slider = document.getElementById('slider-tamano-fuente');
+    if (valorEl) valorEl.textContent = porcentaje + '%';
+    if (slider && Number(slider.value) !== porcentaje) slider.value = porcentaje;
+
+    document.querySelectorAll('.screen h1,.screen h2,.screen h3,.screen p,.screen span,.screen label,.screen button,.screen input,.screen textarea,.screen select,.screen a,.screen li,.screen .desc,.screen .disclaimer').forEach(el => {
+      if (!el.dataset.fontBasePx) {
+        const base = parseFloat(getComputedStyle(el).fontSize);
+        if (Number.isFinite(base) && base > 0) el.dataset.fontBasePx = String(base);
+      }
+      const base = Number(el.dataset.fontBasePx);
+      if (Number.isFinite(base) && base > 0) el.style.fontSize = (base * factor).toFixed(2) + 'px';
+    });
+  }
+
+  function restaurarTamanoFuente() {
+    const guardado = Number(localStorage.getItem('saa_tamano_fuente') || 100);
+    cambiarTamanoFuente(guardado);
   }
 
   function samLoading(texto) {
@@ -4589,6 +4642,7 @@
     const nombreEl = document.querySelector('.band h1');
     if (nombreEl) nombreEl.innerHTML = `<span id="greeting-word">${greet ? greet.textContent : 'Hola'}</span>, ${SESION.nombre}`;
     cargarFotoPerfilGuardada(); // Cargar foto de perfil si existe (guardada localmente)
+    restaurarTamanoFuente();
     await calcularCartaReal(true); // asegura que la carta exista (la calcula si hace falta, silenciosamente)
     cargarCartasGuardadas();
     cargarHomeSummary(); // esta función ya llama a actualizarBandaConCartaReal() internamente
