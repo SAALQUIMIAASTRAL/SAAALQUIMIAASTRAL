@@ -1927,8 +1927,8 @@
 
           <div class="section alquimia-tarjeta" data-tab="alquimia" id="rituales-section">
             <div class="carta-etiqueta">Del cielo a tu día a día</div>
-            <h2 id="rituales-titulo">Rituales para ti</h2>
-            <div class="desc">Prácticas breves para observar lo que sientes, ordenar tus intenciones y elegir una acción. Abre la que necesites.</div>
+            <h2 id="rituales-titulo">Tus tres rituales del mes</h2>
+            <div class="desc">Velas, piedras y canela: elige un ritual y sigue sus pasos. Las intenciones cambian cada mes.</div>
             <div id="rituales-contenedor" style="margin-top:14px;"></div>
           </div>
 
@@ -3979,7 +3979,7 @@
       const ritualesTitulo = document.getElementById('rituales-titulo');
       if (ritualesContenedor && ritualesTitulo) {
         const emojis = ['❄️','💕','🌸','🌼','🌻','🌴','⭐','🔥','🍂','💀🌹','☠️👻','🎄'];
-        ritualesTitulo.textContent = 'Rituales para ti';
+        ritualesTitulo.textContent = 'Tus tres rituales del mes';
         ritualesContenedor.innerHTML = generarRitualesDelMes(mesConsulta);
       }
 
@@ -4119,26 +4119,44 @@
 
   // ===== RITUALES PARA EL MES =====
   function generarRitualesDelMes(mesNum) {
+    // Prácticas simbólicas por mes; no dependen de cálculos ni atribuyen efectos a las gemas.
+    const intenciones = [
+      ['Empezar con claridad','Cuidar tu energía','Ordenar tus recursos'],
+      ['Abrirte al cariño','Reconocer tu valor','Compartir con intención'],
+      ['Dar el primer paso','Sostener tu decisión','Preparar un nuevo proyecto'],
+      ['Renovar tus hábitos','Volver a tu centro','Hacer espacio para lo nuevo'],
+      ['Dar lugar al disfrute','Tratarte con cariño','Valorar lo que tienes'],
+      ['Expresar lo que necesitas','Escuchar tus emociones','Cuidar tu hogar'],
+      ['Reconocer tus logros','Confiar en ti','Organizar tus metas'],
+      ['Mostrar tu creatividad','Recordar tu valor','Dar forma a una idea'],
+      ['Simplificar tu rutina','Elegir tus prioridades','Ordenar tu espacio de trabajo'],
+      ['Revisar tus vínculos','Cuidar tus límites','Revisar tus gastos'],
+      ['Cerrar un ciclo','Acompañar un cambio','Agradecer lo aprendido'],
+      ['Reconocer tu recorrido','Guardar una intención','Preparar el próximo año']
+    ];
+    const indice = Number.isInteger(Number(mesNum)) && Number(mesNum) >= 1 && Number(mesNum) <= 12 ? Number(mesNum)-1 : new Date().getMonth();
+    const [vela, piedra, canela] = intenciones[indice];
     const practicas = [
-      { titulo:'Poner una intención', tiempo:'5 minutos', pasos:[
-        'Elige un tema al que quieras dedicar atención: un vínculo, un proyecto o un hábito.',
-        'Escribe qué quieres cambiar y por qué te importa.',
-        'Define una acción pequeña que puedas realizar esta semana y anótala en tu diario.'
+      { titulo:'Vela · ' + vela, tiempo:'5 minutos', materiales:'Una vela blanca, un portavelas y papel.', pasos:[
+        'Escribe una intención relacionada con “' + vela.toLowerCase() + '”. Deja el papel separado de la vela.',
+        'Enciende la vela en un portavelas estable, lejos de telas. Quédate presente y lee tu intención.',
+        'Elige una acción pequeña para acompañarla esta semana. Apaga la vela antes de retirarte.'
       ]},
-      { titulo:'Reconocer lo que sientes', tiempo:'5 minutos', pasos:[
-        'Haz una pausa en un lugar cómodo y observa cómo te sientes.',
-        'Escribe qué ocurrió, qué emoción apareció y qué necesitas ahora.',
-        'Elige cómo atender esa necesidad: descansar, conversar, pedir apoyo o poner un límite.'
+      { titulo:'Piedra · ' + piedra, tiempo:'5 minutos', materiales:'Un cuarzo, una amatista o una piedra que ya tengas.', pasos:[
+        'Sostén tu piedra y haz tres respiraciones pausadas.',
+        'Piensa qué significa para ti “' + piedra.toLowerCase() + '” y escribe una decisión concreta.',
+        'Deja la piedra a la vista como recordatorio de esa decisión durante el mes.'
       ]},
-      { titulo:'Cerrar y dar el siguiente paso', tiempo:'10 minutos', pasos:[
-        'Revisa una situación que te haya ocupado durante el mes.',
-        'Anota qué aprendiste, qué quieres conservar y qué quieres hacer distinto.',
-        'Elige un pendiente para resolver o un acuerdo para conversar. Guarda tu reflexión para revisarla después.'
+      { titulo:'Canela · ' + canela, tiempo:'5 minutos', materiales:'Una rama de canela, papel y un recipiente pequeño.', pasos:[
+        'Escribe una intención relacionada con “' + canela.toLowerCase() + '”.',
+        'Dobla el papel y colócalo con la rama de canela en el recipiente, como símbolo de tu intención.',
+        'Déjalo en tu escritorio o en un rincón especial. Cada semana revisa qué paso has dado.'
       ]}
     ];
-    return practicas.map((p, i) => `
+    return '<p class="disclaimer">Tres rituales simbólicos para dedicar un momento a tus intenciones este mes.</p>' + practicas.map(p => `
       <details class="alquimia-practica">
         <summary><span>${p.titulo}<small>${p.tiempo}</small></span><span class="alquimia-flecha" aria-hidden="true">⌄</span></summary>
+        <p class="desc"><b>Necesitas:</b> ${p.materiales}</p>
         <ol>${p.pasos.map(paso => '<li>' + paso + '</li>').join('')}</ol>
       </details>`).join('');
   }
