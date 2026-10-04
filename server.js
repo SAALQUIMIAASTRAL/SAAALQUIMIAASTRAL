@@ -2279,6 +2279,14 @@ app.post('/transitos-personales', requireLogin, async (req, res) => {
   }
 });
 
+// Las tiendas no deben abrir pagos mientras falte la validación de comprobantes.
+// Solo activar disponibilidad cuando estén implementadas y probadas compras,
+// renovaciones, vencimiento, restauración y vinculación a la cuenta.
+app.get('/suscripcion/configuracion-nativa', requireLogin, (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json({ disponible:false, plataformas:[] });
+});
+
 app.post('/suscripcion/iniciar', requireLogin, async (req, res) => {
   try {
     const PRECIOS_POR_PLAN = {
