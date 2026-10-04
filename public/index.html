@@ -1361,6 +1361,27 @@
   #sin-calcular:disabled, #compuesta-calcular:disabled { opacity:.5;cursor:default; }
   .persona-ver:focus-visible,.persona-menu summary:focus-visible,.personas-compuesta summary:focus-visible { outline:2px solid var(--marigold);outline-offset:3px;border-radius:8px; }
 
+
+  /* Guía breve del vínculo: título y control alineados en móvil. */
+  .personas-preguntas { margin-top:12px;padding-top:8px; }
+  .section .personas-preguntas > summary {
+    font-family:'Work Sans',sans-serif;
+    font-size:14px;
+    font-weight:500;
+    line-height:1.35;
+    min-height:44px;
+    padding:4px 0;
+    margin:0;
+    align-items:center;
+  }
+  .personas-preguntas > summary::after {
+    flex:0 0 24px;
+    text-align:center;
+    font-size:20px;
+    line-height:1;
+  }
+  .personas-preguntas ul { margin:8px 0;padding-left:18px; }
+  .personas-preguntas li { margin-bottom:6px; }
 </style>
 </head>
 <body>
@@ -1945,14 +1966,14 @@
               <div id="personas-vinculo" class="personas-vinculo" aria-live="polite">Elige con quién explorar tu vínculo.</div>
               <button type="button" class="btn-primary" id="sin-calcular" onclick="calcularSinastria()" disabled>Explorar nuestro vínculo</button>
               <details class="personas-preguntas">
-                <summary>¿Qué puedes explorar sobre el amor?</summary>
+                <summary>Claves del vínculo</summary>
                 <ul>
-                  <li>Cómo expresa cariño cada uno y qué necesita para sentirse querido.</li>
-                  <li>Dónde nace la atracción y qué afinidades comparten.</li>
-                  <li>Cómo se comunican y qué diferencias pueden generar tensión.</li>
-                  <li>Qué temas conviene conversar para cuidar la convivencia.</li>
+                  <li>Cariño: cómo lo expresa cada uno y qué necesita recibir.</li>
+                  <li>Atracción: qué los acerca y qué disfrutan juntos.</li>
+                  <li>Comunicación: cómo se entienden y dónde pueden surgir roces.</li>
+                  <li>Convivencia: acuerdos y diferencias que conviene conversar.</li>
                 </ul>
-                <div class="disclaimer">Busca estos temas en la lectura según los aspectos de sus cartas. La atracción, la comunicación y el compromiso son dimensiones distintas; la carta no decide por ustedes.</div>
+                <div class="disclaimer">La lectura desarrolla estos temas según los aspectos de sus cartas.</div>
               </details>
               <div id="sinastria-resultado" style="margin-top:14px;"></div>
               <details class="personas-compuesta">
