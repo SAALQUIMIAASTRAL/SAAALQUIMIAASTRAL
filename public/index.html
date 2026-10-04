@@ -1610,6 +1610,19 @@
     min-height:40px;padding:2px 2px;gap:1px;font-size:10px;line-height:1.15;
   }
   body.app-nativa.app-ios .bottomnav .it .g{font-size:16px;}
+  /* La app instalada desde la web (PWA) usa el mismo espacio que la app móvil. */
+  body.app-instalada{min-height:100dvh;background:var(--page-bg);}
+  body.app-instalada .page{width:100%;min-height:100dvh;padding:0;background:var(--page-bg);}
+  body.app-instalada .phone{width:100%;max-width:100%;height:100%;padding:0;border-radius:0;background:var(--page-bg);box-shadow:none;}
+  body.app-instalada .screen{width:100%;height:100dvh;min-height:0;border-radius:0;}
+  body.app-instalada .topbar{min-height:48px;padding:calc(2px + env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) 4px max(12px,env(safe-area-inset-left,0px));gap:8px;}
+  body.app-instalada .topbar .menu,
+  body.app-instalada .topbar .right{min-width:44px;min-height:44px;}
+  body.app-instalada .scroll{padding-bottom:12px;}
+  body.app-instalada .bottomnav{padding:4px max(4px,env(safe-area-inset-right,0px)) calc(4px + env(safe-area-inset-bottom,0px)) max(4px,env(safe-area-inset-left,0px));}
+  body.app-instalada .bottomnav .it{min-height:48px;padding:3px 2px;gap:2px;font-size:clamp(9px,2.6vw,11px);line-height:1.15;}
+  body.app-instalada .bottomnav .it .g{font-size:18px;}
+
   .install-btn{bottom:calc(var(--alto-nav) + 10px);}
   .auth-overlay,#pantalla-mi-perfil,#pantalla-legal{padding:calc(22px + env(safe-area-inset-top,0px)) calc(20px + env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) calc(20px + env(safe-area-inset-left,0px));}
   .auth-overlay > *{flex-shrink:0;}
@@ -1677,9 +1690,12 @@
   // quitamos el marco decorativo de teléfono: aquí la pantalla YA es un teléfono real.
   (function () {
     var esNativo = false;
+    var esInstalada = false;
     try {
       esNativo = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform());
+      esInstalada = !!(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
     } catch (e) {}
+    if (esInstalada && !esNativo) document.body.classList.add('app-instalada');
     if (esNativo) {
       document.body.classList.add('app-nativa');
       var plataforma = typeof window.Capacitor.getPlatform === 'function' ? window.Capacitor.getPlatform() : '';
@@ -8235,7 +8251,7 @@
           await Promise.all(nombresCache.map(n => caches.delete(n)));
         }
       } catch (e) { /* si falla la limpieza, igual intentamos registrar abajo */ }
-      navigator.serviceWorker.register('service-worker.js?v=185').catch(() => {});
+      navigator.serviceWorker.register('service-worker.js?v=193').catch(() => {});
     });
   }
 </script>
