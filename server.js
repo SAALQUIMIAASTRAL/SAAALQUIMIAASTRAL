@@ -221,13 +221,43 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 // ---- Conexión a Astrology API ----
 // Traduce una lista de textos al español con Claude (mucho más confiable que reemplazos de palabras sueltas).
 // Si falla, regresa los textos originales sin tronar la sección.
+function normalizarEspanolMX(texto) {
+  if (typeof texto !== 'string') return texto;
+  return texto
+    .replace(/\b(vuestra|vuestro|vuestras|vuestros)\b/gi, (p) => ({vuestra:'su',vuestro:'su',vuestras:'sus',vuestros:'sus'}[p.toLowerCase()]))
+    .replace(/\bvosotros\b/gi, 'ustedes')
+    .replace(/\bvosotras\b/gi, 'ustedes')
+    .replace(/\balinearos\b/gi, 'ponerse de acuerdo')
+    .replace(/\bcomunicaros\b/gi, 'comunicarse')
+    .replace(/\bentenderos\b/gi, 'entenderse')
+    .replace(/\bconoceros\b/gi, 'conocerse')
+    .replace(/\bapoyaros\b/gi, 'apoyarse')
+    .replace(/\bencontráis\b/gi, 'encuentran')
+    .replace(/\bpodéis\b/gi, 'pueden')
+    .replace(/\btenéis\b/gi, 'tienen')
+    .replace(/\bsois\b/gi, 'son')
+    .replace(/\bqueréis\b/gi, 'quieren')
+    .replace(/\bnecesitáis\b/gi, 'necesitan')
+    .replace(/\bsentís\b/gi, 'sienten')
+    .replace(/\bhacéis\b/gi, 'hacen')
+    .replace(/\bdebéis\b/gi, 'deben')
+    .replace(/\bvos\b/gi, 'tú')
+    .replace(/\btenés\b/gi, 'tienes')
+    .replace(/\bpodés\b/gi, 'puedes')
+    .replace(/\bquerés\b/gi, 'quieres')
+    .replace(/\bsos\b/gi, 'eres')
+    .replace(/\bordenador\b/gi, 'computadora')
+    .replace(/\bmóvil\b/gi, 'celular');
+}
+
 async function traducirBloqueSinCache(lista) {
+  lista = lista.map(normalizarEspanolMX);
   if (!process.env.ANTHROPIC_API_KEY) {
     console.error('traducirBloque: falta ANTHROPIC_API_KEY en las variables de entorno');
     return { textos: lista, debug: 'Falta la variable de entorno ANTHROPIC_API_KEY en Render.' };
   }
   try {
-    const prompt = `Traduce cada uno de estos textos de astrología al español de México/Latinoamérica, natural y con tono cálido y profesional (no traducción literal palabra por palabra, y sin modismos de España como "vosotros" o "vale"). Responde ÚNICAMENTE con un array JSON de strings, en el mismo orden, sin explicación ni markdown:\n\n${JSON.stringify(lista)}`;
+    const prompt = `Reescribe cada texto astrológico en español de México, dirigido de tú a una persona y de ustedes a dos personas. Usa su relación y entre ustedes. Nunca uses vosotros, vuestro, vuestra, vos, sois, tenéis, podéis, os ni verbos como alinearos. No mezcles inglés ni portugués. Conserva las tildes correctas, los nombres propios, planetas, signos, casas, aspectos, fechas y cifras; no inventes datos ni cambies el significado. Explica de forma breve y concreta qué significa cada dato en situaciones cotidianas. Evita frases vacías como esta área respalda bien su relación, alinear energías o potenciar la conexión: expresa la facilidad o dificultad específica descrita por el texto. No prometas resultados ni añadas rasgos que no aparecen en el original. Conserva la estructura de párrafos. Responde ÚNICAMENTE con un array JSON de strings en el mismo orden, sin explicación ni markdown:\n\n${JSON.stringify(lista)}`;
     const controlador = new AbortController();
     const timeoutId = setTimeout(() => controlador.abort(), 40000);
     const respuesta = await fetch('https://api.anthropic.com/v1/messages', {
@@ -254,11 +284,11 @@ async function traducirBloqueSinCache(lista) {
       console.error('traducirBloque: no se pudo parsear. Texto crudo:', texto.slice(0, 800));
       return { textos: lista, debug: `No se pudo parsear como JSON. Texto crudo: ${texto.slice(0, 500)}` };
     }
-    if (!Array.isArray(traducidos) || traducidos.length !== lista.length) {
+    if (!Array.isArray(traducidos) || traducidos.length !== lista.length || traducidos.some(t => typeof t !== 'string' || !t.trim())) {
       console.error('traducirBloque: tamaño no coincide. Esperado', lista.length, 'recibido', Array.isArray(traducidos) ? traducidos.length : typeof traducidos);
       return { textos: lista, debug: `Array no coincide en tamaño. Esperado ${lista.length}, recibido ${Array.isArray(traducidos) ? traducidos.length : typeof traducidos}` };
     }
-    return { textos: traducidos, debug: null };
+    return { textos: traducidos.map(normalizarEspanolMX), debug: null };
   } catch (e) {
     console.error('traducirBloque falló:', e.message);
     return { textos: lista, debug: 'Excepción: ' + e.message };
@@ -268,7 +298,7 @@ async function traducirBloqueSinCache(lista) {
 // Traduce una lista completa dividiéndola en bloques de 25 (respuestas grandes como
 // sinastría pueden traer 60+ textos, y un solo bloque gigante es más frágil/lento)
 async function traducirBloque(lista) {
-  const clave = claveAhorro('traduccion-es-v1', lista);
+  const clave = claveAhorro('traduccion-es-MX-v2', lista);
   return consultaUnica(clave, async () => {
     const guardado = cacheGet(clave);
     if (guardado !== null) return { textos:[...guardado] };
@@ -303,6 +333,9 @@ async function traducirInterpretacionesEnObjeto(raiz) {
     if (Array.isArray(obj)) { obj.forEach(buscar); return; }
     for (const campo of CAMPOS_INTERPRETATIVOS) {
       if (typeof obj[campo] === 'string' && obj[campo].trim().length > 3) objetos.push({ obj, campo });
+      else if (Array.isArray(obj[campo])) obj[campo].forEach((texto, indice) => {
+        if (typeof texto === 'string' && texto.trim().length > 3) objetos.push({ obj:obj[campo], campo:indice });
+      });
     }
     for (const key of Object.keys(obj)) {
       if (obj[key] && typeof obj[key] === 'object') buscar(obj[key]);
@@ -335,7 +368,7 @@ async function sintetizarPersonalidad10Bloques(interpretaciones) {
   if (!process.env.ANTHROPIC_API_KEY) return null;
 
   const listaCategorias = CATEGORIAS_PERSONALIDAD.map(([clave, nombre]) => `- ${clave}: "${nombre}"`).join('\n');
-  const prompt = `Eres una astróloga profesional escribiendo un análisis de personalidad en español de México/Latinoamérica, cálido pero profesional, para alguien SIN conocimientos de astrología.
+  const prompt = `Eres una astróloga profesional escribiendo un análisis de personalidad en español de México, de tú, cálido pero profesional, para alguien SIN conocimientos de astrología. No uses vosotros, vuestro, vuestra, vos ni formas verbales de España. Usa ejemplos cotidianos concretos, sin frases genéricas y sin mezclar idiomas.
 
 Con base ÚNICAMENTE en estos datos técnicos reales de la carta natal (no inventes nada que no esté aquí):
 
@@ -1258,7 +1291,7 @@ app.post('/asistente-ia', requireLogin, requirePremium, async (req, res) => {
       const aspectosPrincipales = cd.aspects.slice(0, 5).map(a => `${a.point1} ${a.aspect_type} ${a.point2}`).join(', ');
       contexto += `Aspectos principales: ${aspectosPrincipales}\n\n`;
     }
-    contexto += `Responde en español, de manera cálida, concreta y personal. Máximo 150 palabras. No inventes posiciones planetarias — solo usa las que te dí.`;
+    contexto += `Responde en español de México, de tú, con ejemplos concretos; sin vosotros, vuestro, vuestra ni formas de España. Evita frases genéricas y no mezcles idiomas. Máximo 150 palabras. No inventes posiciones planetarias — solo usa las que te dí.`;
 
     const mensajes = [
       ...(historial || []),
@@ -1399,6 +1432,7 @@ app.post('/sinastria', requireLogin, async (req, res) => {
 
       // ¿Ya calculamos esta sinastría antes? Si sí, la regresamos sin gastar créditos
       if (persona.sinastria_cache) {
+        await traducirInterpretacionesEnObjeto(persona.sinastria_cache);
         return res.json({ reporte: persona.sinastria_cache, desde_cache: true });
       }
       datosOtraPersona = birthDataDesdePerfil(persona, persona.nombre);
@@ -1418,27 +1452,13 @@ app.post('/sinastria', requireLogin, async (req, res) => {
       report_options: { tradition: 'psychological', language: 'es' },
     });
 
-    // Buscamos y traducimos CUALQUIER campo "interpretation" en toda la respuesta,
-    // sin importar en qué nivel de anidación esté (la ruta exacta puede variar)
-    const objetosConInterpretacion = [];
-    function buscarInterpretaciones(obj) {
-      if (!obj || typeof obj !== 'object') return;
-      if (typeof obj.interpretation === 'string' && obj.interpretation.trim()) objetosConInterpretacion.push(obj);
-      for (const key of Object.keys(obj)) {
-        if (obj[key] && typeof obj[key] === 'object') buscarInterpretaciones(obj[key]);
-      }
-    }
-    buscarInterpretaciones(respuesta.data);
-    if (objetosConInterpretacion.length) {
-      const { textos: traducidos } = await traducirTextosConIA(objetosConInterpretacion.map(o => o.interpretation));
-      objetosConInterpretacion.forEach((o, i) => { if (traducidos[i]) o.interpretation = traducidos[i]; });
-    }
+    const interpretacionesTraducidas = await traducirInterpretacionesEnObjeto(respuesta.data);
 
     if (personaGuardada) {
       await req.supabase.from('otras_cartas').update({ sinastria_cache: respuesta.data }).eq('id', personaGuardada.id);
     }
 
-    res.json({ reporte: respuesta.data, desde_cache: false, debug_interpretaciones_traducidas: objetosConInterpretacion.length });
+    res.json({ reporte: respuesta.data, desde_cache: false, debug_interpretaciones_traducidas: interpretacionesTraducidas });
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo calcular la sinastría.', detalle_tecnico: err?.response?.data || err.message });
