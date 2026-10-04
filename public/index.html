@@ -20,7 +20,7 @@
   (() => {
     let preferencia = 'light';
     try { preferencia = localStorage.getItem('saa_tema') || 'light'; } catch (_) {}
-    const oscuro = preferencia === 'dark' || (preferencia === 'system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    const oscuro = preferencia === 'dark';
     document.documentElement.setAttribute('data-theme', oscuro ? 'dark' : 'light');
   })();
 </script>
@@ -1767,8 +1767,6 @@
           <span><b>Claro</b><small>Blanco, lavanda y dorado.</small></span></label>
         <label class="apariencia-opcion"><input type="radio" name="saa-apariencia" value="dark" onchange="elegirApariencia(this.value)">
           <span><b>Oscuro</b><small>Morado profundo, lavanda y dorado suave.</small></span></label>
-        <label class="apariencia-opcion"><input type="radio" name="saa-apariencia" value="system" onchange="elegirApariencia(this.value)">
-          <span><b>Automático</b><small>Sigue el modo de tu teléfono.</small></span></label>
       </fieldset>
 
 
@@ -7720,10 +7718,9 @@
   }
 
   // ---- Función global de cerrar sección ----
-  const mediaApariencia = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
   let preferenciaApariencia = 'light';
   function actualizarApariencia() {
-    const oscuro = preferenciaApariencia === 'dark' || (preferenciaApariencia === 'system' && !!mediaApariencia?.matches);
+    const oscuro = preferenciaApariencia === 'dark';
     document.documentElement.setAttribute('data-theme', oscuro ? 'dark' : 'light');
     document.querySelectorAll('input[name="saa-apariencia"]').forEach(input => {
       input.checked = input.value === preferenciaApariencia;
@@ -7732,7 +7729,7 @@
     if (barra) barra.setAttribute('content', oscuro ? '#17121f' : '#331e37');
   }
   function elegirApariencia(preferencia) {
-    preferenciaApariencia = ['light','dark','system'].includes(preferencia) ? preferencia : 'light';
+    preferenciaApariencia = ['light','dark'].includes(preferencia) ? preferencia : 'light';
     try { localStorage.setItem('saa_tema', preferenciaApariencia); } catch (_) {}
     actualizarApariencia();
   }
@@ -7740,11 +7737,9 @@
   function aplicarTemaGuardado() {
     let guardado = 'light';
     try { guardado = localStorage.getItem('saa_tema') || 'light'; } catch (_) {}
-    preferenciaApariencia = ['light','dark','system'].includes(guardado) ? guardado : 'light';
+    preferenciaApariencia = ['light','dark'].includes(guardado) ? guardado : 'light';
     actualizarApariencia();
   }
-  if (mediaApariencia?.addEventListener) mediaApariencia.addEventListener('change', actualizarApariencia);
-  else if (mediaApariencia?.addListener) mediaApariencia.addListener(actualizarApariencia);
   window.addEventListener('storage', evento => { if (evento.key === 'saa_tema') aplicarTemaGuardado(); });
 
   function cerrar(id) { const el = document.getElementById(id); if (el) el.innerHTML = ''; }
