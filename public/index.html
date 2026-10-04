@@ -203,7 +203,7 @@
     padding:6px 18px 12px;flex:none;
   }
   body.app-nativa .topbar{
-    min-height:40px;padding:3px 14px 5px;gap:8px;
+    min-height:44px;padding:calc(2px + env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) 4px max(12px,env(safe-area-inset-left,0px));gap:8px;
   }
   body.app-nativa .topbar .menu{flex:0 0 24px;}
   body.app-nativa .topbar .brand{
