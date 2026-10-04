@@ -18,14 +18,33 @@ app.use(express.static('public'));
 
 // ---- Caché en memoria con limpieza automática ----
 const memoriaCache = new Map();
+const MAX_CACHE_ENTRADAS = 2000;
+const MAX_CACHE_BYTES = 32 * 1024 * 1024;
+let bytesCache = 0;
+function cacheBorrar(clave) {
+  const anterior = memoriaCache.get(clave);
+  if (anterior) bytesCache -= anterior.bytes || 0;
+  memoriaCache.delete(clave);
+}
 function cacheGet(clave) {
   const item = memoriaCache.get(clave);
   if (!item) return null;
-  if (Date.now() > item.expira) { memoriaCache.delete(clave); return null; }
+  if (Date.now() >= item.expira) { cacheBorrar(clave); return null; }
+  memoriaCache.delete(clave);
+  memoriaCache.set(clave, item);
   return item.valor;
 }
 function cacheSet(clave, valor, ttlMs) {
-  memoriaCache.set(clave, { valor, expira: Date.now() + ttlMs });
+  cacheBorrar(clave);
+  let bytes;
+  try { bytes = Buffer.byteLength(JSON.stringify(valor), 'utf8'); }
+  catch (_) { return; }
+  if (!Number.isFinite(ttlMs) || ttlMs <= 0 || bytes > MAX_CACHE_BYTES) return;
+  while (memoriaCache.size >= MAX_CACHE_ENTRADAS || bytesCache + bytes > MAX_CACHE_BYTES) {
+    cacheBorrar(memoriaCache.keys().next().value);
+  }
+  memoriaCache.set(clave, { valor, expira:Date.now()+ttlMs, bytes });
+  bytesCache += bytes;
 }
 function cacheHash(...partes) {
   return crypto.createHash('md5').update(partes.join('|')).digest('hex').slice(0, 12);
@@ -35,9 +54,86 @@ function cacheHash(...partes) {
 setInterval(() => {
   const ahora = Date.now();
   for (const [clave, item] of memoriaCache.entries()) {
-    if (ahora > item.expira) memoriaCache.delete(clave);
+    if (ahora >= item.expira) cacheBorrar(clave);
+  }
+  if (Object.values(metricasAhorro).some(v => v > 0)) {
+    console.info('Reutilización de consultas', { ...metricasAhorro, entradas:memoriaCache.size, bytes:bytesCache });
+    Object.keys(metricasAhorro).forEach(k => { metricasAhorro[k] = 0; });
   }
 }, 10 * 60 * 1000);
+
+// Reutilización acotada y consultas simultáneas (sin datos personales en los registros).
+const consultasEnCurso = new Map();
+const metricasAhorro = { compartidas:0, memoria:0, persistente:0, calculadas:0 };
+function claveAhorro(...partes) {
+  function ordenar(valor) {
+    if (Array.isArray(valor)) return valor.map(ordenar);
+    if (!valor || typeof valor !== 'object') return valor;
+    return Object.fromEntries(Object.keys(valor).sort().map(k => [k, ordenar(valor[k])]));
+  }
+  return crypto.createHash('sha256').update(JSON.stringify(ordenar(partes))).digest('hex');
+}
+async function consultaUnica(clave, calcular) {
+  if (consultasEnCurso.has(clave)) {
+    metricasAhorro.compartidas++;
+    return consultasEnCurso.get(clave);
+  }
+  const tarea = Promise.resolve().then(calcular);
+  consultasEnCurso.set(clave, tarea);
+  try { return await tarea; }
+  finally { if (consultasEnCurso.get(clave) === tarea) consultasEnCurso.delete(clave); }
+}
+// Solo para JSON de rutas autenticadas. No conserva la respuesta después de terminar.
+function rutaSinDuplicados(nombre, handler) {
+  return async (req, res, next) => {
+    if (!req.userId) return res.status(401).json({ error:'Inicia sesión.' });
+    const clave = claveAhorro('ruta-v1', nombre, req.userId, req.params || {}, req.body || {}, zonaHorariaDesdeReq(req));
+    try {
+      const resultado = await consultaUnica(clave, async () => {
+        let codigo = 200, respuesta, enviada = false;
+        const salida = {
+          status(valor) { codigo = valor; return salida; },
+          json(valor) { respuesta = valor; enviada = true; return salida; }
+        };
+        await handler(req, salida);
+        if (!enviada) throw new Error('La consulta no devolvió una respuesta.');
+        return { codigo, respuesta };
+      });
+      return res.status(resultado.codigo).json(resultado.respuesta);
+    } catch (err) { return next(err); }
+  };
+}
+// Activar solo en el servicio de pruebas tras habilitar su tabla de caché pública.
+const CACHE_CIELO_PERSISTENTE = process.env.CACHE_CIELO_PERSISTENTE === 'true';
+// La tabla compartida se usa EXCLUSIVAMENTE para cielo público, nunca para cartas o traducciones.
+async function cacheCieloPublico(clave, ttl, calcular, forzar = false) {
+  const llave = 'cielo-publico-v1-' + claveAhorro(clave);
+  return consultaUnica(llave, async () => {
+    if (!forzar) {
+      const local = cacheGet(llave);
+      if (local !== null) { metricasAhorro.memoria++; return JSON.parse(JSON.stringify(local)); }
+      if (CACHE_CIELO_PERSISTENTE) try {
+        const { data, error } = await supabase.from('cache_persistente').select('datos').eq('clave', llave).maybeSingle();
+        const guardado = data?.datos;
+        if (!error && guardado?.version === 1 && guardado.expira > Date.now() && guardado.valor != null) {
+          cacheSet(llave, guardado.valor, guardado.expira - Date.now());
+          metricasAhorro.persistente++;
+          return JSON.parse(JSON.stringify(guardado.valor));
+        }
+      } catch (_) { /* La caché es una optimización: no bloquea el cálculo. */ }
+    }
+    const valor = await calcular();
+    metricasAhorro.calculadas++;
+    cacheSet(llave, valor, ttl);
+    if (CACHE_CIELO_PERSISTENTE) try {
+      const { error } = await supabase.from('cache_persistente').upsert({
+        clave:llave, datos:{ version:1, expira:Date.now()+ttl, valor }, updated_at:new Date().toISOString()
+      }, { onConflict:'clave' });
+      if (error) console.warn('No se pudo guardar la caché pública:', error.code || 'error');
+    } catch (_) { console.warn('No se pudo guardar la caché pública.'); }
+    return JSON.parse(JSON.stringify(valor));
+  });
+}
 
 const TTL = {
   PERFIL: 5 * 60 * 1000,                 // 5 min
@@ -125,7 +221,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 // ---- Conexión a Astrology API ----
 // Traduce una lista de textos al español con Claude (mucho más confiable que reemplazos de palabras sueltas).
 // Si falla, regresa los textos originales sin tronar la sección.
-async function traducirBloque(lista) {
+async function traducirBloqueSinCache(lista) {
   if (!process.env.ANTHROPIC_API_KEY) {
     console.error('traducirBloque: falta ANTHROPIC_API_KEY en las variables de entorno');
     return { textos: lista, debug: 'Falta la variable de entorno ANTHROPIC_API_KEY en Render.' };
@@ -171,6 +267,19 @@ async function traducirBloque(lista) {
 
 // Traduce una lista completa dividiéndola en bloques de 25 (respuestas grandes como
 // sinastría pueden traer 60+ textos, y un solo bloque gigante es más frágil/lento)
+async function traducirBloque(lista) {
+  const clave = claveAhorro('traduccion-es-v1', lista);
+  return consultaUnica(clave, async () => {
+    const guardado = cacheGet(clave);
+    if (guardado !== null) return { textos:[...guardado] };
+    const resultado = await traducirBloqueSinCache(lista);
+    if (!resultado.debug && Array.isArray(resultado.textos) && resultado.textos.length === lista.length) {
+      cacheSet(clave, resultado.textos, 7 * 24 * 60 * 60 * 1000);
+    }
+    return resultado;
+  });
+}
+
 async function traducirTextosConIA(textos) {
   const lista = (textos || []).filter(t => t && typeof t === 'string');
   if (!lista.length) return { textos: [], debug: 'sin textos que traducir' };
@@ -282,9 +391,7 @@ const astrologyApi = axios.create({
 async function obtenerLunaGlobalActual() {
   const bloque30m = Math.floor(Date.now() / TTL.LUNA);
   const cacheKey = cacheHash('luna-global-v2', bloque30m);
-  const cached = cacheGet(cacheKey);
-  if (cached) return cached;
-
+  return cacheCieloPublico(cacheKey, TTL.LUNA, async () => {
   const ahora = new Date();
   const respuesta = await astrologyApi.post('/analysis/lunar-analysis', {
     datetime_location: {
@@ -302,8 +409,8 @@ async function obtenerLunaGlobalActual() {
 
   const respuestaLuna = { mensaje: 'Datos lunares actuales', luna: respuesta.data };
   await traducirInterpretacionesEnObjeto(respuestaLuna);
-  cacheSet(cacheKey, respuestaLuna, TTL.LUNA);
   return respuestaLuna;
+  });
 }
 
 
@@ -312,9 +419,7 @@ async function obtenerLunaGlobalActual() {
 async function obtenerCieloGlobalActual() {
   const bloque30m = Math.floor(Date.now() / TTL.TRANSITOS_HOY);
   const cacheKey = cacheHash('cielo-global-v1', bloque30m);
-  const cached = cacheGet(cacheKey);
-  if (cached) return cached;
-
+  return cacheCieloPublico(cacheKey, TTL.TRANSITOS_HOY, async () => {
   const ahora = new Date();
   const respuesta = await astrologyApi.post('/charts/natal', {
     subject: {
@@ -334,8 +439,8 @@ async function obtenerCieloGlobalActual() {
   });
 
   const cielo = { mensaje: 'Cielo actual', datos_hoy: respuesta.data };
-  cacheSet(cacheKey, cielo, TTL.TRANSITOS_HOY);
   return cielo;
+  });
 }
 
 // ============================================================
@@ -542,12 +647,12 @@ app.post('/perfil', requireLogin, async (req, res) => {
 
   if (error) return res.status(400).json({ error: error.message });
 
-  memoriaCache.delete(cacheHash('perfil', req.userId));
+  cacheBorrar(cacheHash('perfil', req.userId));
 
   const normalizarNumero = v => (v === null || v === undefined || v === '' ? null : Number(v));
   const cambioNatal = !perfilAnterior || [
     ['fecha_nacimiento', perfilAnterior?.fecha_nacimiento, fecha_nacimiento],
-    ['hora_nacimiento', perfilAnterior?.hora_nacimiento, hora_nacimiento],
+    ['hora_nacimiento', String(perfilAnterior?.hora_nacimiento || '').slice(0,5), String(hora_nacimiento || '').slice(0,5)],
     ['ciudad_nacimiento', perfilAnterior?.ciudad_nacimiento, ciudad_nacimiento],
     ['pais_codigo', perfilAnterior?.pais_codigo, pais_codigo],
     ['latitud', normalizarNumero(perfilAnterior?.latitud), normalizarNumero(latitud ?? perfilAnterior?.latitud)],
@@ -560,13 +665,13 @@ app.post('/perfil', requireLogin, async (req, res) => {
     const hoy = new Date();
     const anioActual = hoy.getUTCFullYear();
     const mesActual = hoy.getUTCMonth() + 1;
-    memoriaCache.delete(cacheHash(req.userId, 'acg', 'propia'));
-    memoriaCache.delete(cacheHash(req.userId, 'estrellas', 'propia'));
-    memoriaCache.delete(cacheHash(req.userId, 'calendario-lunar', `${anioActual}-${mesActual}`));
-    memoriaCache.delete(cacheHash(req.userId, 'home', hoyStr()));
-    memoriaCache.delete(cacheHash(req.userId, 'numerologia', 'propia', hoyStr()));
-    memoriaCache.delete(cacheHash(req.userId, 'energia', hoyStr()));
-    memoriaCache.delete(cacheHash(req.userId, 'horoscopo', hoyStr()));
+    cacheBorrar(cacheHash(req.userId, 'acg', 'propia'));
+    cacheBorrar(cacheHash(req.userId, 'estrellas', 'propia'));
+    cacheBorrar(cacheHash(req.userId, 'calendario-lunar', `${anioActual}-${mesActual}`));
+    cacheBorrar(cacheHash(req.userId, 'home', hoyStr()));
+    cacheBorrar(cacheHash(req.userId, 'numerologia', 'propia', hoyStr()));
+    cacheBorrar(cacheHash(req.userId, 'energia', hoyStr()));
+    cacheBorrar(cacheHash(req.userId, 'horoscopo', hoyStr()));
     await req.supabase.from('natal_charts').delete().eq('user_id', req.userId);
   }
 
@@ -587,7 +692,7 @@ app.get('/perfil', requireLogin, async (req, res) => {
 // ============================================================
 // RUTA: Calcular la carta natal REAL (texto: Sol, Luna, etc.)
 // ============================================================
-app.post('/carta-natal', requireLogin, async (req, res) => {
+app.post('/carta-natal', requireLogin, rutaSinDuplicados('/carta-natal', async (req, res) => {
   try {
     // 1) ¿Ya la calculamos antes? Si sí, la regresamos sin gastar créditos
     const { data: yaExiste } = await req.supabase
@@ -626,12 +731,12 @@ app.post('/carta-natal', requireLogin, async (req, res) => {
     console.error('carta-natal falló:', detalle);
     res.status(500).json({ error: 'No se pudo calcular la carta. Revisa los datos de nacimiento.', detalle_tecnico: detalle });
   }
-});
+}));
 
 // ============================================================
 // RUTA: Generar la carta natal VISUAL (la "rueda" en SVG)
 // ============================================================
-app.post('/carta-visual', requireLogin, async (req, res) => {
+app.post('/carta-visual', requireLogin, rutaSinDuplicados('/carta-visual', async (req, res) => {
   try {
     // 1) Buscamos la carta guardada de esta usuaria
     const { data: cartaExistente } = await req.supabase
@@ -679,7 +784,7 @@ app.post('/carta-visual', requireLogin, async (req, res) => {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo generar la carta visual.', detalle_tecnico: err?.response?.data || err.message });
   }
-});
+}));
 
 // ============================================================
 // RUTA: Fase lunar de HOY (real)
@@ -698,7 +803,7 @@ app.get('/carta-natal/ultima', requireLogin, async (req, res) => {
 });
 
 // RUTA: Resumen/reporte de personalidad de la carta natal (en español)
-app.post('/resumen-natal', requireLogin, async (req, res) => {
+app.post('/resumen-natal', requireLogin, rutaSinDuplicados('/resumen-natal', async (req, res) => {
   try {
     const { data: cartaExistente } = await req.supabase
       .from('natal_charts')
@@ -734,7 +839,7 @@ app.post('/resumen-natal', requireLogin, async (req, res) => {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo generar el resumen.', detalle_tecnico: err?.response?.data || err.message });
   }
-});
+}));
 
 app.post('/luna', requireLogin, async (req, res) => {
   try {
@@ -1315,7 +1420,7 @@ app.delete('/otras-cartas/:id', requireLogin, async (req, res) => {
 });
 
 // RUTA: Resumen de personalidad de una carta guardada (otra persona)
-app.post('/otras-cartas/:id/resumen', requireLogin, async (req, res) => {
+app.post('/otras-cartas/:id/resumen', requireLogin, rutaSinDuplicados('/otras-cartas/:id/resumen', async (req, res) => {
   try {
     const { data: persona, error } = await req.supabase
       .from('otras_cartas')
@@ -1340,10 +1445,10 @@ app.post('/otras-cartas/:id/resumen', requireLogin, async (req, res) => {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo generar el resumen.', detalle_tecnico: err?.response?.data || err.message });
   }
-});
+}));
 
 // RUTA: Generar la carta visual (rueda) de una persona guardada
-app.post('/otras-cartas/:id/visual', requireLogin, async (req, res) => {
+app.post('/otras-cartas/:id/visual', requireLogin, rutaSinDuplicados('/otras-cartas/:id/visual', async (req, res) => {
   try {
     const { data: persona, error } = await req.supabase
       .from('otras_cartas')
@@ -1375,7 +1480,7 @@ app.post('/otras-cartas/:id/visual', requireLogin, async (req, res) => {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo generar la carta visual.', detalle_tecnico: err?.response?.data || err.message });
   }
-});
+}));
 
 // RUTA: Guardar y calcular la carta de otra persona (familia, pareja, amigas — hasta 8)
 app.post('/otras-cartas', requireLogin, async (req, res) => {
@@ -1385,7 +1490,7 @@ app.post('/otras-cartas', requireLogin, async (req, res) => {
       return res.status(400).json({ error: 'Faltan datos de la persona.' });
     }
 
-    const { count } = await req.supabase.from('otras_cartas').select('*', { count: 'exact', head: true });
+    const { count } = await req.supabase.from('otras_cartas').select('*', { count: 'exact', head: true }).eq('user_id', req.userId);
     if (count >= 8) return res.status(400).json({ error: 'Ya tienes 8 cartas guardadas (el máximo).' });
 
     const respuesta = await astrologyApi.post('/charts/natal', {
@@ -1420,6 +1525,26 @@ app.put('/otras-cartas/:id', requireLogin, async (req, res) => {
     const { nombre, fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo, latitud, longitud } = req.body;
     if (!nombre || !fecha_nacimiento || !ciudad_nacimiento || !pais_codigo) {
       return res.status(400).json({ error: 'Faltan datos de la persona.' });
+    }
+
+    const { data: anterior, error: errorAnterior } = await req.supabase
+      .from('otras_cartas').select('*').eq('id', req.params.id).eq('user_id', req.userId).maybeSingle();
+    if (errorAnterior) return res.status(400).json({ error:errorAnterior.message });
+    if (!anterior) return res.status(404).json({ error:'No se encontró esa carta.' });
+    const numero = v => v == null || v === '' ? null : Number(v);
+    const cambioNatal = [
+      [anterior.fecha_nacimiento, fecha_nacimiento],
+      [String(anterior.hora_nacimiento || '').slice(0,5), String(hora_nacimiento || '').slice(0,5)],
+      [anterior.ciudad_nacimiento, ciudad_nacimiento],
+      [anterior.pais_codigo, pais_codigo],
+      [numero(anterior.latitud), numero(latitud ?? anterior.latitud)],
+      [numero(anterior.longitud), numero(longitud ?? anterior.longitud)]
+    ].some(([antes, despues]) => String(antes ?? '') !== String(despues ?? ''));
+    if (!cambioNatal) {
+      const { data, error } = await req.supabase.from('otras_cartas').update({ nombre })
+        .eq('id', req.params.id).eq('user_id', req.userId).select().single();
+      if (error) return res.status(400).json({ error:error.message });
+      return res.json({ mensaje:'Carta actualizada', carta:data, cambio_natal:false });
     }
 
     const respuesta = await astrologyApi.post('/charts/natal', {
@@ -1459,26 +1584,11 @@ app.get('/otras-cartas', requireLogin, async (req, res) => {
   const { data, error } = await req.supabase
     .from('otras_cartas')
     .select('id, nombre, fecha_nacimiento, ciudad_nacimiento, created_at')
+    .eq('user_id', req.userId)
     .order('created_at', { ascending: true });
   if (error) return res.status(400).json({ error: error.message });
 
-  // Diagnóstico: comparamos contra el cliente admin (sin RLS) para detectar
-  // si RLS está bloqueando filas que sí existen en la tabla
-  let debug = null;
-  try {
-    const { data: todasAdmin } = await supabase
-      .from('otras_cartas')
-      .select('id, user_id, nombre')
-      .eq('user_id', req.userId);
-    debug = {
-      filas_con_rls: (data || []).length,
-      filas_sin_rls_mismo_user_id: (todasAdmin || []).length,
-      ids_con_rls: (data || []).map(c => c.id),
-      ids_sin_rls: (todasAdmin || []).map(c => c.id),
-    };
-  } catch (eDebug) { debug = { error_debug: eDebug.message }; }
-
-  res.json({ cartas: data || [], debug });
+  res.json({ cartas:data || [] });
 });
 
 // RUTA: Próximos eclipses y cómo afectan tu carta natal
@@ -1618,7 +1728,7 @@ function normalizarEventosGeneralesMes(payload, anio, mes, tz) {
 
 // Resumen mensual independiente del calendario de días propicios.
 // Los eventos globales se comparten; los tránsitos conservan el cálculo natal existente.
-app.post('/mes-astrologico', requireLogin, async (req, res) => {
+app.post('/mes-astrologico', requireLogin, rutaSinDuplicados('/mes-astrologico', async (req, res) => {
   try {
     const perfil = await leerPerfil(req);
     if (!perfil) return res.status(400).json({ error:'Primero guarda tus datos de nacimiento.' });
@@ -1629,11 +1739,10 @@ app.post('/mes-astrologico', requireLogin, async (req, res) => {
     if (!Number.isInteger(anio) || anio < 1900 || anio > 2100 || !Number.isInteger(mes) || mes < 1 || mes > 12) return res.status(400).json({ error:'Elige un mes y un año válidos.' });
     const dias = new Date(Date.UTC(anio,mes,0)).getUTCDate();
     const refrescar = req.body?.forzar_recalculo === true;
-    const globalKey = cacheHash('eventos-mensuales-v1', anio, mes);
-    const personalKey = cacheHash(req.userId, 'transitos-mensuales-v1', anio, mes);
+    const globalKey = claveAhorro('eventos-mensuales-v2', anio, mes);
+    const personalKey = claveAhorro(req.userId, 'transitos-mensuales-v2', anio, mes, birthDataDesdePerfil(perfil));
     async function consultarGeneral() {
-      const guardado = cacheGet(globalKey);
-      if (guardado && !refrescar) return guardado;
+      return cacheCieloPublico(globalKey, TTL.CALENDARIO_LUNAR, async () => {
       const desde = new Date(Date.UTC(anio,mes-1,0)).toISOString().slice(0,10);
       const hasta = new Date(Date.UTC(anio,mes,2)).toISOString().slice(0,10);
       const r = await astrologyApi.post('/mundane/events/search', {
@@ -1643,10 +1752,11 @@ app.post('/mes-astrologico', requireLogin, async (req, res) => {
       });
       // Validar antes de guardar: una respuesta incompleta nunca se convierte en "sin eventos".
       normalizarEventosGeneralesMes(r.data, anio, mes, tz);
-      cacheSet(globalKey, r.data, TTL.CALENDARIO_LUNAR);
       return r.data;
+      }, refrescar);
     }
     async function consultarPersonal() {
+      return consultaUnica(personalKey, async () => {
       const guardado = cacheGet(personalKey);
       if (guardado && !refrescar) return guardado;
       const r = await astrologyApi.post('/analysis/natal-transit-report', {
@@ -1658,6 +1768,7 @@ app.post('/mes-astrologico', requireLogin, async (req, res) => {
       if (!Array.isArray(eventos)) throw new Error('La consulta personal no incluyó su lista de tránsitos.');
       cacheSet(personalKey,eventos,TTL.CALENDARIO_LUNAR);
       return eventos;
+      });
     }
     const [general, personal] = await Promise.allSettled([consultarGeneral(), consultarPersonal()]);
     const eventosGenerales = general.status === 'fulfilled' ? normalizarEventosGeneralesMes(general.value,anio,mes,tz) : [];
@@ -1684,7 +1795,7 @@ app.post('/mes-astrologico', requireLogin, async (req, res) => {
     console.error('Resumen mensual:', err.message);
     res.status(500).json({error:'No se pudo cargar tu mes. Vuelve a intentarlo.'});
   }
-});
+}));
 
 
 // RUTA: Calendario lunar del mes — mejores días específicos por actividad
