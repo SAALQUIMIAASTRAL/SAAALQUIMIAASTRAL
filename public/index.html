@@ -1486,6 +1486,43 @@
   .carta-rueda-frame,.carta-rueda-frame svg,.zoom-modal-bg svg{background:#fff;}
   html[data-theme="dark"] :is(.carta-rueda-frame,.acg-map-shell) svg{background:#fff;border-radius:12px;}
 
+
+  /* Lista del cielo: símbolos vectoriales y posiciones sin alterar los datos. */
+  .cielo-hoy{border:1px solid var(--line);border-radius:18px;background:var(--paper);overflow:hidden;}
+  .cielo-cabecera{padding:16px 15px 13px;border-bottom:1px solid var(--line);background:var(--lilac-soft);}
+  .cielo-cabecera h3{font-size:22px;color:var(--plum);}
+  .cielo-cabecera p{margin:4px 0 0;color:var(--ink-dim);font-size:13px !important;}
+  .cielo-lista{margin:0;padding:0 13px;}
+  .cielo-planeta{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:13px 0;}
+  .cielo-planeta + .cielo-planeta{border-top:1px solid var(--line);}
+  .cielo-identidad{margin:0;display:flex;align-items:center;gap:10px;min-width:0;}
+  .cielo-icono{display:flex;align-items:center;justify-content:center;width:36px;height:36px;flex:none;border-radius:12px;color:var(--plum-light);background:var(--lilac-soft);}
+  .cielo-icono svg{display:block;width:25px;height:25px;}
+  .cielo-nombre{display:flex;flex-direction:column;gap:3px;min-width:0;}
+  .cielo-nombre strong{font-size:14px;font-weight:600;color:var(--plum);line-height:1.25;}
+  .cielo-retro{font-size:10px;color:var(--error-text);font-weight:500;line-height:1.2;}
+  .cielo-posicion{display:flex;flex-direction:column;align-items:flex-end;gap:3px;margin:0;min-width:0;}
+  #transitos-hoy-resultado .cielo-signo{display:flex;align-items:center;gap:5px;font-size:13px !important;font-weight:600;line-height:1.3;}
+  #transitos-hoy-resultado .cielo-glifo{font-family:'Times New Roman',serif;font-variant-emoji:text;font-size:19px !important;font-weight:400;line-height:1;}
+  #transitos-hoy-resultado .cielo-grados{font-size:12px !important;font-variant-numeric:tabular-nums;line-height:1.3;color:var(--ink-dim);}
+  .cielo-signo.elemento-fire{color:#a94120;}
+  .cielo-signo.elemento-earth{color:#53603f;}
+  .cielo-signo.elemento-air{color:#315c86;}
+  .cielo-signo.elemento-water{color:#685094;}
+  .cielo-signo.elemento-otro{color:var(--plum);}
+  html[data-theme="dark"] .cielo-signo.elemento-fire{color:#f5b293;}
+  html[data-theme="dark"] .cielo-signo.elemento-earth{color:#bacf96;}
+  html[data-theme="dark"] .cielo-signo.elemento-air{color:#9ec8ef;}
+  html[data-theme="dark"] .cielo-signo.elemento-water{color:#cfb0f1;}
+  @media(max-width:360px){
+    .cielo-lista{padding:0 10px;}
+    .cielo-identidad{gap:7px;}
+    .cielo-icono{width:31px;height:31px;border-radius:10px;}
+    .cielo-icono svg{width:22px;height:22px;}
+    .cielo-nombre strong{font-size:13px;}
+    #transitos-hoy-resultado .cielo-signo{font-size:12px !important;}
+  }
+
 </style>
 </head>
 <body>
@@ -6190,6 +6227,15 @@
   function colorSigno(abrev) { return ELEMENTO_GRADIENTE[SIGNO_ELEMENTO[abrev]] || 'var(--marigold)'; }
   function glifoSigno(abrev) { return SIGNO_GLIFO[abrev] || '✦'; }
 
+  function iconoPlanetaCielo(nombre) {
+    const trazos = {"Sun":"<circle cx=\"12\" cy=\"12\" r=\"7\"/><circle cx=\"12\" cy=\"12\" r=\"1\" fill=\"currentColor\" stroke=\"none\"/>","Moon":"<path d=\"M15 4a8 8 0 1 0 0 16A9 9 0 0 1 15 4Z\"/>","Mercury":"<circle cx=\"12\" cy=\"10\" r=\"4\"/><path d=\"M8 3c0 4 8 4 8 0M12 14v7M9 18h6\"/>","Venus":"<circle cx=\"12\" cy=\"8\" r=\"5\"/><path d=\"M12 13v8M8 17h8\"/>","Mars":"<circle cx=\"9\" cy=\"15\" r=\"5\"/><path d=\"m13 11 7-7M15 4h5v5\"/>","Jupiter":"<path d=\"M6 5c6-3 7 4 0 8h13M15 4v17\"/>","Saturn":"<path d=\"M8 3v14M5 7h7M8 12c7-6 10 1 7 6l-2 3\"/>","Uranus":"<circle cx=\"12\" cy=\"18\" r=\"3\"/><path d=\"M12 15V5M6 5v8M18 5v8M6 9h12\"/>","Neptune":"<path d=\"M5 5v4c0 7 14 7 14 0V5M12 3v18M8 18h8M3 7l2-2 2 2M17 7l2-2 2 2\"/>","Pluto":"<circle cx=\"12\" cy=\"6\" r=\"3\"/><path d=\"M5 6c0 10 14 10 14 0M12 13v8M8 18h8\"/>","Chiron":"<circle cx=\"10\" cy=\"18\" r=\"3\"/><path d=\"M10 15V3M10 9l7-5M10 9l7 5\"/>","Mean_Node":"<path d=\"M5 16V9a7 7 0 0 1 14 0v7M5 13a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM19 13a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z\"/>","Lilith":"<path d=\"M14 3a6 6 0 1 0 0 12 7 7 0 0 1 0-12ZM10 16v6M6 19h8\"/>"};
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' + (trazos[nombre] || trazos.Sun) + '</svg>';
+  }
+  function glifoSignoCielo(signo) {
+    const glifos = { Ari:'♈',Tau:'♉',Gem:'♊',Can:'♋',Leo:'♌',Vir:'♍',Lib:'♎',Sco:'♏',Sag:'♐',Cap:'♑',Aqu:'♒',Pis:'♓' };
+    return (glifos[String(signo || '').slice(0,3)] || '✦') + '\uFE0E';
+  }
+
   async function verTransitosHoy() {
     const contenedor = document.getElementById('transitos-hoy-resultado');
     contenedor.innerHTML = '<div class="disclaimer">Consultando el cielo de hoy...</div>';
@@ -6207,11 +6253,6 @@
       const bruto = hoy?.subject_data || hoy;
       const botonCerrarLocal = `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button onclick="cerrar('transitos-hoy-resultado')" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
 
-      const GLIFO_PLANETA_HOY = { Sun:'☉', Moon:'☽', Mercury:'☿', Venus:'♀', Mars:'♂', Jupiter:'♃', Saturn:'♄',
-        Uranus:'♅', Neptune:'♆', Pluto:'♇', Chiron:'⚷', Mean_Node:'☊', Lilith:'⚸' };
-      const ELEMENTO_COLOR_TEXTO = { fire:'#c1481f', earth:'#5c4a35', air:'#2f5a86', water:'#4a3a8a' };
-      function colorTextoSigno(abrev) { return ELEMENTO_COLOR_TEXTO[SIGNO_ELEMENTO[abrev]] || 'var(--marigold-dark)'; }
-
       if (bruto && bruto.sun) {
         const CLAVE_A_NOMBRE = {
           sun:'Sun', moon:'Moon', mercury:'Mercury', venus:'Venus', mars:'Mars',
@@ -6220,30 +6261,30 @@
         };
         const filas = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','chiron','mean_node','lilith']
           .filter(k => bruto[k])
-          .map((k, idx) => {
+          .map(k => {
             const p = bruto[k];
             const claveNombre = CLAVE_A_NOMBRE[k] || (k.charAt(0).toUpperCase() + k.slice(1));
             const nombre = nombrePlanetaEs(claveNombre).replace(/^\S+\s+/, '');
-            const glifoPlaneta = GLIFO_PLANETA_HOY[claveNombre] || '✦';
+            const glifoPlaneta = iconoPlanetaCielo(claveNombre);
             const grados = p.position !== undefined ? Math.floor(p.position) : null;
             const minutos = p.position !== undefined ? Math.floor((p.position % 1) * 60) : null;
             const gradoStr = grados !== null ? `${grados}°${minutos !== null ? minutos.toString().padStart(2,'0')+"'" : ''}` : '';
             const abrevSigno = (p.sign || '').slice(0, 3);
             return `
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:${idx % 2 === 0 ? '#FFFFFF' : '#F7F5FC'};">
-                <span style="display:flex;align-items:center;gap:10px;">
-                  <span style="width:26px;height:26px;flex:none;border-radius:50%;background:var(--lilac-bg);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--plum);">${glifoPlaneta}</span>
-                  <span style="font-size:13px;color:var(--plum);font-weight:500;">${nombre}${p.retrograde ? ' <span style="color:var(--error-text);font-size:10.5px;font-weight:700;" title="Retrógrado">R</span>' : ''}</span>
-                </span>
-                <span style="display:flex;align-items:center;gap:7px;">
-                  <span style="font-size:13px;color:${colorTextoSigno(p.sign)};">${glifoSigno(p.sign)}</span>
-                  <span style="font-size:12.5px;font-weight:600;color:var(--ink-dim);">${gradoStr}</span>
-                  <span style="font-size:12.5px;font-weight:700;color:${colorTextoSigno(p.sign)};">${signoEs(p.sign)}</span>
-                </span>
+              <div class="cielo-planeta">
+                <dt class="cielo-identidad">
+                  <span class="cielo-icono">${glifoPlaneta}</span>
+                  <span class="cielo-nombre"><strong>${escaparTextoMes(nombre)}</strong>${p.retrograde ? '<small class="cielo-retro">Retrógrado</small>' : ''}</span>
+                </dt>
+                <dd class="cielo-posicion">
+                  <span class="cielo-signo elemento-${SIGNO_ELEMENTO[abrevSigno] || 'otro'}"><span class="cielo-glifo" aria-hidden="true">${glifoSignoCielo(p.sign)}</span>${escaparTextoMes(signoEs(p.sign))}</span>
+                  <span class="cielo-grados">${escaparTextoMes(gradoStr)}</span>
+                </dd>
               </div>
             `;
+
           }).join('');
-        contenedor.innerHTML = botonCerrarLocal + `<div style="background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden;">${filas}</div>`;
+        contenedor.innerHTML = botonCerrarLocal + `<div class="cielo-hoy"><div class="cielo-cabecera"><h3>El cielo de hoy</h3><p>Planetas, signos y posición actual.</p></div><dl class="cielo-lista">${filas}</dl></div>`;
       } else {
         contenedor.innerHTML = botonCerrarLocal + `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(hoy, null, 2)}</pre>`;
       }
