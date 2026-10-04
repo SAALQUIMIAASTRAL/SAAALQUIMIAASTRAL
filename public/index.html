@@ -186,6 +186,14 @@
   body.app-nativa .screen{
     height:100dvh;border-radius:0;
   }
+  /* En móvil se usa la pantalla completa, sin el margen del marco de vista previa. */
+  @media(max-width:600px){
+    .page{width:100%;min-height:100dvh;padding:0;background:var(--page-bg);}
+    .phone{width:100%;background:transparent;border-radius:0;padding:0;box-shadow:none;}
+    .screen{height:100dvh;border-radius:0;}
+    .topbar{padding:calc(6px + env(safe-area-inset-top,0px)) 18px 12px;}
+  }
+
   body.app-nativa .notch{ display:none; }
   body.app-nativa .app-nativa-only{ display:block !important; }
   /* Elementos que solo tienen sentido en la versión web (PWA) — nunca deben verse dentro de la app nativa */
@@ -668,6 +676,11 @@
   .bottomnav .it .g{font-size:18px;line-height:1;transition:transform 0.18s;}
   .bottomnav .it.active{color:var(--marigold);background:var(--marigold-soft);}
   .bottomnav .it.active .g{transform:scale(1.1);}
+  /* La barra conserva 48 px táctiles; solo se recorta el relleno exterior sobrante. */
+  @media(max-width:600px){
+    .bottomnav{padding:4px 4px calc(4px + env(safe-area-inset-bottom,0px));}
+    .bottomnav .it{min-height:48px;padding:0 2px;gap:1px;}
+  }
   [data-tab]{display:none;}
   [data-tab].tab-activa{display:block;}
 
