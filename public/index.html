@@ -3890,15 +3890,33 @@
     return (dificil ? 'Pon atención a ' : 'Enfócate en ') + tema + '.';
   }
   function generarPanoramaActualMes(generales, personales, generalDisponible, personalDisponible) {
-    if (!generalDisponible) return '<div class="disclaimer">No se pudo cargar el panorama. Toca actualizar.</div>';
+    if (!generalDisponible) return '<div class="disclaimer">No se pudo completar el panorama del mes. Toca actualizar para consultar sus eventos.</div>';
     const relevantes = [...generales].sort((a,b) => {
       const p = e => e.tipo?.includes('eclipse') ? 0 : e.tipo === 'station' ? 1 : e.tipo === 'lunation' ? 2 : 3;
       return p(a)-p(b) || a.fecha.localeCompare(b.fecha);
-    }).slice(0,3).sort((a,b)=>a.fecha.localeCompare(b.fecha));
-    const frases = relevantes.map(e => '<p><b>' + escaparTextoMes(e.titulo) + ':</b> ' + escaparTextoMes(e.accion || e.texto) + '</p>');
-    if (personalDisponible && personales.length) frases.push('<p><b>En tu carta:</b> ' + escaparTextoMes(resumenPersonalMes(personales[0])) + '</p>');
-    if (!frases.length) return '<div class="disclaimer">Faltan datos para el panorama. Toca actualizar.</div>';
-    return '<div class="mes-panorama-lectura">' + frases.join('') + '</div>';
+    }).slice(0,4).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+    const frases = relevantes.flatMap(e => [
+      `El día ${Number(e.fecha.slice(-2))}, ${e.titulo.charAt(0).toLowerCase() + e.titulo.slice(1)}.`,
+      e.accion || e.texto
+    ]);
+    if (personalDisponible && personales.length) {
+      const e = [...personales].sort((a,b)=>(a.orbe ?? Infinity)-(b.orbe ?? Infinity))[0];
+      frases.push(`En tu carta destaca ${e.planeta_transito} en ${e.aspecto} con tu ${e.punto_natal}, el día ${Number(e.fecha.slice(-2))}.`);
+      const tema = {
+        'Sol':'Observa cómo ese contacto se refleja en tus decisiones y en la confianza para mostrarte.',
+        'Luna':'Pon atención a tus necesidades emocionales y a cómo buscas apoyo.',
+        'Mercurio':'Observa qué conversaciones o decisiones requieren más atención.',
+        'Venus':'Revisa qué necesitas en tus vínculos y qué valoras al compartir con otros.',
+        'Marte':'Observa cómo distribuyes tu esfuerzo y cómo respondes al desacuerdo.',
+        'Ascendente':'Pon atención a cómo te presentas y a las iniciativas que quieres tomar.',
+        'Medio Cielo':'Revisa tus prioridades profesionales y los compromisos que asumes.'
+      };
+      if (tema[e.punto_natal]) frases.push(tema[e.punto_natal]);
+    } else if (!personalDisponible) frases.push('Los tránsitos personales aún no están disponibles; esta lectura describe el cielo general.');
+    if (!frases.length) return '<div class="disclaimer">La consulta no devolvió datos suficientes para redactar el panorama. Toca actualizar para reintentar.</div>';
+    const parrafos = [];
+    for (let i=0;i<frases.length;i+=4) parrafos.push('<p>' + frases.slice(i,i+4).map(escaparTextoMes).join(' ') + '</p>');
+    return '<div class="mes-panorama-lectura">' + parrafos.join('') + '</div>';
   }
 
   let _solicitudMesAlquimia = 0;
