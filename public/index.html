@@ -6284,7 +6284,7 @@
             `;
 
           }).join('');
-        contenedor.innerHTML = botonCerrarLocal + `<div class="cielo-hoy"><div class="cielo-cabecera"><h3>El cielo de hoy</h3><p>Planetas, signos y posición actual.</p></div><dl class="cielo-lista">${filas}</dl></div>`;
+        contenedor.innerHTML = botonCerrarLocal + `<div class="cielo-hoy"><dl class="cielo-lista">${filas}</dl></div>`;
       } else {
         contenedor.innerHTML = botonCerrarLocal + `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(hoy, null, 2)}</pre>`;
       }
