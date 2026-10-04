@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>Confirmar correo · Sam Alquimia Astral</title>
+<style>body{margin:0;padding:40px 20px;background:#FBFAFC;color:#2D1B4E;font-family:Arial,sans-serif;line-height:1.6}main{max-width:460px;margin:auto;padding:28px;background:white;border:1px solid #E5E0EA;border-radius:20px}h1{font-family:Georgia,serif;font-size:28px}a{display:block;background:#C9A84C;color:#2D1B4E;text-align:center;padding:12px;border-radius:30px;text-decoration:none;font-weight:bold}.firma{color:#6B4FA0;font-size:14px}</style></head><body><main><p class="firma">Sam | Alquimia Astral</p><h1 id="titulo">Comprobando tu correo</h1><p id="mensaje" role="status" aria-live="polite">Espera un momento.</p><a href="/">Iniciar sesión</a></main>
+<script>
+(async () => {
+  const parametros = new URLSearchParams(window.location.hash.slice(1));
+  const token = parametros.get('access_token');
+  const error = parametros.get('error') || new URLSearchParams(window.location.search).get('error');
+  window.history.replaceState(null, '', window.location.pathname);
+  const titulo = document.getElementById('titulo'), mensaje = document.getElementById('mensaje');
+  if (!token || error) {
+    titulo.textContent = 'Revisa tu enlace';
+    mensaje.textContent = 'El enlace no es válido o ya venció. Si ya confirmaste tu correo, inicia sesión. Si necesitas ayuda, escribe a soporte@samalquimiaastral.com.';
+    return;
+  }
+  try {
+    const r = await fetch('/auth/confirmacion', { method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({access_token:token}) });
+    const data = await r.json();
+    if (!r.ok || !data.confirmado) throw new Error('enlace');
+    titulo.textContent = 'Tu correo está confirmado';
+    mensaje.textContent = 'Te damos la bienvenida a Sam Alquimia Astral. Ya puedes iniciar sesión y comenzar con tu carta.';
+  } catch (_) {
+    titulo.textContent = 'Comprueba tu acceso';
+    mensaje.textContent = 'No pudimos comprobar el enlace. Intenta iniciar sesión; si tu correo sigue pendiente, revisa el correo de confirmación.';
+  }
+})();
+</script></body></html>
