@@ -1382,6 +1382,34 @@
   }
   .personas-preguntas ul { margin:8px 0;padding-left:18px; }
   .personas-preguntas li { margin-bottom:6px; }
+
+  /* Alquimia comparte superficies, colores y jerarquía con Carta. */
+  [data-tab="alquimia"].alquimia-tarjeta {
+    border:1px solid var(--line);border-radius:18px;background:var(--paper);
+    box-shadow:0 5px 18px rgba(45,27,78,.045);
+    scroll-margin-top:12px;
+  }
+  [data-tab="alquimia"] h2 { font-family:'Cormorant Garamond',serif;color:var(--plum);font-size:24px;line-height:1.2; }
+  [data-tab="alquimia"] .desc { font-family:'Work Sans',sans-serif;font-size:14px!important;line-height:1.6!important;color:var(--plum);opacity:.82; }
+  [data-tab="alquimia"] input,[data-tab="alquimia"] select,[data-tab="alquimia"] textarea { font-family:'Work Sans',sans-serif!important;font-size:16px!important;color:var(--plum)!important;background:var(--paper)!important;border-color:var(--line)!important; }
+  [data-tab="alquimia"] textarea { min-height:120px;line-height:1.6; }
+  [data-tab="alquimia"] button { font-family:'Work Sans',sans-serif!important; }
+  [data-tab="alquimia"] .btn-primary { background:var(--marigold);color:var(--plum); }
+  [data-tab="alquimia"] .btn-outline { background:var(--paper);color:var(--plum);border-color:var(--marigold); }
+  #diario-animo-btns button,#bib-categorias button { font-size:13px!important;min-height:36px;padding:8px 12px!important;color:var(--plum)!important; }
+  #diario-animo-btns > span { font-size:14px!important; }
+  #bib-articulo-titulo { font-size:23px!important; }
+  #bib-articulo-cuerpo { font-family:'Work Sans',sans-serif;font-size:15px!important;line-height:1.75!important; }
+  .alquimia-practica { background:var(--paper);border:1px solid var(--line);border-radius:14px;margin-bottom:10px; }
+  .alquimia-practica > summary { list-style:none;cursor:pointer;padding:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--plum);font:600 15px/1.4 'Work Sans',sans-serif; }
+  .alquimia-practica > summary::-webkit-details-marker { display:none; }
+  .alquimia-practica small { display:block;font-size:13px;font-weight:400;color:var(--ink-dim);margin-top:3px; }
+  .alquimia-practica[open] > summary { background:var(--lilac-soft);border-radius:14px 14px 0 0; }
+  .alquimia-practica[open] .alquimia-flecha { transform:rotate(180deg); }
+  .alquimia-practica ol { padding:0 20px 4px 36px;font:400 14px/1.65 'Work Sans',sans-serif;color:var(--plum); }
+  .alquimia-practica li { margin-bottom:10px; }
+  .alquimia-practica summary:focus-visible { outline:2px solid var(--marigold);outline-offset:2px;border-radius:14px; }
+
 </style>
 </head>
 <body>
@@ -1843,11 +1871,24 @@
             <div id="horoscopo-resultado" style="margin-top:14px;"></div>
           </div>
 
-          <div class="section" data-tab="alquimia">
-            <h2>📓 Diario astrológico</h2>
-            <div class="desc">Registra cómo te sientes hoy — tu entrada se guarda junto con la Luna y tu número del día.</div>
+          <div class="carta-portada alquimia-portada" data-tab="alquimia">
+            <div class="carta-etiqueta">Observa · comprende · integra</div>
+            <h2>Alquimia</h2>
+            <p>Registra lo que vives, explora tu mes y encuentra ideas para llevar la astrología a tu día a día.</p>
+            <div class="carta-nav">
+              <button type="button" onclick="irASeccionAlquimia('alquimia-diario')"><b>Diario</b>Lo que vives y sientes</button>
+              <button type="button" onclick="irASeccionAlquimia('alquimia-mes')"><b>Tu mes</b>Fechas y temas importantes</button>
+              <button type="button" onclick="irASeccionAlquimia('rituales-section')"><b>Rituales</b>Pausas y acciones concretas</button>
+              <button type="button" onclick="irASeccionAlquimia('alquimia-biblioteca')"><b>Biblioteca</b>Comprende tu carta</button>
+            </div>
+          </div>
+
+          <div class="section alquimia-tarjeta" data-tab="alquimia" id="alquimia-diario">
+            <div class="carta-etiqueta">Tu registro personal</div>
+            <h2>Diario astrológico</h2>
+            <div class="desc">Escribe qué pasó y cómo lo viviste. Cada entrada conserva la Luna y tu número personal del día.</div>
             <div style="margin-bottom:10px;">
-              <textarea id="diario-texto" placeholder="¿Cómo te sientes hoy? ¿Qué quieres recordar de este momento astrológico?" style="width:100%;min-height:90px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:var(--paper);resize:vertical;box-sizing:border-box;"></textarea>
+              <textarea id="diario-texto" placeholder="¿Qué pasó hoy? ¿Cómo te sentiste? ¿Qué quieres recordar?" style="width:100%;min-height:90px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:var(--paper);resize:vertical;box-sizing:border-box;"></textarea>
             </div>
             <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;" id="diario-animo-btns">
               <span style="font-size:11.5px;color:var(--ink-dim);align-self:center;width:100%;margin-bottom:2px;">¿Cómo estás hoy?</span>
@@ -1863,6 +1904,102 @@
             <div id="diario-msg" style="margin-top:8px;font-size:12px;"></div>
             <div id="diario-lista" style="margin-top:14px;"></div>
             <button class="btn-outline" style="width:100%;margin-top:8px;" id="diario-btn-ver" onclick="alternarEntradasDiario()">Ver entradas anteriores</button>
+          </div>
+
+          <div class="section alquimia-tarjeta" data-tab="alquimia" id="alquimia-mes">
+            <div class="carta-etiqueta">Lo que viene para ti</div>
+            <h2>Tu mes astrológico</h2>
+            <div class="desc">Consulta los movimientos del mes y los temas que activan en tu carta. Abre cada bloque para ver las fechas y su explicación.</div>
+            <div id="mes-astrologico-contenido"><div class="disclaimer">Elige «Ver mi mes» para consultar sus fechas y movimientos.</div></div>
+            <div style="display:flex;gap:8px;margin-top:10px;">
+              <button class="btn-outline" style="flex:1;" onclick="cargarMesAstrologico()">Ver mi mes</button>
+              <button class="btn-outline" style="width:44px;flex:none;" title="Recalcular sin usar lo guardado" onclick="cargarMesAstrologico(true)">🔄</button>
+            </div>
+          </div>
+
+          <div class="section alquimia-tarjeta" data-tab="alquimia" id="rituales-section">
+            <div class="carta-etiqueta">Del cielo a tu día a día</div>
+            <h2 id="rituales-titulo">Rituales para ti</h2>
+            <div class="desc">Prácticas breves para observar lo que sientes, ordenar tus intenciones y elegir una acción. Abre la que necesites.</div>
+            <div id="rituales-contenedor" style="margin-top:14px;"></div>
+          </div>
+
+          <div class="section alquimia-tarjeta" data-tab="alquimia" id="alquimia-biblioteca">
+            <div class="carta-etiqueta">Aprende a leer tu carta</div>
+            <h2>Biblioteca astrológica</h2>
+            <div class="desc">Artículos, textos y referencias para profundizar en tu carta.</div>
+
+            <div id="bib-cerrar-todo" style="display:none;text-align:right;margin-bottom:10px;">
+              <button onclick="cerrarBibliotecaCompleta()" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar biblioteca ✕</button>
+            </div>
+
+            <!-- Filtro por categoría -->
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;" id="bib-categorias">
+              <button onclick="cargarBiblioteca()" style="background:var(--marigold-soft);border:1px solid var(--marigold);border-radius:100px;padding:5px 12px;font-size:11.5px;color:var(--plum);cursor:pointer;">Todos</button>
+            </div>
+
+            <div id="bib-lista"><div class="disclaimer">Explora artículos por tema y abre el que quieras leer.</div></div>
+            <button class="btn-outline" id="bib-btn-cargar" style="width:100%;margin-top:10px;" onclick="cargarBiblioteca()">Explorar artículos</button>
+
+            <!-- Lector de artículo -->
+            <div id="bib-lector" style="display:none;margin-top:14px;">
+              <div style="display:flex;justify-content:flex-end;margin-bottom:12px;"><button onclick="cerrarArticulo()" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>
+              <div id="bib-articulo-titulo" style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:18px;color:var(--plum);margin-bottom:4px;"></div>
+              <div id="bib-articulo-meta" style="font-size:11px;color:var(--ink-dim);margin-bottom:12px;"></div>
+              <div id="bib-articulo-cuerpo" style="font-size:13px;color:var(--plum);line-height:1.7;white-space:pre-wrap;"></div>
+            </div>
+
+            <!-- Panel de admin (solo visible si eres la administradora) -->
+            <div id="bib-admin" style="display:none;margin-top:16px;padding-top:14px;border-top:1px dashed var(--line);">
+              <div class="etiqueta-seccion">+ Agregar artículo</div>
+              <div class="auth-field"><label>Título</label><input type="text" id="bib-titulo" placeholder="Ej. Saturno en Casa 4"></div>
+              <div class="auth-field"><label>Categoría</label>
+                <select id="bib-categoria" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;">
+                  <option>Planetas</option><option>Casas</option><option>Aspectos</option><option>Signos</option>
+                  <option>Tránsitos</option><option>Luna</option><option>Sinastría</option><option>General</option>
+                </select>
+              </div>
+              <div class="auth-field"><label>Fuente / Autor</label><input type="text" id="bib-fuente" placeholder="Ej. Liz Greene — Saturno"></div>
+              <div class="auth-field"><label>Contenido</label><textarea id="bib-contenido" placeholder="Pega o escribe el texto aquí..." style="width:100%;min-height:120px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);resize:vertical;box-sizing:border-box;"></textarea></div>
+              <button class="btn-primary" onclick="guardarArticulo()">Guardar artículo</button>
+              <div id="bib-admin-msg" style="font-size:12px;margin-top:6px;"></div>
+
+              <div class="etiqueta-seccion" style="margin-top:18px;">✨ Nuevo evento astrológico</div>
+              <div class="disclaimer" style="margin-bottom:8px;">Este aviso aparece en el inicio de las usuarias cuando su signo solar coincide (o a todas, si dejas los signos vacíos) y la fecha de hoy cae dentro del rango.</div>
+              <div class="auth-field"><label>Título</label><input type="text" id="ev-titulo" placeholder="Ej. Equinoccio de Otoño"></div>
+              <div class="auth-field"><label>Tipo</label>
+                <select id="ev-tipo" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;">
+                  <option value="equinoccio">Equinoccio / Solsticio</option>
+                  <option value="eclipse">Eclipse</option>
+                  <option value="cambio_planeta">Cambio de planeta de signo</option>
+                  <option value="general">General</option>
+                </select>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <div class="auth-field" style="flex:1;"><label>Desde</label><input type="date" id="ev-fecha-inicio"></div>
+                <div class="auth-field" style="flex:1;"><label>Hasta</label><input type="date" id="ev-fecha-fin"></div>
+              </div>
+              <div class="auth-field">
+                <label>Signos a los que afecta (deja vacío = todas)</label>
+                <div id="ev-signos" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;">
+                  <label style="font-size:11px;"><input type="checkbox" value="Ari"> Aries</label>
+                  <label style="font-size:11px;"><input type="checkbox" value="Tau"> Tauro</label>
+                  <label style="font-size:11px;"><input type="checkbox" value="Gem"> Géminis</label>
+                  <label style="font-size:11px;"><input type="checkbox" value="Can"> Cáncer</label>
+                  <label style="font-size:11px;"><input type="checkbox" value="Leo"> Leo</label>
+                  <label style="font-size:11px;"><input type="checkbox" value="Vir"> Virgo</label>
+                  <label style="font-size:11px;"><input type="checkbox" value="Lib"> Libra</label>
+                  <label style="font-size:11px;"><input type="checkbox" value="Sco"> Escorpio</label>
+                  <label style="font-size:11px;"><input type="checkbox" value="Sag"> Sagitario</label>
+                  <label style="font-size:11px;"><input type="checkbox" value="Cap"> Capricornio</label>
+                  <label style="font-size:11px;"><input type="checkbox" value="Aqu"> Acuario</label>
+                  <label style="font-size:11px;"><input type="checkbox" value="Pis"> Piscis</label>
+                </div>
+              </div>
+              <div class="auth-field"><label>Mensaje personalizado</label><textarea id="ev-mensaje" placeholder="Ej. Lilith entra a tu signo — esperá que tu magnetismo y tu necesidad de autenticidad se intensifiquen este mes." style="width:100%;min-height:90px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);resize:vertical;box-sizing:border-box;"></textarea></div>
+              <button class="btn-primary" style="background:var(--lilac);" onclick="guardarEventoAstrologico()">Publicar evento</button>
+              <div id="ev-admin-msg" style="font-size:12px;margin-top:6px;"></div>
+            </div>
           </div>
 
           <div class="section ciclo-destacado" data-tab="ciclos" id="ciclos-eclipses">
@@ -2138,92 +2275,9 @@
             </div>
           </div>
 
-          <div class="section" data-tab="alquimia">
-            <h2>📚 Biblioteca astrológica</h2>
-            <div class="desc">Artículos, textos y referencias para profundizar en tu carta.</div>
 
-            <div id="bib-cerrar-todo" style="display:none;text-align:right;margin-bottom:10px;">
-              <button onclick="cerrarBibliotecaCompleta()" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar biblioteca ✕</button>
-            </div>
 
-            <!-- Filtro por categoría -->
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;" id="bib-categorias">
-              <button onclick="cargarBiblioteca()" style="background:var(--marigold-soft);border:1px solid var(--marigold);border-radius:100px;padding:5px 12px;font-size:11.5px;color:var(--plum);cursor:pointer;">Todos</button>
-            </div>
 
-            <div id="bib-lista"><div class="disclaimer">Toca "Cargar" para ver los artículos disponibles.</div></div>
-            <button class="btn-outline" id="bib-btn-cargar" style="width:100%;margin-top:10px;" onclick="cargarBiblioteca()">Cargar biblioteca</button>
-
-            <!-- Lector de artículo -->
-            <div id="bib-lector" style="display:none;margin-top:14px;">
-              <div style="display:flex;justify-content:flex-end;margin-bottom:12px;"><button onclick="cerrarArticulo()" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>
-              <div id="bib-articulo-titulo" style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:18px;color:var(--plum);margin-bottom:4px;"></div>
-              <div id="bib-articulo-meta" style="font-size:11px;color:var(--ink-dim);margin-bottom:12px;"></div>
-              <div id="bib-articulo-cuerpo" style="font-size:13px;color:var(--plum);line-height:1.7;white-space:pre-wrap;"></div>
-            </div>
-
-            <!-- Panel de admin (solo visible si eres la administradora) -->
-            <div id="bib-admin" style="display:none;margin-top:16px;padding-top:14px;border-top:1px dashed var(--line);">
-              <div class="etiqueta-seccion">+ Agregar artículo</div>
-              <div class="auth-field"><label>Título</label><input type="text" id="bib-titulo" placeholder="Ej. Saturno en Casa 4"></div>
-              <div class="auth-field"><label>Categoría</label>
-                <select id="bib-categoria" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;">
-                  <option>Planetas</option><option>Casas</option><option>Aspectos</option><option>Signos</option>
-                  <option>Tránsitos</option><option>Luna</option><option>Sinastría</option><option>General</option>
-                </select>
-              </div>
-              <div class="auth-field"><label>Fuente / Autor</label><input type="text" id="bib-fuente" placeholder="Ej. Liz Greene — Saturno"></div>
-              <div class="auth-field"><label>Contenido</label><textarea id="bib-contenido" placeholder="Pega o escribe el texto aquí..." style="width:100%;min-height:120px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);resize:vertical;box-sizing:border-box;"></textarea></div>
-              <button class="btn-primary" onclick="guardarArticulo()">Guardar artículo</button>
-              <div id="bib-admin-msg" style="font-size:12px;margin-top:6px;"></div>
-
-              <div class="etiqueta-seccion" style="margin-top:18px;">✨ Nuevo evento astrológico</div>
-              <div class="disclaimer" style="margin-bottom:8px;">Este aviso aparece en el inicio de las usuarias cuando su signo solar coincide (o a todas, si dejas los signos vacíos) y la fecha de hoy cae dentro del rango.</div>
-              <div class="auth-field"><label>Título</label><input type="text" id="ev-titulo" placeholder="Ej. Equinoccio de Otoño"></div>
-              <div class="auth-field"><label>Tipo</label>
-                <select id="ev-tipo" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;">
-                  <option value="equinoccio">Equinoccio / Solsticio</option>
-                  <option value="eclipse">Eclipse</option>
-                  <option value="cambio_planeta">Cambio de planeta de signo</option>
-                  <option value="general">General</option>
-                </select>
-              </div>
-              <div style="display:flex;gap:8px;">
-                <div class="auth-field" style="flex:1;"><label>Desde</label><input type="date" id="ev-fecha-inicio"></div>
-                <div class="auth-field" style="flex:1;"><label>Hasta</label><input type="date" id="ev-fecha-fin"></div>
-              </div>
-              <div class="auth-field">
-                <label>Signos a los que afecta (deja vacío = todas)</label>
-                <div id="ev-signos" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;">
-                  <label style="font-size:11px;"><input type="checkbox" value="Ari"> Aries</label>
-                  <label style="font-size:11px;"><input type="checkbox" value="Tau"> Tauro</label>
-                  <label style="font-size:11px;"><input type="checkbox" value="Gem"> Géminis</label>
-                  <label style="font-size:11px;"><input type="checkbox" value="Can"> Cáncer</label>
-                  <label style="font-size:11px;"><input type="checkbox" value="Leo"> Leo</label>
-                  <label style="font-size:11px;"><input type="checkbox" value="Vir"> Virgo</label>
-                  <label style="font-size:11px;"><input type="checkbox" value="Lib"> Libra</label>
-                  <label style="font-size:11px;"><input type="checkbox" value="Sco"> Escorpio</label>
-                  <label style="font-size:11px;"><input type="checkbox" value="Sag"> Sagitario</label>
-                  <label style="font-size:11px;"><input type="checkbox" value="Cap"> Capricornio</label>
-                  <label style="font-size:11px;"><input type="checkbox" value="Aqu"> Acuario</label>
-                  <label style="font-size:11px;"><input type="checkbox" value="Pis"> Piscis</label>
-                </div>
-              </div>
-              <div class="auth-field"><label>Mensaje personalizado</label><textarea id="ev-mensaje" placeholder="Ej. Lilith entra a tu signo — esperá que tu magnetismo y tu necesidad de autenticidad se intensifiquen este mes." style="width:100%;min-height:90px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);resize:vertical;box-sizing:border-box;"></textarea></div>
-              <button class="btn-primary" style="background:var(--lilac);" onclick="guardarEventoAstrologico()">Publicar evento</button>
-              <div id="ev-admin-msg" style="font-size:12px;margin-top:6px;"></div>
-            </div>
-          </div>
-
-          <div class="section" data-tab="alquimia">
-            <h2>📖 Tu mes astrológico</h2>
-            <div class="desc">El relato del mes y lo más importante que trae para ti, según tus tránsitos reales.</div>
-            <div id="mes-astrologico-contenido"><div class="disclaimer">Toca "Ver mi mes" para calcularlo.</div></div>
-            <div style="display:flex;gap:8px;margin-top:10px;">
-              <button class="btn-outline" style="flex:1;" onclick="cargarMesAstrologico()">Ver mi mes</button>
-              <button class="btn-outline" style="width:44px;flex:none;" title="Recalcular sin usar lo guardado" onclick="cargarMesAstrologico(true)">🔄</button>
-            </div>
-          </div>
 
           <div class="section carta-destacada" data-tab="carta" id="carta-revolucion" style="opacity:0.75;border:1px dashed var(--line);">
             <div class="carta-etiqueta">Tu año personal</div>
@@ -2232,10 +2286,7 @@
             <button class="btn-primary" disabled style="opacity:0.5;">Disponible pronto</button>
           </div>
 
-          <div class="section" data-tab="alquimia" id="rituales-section">
-            <h2 id="rituales-titulo">🕯️ Rituales del mes</h2>
-            <div id="rituales-contenedor" style="margin-top:14px;"></div>
-          </div>
+
 
         </div>
 
@@ -3802,7 +3853,7 @@
       // Resumen breve visible de entrada
       let html = `<div style="text-align:center;">
           <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:18px;color:var(--plum);margin-bottom:6px;">Tu mes astrológico</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:36px;color:var(--marigold);margin-bottom:12px;letter-spacing:1px;">${EMOJIS_MESES[_calMesActual - 1]} ${NOMBRES_MES[_calMesActual - 1]}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:36px;color:var(--marigold);margin-bottom:12px;letter-spacing:1px;">${NOMBRES_MES[_calMesActual - 1]} ${_calAnioActual}</div>
         </div>`;
       const totalEventos = ingresos.length + retrogrados.length + eventosPersonales.length;
       html += `<div class="disclaimer" style="text-align:center;margin-bottom:14px;">${totalEventos ? `${totalEventos} momentos clave este mes — toca cada bloque para explorarlos.` : 'Un mes sin grandes eventos mayores — buen momento para lo cotidiano.'}</div>`;
@@ -3810,7 +3861,7 @@
       // ===== 1) PANORAMA DEL MES (LUNA NUEVA / CRECIENTE / LLENA / MENGUANTE) =====
       const diasDelMes = new Date(_calAnioActual, _calMesActual, 0).getDate();
       const panoramaDetallado = generarPanoramaMes(m.relato, diasDelMes, _calMesActual);
-      html += acordeonItemMes('nivel1-panorama', '🔮 Panorama del mes', panoramaDetallado, true);
+      html += acordeonItemMes('nivel1-panorama', 'Panorama del mes', panoramaDetallado, false);
 
       // ===== 2) EVENTOS CLAVE CON ANÁLISIS =====
       const eventosClave = [
@@ -3865,7 +3916,7 @@
       const ritualesTitulo = document.getElementById('rituales-titulo');
       if (ritualesContenedor && ritualesTitulo) {
         const emojis = ['❄️','💕','🌸','🌼','🌻','🌴','⭐','🔥','🍂','💀🌹','☠️👻','🎄'];
-        ritualesTitulo.textContent = `🕯️ Rituales para ${emojis[_calMesActual - 1]} ${NOMBRES_MES[_calMesActual - 1]}`;
+        ritualesTitulo.textContent = 'Rituales para ti';
         ritualesContenedor.innerHTML = generarRitualesDelMes(_calMesActual);
       }
 
@@ -4004,534 +4055,28 @@
 
   // ===== RITUALES PARA EL MES =====
   function generarRitualesDelMes(mesNum) {
-    const anioSiguiente = new Date().getFullYear() + 1;
-    const ritualesDefMes = {
-      1: [ // ENERO
-        {
-          titulo: '🌑 Ritual de Intención — Luna Nueva',
-          pasos: [
-            'Busca un lugar tranquilo donde puedas estar 10 minutos sin interrupciones.',
-            'Enciende una vela blanca o plateada (o simplemente visualiza una luz si no tienes).',
-            'Escribe en un papel blanco tus 3 intenciones principales para enero. No pidas cosas específicas; escribe cómo quieres sentirte: **confiado, creativo, conectado**.',
-            'Lee en voz alta lo que escribiste, como si ya fuera verdad.',
-            'Quema el papel en la llama de la vela (con cuidado) o guárdalo bajo tu almohada.',
-            'Cierra los ojos 30 segundos en silencio.'
-          ]
-        },
-        {
-          titulo: '☿️ Ritual del Comunicador — Mercurio en Capricornio',
-          pasos: [
-            'Mercurio enero está en modo serio y estratégico. Este ritual mejora tus palabras cuando más importan.',
-            'Escribe 3 mensajes que llevas aplazando: un correo importante, una conversación difícil, una propuesta.',
-            'Para cada una, escribe el mensaje EN BORRADOR (no envíes aún) en tu celular o papel.',
-            'Antes de enviar el borrador real, léelo en voz alta como si le hables a la persona directamente.',
-            'Si sientes que resuena, envía. Si no, revísalo mañana con ojos frescos.',
-            'Este ritual te quita el miedo a comunicar con claridad.'
-          ]
-        },
-        {
-          titulo: '🌕 Ritual de Liberación — Luna Llena',
-          pasos: [
-            'Punto medio del mes: momento de soltar lo que no funciona.',
-            'Escribe en un papel TODO lo que llevaste en enero y ya no quieres cargar: resentimientos, culpas, hábitos viejos, conversaciones sin cerrar.',
-            'Rompe el papel en pedazos mientras dices: **Suelto esto. No es mío. Fluyo sin esto**.',
-            'Tira los pedazos al basura o quémalos (con cuidado) — lo importante es el acto de soltar, no el método.',
-            'Luego, escribe 3 cosas que SÍ quieres llevar a la segunda quincena.',
-            'Guarda este papel visible en tu espacio.'
-          ]
-        },
-        {
-          titulo: '🌙 Ritual de Integración — Fin de Mes',
-          pasos: [
-            'Último día o dos de enero: es hora de integrar aprendizajes.',
-            'Revisa tu semana: ¿Qué salió bien? ¿Qué aprendiste? ¿Hacia dónde voy?',
-            'Enciende una vela y haz una pregunta simple: **¿Qué debo saber para febrero?**',
-            'No fuerces una respuesta; solo escucha lo que surge. Escríbelo sin censurar.',
-            'Agradece el mes que termina, aunque haya tenido turbulencias.',
-            'Apaga la vela con intención, no con aire (es más honroso).'
-          ]
-        }
-      ],
-      2: [ // FEBRERO
-        {
-          titulo: '🌑 Ritual de Intención — Luna Nueva',
-          pasos: [
-            'Febrero es el mes del corazón. Crea un espacio bonito alrededor de una vela roja o rosa.',
-            'Escribe 3 intenciones enfocadas en lo que amas: a ti mismo, a otros, a tu propósito.',
-            'Lee lentamente, visualizando cada intención como una realidad que YA existe.',
-            'Guarda el papel cerca de tu cama o en un lugar especial.',
-            'Duerme con la intención lista.'
-          ]
-        },
-        {
-          titulo: '💕 Ritual del Amor Propio — Venus en Acuario',
-          pasos: [
-            'Venus en febrero habla de innovación en relaciones Y en cómo te amas a ti mismo.',
-            'Pasa 15 minutos frente al espejo mirándote a los ojos sin juzgar. Solo observa con curiosidad.',
-            'Dile en voz alta 3 cosas que amas de ti (pueden ser rasgos, acciones, cualidades).',
-            'Toca tu pecho mientras lo haces — conecta físicamente con el acto.',
-            'Este ritual neutraliza la autocrítica y activa el amor propio real.',
-            'Repite esto cada semana en febrero si es posible.'
-          ]
-        },
-        {
-          titulo: '🌕 Ritual de Liberación — Luna Llena',
-          pasos: [
-            'En mitad de febrero: es momento de soltar lo que te ata emocionalmente.',
-            'Escribe relaciones, patrones o comportamientos que te limitan en el amor (a ti o a otros).',
-            'Dile en voz alta a cada cosa: **Agradezco lo que me enseñaste. Ahora suelto tu peso**.',
-            'Quema el papel o rómpelo.',
-            'Luego, visualiza cómo serían tus relaciones sin eso que soltaste.'
-          ]
-        },
-        {
-          titulo: '🌙 Ritual de Integración — Fin de Mes',
-          pasos: [
-            'Cierra febrero reflexionando: ¿Cómo cambió mi relación conmigo este mes?',
-            'Escribe una carta corta a ti mismo reconociendo lo que aprendiste sobre amor.',
-            'Guárdala para leerla en marzo y ver si cumpliste esas promesas.'
-          ]
-        }
-      ],
-      3: [ // MARZO
-        {
-          titulo: '🌑 Ritual de Intención — Luna Nueva',
-          pasos: [
-            'Marzo es Primavera en hemisferio norte: renacimiento, crecimiento, aventura.',
-            'Planta una semilla (literal o simbólica) mientras escribes 3 intenciones de crecimiento.',
-            'Si es literal, riégala cada mañana; si es simbólica, escribe en una maceta.',
-            'Visualiza cómo esas intenciones florecen todo el mes.',
-            'Mantén esa planta visible como recordatorio.'
-          ]
-        },
-        {
-          titulo: '🌾 Ritual del Crecimiento — Marte Activo',
-          pasos: [
-            'Marzo trae energía Marciana de acción. Canalízala en algo productivo.',
-            'Elige UN proyecto pequeño que lleves posponiéndose hace meses.',
-            'Dale los primeros 3 pasos THIS WEEK mientras dices: **Mi energía está lista. Avanzo sin miedo**.',
-            'Documenta esos pasos (fotos, notas) — es tu prueba de que SÍ puedes.',
-            'Este ritual te quita la parálisis de la indecisión.'
-          ]
-        },
-        {
-          titulo: '🌕 Ritual de Liberación — Luna Llena',
-          pasos: [
-            'Mitad de marzo: revisa qué obstáculos encontraste en el proyecto.',
-            'Escribe TODO lo que te frenó (miedo, dudas, personas, circunstancias).',
-            'Quema la lista diciendo: **No controlo esto. Dejo que fluya lo que debe fluir**.',
-            'Enfócate en lo que SÍ controlaste y celebralo.',
-            'Luego ajusta el plan para la segunda quincena basado en lo aprendido.'
-          ]
-        },
-        {
-          titulo: '🌙 Ritual de Integración — Fin de Mes',
-          pasos: [
-            'Mira tu planta/intención: ¿creció? ¿Qué necesitó para crecer?',
-            'Escribe las lecciones del mes sobre crecimiento y acción.',
-            'Agradece tu propia valentía por intentar.'
-          ]
-        }
-      ],
-      4: [ // ABRIL
-        {
-          titulo: '🌑 Ritual de Intención — Luna Nueva',
-          pasos: [
-            'Abril es estabilidad, raíces profundas, hogar y base sólida.',
-            'Crea un pequeño altar en tu espacio: vela, cristal (si tienes), flores.',
-            'Escribe intenciones sobre **seguridad, hogar (físico o emocional), y raíces**.',
-            'Toca las paredes de tu espacio mientras las lees — conecta con tu territorio.',
-            'Cierra con las manos en el corazón.'
-          ]
-        },
-        {
-          titulo: '🏠 Ritual de Hogar y Seguridad — Luna en Tauro',
-          pasos: [
-            'Abril necesita que SIENTAS que perteneces a algún lugar.',
-            'Limpia un rincón de tu espacio: barre, ordena, abre ventanas.',
-            'Mientras limpias, visualiza que alejas energía vieja y acuerdas a la nueva.',
-            'Enciende incienso (o vela) en ese rincón.',
-            'Siéntate allí 5 minutos en silencio — este es tu espacio sagrado ahora.',
-            'Este ritual enraíza tu energía.'
-          ]
-        },
-        {
-          titulo: '🌕 Ritual de Liberación — Luna Llena',
-          pasos: [
-            'Mitad de abril: suelta todo lo que te hace sentir **sin raíces o inseguro**.',
-            'Escribe situaciones o personas que socavan tu estabilidad.',
-            'Rompe el papel diciendo: **Mi seguridad no depende de esto. Estoy anclada en mí**.',
-            'Luego visualiza tu espacio como una fortaleza donde SOLO tú decides quién entra.'
-          ]
-        },
-        {
-          titulo: '🌙 Ritual de Integración — Fin de Mes',
-          pasos: [
-            'Revisa: ¿Me siento más segura que a inicio de mes?',
-            'Escribe 3 cosas que hace abril que te anclan (pueden ser rutinas, lugares, personas).',
-            'Compromítete a mantener esas 3 cosas en mayo.'
-          ]
-        }
-      ],
-      5: [ // MAYO
-        {
-          titulo: '🌑 Ritual de Intención — Luna Nueva',
-          pasos: [
-            'Mayo es creatividad, juego, romance y pura expresión del SER.',
-            'Haz algo SIN expectativa: pinta, canta, baila, escribe, crea con arcilla.',
-            'Mientras creas, enuncia: **Soy libre de ser exactamente lo que quiero ser**.',
-            'Guarda o expón lo que hiciste — no importa la calidad; importa que existió.',
-            'Este ritual abre tu canal creativo.'
-          ]
-        },
-        {
-          titulo: '🎨 Ritual de Creatividad Salvaje — Sol Fuerte',
-          pasos: [
-            'Mayo brilla intenso. Canalízalo en algo que te haga sentir **viva**.',
-            'Haz una lista de 10 cosas que te encantaban de niña y dejaste de hacer.',
-            'Elige UNA y hazla esta semana (aunque sea 10 minutos).',
-            'Nota cómo te sientes al hacerlo — ese es tu yo auténtica pidiendo salir.',
-            'Répitelo cada semana de mayo con otra cosa.'
-          ]
-        },
-        {
-          titulo: '🌕 Ritual de Liberación — Luna Llena',
-          pasos: [
-            'Mitad de mayo: libera la vergüenza de brillar.',
-            'Escribe TODO lo que te frena de ser creativa/auténtica: miedo al juicio, inseguridad, crítica interna.',
-            'Quema la lista diciendo: **Mi luz es mía. Brillo sin pedir permiso**.',
-            'Luego haz algo en público que normalmente esconderías (comparte arte, sé rara, existe loudly).'
-          ]
-        },
-        {
-          titulo: '🌙 Ritual de Integración — Fin de Mes',
-          pasos: [
-            'Mira cuánto te expresaste en mayo.',
-            'Escribe: **Lo que aprendí sobre mí siendo auténtica es...**',
-            'Promete llevar esa autenticidad a junio.'
-          ]
-        }
-      ],
-      6: [ // JUNIO
-        {
-          titulo: '🌑 Ritual de Intención — Luna Nueva',
-          pasos: [
-            'Junio es servicio, salud, trabajo y perfeccionamiento de oficio.',
-            'Escribe intenciones sobre **salud del cuerpo, mente, espíritu; trabajo que te alimenta**.',
-            'Visualiza cómo te sientes cuando cuidas bien tu cuerpo (energía, ligereza, fortaleza).',
-            'Haz un acto pequeño ese día: toma agua, camina 20 min, estira.',
-            'Dile a tu cuerpo: **Te cuido porque te amo**.'
-          ]
-        },
-        {
-          titulo: '💪 Ritual de Salud y Cuidado — Mercurio en Géminis',
-          pasos: [
-            'Junio pide que te entiendas mejor: cuerpo, emociones, mente.',
-            'Pasa 10 minutos escaneando tu cuerpo de arriba a abajo.',
-            '¿Dónde sientes tensión? ¿Dónde hay ligereza? ¿Qué te está pidiendo atención?',
-            'Escribe lo que notaste (ej: espalda tensa = cargo emocional; cuello rígido = no expresión).',
-            'Luego actúa: masaje, agua caliente, movimiento — cuida esa zona.',
-            'Este ritual te reconecta con tu sabiduría corporal.'
-          ]
-        },
-        {
-          titulo: '🌕 Ritual de Liberación — Luna Llena',
-          pasos: [
-            'Mitad de junio: suelta hábitos que dañan tu salud.',
-            'Escribe comportamientos autodestructivos (poco sueño, dieta caótica, sedentarismo, autocrítica brutal).',
-            'Para CADA uno, escribe qué necesidad oculta lo alimenta (ej: poco sueño = huida; dieta caótica = control falso).',
-            'Quema el papel diciendo: **Elijo cuidarme porque me amo**.',
-            'Reemplaza cada hábito viejo con UNO pequeño nuevo.'
-          ]
-        },
-        {
-          titulo: '🌙 Ritual de Integración — Fin de Mes',
-          pasos: [
-            'Revisa los cambios pequeños que hiciste en junio.',
-            '¿Cómo se siente tu cuerpo? ¿Tu energía?',
-            'Escribe lo que mantuviste en julio y lo que necesita ajuste.'
-          ]
-        }
-      ],
-      7: [ // JULIO
-        {
-          titulo: '🌑 Ritual de Intención — Luna Nueva',
-          pasos: [
-            'Julio es intensidad, pasión, generosidad sin límites y poder personal.',
-            'Escribe intenciones audaces: qué QUIERES brillar, qué riesgo QUIERES tomar.',
-            'No escribas cosas "realistas" — escribe lo que tu corazón salvaje desea.',
-            'Lee con el puño en el pecho, sienta la pasión.',
-            'Guarda la lista donde la veas cuando tengas miedo.'
-          ]
-        },
-        {
-          titulo: '🔥 Ritual del Poder Personal — Sol en Leo',
-          pasos: [
-            'Julio necesita que OCUPES ESPACIO sin disculparte.',
-            'Haz algo hoy que te haga sentir poderosa: ropa que te encanta, peinado atrevido, algo que normalmente no harías.',
-            'Mira al espejo y di: **Soy digna de ocupar espacio. Mi presencia importa**.',
-            'Si sientes vergüenza, ESPECIALMENTE hazlo — es donde vive tu poder.',
-            'Repítelo toda la semana.'
-          ]
-        },
-        {
-          titulo: '🌕 Ritual de Liberación — Luna Llena',
-          pasos: [
-            'Mitad de julio: suelta todo lo que te hizo pequeña.',
-            'Escribe creencias que te minimizaban (soy demasiado, no soy suficiente, no merezco, etc.).',
-            'Quema violentamente la lista (con seguridad) diciendo: **MEREZCO BRILLAR Y LO HARÉ**.',
-            'Luego haz algo radicalmente visible: publica algo, sé rara en público, reclama espacio.',
-            'Tu luz es revolucionaria.'
-          ]
-        },
-        {
-          titulo: '🌙 Ritual de Integración — Fin de Mes',
-          pasos: [
-            'Mira atrás: ¿Cuánto brillaste en julio?',
-            'Escribe momentos donde te sentiste PODEROSA.',
-            'Prométete llevar esa energía a los meses que siguen.',
-            'Agradece tu propio coraje.'
-          ]
-        }
-      ],
-      8: [ // AGOSTO
-        {
-          titulo: '🌑 Ritual de Intención — Luna Nueva',
-          pasos: [
-            'Agosto es transformación profunda, muerte y renacimiento, poder oculto.',
-            'Este ritual NO es ligero. Prepara un espacio especial, con velas oscuras (negro, morado).',
-            'Escribe intenciones sobre TRANSFORMACIÓN: **Quiero morir de mi vieja yo. Quiero renacer como...**',
-            'Visualiza lo viejo ardiendo para dejar espacio a lo nuevo.',
-            'Este es un mes de metamorfosis — confía en el proceso.'
-          ]
-        },
-        {
-          titulo: '💀 Ritual de Muerte y Renacimiento — Plutón Fuerte',
-          pasos: [
-            'Agosto te pide dejar morir lo que ya no funciona.',
-            'Escribe una **carta de despedida** a tu versión anterior — la que comete los mismos errores, la que tiene miedo, la que no confía.',
-            'Sé honesta. Agradécele por protegerte, pero dile que ya no la necesitas.',
-            'Quema la carta (ritual importante este mes).',
-            'Luego escribe una **carta de bienvenida** a tu nuevo yo — más fuerte, consciente, lista.',
-            'Guarda esta carta y léela cada semana de agosto.'
-          ]
-        },
-        {
-          titulo: '🌕 Ritual de Liberación — Luna Llena',
-          pasos: [
-            'Mitad de agosto: suelta lo que RESISTISTE soltar.',
-            'Escribe TODO lo que te ata a tu pasado (resentimientos, culpas, traumas pequeños, creencias viejas).',
-            'NO escribas "personas" — escribe patrones: **La creencia de que no soy suficiente**; **El resentimiento que cargo**.',
-            'Quema FUERTE (con seguridad), visualizando esas creencias en humo que se disuelve.',
-            'Luego: visualiza que del humo nace algo nuevo, limpio, tuyo.'
-          ]
-        },
-        {
-          titulo: '🌙 Ritual de Integración — Fin de Mes',
-          pasos: [
-            'Observa qué MURIÓ en ti este mes y qué NACIÓ.',
-            'Escribe reflexión honesta: **Dejé ir... y descubrí...**',
-            'Agradece la alquimia del mes.',
-            'Prepárate para septiembre con tu versión renovada.'
-          ]
-        }
-      ],
-      9: [ // SEPTIEMBRE
-        {
-          titulo: '🌑 Ritual de Intención — Luna Nueva',
-          pasos: [
-            'Septiembre es aprendizaje, viajes (físicos y mentales), expansión de perspectiva.',
-            'Escribe intenciones sobre **conocimiento, sabiduría, nuevas visiones, aventura intelectual**.',
-            'Pregúntate: **¿Qué verdad grande necesito entender este mes?**',
-            'Lee lentamente, permitiendo curiosidad.',
-            'Guarda la pregunta lista para responder a fin de mes.'
-          ]
-        },
-        {
-          titulo: '📚 Ritual de Aprendizaje y Expansión — Júpiter Benévolo',
-          pasos: [
-            'Septiembre necesita que CREZCAS mentalmente.',
-            'Elige UN tema que SIEMPRE quisiste aprender (tarot, astrología, otro idioma, etc.).',
-            'Este mes, toma acción: compra un libro, toma una clase, busca un tutorial.',
-            'Dedica 20 min a la semana a aprender, sin perfeccionismo.',
-            'Notas lo que aprendes — tu sabiduría es tu poder.',
-            'Este ritual abre puertas que no sabías que existían.'
-          ]
-        },
-        {
-          titulo: '🌕 Ritual de Liberación — Luna Llena',
-          pasos: [
-            'Mitad de septiembre: suelta creencias que limitan tu visión.',
-            'Escribe ideas fijas sobre cómo "deben ser las cosas" (el mundo, la gente, tú).',
-            'Para cada una, pregunta: **¿Es VERDAD esto o solo lo creo?**',
-            'Quema lo que reconozcas como limitante diciendo: **Elijo ver más allá**.',
-            'Abre perspectiva: busca opiniones nuevas, lee otro punto de vista, desafíate.'
-          ]
-        },
-        {
-          titulo: '🌙 Ritual de Integración — Fin de Mes',
-          pasos: [
-            'Revisa: ¿Qué verdad grande descubriste?',
-            '¿Cómo cambió tu perspectiva?',
-            'Escribe la lección de septiembre como un mantra para recordar.',
-            'Agradece tu curiosidad infinita.'
-          ]
-        }
-      ],
-      10: [ // OCTUBRE
-        {
-          titulo: '🌑 Ritual de Intención — Luna Nueva',
-          pasos: [
-            'Octubre es equilibrio, relaciones conscientes, reflejos honestos.',
-            'Escribe intenciones sobre **paz, equilibrio entre dar y recibir, relaciones auténticas**.',
-            'Visualiza qué significa estar EN BALANCE para ti.',
-            'Guarda la intención donde puedas verla.'
-          ]
-        },
-        {
-          titulo: '⚖️ Ritual de Equilibrio y Espejo — Libra Refleja',
-          pasos: [
-            'Octubre te muestra quién eres a través de tus relaciones.',
-            'Haz una lista de 5 personas en tu vida (pueden ser relaciones o encuentros).',
-            'Para CADA una, escribe: **Esta persona me muestra que yo soy...**',
-            'Nota patrones — los mismos comportamientos, necesidades, miedos aparecen.',
-            'Ese ES el trabajo de octubre: ver tu reflejo y AMARLO.',
-            'Este ritual integra las partes tuyas que otras personas espejean.'
-          ]
-        },
-        {
-          titulo: '🌕 Ritual de Liberación — Luna Llena',
-          pasos: [
-            'Mitad de octubre: suelta toda codependencia y necesidad de aprobación.',
-            'Escribe formas en que abandonas tu propia verdad para complacer (a pareja, jefe, familia, amigos).',
-            'Quema el papel diciendo: **Mi verdad es más importante que tu comodidad**.',
-            'Luego: toma UNA acción pequeña donde dices "no" o comunicas tu verdad sin disculparte.',
-            'Este ritual fortalece tu independencia emocional.'
-          ]
-        },
-        {
-          titulo: '🌙 Ritual de Integración — Fin de Mes',
-          pasos: [
-            'Reflexiona: ¿Cómo cambió mi relación conmigo misma este mes?',
-            '¿Estoy más equilibrada? ¿Dije mis verdades?',
-            'Escribe compromisos de relaciones más conscientes para adelante.',
-            'Agradece tu brújula interna.'
-          ]
-        }
-      ],
-      11: [ // NOVIEMBRE
-        {
-          titulo: '🌑 Ritual de Intención — Luna Nueva',
-          pasos: [
-            'Noviembre es transformación colectiva, vínculos comunitarios, lo oculto revelado.',
-            'Escribe intenciones sobre **comunidad, verdad, conexión profunda con otros**.',
-            'Pregúntate: **¿Qué quiero revelar de mí que estaba escondido?**',
-            'Lee despacio, aceptando tu vulnerabilidad.'
-          ]
-        },
-        {
-          titulo: '👥 Ritual de Verdad y Comunidad — Escorpio Intenso',
-          pasos: [
-            'Noviembre pide que bajes defensas.',
-            'Elige UN secreto pequeño que nunca compartiste (miedo, inseguridad, deseo).',
-            'Escríbelo en un papel.',
-            'Luego: comparte ALGO de eso con alguien seguro (amiga, terapeuta, diario publicado).',
-            'No tienes que contar todo — pero deja de fingir perfección.',
-            'Este ritual te libera del peso de la mentira.',
-            'Noviembre es el mes para SER REAL.'
-          ]
-        },
-        {
-          titulo: '🌕 Ritual de Liberación — Luna Llena',
-          pasos: [
-            'Mitad de noviembre: suelta máscaras y falsedades.',
-            'Escribe cada papel que juegas: **la profesional, la fuerte, la que lo tiene todo junto, la serena**.',
-            'Para CADA máscara, escribe el costo emocional.',
-            'Quema las máscaras diciendo: **Soy compleja. Soy real. Soy entera**.',
-            'Permítete ser desordenada, vulnerable, imperfecta este mes.'
-          ]
-        },
-        {
-          titulo: '🌙 Ritual de Integración — Fin de Mes',
-          pasos: [
-            'Revisa: ¿Qué verdad revelaste?',
-            '¿Cómo se siente ser más auténtica?',
-            'Escribe promesa de mantener esa autenticidad en diciembre y adelante.',
-            'Agradece tu valentía de ser real.'
-          ]
-        }
-      ],
-      12: [ // DICIEMBRE
-        {
-          titulo: '🌑 Ritual de Intención — Luna Nueva',
-          pasos: [
-            'Diciembre es cierre, integración, mágica renacimiento cíclico.',
-            'Escribe intenciones sobre **peace, gratitud, espíritu navideño de verdad, renacimiento**.',
-            'Visualiza cómo recibe el año nuevo: qué necesitas soltar, qué quieres traer.',
-            'Crea un pequeño altar para diciembre: velas, flores, algo que represente magic para ti.'
-          ]
-        },
-        {
-          titulo: '🎄 Ritual de Cierre y Celebración — Sagitario Festivo',
-          pasos: [
-            'Diciembre es para celebrar lo que HICISTE este año.',
-            'Haz una lista larga (NO short, LARGA) de:',
-            '- 10 cosas que superaste',
-            '- 5 decisiones valientes que tomaste',
-            '- 3 versiones tuya que murieron para que nacieras más fuerte',
-            '- 5 momentos donde sentiste magic o sincronicidad',
-            'Lee en voz alta cada una como un **acta de poder**.',
-            'Este ritual no es sobre LOGROS — es sobre RESISTENCIA y CRECIMIENTO.',
-            'Permite que brille tu sabiduría del año.'
-          ]
-        },
-        {
-          titulo: '🌕 Ritual de Liberación — Luna Llena',
-          pasos: [
-            'Mitad de diciembre: SUELTA el año entero.',
-            'Escribe TODO lo que fue difícil, doloroso, humillante, que pedía mucho.',
-            'Agradécele CADA cosa por enseñarte algo crucial.',
-            `Luego quema FUERTE diciendo: **Integro las lecciones. Suelto el peso. Entro a ${anioSiguiente} libre**.`,
-            'Este ritual es sagrado — hazlo con reverencia y rabia si la hay.',
-            'Después: limpia tu espacio, abre ventanas, deja entrar aire fresco.'
-          ]
-        },
-        {
-          titulo: '🌙 Ritual de Integración — Fin de Año',
-          pasos: [
-            'Últimos días de diciembre: escribe tu carta al año nuevo.',
-            'No un "deseo del año nuevo" — una CARTA: quién quieres SER, no qué quieres TENER.',
-            `**Querido ${anioSiguiente}, llego como... Prometo... Merezco... Dejo ir... Recibo**`,
-            'Guarda la carta para leer en enero 1.',
-            'Celebra: fuego, música, gente que amas, lo que se sienta celebratorio PARA TI.',
-            '**Cierra el año como diosa. Abre el siguiente como reina de tu propia vida**.'
-          ]
-        }
-      ]
-    };
-
-    const ritualesDelMesArray = ritualesDefMes[mesNum] || ritualesDefMes[10]; // Default a octubre
-    let html = '';
-
-    ritualesDelMesArray.forEach((ritual, idx) => {
-      const idAcordeon = `ritual-${mesNum}-${idx}`;
-      html += `
-        <div style="margin-bottom:10px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#fff;box-shadow:0 3px 10px rgba(45,27,78,0.04);">
-          <div style="padding:14px 15px;cursor:pointer;display:flex;align-items:center;gap:10px;background:var(--lilac-soft);border-bottom:1px solid var(--line);" onclick="document.getElementById('${idAcordeon}').style.display = document.getElementById('${idAcordeon}').style.display === 'none' ? 'block' : 'none'">
-            <span style="font-size:20px;flex-shrink:0;">${ritual.titulo.split(' ')[0]}</span>
-            <strong style="flex:1;font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.3;color:var(--plum);font-weight:700;">${ritual.titulo.substring(ritual.titulo.indexOf(' ') + 1)}</strong>
-            <span style="font-family:'Work Sans',sans-serif;font-size:13px;color:var(--marigold-dark);font-weight:700;">▼</span>
-          </div>
-          <div id="${idAcordeon}" style="display:none;padding:16px;background:#fff;font-family:'Work Sans',sans-serif;font-size:15.5px;line-height:1.7;color:var(--plum);">
-            <ol style="margin:0;padding-left:22px;">
-              ${ritual.pasos.map(p => `<li style="margin-bottom:10px;">${p}</li>`).join('')}
-            </ol>
-          </div>
-        </div>
-      `;
-    });
-
-    return html;
+    const practicas = [
+      { titulo:'Poner una intención', tiempo:'5 minutos', pasos:[
+        'Elige un tema al que quieras dedicar atención: un vínculo, un proyecto o un hábito.',
+        'Escribe qué quieres cambiar y por qué te importa.',
+        'Define una acción pequeña que puedas realizar esta semana y anótala en tu diario.'
+      ]},
+      { titulo:'Reconocer lo que sientes', tiempo:'5 minutos', pasos:[
+        'Haz una pausa en un lugar cómodo y observa cómo te sientes.',
+        'Escribe qué ocurrió, qué emoción apareció y qué necesitas ahora.',
+        'Elige cómo atender esa necesidad: descansar, conversar, pedir apoyo o poner un límite.'
+      ]},
+      { titulo:'Cerrar y dar el siguiente paso', tiempo:'10 minutos', pasos:[
+        'Revisa una situación que te haya ocupado durante el mes.',
+        'Anota qué aprendiste, qué quieres conservar y qué quieres hacer distinto.',
+        'Elige un pendiente para resolver o un acuerdo para conversar. Guarda tu reflexión para revisarla después.'
+      ]}
+    ];
+    return practicas.map((p, i) => `
+      <details class="alquimia-practica">
+        <summary><span>${p.titulo}<small>${p.tiempo}</small></span><span class="alquimia-flecha" aria-hidden="true">⌄</span></summary>
+        <ol>${p.pasos.map(paso => '<li>' + paso + '</li>').join('')}</ol>
+      </details>`).join('');
   }
 
   // Mapa auxiliar de temas de casas (si no existe)
@@ -7344,6 +6889,11 @@
     `;
   }
 
+  function irASeccionAlquimia(id) {
+    cambiarPestana('alquimia');
+    requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ behavior:'smooth', block:'start' }));
+  }
+
   function irASeccionCarta(id) {
     cambiarPestana('carta');
     requestAnimationFrame(() => {
@@ -7365,6 +6915,10 @@
   }
 
   function cambiarPestana(nombre) {
+    if (nombre === 'alquimia') {
+      const practicas = document.getElementById('rituales-contenedor');
+      if (practicas && !practicas.innerHTML.trim()) practicas.innerHTML = generarRitualesDelMes(_calMesActual);
+    }
     document.querySelectorAll('[data-tab]').forEach(el => el.classList.remove('tab-activa'));
     document.querySelectorAll('[data-tab="' + nombre + '"]').forEach(el => el.classList.add('tab-activa'));
     document.querySelectorAll('[data-boton-tab]').forEach(el => el.classList.remove('active'));
