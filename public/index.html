@@ -3532,9 +3532,38 @@
     return t;
   }
 
+  function normalizarEspanolMX(texto) {
+  if (typeof texto !== 'string') return texto;
+  return texto
+    .replace(/\b(vuestra|vuestro|vuestras|vuestros)\b/gi, (p) => ({vuestra:'su',vuestro:'su',vuestras:'sus',vuestros:'sus'}[p.toLowerCase()]))
+    .replace(/\bvosotros\b/gi, 'ustedes')
+    .replace(/\bvosotras\b/gi, 'ustedes')
+    .replace(/\balinearos\b/gi, 'ponerse de acuerdo')
+    .replace(/\bcomunicaros\b/gi, 'comunicarse')
+    .replace(/\bentenderos\b/gi, 'entenderse')
+    .replace(/\bconoceros\b/gi, 'conocerse')
+    .replace(/\bapoyaros\b/gi, 'apoyarse')
+    .replace(/\bencontráis\b/gi, 'encuentran')
+    .replace(/\bpodéis\b/gi, 'pueden')
+    .replace(/\btenéis\b/gi, 'tienen')
+    .replace(/\bsois\b/gi, 'son')
+    .replace(/\bqueréis\b/gi, 'quieren')
+    .replace(/\bnecesitáis\b/gi, 'necesitan')
+    .replace(/\bsentís\b/gi, 'sienten')
+    .replace(/\bhacéis\b/gi, 'hacen')
+    .replace(/\bdebéis\b/gi, 'deben')
+    .replace(/\bvos\b/gi, 'tú')
+    .replace(/\btenés\b/gi, 'tienes')
+    .replace(/\bpodés\b/gi, 'puedes')
+    .replace(/\bquerés\b/gi, 'quieres')
+    .replace(/\bsos\b/gi, 'eres')
+    .replace(/\bordenador\b/gi, 'computadora')
+    .replace(/\bmóvil\b/gi, 'celular');
+}
+
   function limpiarTextoAPI(texto) {
     if (!texto || typeof texto !== 'string') return texto;
-    return texto
+    return normalizarEspanolMX(texto)
       .replace(/\{birth chart\}/gi, 'tu carta natal')
       .replace(/\{personal chart\}/gi, 'tu carta natal')
       .replace(/\{natal chart\}/gi, 'tu carta natal')
@@ -6974,6 +7003,46 @@
       .replace(/\bentre\s+tú\s+y\s*\.\s*/gi, `entre tú y ${nombreOtra}. `)
       .replace(/\by\s+tú\.\s*/gi, `y tú con ${nombreOtra}. `);
   }
+  function explicarAreaSinastria(area, score, original, nombreOtra) {
+    const clave = String(area || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const nivel = typeof score === 'number' && Number.isFinite(score) ? (score >= 0.65 ? 2 : score >= 0.4 ? 1 : 0) : -1;
+    const temas = [
+      [/comunic|communication|intellect|mental/, [
+        'Hablar de un mismo tema puede llevarlos a conclusiones distintas. Comprueben qué entendió cada quien antes de responder.',
+        'Pueden compartir ideas, aunque a veces necesitan explicar mejor lo que quieren decir. Preguntar antes de suponer ayuda a evitar malentendidos.',
+        'Esta puntuación señala facilidad para intercambiar ideas y entender sus puntos de vista. Aprovechen esa conversación para hablar también de lo que les incomoda.'
+      ]],
+      [/amor|romance|love|romantic/, [
+        'Sus formas de dar y recibir cariño pueden ser distintas. Hablen de qué gestos les hacen sentir queridos, sin esperar que el otro lo adivine.',
+        'Puede haber cariño, aunque no siempre lo expresan de la misma manera. Digan qué necesitan: tiempo juntos, palabras, contacto o espacio.',
+        'Esta puntuación sugiere afinidad al expresar cariño. Noten qué gestos disfruta cada quien y manténganlos presentes en la vida diaria.'
+      ]],
+      [/pasion|sexual|passion|physical|intimacy/, [
+        'En una relación de pareja, sus ritmos o deseos pueden diferir. Hablen de comodidad, límites y consentimiento sin presionarse.',
+        'En una relación de pareja, puede haber atracción con ritmos distintos. Hablar de lo que cada quien disfruta ayuda a cuidar la intimidad.',
+        'En una relación de pareja, esta puntuación sugiere afinidad en la atracción y la intimidad. Sigue siendo necesario escuchar los deseos y límites de ambos.'
+      ]],
+      [/emocion|emotional/, [
+        'Pueden necesitar respuestas distintas cuando algo les duele. Pregunten si el otro necesita compañía, escucha o espacio.',
+        'No siempre reaccionan igual ante lo que sienten. Explicar qué les afecta ayuda más que esperar que el otro lo note.',
+        'Esta puntuación sugiere facilidad para acompañarse emocionalmente. Escuchar sin resolver todo de inmediato puede fortalecer ese apoyo.'
+      ]],
+      [/confian|trust/, [
+        'Aclaren qué consideran un acuerdo y qué límites necesitan. La confianza se construye con acciones consistentes.',
+        'Conviene hablar de expectativas y cumplir los acuerdos pequeños. Eso ayuda a reducir dudas y suposiciones.',
+        'Esta puntuación sugiere una base favorable para la confianza. Cuídenla siendo claros y cumpliendo lo que acuerdan.'
+      ]],
+      [/valor|values|long.term|largo plazo|commitment|compromiso/, [
+        'Sus prioridades pueden ir en direcciones distintas. Hablen de dinero, tiempo y planes antes de asumir que quieren lo mismo.',
+        'Pueden coincidir en algunos planes y diferir en otros. Definan qué es indispensable para cada quien y dónde pueden negociar.',
+        'Esta puntuación sugiere afinidad en prioridades o planes. Conversen sobre cómo llevar esos acuerdos a decisiones concretas.'
+      ]]
+    ];
+    const tema = temas.find(([patron]) => patron.test(clave));
+    if (tema && nivel >= 0) return tema[1][nivel];
+    return limpiarTextoAPI(completarTextoCortado(original, nombreOtra) || '');
+  }
+
   function renderizarSinastriaSimple(reporte, nombreOtra) {
     nombreOtra = nombreOtra || 'esta persona';
     const d = reporte?.data || reporte || {};
@@ -7022,7 +7091,7 @@
             <div class="card-titulo" style="font-size:13px;">${a.area.replace(/\s*---\s*$/, '').trim()}</div>
             <div style="font-size:12px;font-weight:700;color:var(--marigold-dark);">${Math.round((a.compatibility_score || 0) * 100)}%</div>
           </div>
-          <div class="card-cuerpo" style="color:var(--ink-dim);">${completarTextoCortado(a.description, nombreOtra) || ''}</div>
+          <div class="card-cuerpo" style="color:var(--ink-dim);">${escaparTextoMes(explicarAreaSinastria(a.area, a.compatibility_score, a.description, nombreOtra))}</div>
         </div>
       `).join('');
     }
