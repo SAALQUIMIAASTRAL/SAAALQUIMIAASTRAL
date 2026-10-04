@@ -1619,7 +1619,12 @@
               </div>
             </div>
 
-            <div id="luna-cruda" style="margin-bottom:14px;"></div>
+            <div id="luna-cruda-wrap" style="display:none;margin-bottom:14px;">
+              <div style="display:flex;justify-content:flex-end;margin-bottom:6px;">
+                <button type="button" onclick="cerrarLunaHoy()" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button>
+              </div>
+              <div id="luna-cruda"></div>
+            </div>
             <div id="luna-vacia-resultado" style="display:none;"></div>
 
             <div class="natal-highlight" id="natal-highlight"></div>
@@ -6447,8 +6452,17 @@
     return lunaData;
   }
 
+  function cerrarLunaHoy() {
+    const wrap = document.getElementById('luna-cruda-wrap');
+    const contenedor = document.getElementById('luna-cruda');
+    if (wrap) wrap.style.display = 'none';
+    if (contenedor) contenedor.innerHTML = '';
+  }
+
   async function cargarLunaReal() {
     const contenedor = document.getElementById('luna-cruda');
+    const wrap = document.getElementById('luna-cruda-wrap');
+    if (wrap) wrap.style.display = 'block';
     contenedor.innerHTML = samLoading('Mirando la Luna de hoy...');
     try {
       const r = await fetchAuth('/luna', { method: 'POST', headers: {} });
