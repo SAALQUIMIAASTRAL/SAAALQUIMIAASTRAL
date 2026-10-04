@@ -3859,36 +3859,46 @@
     });
     const orden = e => ['Sol','Luna','Ascendente','Medio Cielo','Venus','Mercurio','Marte'].indexOf(e.punto_natal);
     return [...grupos.values()].sort((a,b) => (a.orbe ?? Infinity)-(b.orbe ?? Infinity) || (orden(a)<0?99:orden(a))-(orden(b)<0?99:orden(b)))
-      .slice(0,6).sort((a,b) => a.fecha.localeCompare(b.fecha));
+      .slice(0,3).sort((a,b) => a.fecha.localeCompare(b.fecha));
+  }
+  // El resumen mensual usa textos breves propios en español, sin copiar informes del proveedor.
+  function etiquetaMensualEs(valor, tipo) {
+    const clave = String(valor || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[_-]/g,' ').trim();
+    const nombres = {
+      sol:'Sol',sun:'Sol',luna:'Luna',moon:'Luna',lua:'Luna',
+      mercurio:'Mercurio',mercury:'Mercurio',venus:'Venus',marte:'Marte',mars:'Marte',
+      jupiter:'Júpiter',saturno:'Saturno',saturn:'Saturno',urano:'Urano',uranus:'Urano',
+      neptuno:'Neptuno',neptune:'Neptuno',netuno:'Neptuno',pluton:'Plutón',pluto:'Plutón',plutao:'Plutón',
+      asc:'Ascendente',ascendant:'Ascendente',ascendente:'Ascendente',
+      mc:'Medio Cielo',midheaven:'Medio Cielo','medio cielo':'Medio Cielo','meio do ceu':'Medio Cielo',
+      conjunction:'conjunción',conjuncion:'conjunción',conjuncao:'conjunción',
+      sextile:'sextil',sextil:'sextil',square:'cuadratura',cuadratura:'cuadratura',quadratura:'cuadratura',
+      trine:'trígono',trigono:'trígono',opposition:'oposición',oposicion:'oposición',oposicao:'oposición',
+      quincunx:'quincuncio',quincuncio:'quincuncio'
+    };
+    return nombres[clave] || (tipo === 'aspecto' ? 'contacto' : tipo === 'natal' ? 'carta natal' : 'Un planeta');
+  }
+  function resumenPersonalMes(e) {
+    const temas = {
+      Sol:'confianza y decisiones',Luna:'emociones y bienestar',Mercurio:'conversaciones y acuerdos',
+      Venus:'amor y vínculos',Marte:'iniciativa y manejo del enojo','Júpiter':'crecimiento y oportunidades',
+      Saturno:'responsabilidades y límites',Urano:'cambios e independencia',Neptuno:'inspiración y claridad',
+      'Plutón':'cambios profundos',Ascendente:'imagen personal y nuevos comienzos','Medio Cielo':'trabajo y metas'
+    };
+    const tema = temas[e.punto_natal] || 'tus prioridades';
+    const dificil = ['cuadratura','oposición','quincuncio'].includes(e.aspecto);
+    return (dificil ? 'Pon atención a ' : 'Enfócate en ') + tema + '.';
   }
   function generarPanoramaActualMes(generales, personales, generalDisponible, personalDisponible) {
-    if (!generalDisponible) return '<div class="disclaimer">No se pudo completar el panorama del mes. Toca actualizar para consultar sus eventos.</div>';
+    if (!generalDisponible) return '<div class="disclaimer">No se pudo cargar el panorama. Toca actualizar.</div>';
     const relevantes = [...generales].sort((a,b) => {
       const p = e => e.tipo?.includes('eclipse') ? 0 : e.tipo === 'station' ? 1 : e.tipo === 'lunation' ? 2 : 3;
       return p(a)-p(b) || a.fecha.localeCompare(b.fecha);
-    }).slice(0,4).sort((a,b)=>a.fecha.localeCompare(b.fecha));
-    const frases = relevantes.flatMap(e => [
-      `El día ${Number(e.fecha.slice(-2))}, ${e.titulo.charAt(0).toLowerCase() + e.titulo.slice(1)}.`,
-      e.accion || e.texto
-    ]);
-    if (personalDisponible && personales.length) {
-      const e = [...personales].sort((a,b)=>(a.orbe ?? Infinity)-(b.orbe ?? Infinity))[0];
-      frases.push(`En tu carta destaca ${e.planeta_transito} en ${e.aspecto} con tu ${e.punto_natal}, el día ${Number(e.fecha.slice(-2))}.`);
-      const tema = {
-        'Sol':'Observa cómo ese contacto se refleja en tus decisiones y en la confianza para mostrarte.',
-        'Luna':'Pon atención a tus necesidades emocionales y a cómo buscas apoyo.',
-        'Mercurio':'Observa qué conversaciones o decisiones requieren más atención.',
-        'Venus':'Revisa qué necesitas en tus vínculos y qué valoras al compartir con otros.',
-        'Marte':'Observa cómo distribuyes tu esfuerzo y cómo respondes al desacuerdo.',
-        'Ascendente':'Pon atención a cómo te presentas y a las iniciativas que quieres tomar.',
-        'Medio Cielo':'Revisa tus prioridades profesionales y los compromisos que asumes.'
-      };
-      if (tema[e.punto_natal]) frases.push(tema[e.punto_natal]);
-    } else if (!personalDisponible) frases.push('Los tránsitos personales aún no están disponibles; esta lectura describe el cielo general.');
-    if (!frases.length) return '<div class="disclaimer">La consulta no devolvió datos suficientes para redactar el panorama. Toca actualizar para reintentar.</div>';
-    const parrafos = [];
-    for (let i=0;i<frases.length;i+=4) parrafos.push('<p>' + frases.slice(i,i+4).map(escaparTextoMes).join(' ') + '</p>');
-    return '<div class="mes-panorama-lectura">' + parrafos.join('') + '</div>';
+    }).slice(0,3).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+    const frases = relevantes.map(e => '<p><b>' + escaparTextoMes(e.titulo) + ':</b> ' + escaparTextoMes(e.accion || e.texto) + '</p>');
+    if (personalDisponible && personales.length) frases.push('<p><b>En tu carta:</b> ' + escaparTextoMes(resumenPersonalMes(personales[0])) + '</p>');
+    if (!frases.length) return '<div class="disclaimer">Faltan datos para el panorama. Toca actualizar.</div>';
+    return '<div class="mes-panorama-lectura">' + frases.join('') + '</div>';
   }
 
   let _solicitudMesAlquimia = 0;
@@ -3916,7 +3926,12 @@
       const generales = seleccionarEventosImportantesMes(m.eventos_generales || []);
       const estadoGeneral = m.estado_general === 'disponible';
       const estadoPersonal = m.estado_personal === 'disponible';
-      const eventosPersonales = seleccionarTransitosImportantesMes(m.eventos_destacados || []);
+      const eventosPersonales = seleccionarTransitosImportantesMes((m.eventos_destacados || []).map(e => ({
+        ...e,
+        planeta_transito: etiquetaMensualEs(e.planeta_transito, 'planeta'),
+        punto_natal: etiquetaMensualEs(e.punto_natal, 'natal'),
+        aspecto: etiquetaMensualEs(e.aspecto, 'aspecto')
+      })));
       const areas = m.areas_destacadas || [];
 
       // Resumen breve visible de entrada
@@ -3937,10 +3952,7 @@
             const cuando = fecha + (e.hora ? ' · ' + e.hora : '');
             const detalle = `<div class="cuerpo">
               <div class="mes-evento-fecha">${escaparTextoMes(cuando)} · ${escaparTextoMes(zona)}</div>
-              ${e.posicion ? '<div class="disclaimer">Posición: ' + escaparTextoMes(e.posicion) + '</div>' : ''}
-              <p>${escaparTextoMes(e.texto)}</p>
-              ${e.enfoque ? '<p><b>Qué tema mueve:</b> ' + escaparTextoMes(e.enfoque) + '</p>' : ''}
-              ${e.accion ? '<p><b>Para acompañarlo:</b> ' + escaparTextoMes(e.accion) + '</p>' : ''}
+              <p>${escaparTextoMes(e.accion || e.texto)}</p>
             </div>`;
             return acordeonItemMes('evento-mes-' + i, escaparTextoMes(e.titulo), detalle, false, { tema:escaparTextoMes(cuando) });
           }).join('')
@@ -3954,11 +3966,11 @@
           ? eventosPersonales.map(e => `
             <div class="tarjeta-lectura neutral" style="margin-bottom:10px;">
               <div class="titulo">${formatearFechaEs(e.fecha)}${e.hora ? ' · ' + e.hora : ''}</div>
-              <div class="cuerpo">${e.planeta_transito || 'Un planeta'} en ${e.aspecto || 'aspecto'} con tu ${e.punto_natal || 'carta natal'}${e.area ? ' · ' + e.area : ''}</div>
-              ${e.interpretacion ? '<div class="cuerpo" style="margin-top:8px;">' + limpiarTextoAPI(e.interpretacion) + '</div>' : ''}
+              <div class="cuerpo">${escaparTextoMes(e.planeta_transito)} en ${escaparTextoMes(e.aspecto)} con tu ${escaparTextoMes(e.punto_natal)}.</div>
+              <div class="cuerpo" style="margin-top:6px;">${escaparTextoMes(resumenPersonalMes(e))}</div>
             </div>`).join('')
           : '<div class="disclaimer">La consulta no devolvió tránsitos personales con el orbe de 2° para este mes.</div>';
-      html += acordeonItemMes('nivel1-personal', 'Lo más importante en tu carta', cuerpoPersonal, false);
+      html += acordeonItemMes('nivel1-personal', 'En tu carta', cuerpoPersonal + '<p class="disclaimer">Para profundizar, consulta tus tránsitos de la semana en Ciclos.</p>', false);
 
       contenedor.innerHTML = html;
 
