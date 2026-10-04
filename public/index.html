@@ -1903,7 +1903,7 @@
   // ======================================================
   // Conexión real con el servidor (login, perfil, carta natal)
   // ======================================================
-  const BACKEND = 'https://saaalquimiaastral.onrender.com';
+  const BACKEND = (window.location.protocol === 'http:' || window.location.protocol === 'https:') ? window.location.origin : 'https://saaalquimiaastral.onrender.com';
   const apiUrl = (url) => /^https?:\/\//i.test(url) ? url : BACKEND + url;
 
   let SESION = {
