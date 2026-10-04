@@ -514,11 +514,52 @@ async function leerPerfil(req) {
 // ============================================================
 // RUTA: Registro de nueva usuaria
 // ============================================================
+// Cada operación pública de Auth usa su propio cliente: no altera la sesión del cliente admin.
+function clienteAuthPublico() {
+  return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
+    auth:{ persistSession:false, autoRefreshToken:false, detectSessionInUrl:false, flowType:'implicit' }
+  });
+}
+function urlPublicaAuth(req) {
+  const host = req.get('host') || '';
+  // El servicio de pruebas debe volver a pruebas incluso si heredó APP_PUBLIC_URL de PRD.
+  const pruebas = /^[a-z0-9-]*pruebas[a-z0-9-]*\.onrender\.com$/i.test(host);
+  const base = pruebas ? 'https://' + host : (process.env.AUTH_PUBLIC_URL || process.env.APP_PUBLIC_URL || req.protocol + '://' + host);
+  const url = new URL(base);
+  if (!['http:','https:'].includes(url.protocol)) throw new Error('URL pública inválida.');
+  return url.origin;
+}
+function correoValido(email) { return typeof email === 'string' && email.length <= 320 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
+async function correoCuentaEliminada(email, userId) {
+  // Activar solo en el servicio de pruebas con remitente verificado. No usa IA ni tokens.
+  if (!process.env.RESEND_API_KEY || !process.env.EMAIL_FROM) return { enviado:false, motivo:'sin_configurar' };
+  const texto = 'Tu cuenta de Sam Alquimia Astral fue eliminada a tu solicitud. Ya no podrás iniciar sesión con esa cuenta. Gracias por haber compartido este espacio. Si no solicitaste la eliminación, escribe a soporte@samalquimiaastral.com.\n\nSam | Alquimia Astral';
+  try {
+    const r = await fetch('https://api.resend.com/emails', {
+      method:'POST',
+      headers:{ 'Authorization':'Bearer ' + process.env.RESEND_API_KEY, 'Content-Type':'application/json',
+        'Idempotency-Key':'cuenta-eliminada-' + claveAhorro(userId) },
+      body:JSON.stringify({ from:process.env.EMAIL_FROM, to:[email], subject:'Tu cuenta fue eliminada · Sam Alquimia Astral',
+        text:texto, html:'<div style="font-family:Arial,sans-serif;color:#2D1B4E;max-width:560px;margin:auto;padding:28px;border:1px solid #E5E0EA;border-radius:16px;"><p style="color:#9B7A2E;">Sam | Alquimia Astral</p><h1 style="font-family:Georgia,serif;font-size:26px;">Tu cuenta fue eliminada</h1><p>Confirmamos la eliminación de tu cuenta a tu solicitud. Ya no podrás iniciar sesión con esa cuenta.</p><p>Gracias por haber compartido este espacio.</p><p>Si no solicitaste la eliminación, escribe a <a href="mailto:soporte@samalquimiaastral.com">soporte@samalquimiaastral.com</a>.</p><p>Sam | Alquimia Astral</p></div>' }),
+      signal:AbortSignal.timeout(10000)
+    });
+    return { enviado:r.ok, motivo:r.ok ? null : 'proveedor_no_disponible' };
+  } catch (_) { return { enviado:false, motivo:'proveedor_no_disponible' }; }
+}
+
 app.post('/auth/registro', async (req, res) => {
-  const { email, password } = req.body;
-  const { data, error } = await supabase.auth.signUp({ email, password });
-  if (error) return res.status(400).json({ error: error.message });
-  res.json({ mensaje: 'Cuenta creada', usuario: data.user });
+  try {
+    const email = String(req.body?.email || '').trim();
+    const { password, nombre } = req.body || {};
+    if (!correoValido(email) || typeof password !== 'string' || password.length < 6) return res.status(400).json({ error:'Escribe un correo válido y una contraseña de al menos 6 caracteres.' });
+    const { data, error } = await clienteAuthPublico().auth.signUp({
+      email, password,
+      options:{ data:{ nombre:String(nombre || '').trim().slice(0,100) }, emailRedirectTo:urlPublicaAuth(req) + '/confirmar.html' }
+    });
+    if (error) return res.status(400).json({ error:'No se pudo crear la cuenta. Revisa tus datos o intenta de nuevo más tarde.' });
+    res.json({ mensaje:data.session ? 'Cuenta creada' : 'Revisa tu correo para confirmar tu cuenta.',
+      usuario:data.user, sesion:data.session || null, necesita_confirmacion:!data.session });
+  } catch (_) { res.status(503).json({ error:'No se pudo crear la cuenta. Intenta de nuevo.' }); }
 });
 
 // ============================================================
@@ -526,7 +567,7 @@ app.post('/auth/registro', async (req, res) => {
 // ============================================================
 app.post('/auth/login', async (req, res) => {
   const { email, password } = req.body;
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await clienteAuthPublico().auth.signInWithPassword({ email, password });
   if (error) return res.status(400).json({ error: error.message });
   res.json({ sesion: data.session, usuario: data.user });
 });
@@ -534,7 +575,7 @@ app.post('/auth/login', async (req, res) => {
 app.post('/auth/refresh', async (req, res) => {
   const { refresh_token } = req.body;
   if (!refresh_token) return res.status(400).json({ error: 'Falta el refresh_token.' });
-  const { data, error } = await supabase.auth.refreshSession({ refresh_token });
+  const { data, error } = await clienteAuthPublico().auth.refreshSession({ refresh_token });
   if (error) return res.status(401).json({ error: 'Sesión expirada. Inicia sesión de nuevo.' });
   res.json({ sesion: data.session });
 });
@@ -542,16 +583,26 @@ app.post('/auth/refresh', async (req, res) => {
 // ============================================================
 // RUTA: Solicitar recuperación de contraseña (envía correo con link)
 // ============================================================
+app.post('/auth/confirmacion', async (req, res) => {
+  try {
+    const token = req.body?.access_token;
+    if (typeof token !== 'string' || !token) return res.status(400).json({ error:'El enlace no es válido.' });
+    const { data, error } = await clienteAuthPublico().auth.getUser(token);
+    if (error || !data.user?.email_confirmed_at) return res.status(400).json({ error:'El enlace no es válido o ya venció.' });
+    res.json({ confirmado:true });
+  } catch (_) { res.status(503).json({ error:'No se pudo comprobar el correo. Intenta iniciar sesión.' }); }
+});
+
 app.post('/auth/olvide-password', async (req, res) => {
-  const { email } = req.body;
-  if (!email) return res.status(400).json({ error: 'Falta el correo.' });
-  const urlBase = process.env.APP_PUBLIC_URL || `${req.protocol}://${req.get('host')}`;
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${urlBase}/restablecer.html`,
-  });
-  // Por seguridad, siempre respondemos "ok" aunque el correo no exista (evita revelar qué correos están registrados)
-  if (error) console.error('Error al enviar correo de recuperación:', error.message);
-  res.json({ mensaje: 'Si ese correo está registrado, te enviamos un enlace para restablecer tu contraseña.' });
+  const email = String(req.body?.email || '').trim();
+  if (!correoValido(email)) return res.status(400).json({ error:'Escribe un correo válido.' });
+  try {
+    const { error } = await clienteAuthPublico().auth.resetPasswordForEmail(email, {
+      redirectTo:urlPublicaAuth(req) + '/restablecer.html'
+    });
+    if (error) return res.status(error.status === 429 ? 429 : 503).json({ error:error.status === 429 ? 'Espera un minuto antes de pedir otro enlace.' : 'No se pudo enviar el enlace. Intenta de nuevo más tarde.' });
+    res.json({ mensaje:'Si ese correo está registrado, recibirás un enlace. Revisa tu bandeja y spam.' });
+  } catch (_) { res.status(503).json({ error:'No se pudo enviar el enlace. Intenta de nuevo.' }); }
 });
 
 // ============================================================
@@ -1254,24 +1305,27 @@ app.get('/mis-datos', requireLogin, async (req, res) => {
   }
 });
 
-app.delete('/mi-cuenta', requireLogin, async (req, res) => {
+app.delete('/mi-cuenta', requireLogin, rutaSinDuplicados('/mi-cuenta', async (req, res) => {
   try {
-    // Borrar todos los datos del usuario en orden
-    await Promise.all([
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return res.status(503).json({ error:'No se pudo eliminar la cuenta. Contacta con soporte.' });
+    const correo = req.userEmail;
+    const resultados = await Promise.all([
       req.supabase.from('diario').delete().eq('user_id', req.userId),
       req.supabase.from('natal_charts').delete().eq('user_id', req.userId),
       req.supabase.from('otras_cartas').delete().eq('user_id', req.userId),
       req.supabase.from('subscriptions').delete().eq('user_id', req.userId),
       req.supabase.from('feedback').delete().eq('user_id', req.userId),
     ]);
-    await req.supabase.from('profiles').delete().eq('id', req.userId);
-    // Eliminar el usuario de auth (requiere service_role key en supabase admin)
-    await supabase.auth.admin.deleteUser(req.userId).catch(() => null);
-    res.json({ ok: true, mensaje: 'Cuenta y datos eliminados.' });
-  } catch (err) {
-    res.status(500).json({ error: 'No se pudo eliminar la cuenta.' });
-  }
-});
+    if (resultados.some(r => r.error)) throw new Error('No se completó la eliminación de los datos.');
+    const perfil = await req.supabase.from('profiles').delete().eq('id', req.userId);
+    if (perfil.error) throw new Error('No se pudo eliminar el perfil.');
+    const eliminacion = await supabase.auth.admin.deleteUser(req.userId);
+    if (eliminacion.error) throw new Error('No se pudo eliminar el acceso.');
+    const aviso = correoValido(correo) ? await correoCuentaEliminada(correo, req.userId) : { enviado:false };
+    if (!aviso.enviado) console.warn('Aviso de eliminación pendiente:', aviso.motivo || 'correo_no_disponible');
+    res.json({ ok:true, mensaje:'Cuenta eliminada.', correo_eliminacion_enviado:aviso.enviado });
+  } catch (_) { res.status(500).json({ error:'No se pudo completar la eliminación. Contacta con soporte antes de volver a intentarlo.' }); }
+}));
 
 app.post('/carta-compuesta', requireLogin, async (req, res) => {
   try {
