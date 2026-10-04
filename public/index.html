@@ -798,6 +798,65 @@
     color:var(--marigold-dark);
     margin-bottom:6px;
   }
+
+  .carta-portada{
+    background:linear-gradient(135deg,rgba(151,116,205,.14),rgba(201,168,76,.09));
+    border:1px solid var(--line);
+    border-radius:22px;
+    padding:16px;
+    margin-bottom:14px;
+  }
+  .carta-portada h2{
+    margin:0 0 5px;
+    font-family:'Cormorant Garamond',serif;
+    font-size:24px;
+    color:var(--plum);
+  }
+  .carta-portada p{
+    margin:0;
+    font-size:13px;
+    line-height:1.55;
+    color:var(--ink-dim);
+  }
+  .carta-nav{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    margin-top:13px;
+  }
+  .carta-nav button{
+    border:1px solid var(--line);
+    background:#fff;
+    color:var(--plum);
+    border-radius:14px;
+    padding:10px 11px;
+    font-family:'Work Sans',sans-serif;
+    font-size:12.5px !important;
+    font-weight:600;
+    text-align:left;
+    cursor:pointer;
+  }
+  .carta-nav button b{
+    display:block;
+    font-family:'Cormorant Garamond',serif;
+    font-size:16px;
+    margin-bottom:2px;
+  }
+  [data-tab="carta"].carta-destacada{
+    border:1px solid var(--line);
+    border-radius:18px;
+    background:#fff;
+    box-shadow:0 5px 18px rgba(45,27,78,.045);
+  }
+  .carta-etiqueta{
+    display:inline-block;
+    font-size:10.5px !important;
+    font-weight:700;
+    letter-spacing:.45px;
+    text-transform:uppercase;
+    color:var(--marigold-dark);
+    margin-bottom:6px;
+  }
   .zoom-close-btn{position:fixed;top:16px;right:16px;background:#fff;border:none;border-radius:50%;width:36px;height:36px;font-size:18px;z-index:61;cursor:pointer;}
   .lectura-modal-bg{display:none;position:fixed;inset:0;background:var(--page-bg);z-index:62;padding:0;overflow:hidden;flex-direction:column;}
   .lectura-modal-bg.open{display:flex;}
@@ -1524,16 +1583,30 @@
             <div id="transitos-resultado" style="margin-top:14px;"></div>
           </div>
 
-          <div class="section" data-tab="carta">
+          <div class="carta-portada" data-tab="carta" id="carta-portada">
+            <h2>Tu carta</h2>
+            <p>Explora otras capas de tu mapa natal: tus números, puntos especiales, lugares del mundo y cómo cambia tu carta según dónde vives.</p>
+            <div class="carta-nav">
+              <button type="button" onclick="irASeccionCarta('carta-numerologia')"><b>Numerología</b>Tus números personales</button>
+              <button type="button" onclick="irASeccionCarta('carta-estrellas')"><b>Estrellas fijas</b>Puntos especiales de tu carta</button>
+              <button type="button" onclick="irASeccionCarta('carta-astrocartografia')"><b>Astrocartografía</b>Tu mapa en el mundo</button>
+              <button type="button" onclick="irASeccionCarta('carta-relocacion')"><b>Relocación</b>Cómo cambia tu carta al mudarte</button>
+              <button type="button" onclick="irASeccionCarta('carta-revolucion')"><b>Revolución Solar</b>Tu mapa del año</button>
+            </div>
+          </div>
+
+          <div class="section carta-destacada" data-tab="carta" id="carta-numerologia">
+            <div class="carta-etiqueta">Tus números</div>
             <h2>Numerología</h2>
-            <div class="desc">Tus números núcleo: camino de vida, destino y más — calculados con tu nombre y fecha de nacimiento.</div>
+            <div class="desc">Conoce tus números principales a partir de tu nombre y fecha de nacimiento.</div>
             <button class="btn-primary" onclick="verNumerologia()">Calcular mi numerología</button>
             <div id="numerologia-resultado" style="margin-top:14px;"></div>
           </div>
 
-          <div class="section" data-tab="carta">
+          <div class="section carta-destacada" data-tab="carta" id="carta-estrellas">
+            <div class="carta-etiqueta">Puntos especiales</div>
             <h2>Estrellas fijas</h2>
-            <div class="desc">Qué estrellas fijas importantes tocan tu carta natal.</div>
+            <div class="desc">Descubre si alguna estrella fija importante está en contacto directo con puntos de tu carta natal.</div>
             <button class="btn-primary" onclick="verEstrellasFijas()">Ver mis estrellas fijas</button>
             <div id="estrellas-resultado" style="margin-top:14px;"></div>
           </div>
@@ -1688,9 +1761,10 @@
           </div>
           -->
 
-          <div class="section" data-tab="carta">
+          <div class="section carta-destacada" data-tab="carta" id="carta-astrocartografia">
+            <div class="carta-etiqueta">Tu mapa en el mundo</div>
             <h2>Astrocartografía</h2>
-            <div class="desc">Los lugares del mundo donde distintas energías de tu carta se activan más fuerte.</div>
+            <div class="desc">Mira en qué lugares del mundo distintas partes de tu carta natal se sienten con más fuerza.</div>
 
             <div class="calc-form" style="margin-bottom:16px;">
               <button class="btn-primary" id="acg-boton" onclick="calcularACG()">Ver mis líneas reales</button>
@@ -1702,9 +1776,10 @@
             <div class="disclaimer">Calculado con tu fecha, hora y lugar de nacimiento reales.</div>
           </div>
 
-          <div class="section" data-tab="carta">
+          <div class="section carta-destacada" data-tab="carta" id="carta-relocacion">
+            <div class="carta-etiqueta">Tu carta al mudarte</div>
             <h2>Relocación</h2>
-            <div class="desc">Naciste en un lugar, pero vives en otro — así te afecta el cambio.</div>
+            <div class="desc">Compara tu lugar de nacimiento con la ciudad donde vives ahora y mira qué áreas de tu carta cambian de énfasis.</div>
             <div class="calc-form">
               <label>Ciudad donde vives ahora<input type="text" id="reloc-ciudad" placeholder="Ej. Ciudad de México"></label>
               <label>País<select id="reloc-pais" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;"><option value="">Selecciona el país</option></select></label>
@@ -1800,7 +1875,8 @@
             </div>
           </div>
 
-          <div class="section" data-tab="carta" style="opacity:0.75;border:1px dashed var(--line);">
+          <div class="section carta-destacada" data-tab="carta" id="carta-revolucion" style="opacity:0.75;border:1px dashed var(--line);">
+            <div class="carta-etiqueta">Tu año personal</div>
             <h2>☀️ Revolución Solar</h2>
             <div class="desc">Tu mapa del año — qué energías activa este cumpleaños en tu vida. <b>Próximamente.</b></div>
             <button class="btn-primary" disabled style="opacity:0.5;">Disponible pronto</button>
@@ -6811,6 +6887,14 @@
         </div>
       </div>
     `;
+  }
+
+  function irASeccionCarta(id) {
+    cambiarPestana('carta');
+    requestAnimationFrame(() => {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   }
 
   function irASeccionCiclos(id) {
