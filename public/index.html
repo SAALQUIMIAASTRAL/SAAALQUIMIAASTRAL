@@ -1228,6 +1228,18 @@
   .auth-error.msj-verde{background:var(--success-bg);color:var(--success-text);}
   .auth-error.msj-amarillo{background:var(--warning-bg);color:var(--warning-text);}
   .auth-error.msj-rojo{background:var(--error-bg);color:var(--error-text);}
+
+  /* Semáforo de avisos: color, símbolo y texto en claro y oscuro. */
+  .estado-aviso{padding:10px 12px;border-radius:10px;font-size:13px;line-height:1.5;overflow-wrap:anywhere;}
+  .estado-aviso:empty{display:none!important;}
+  .estado-aviso.msj-verde{background:var(--success-bg)!important;color:var(--success-text)!important;}
+  .estado-aviso.msj-rojo{background:var(--error-bg)!important;color:var(--error-text)!important;}
+  .estado-aviso.msj-amarillo{background:var(--warning-bg)!important;color:var(--warning-text)!important;}
+  .estado-aviso::before{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;margin-right:8px;font-family:Arial,sans-serif;font-weight:700;vertical-align:middle;}
+  .estado-aviso.msj-verde::before{content:'✓';background:#21834b;color:#fff;}
+  .estado-aviso.msj-rojo::before{content:'×';background:#bf3535;color:#fff;}
+  .estado-aviso.msj-amarillo::before{content:'!';background:#efc34d;color:#493400;}
+
   .campo-pass{position:relative;}
   .campo-pass input{width:100%;padding-right:48px !important;}
   .ojo-toggle{position:absolute;right:12px;top:50%;bottom:auto;transform:translateY(-50%);width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer;font-size:17px;padding:0;color:var(--ink-dim);line-height:1;}
@@ -1617,7 +1629,7 @@
         <div class="auth-overlay" id="pantalla-confirmar-correo">
           <h1>Revisa tu correo</h1>
           <div class="sub">Ya casi estás en Sam Alquimia Astral.</div>
-          <p style="color:var(--plum);font-size:15px;line-height:1.6;">Abre el correo de bienvenida y toca <b>Confirmar mi correo</b> para activar tu cuenta.</p>
+          <p class="estado-aviso msj-amarillo" role="status">Abre el correo de bienvenida y toca <b>Confirmar mi correo</b> para activar tu cuenta.</p>
           <p id="confirmar-correo-destino" style="font-weight:600;color:var(--marigold-dark);overflow-wrap:anywhere;"></p>
           <p class="disclaimer">Si no lo encuentras, revisa spam o correo no deseado.</p>
           <button type="button" class="btn-primary" onclick="mostrarPantalla('login')">Ya confirmé · Iniciar sesión</button>
@@ -1637,7 +1649,7 @@
             <input type="checkbox" id="registro-acepta-terminos" style="margin-top:2px;">
             <span>Acepto los <a onclick="event.preventDefault();mostrarLegal('terminos')" style="color:var(--marigold-dark);cursor:pointer;">Términos y Condiciones</a> y el <a onclick="event.preventDefault();mostrarLegal('privacidad')" style="color:var(--marigold-dark);cursor:pointer;">Aviso de Privacidad</a>.</span>
           </label>
-          <p class="disclaimer">Para activar tu cuenta, confirma tu correo desde el enlace que recibirás al registrarte.</p>
+          <p class="estado-aviso msj-amarillo">Para activar tu cuenta, confirma tu correo desde el enlace que recibirás al registrarte.</p>
           <button id="registro-enviar" class="btn-primary" onclick="accionRegistro()">Crear cuenta</button>
           <div class="auth-switch">¿Ya tienes cuenta? <a onclick="mostrarPantalla('login')">Inicia sesión</a></div>
         </div>
@@ -3131,14 +3143,14 @@
       const r = await fetchAuth(`/otras-cartas/${id}`, { method: 'DELETE', headers: {} });
       if (!r.ok) {
         const d = await r.json().catch(() => ({}));
-        alert('No se pudo eliminar: ' + (d.error || r.status));
+        mostrarMensajeGlobal('No se pudo eliminar: ' + (d.error || r.status), 'rojo');
         return;
       }
       // Solo refrescar la lista — NO recargar toda la app (eso lleva al inicio)
       delete _otrasCartasCache[id];
       await cargarCartasGuardadas();
     } catch (e) {
-      alert('No se pudo eliminar: ' + e.message);
+      mostrarMensajeGlobal('No se pudo eliminar: ' + e.message, 'rojo');
     }
   }
 
@@ -3882,8 +3894,8 @@
     const texto = document.getElementById('diario-texto').value.trim();
     const estado_animo = document.getElementById('diario-animo-val').value || null;
     const msg = document.getElementById('diario-msg');
-    if (!texto) { msg.textContent = 'Escribe algo primero.'; msg.style.color = '#a5442f'; return; }
-    msg.textContent = 'Guardando...'; msg.style.color = 'var(--ink-dim)';
+    if (!texto) { pintarAviso(msg, 'Escribe algo primero.', 'rojo'); return; }
+    pintarAviso(msg, 'Guardando...', 'amarillo');
     try {
       const r = await fetchAuth('/diario/guardar', {
         method: 'POST',
@@ -3891,12 +3903,12 @@
         body: JSON.stringify({ texto, estado_animo }),
       });
       const data = await r.json();
-      if (!r.ok) { msg.textContent = data.error || 'No se pudo guardar.'; msg.style.color = '#a5442f'; return; }
+      if (!r.ok) { pintarAviso(msg, data.error || 'No se pudo guardar.', 'rojo'); return; }
       document.getElementById('diario-texto').value = '';
       document.getElementById('diario-animo-val').value = '';
       document.querySelectorAll('#diario-animo-btns button').forEach(b => b.style.background = 'var(--marigold-soft)');
-      msg.textContent = '✓ Guardado en tu diario.'; msg.style.color = 'var(--armonia)';
-    } catch (e) { msg.textContent = e.message; msg.style.color = '#a5442f'; }
+      pintarAviso(msg, '✓ Guardado en tu diario.', 'verde');
+    } catch (e) { pintarAviso(msg, e.message, 'rojo'); }
   }
 
   const TEMA_SIGNO_LUNACION = {
@@ -4737,8 +4749,8 @@
       fuente: document.getElementById('bib-fuente').value.trim(),
       contenido: document.getElementById('bib-contenido').value.trim(),
     };
-    if (!cuerpo.titulo || !cuerpo.contenido) { msg.textContent = 'Faltan título y contenido.'; msg.style.color = '#a5442f'; return; }
-    msg.textContent = 'Guardando...'; msg.style.color = 'var(--ink-dim)';
+    if (!cuerpo.titulo || !cuerpo.contenido) { pintarAviso(msg, 'Faltan título y contenido.', 'rojo'); return; }
+    pintarAviso(msg, 'Guardando...', 'amarillo');
     try {
       const r = await fetchAuth('/biblioteca', {
         method: 'POST',
@@ -4746,12 +4758,12 @@
         body: JSON.stringify(cuerpo),
       });
       const data = await r.json();
-      if (!r.ok) { msg.textContent = data.error || 'Error.'; msg.style.color = '#a5442f'; return; }
-      msg.textContent = '✓ Artículo guardado.'; msg.style.color = 'var(--armonia)';
+      if (!r.ok) { pintarAviso(msg, data.error || 'Error.', 'rojo'); return; }
+      pintarAviso(msg, '✓ Artículo guardado.', 'verde');
       document.getElementById('bib-titulo').value = '';
       document.getElementById('bib-contenido').value = '';
       document.getElementById('bib-fuente').value = '';
-    } catch (e) { msg.textContent = e.message; msg.style.color = '#a5442f'; }
+    } catch (e) { pintarAviso(msg, e.message, 'rojo'); }
   }
 
   async function guardarEventoAstrologico() {
@@ -4766,9 +4778,9 @@
       mensaje: document.getElementById('ev-mensaje').value.trim(),
     };
     if (!cuerpo.titulo || !cuerpo.fecha_inicio || !cuerpo.fecha_fin || !cuerpo.mensaje) {
-      msg.textContent = 'Faltan título, fechas o mensaje.'; msg.style.color = '#a5442f'; return;
+      pintarAviso(msg, 'Faltan título, fechas o mensaje.', 'rojo'); return;
     }
-    msg.textContent = 'Publicando...'; msg.style.color = 'var(--ink-dim)';
+    pintarAviso(msg, 'Publicando...', 'amarillo');
     try {
       const r = await fetchAuth('/eventos-astrologicos', {
         method: 'POST',
@@ -4776,14 +4788,14 @@
         body: JSON.stringify(cuerpo),
       });
       const data = await r.json();
-      if (!r.ok) { msg.textContent = data.error || 'Error.'; msg.style.color = '#a5442f'; return; }
-      msg.textContent = '✓ Evento publicado.'; msg.style.color = 'var(--armonia)';
+      if (!r.ok) { pintarAviso(msg, data.error || 'Error.', 'rojo'); return; }
+      pintarAviso(msg, '✓ Evento publicado.', 'verde');
       document.getElementById('ev-titulo').value = '';
       document.getElementById('ev-mensaje').value = '';
       document.getElementById('ev-fecha-inicio').value = '';
       document.getElementById('ev-fecha-fin').value = '';
       document.querySelectorAll('#ev-signos input:checked').forEach(i => i.checked = false);
-    } catch (e) { msg.textContent = e.message; msg.style.color = '#a5442f'; }
+    } catch (e) { pintarAviso(msg, e.message, 'rojo'); }
   }
 
   function mostrarEliminarCuenta() {
@@ -4847,7 +4859,7 @@
       const a = document.createElement('a');
       a.href = url; a.download = 'mis-datos-alquimia-astral.json';
       a.click(); URL.revokeObjectURL(url);
-    } catch (e) { alert('No se pudieron descargar los datos: ' + e.message); }
+    } catch (e) { mostrarMensajeGlobal('No se pudieron descargar los datos: ' + e.message, 'rojo'); }
   }
 
   async function eliminarMiCuenta() {
@@ -4855,19 +4867,19 @@
       const r = await fetchAuth('/mi-cuenta', { method: 'DELETE', headers: {} });
       const data = await r.json();
       if (r.ok) {
-        alert('Tu cuenta y todos tus datos han sido eliminados.');
+        mostrarMensajeGlobal('Tu cuenta fue eliminada.', 'verde');
         cerrarSesion();
       } else {
-        alert(data.error || 'No se pudo eliminar la cuenta.');
+        mostrarMensajeGlobal(data.error || 'No se pudo eliminar la cuenta.', 'rojo');
       }
-    } catch (e) { alert('Error: ' + e.message); }
+    } catch (e) { mostrarMensajeGlobal('Error: ' + e.message, 'rojo'); }
   }
 
   async function enviarFeedback() {
     const texto = document.getElementById('feedback-texto').value.trim();
     const msg = document.getElementById('feedback-msg');
-    if (!texto) { msg.textContent = 'Escribe tu mensaje primero.'; msg.style.color = '#a5442f'; return; }
-    msg.textContent = 'Enviando...'; msg.style.color = 'var(--ink-dim)';
+    if (!texto) { pintarAviso(msg, 'Escribe tu mensaje primero.', 'rojo'); return; }
+    pintarAviso(msg, 'Enviando...', 'amarillo');
     try {
       const r = await fetchAuth('/feedback', {
         method: 'POST',
@@ -4875,10 +4887,10 @@
         body: JSON.stringify({ tipo: 'sugerencia', mensaje: texto }),
       });
       const data = await r.json();
-      msg.textContent = data.mensaje || '¡Gracias!';
-      msg.style.color = 'var(--armonia)';
+      if (!r.ok) { pintarAviso(msg, data.error || 'No se pudo enviar tu mensaje.', 'rojo'); return; }
+      pintarAviso(msg, data.mensaje || '¡Gracias! Tu mensaje fue enviado.', 'verde');
       document.getElementById('feedback-texto').value = '';
-    } catch (e) { msg.textContent = e.message; msg.style.color = '#a5442f'; }
+    } catch (e) { pintarAviso(msg, e.message, 'rojo'); }
   }
 
   function abrirAsistenteIA() {
@@ -5137,7 +5149,7 @@
       cancelarEdicionDatos();
       await cargarDatosParaEditar();
       document.getElementById('editar-datos-msg').style.color = 'var(--armonia)';
-      document.getElementById('editar-datos-msg').textContent = '✔ Guardado. Tu carta natal se recalculará la próxima vez que la abras.';
+      mostrarMensaje('editar-datos-msg', 'Guardado. Tu carta natal se recalculará la próxima vez que la abras.', 'verde');
     } catch (e) {
       mostrarErrorEn('editar-datos-error', 'No se pudo conectar. Intenta de nuevo.');
     }
@@ -5155,10 +5167,10 @@
     try {
       const r = await fetchAuth('/suscripcion/portal', { method: 'POST', headers: {} });
       const data = await r.json();
-      if (!r.ok || !data.url) { errorEl.textContent = data.error || 'No se pudo abrir el portal.'; return; }
+      if (!r.ok || !data.url) { pintarAviso(errorEl, data.error || 'No se pudo abrir el portal.', 'rojo'); return; }
       window.location.href = data.url;
     } catch (e) {
-      errorEl.textContent = 'No se pudo conectar con Stripe.';
+      pintarAviso(errorEl, 'No se pudo conectar con Stripe.', 'rojo');
     }
   }
 
@@ -5191,7 +5203,7 @@
       });
       const data = await leerJsonSeguro(r);
       if (!r.ok) { mostrarErrorEn('olvide-error', data.error || 'No se pudo procesar la solicitud.'); return; }
-      mostrarMensaje('olvide-error', 'Si ese correo está registrado, te llegará un enlace para crear una nueva contraseña. Revisa también spam.', 'verde');
+      mostrarMensaje('olvide-error', 'Si ese correo está registrado, te llegará un enlace para crear una nueva contraseña. Revisa también spam.', 'amarillo');
       // Mantener el aviso visible hasta que la persona decida regresar.
     } catch (e) {
       mostrarErrorEn('olvide-error', 'Error de conexión: ' + e.message);
@@ -5200,12 +5212,18 @@
 
   // Sistema unificado de mensajes: 'rojo' (error), 'amarillo' (aviso/pendiente), 'verde' (éxito).
   // mostrarErrorEn() se mantiene por compatibilidad y sigue siendo rojo por defecto.
-  function mostrarMensaje(id, mensaje, tipo = 'rojo') {
-    const el = document.getElementById(id);
+  function pintarAviso(el, mensaje, tipo = 'rojo') {
     if (!el) return;
-    el.textContent = mensaje;
-    el.classList.remove('msj-verde', 'msj-amarillo', 'msj-rojo');
-    el.classList.add('msj-' + tipo, 'show');
+    const estado = ['verde','rojo','amarillo'].includes(tipo) ? tipo : 'amarillo';
+    el.textContent = String(mensaje || '').replace(/^[✓✔✅]\s*/, '');
+    el.classList.remove('msj-verde','msj-amarillo','msj-rojo');
+    el.classList.add('estado-aviso','msj-' + estado,'show');
+    el.setAttribute('role', estado === 'rojo' ? 'alert' : 'status');
+    el.setAttribute('aria-live', estado === 'rojo' ? 'assertive' : 'polite');
+    el.setAttribute('aria-atomic', 'true');
+  }
+  function mostrarMensaje(id, mensaje, tipo = 'rojo') {
+    pintarAviso(document.getElementById(id), mensaje, tipo);
   }
   function alternarOjo(inputId, boton) {
     const input = document.getElementById(inputId);
@@ -5228,10 +5246,7 @@
       el.style.cssText = 'position:fixed;top:calc(env(safe-area-inset-top,0px) + 14px);left:50%;transform:translateX(-50%);z-index:9999;border-radius:10px;padding:10px 16px;font-size:12.5px;font-family:"Work Sans",sans-serif;box-shadow:0 4px 14px rgba(0,0,0,0.15);max-width:90%;text-align:center;';
       document.body.appendChild(el);
     }
-    const colores = { verde: ['#e1f3e6', '#1e6b3c'], amarillo: ['#fdf2d8', '#8a6414'], rojo: ['#fbe6e3', '#a5442f'] };
-    const [bg, fg] = colores[tipo] || colores.amarillo;
-    el.style.background = bg; el.style.color = fg;
-    el.textContent = texto;
+    pintarAviso(el, texto, tipo);
     el.style.display = 'block';
     clearTimeout(el._timeout);
     el._timeout = setTimeout(() => { el.style.display = 'none'; }, 4000);
@@ -6827,7 +6842,7 @@
       const r = await fetchAuth('/calendario-lunar', { method: 'POST', headers: {} });
       const data = await r.json();
       if (!r.ok) {
-        if (detectarLimiteExcedido(data)) { alert('Se acabaron los créditos gratis de este mes.'); return; }
+        if (detectarLimiteExcedido(data)) { mostrarMensajeGlobal('Se acabaron los créditos gratis de este mes.', 'amarillo'); return; }
         throw new Error(data.error || 'No se pudo calcular.');
       }
 
@@ -6971,7 +6986,7 @@
         console.error('dias_poder_personal_error:', data.dias_poder_personal_error);
       }
     } catch (err) {
-      alert(err.message);
+      mostrarMensajeGlobal(err.message, 'rojo');
     } finally {
       boton.textContent = 'Ver fechas exactas de este mes';
       boton.disabled = false;
@@ -7241,7 +7256,7 @@
       });
       if (!r.ok) { const d = await r.json(); throw new Error(d.error); }
       cargarHorariasGuardadas();
-    } catch (e) { alert(e.message); }
+    } catch (e) { mostrarMensajeGlobal(e.message, 'rojo'); }
   }
 
   async function eliminarHorariaGuardada(id) {
@@ -7249,7 +7264,7 @@
       const r = await fetchAuth('/horarias-guardadas/' + id, { method: 'DELETE', headers: {} });
       if (!r.ok) { const d = await r.json(); throw new Error(d.error); }
       cargarHorariasGuardadas();
-    } catch (e) { alert(e.message); }
+    } catch (e) { mostrarMensajeGlobal(e.message, 'rojo'); }
   }
 
   const TAROT_ARCANOS = [
@@ -7278,7 +7293,7 @@
   ];
 
   function mostrarProximamente(nombre) {
-    alert(nombre + ' está en construcción — muy pronto estará disponible en tu app 🔮');
+    mostrarMensajeGlobal(nombre + ' está en construcción — muy pronto estará disponible en tu app 🔮', 'amarillo');
   }
 
   function hashTextoSimple(texto) {
