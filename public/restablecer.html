@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
 <title>Crear nueva contraseña — Sam Alquimia Astral</title>
 <style>
   body { font-family: 'Georgia', serif; max-width: 420px; margin: 60px auto; padding: 24px; color: #2D1B4E; background: #FAF6F0; }
@@ -15,11 +16,16 @@
   .error { color: #a5442f; background:#fbe6e3; border-radius:10px; padding:10px; }
   .exito { color: #1e6b3c; background:#e1f3e6; border-radius:10px; padding:10px; }
   .aviso { color: #8a6414; background:#fdf2d8; border-radius:10px; padding:10px; }
+  .msg:empty { display:none; }
+  .msg:not(:empty)::before { display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;margin-right:8px;font-family:Arial,sans-serif;font-weight:bold; }
+  .msg.error::before { content:'×';background:#bf3535;color:white; }
+  .msg.exito::before { content:'✓';background:#21834b;color:white; }
+  .msg.aviso::before { content:'!';background:#efc34d;color:#493400; }
   .campo-pass { margin-bottom: 4px; }
   .campo-pass label { font-size: 13px; display: block; margin: 16px 0 4px; }
   .input-wrap { position: relative; }
   .input-wrap input { width: 100%; box-sizing: border-box; padding: 10px 40px 10px 12px; border-radius: 10px; border: 1px solid #D9C6EE; font-size: 14px; }
-  .ojo-toggle { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 20px; color: #6b5a80; padding: 4px; z-index: 10; line-height: 1; }
+  .ojo-toggle { width:auto; margin:0; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 20px; color: #6b5a80; padding: 4px; z-index: 10; line-height: 1; }
   input { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1px solid #D9C6EE; font-size: 14px; }
 </style>
 </head>
@@ -42,9 +48,10 @@
         <button type="button" class="ojo-toggle" onclick="alternarOjo('confirmar-password', this)">👁</button>
       </div>
     </div>
-    <button onclick="restablecer()">Guardar nueva contraseña</button>
+    <button id="guardar-password" onclick="restablecer()">Guardar nueva contraseña</button>
   </div>
-  <div class="msg" id="mensaje"></div>
+  <div class="msg" id="mensaje" role="status" aria-live="polite"></div>
+  <p><a href="/" style="color:#6B4FA0;">Volver a iniciar sesión</a></p>
 
   <script>
     function alternarOjo(id, boton) {
@@ -54,11 +61,18 @@
       boton.textContent = oculto ? '🙈' : '👁';
     }
 
-    // Supabase manda el token en el fragmento de la URL: #access_token=...&type=recovery
-    function obtenerAccessToken() {
-      const hash = window.location.hash.substring(1);
-      const params = new URLSearchParams(hash);
-      return params.get('access_token');
+    // Mantener la credencial solo en memoria y retirarla del historial/URL visible.
+    const parametrosRecuperacion = new URLSearchParams(window.location.hash.slice(1));
+    const tokenRecuperacion = parametrosRecuperacion.get('type') === 'recovery' ? parametrosRecuperacion.get('access_token') : null;
+    const errorEnlace = parametrosRecuperacion.get('error') || new URLSearchParams(window.location.search).get('error');
+    if (window.location.hash || window.location.search) window.history.replaceState(null, '', window.location.pathname);
+    function obtenerAccessToken() { return tokenRecuperacion; }
+    let restableciendo = false;
+    if (!tokenRecuperacion || errorEnlace) {
+      document.getElementById('formulario').style.display = 'none';
+      const aviso = document.getElementById('mensaje');
+      aviso.textContent = 'Este enlace no es válido o ya venció. Vuelve a iniciar sesión y toca ¿Olvidaste tu contraseña? para pedir otro.';
+      aviso.className = 'msg aviso';
     }
 
     // Lee la respuesta como JSON de forma segura — si el servidor devolvió HTML
@@ -70,6 +84,7 @@
     }
 
     async function restablecer() {
+      if (restableciendo) return;
       const msg = document.getElementById('mensaje');
       const access_token = obtenerAccessToken();
       const nueva_password = document.getElementById('nueva-password').value;
@@ -91,6 +106,9 @@
         return;
       }
 
+      restableciendo = true;
+      const boton = document.getElementById('guardar-password');
+      boton.disabled = true;
       try {
         const r = await fetch('/auth/restablecer-password', {
           method: 'POST',
@@ -104,11 +122,16 @@
           return;
         }
         document.getElementById('formulario').style.display = 'none';
-        msg.textContent = '✅ ¡Contraseña actualizada! Ya puedes regresar a la app e iniciar sesión con tu nueva contraseña.';
+        msg.textContent = '¡Contraseña actualizada! Ya puedes regresar a la app e iniciar sesión con tu nueva contraseña.';
         msg.className = 'msg exito';
+        document.getElementById('nueva-password').value = '';
+        document.getElementById('confirmar-password').value = '';
       } catch (e) {
-        msg.textContent = 'Error de conexión: ' + e.message;
+        msg.textContent = 'No se pudo conectar. Intenta guardar de nuevo.';
         msg.className = 'msg error';
+      } finally {
+        restableciendo = false;
+        boton.disabled = false;
       }
     }
   </script>
