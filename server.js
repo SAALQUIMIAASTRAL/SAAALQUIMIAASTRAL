@@ -9,6 +9,14 @@ const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
+app.disable('x-powered-by');
+app.use((req, res, next) => {
+  res.set('X-Content-Type-Options', 'nosniff');
+  res.set('X-Frame-Options', 'DENY');
+  res.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.set('Content-Security-Policy', "frame-ancestors 'none'; base-uri 'self'; object-src 'none'");
+  next();
+});
 app.use(cors());
 app.use((req, res, next) => {
   if (req.originalUrl === '/webhooks/stripe') return next();
@@ -47,7 +55,7 @@ function cacheSet(clave, valor, ttlMs) {
   bytesCache += bytes;
 }
 function cacheHash(...partes) {
-  return crypto.createHash('md5').update(partes.join('|')).digest('hex').slice(0, 12);
+  return crypto.createHash('sha256').update(JSON.stringify(partes)).digest('hex');
 }
 
 // Limpieza automática cada 10 min — evita fugas de memoria
@@ -447,34 +455,36 @@ async function obtenerCieloGlobalActual() {
 // Middleware: verifica que la usuaria haya iniciado sesión
 // ============================================================
 async function requireLogin(req, res, next) {
-  const authHeader = req.headers.authorization || '';
-  const token = authHeader.replace('Bearer ', '');
-
-  if (!token) return res.status(401).json({ error: 'No iniciaste sesión.' });
-
-  const { data, error } = await supabase.auth.getUser(token);
-  if (error || !data?.user) return res.status(401).json({ error: 'Sesión inválida o expirada.' });
-
-  req.userId = data.user.id;
-  req.userEmail = data.user.email;
-  req.supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
-  });
-  next();
+  res.set('Cache-Control', 'no-store');
+  const coincidencia = /^Bearer\s+(\S+)$/i.exec(req.headers.authorization || '');
+  if (!coincidencia) return res.status(401).json({ error: 'No iniciaste sesión.' });
+  const token = coincidencia[1];
+  try {
+    const { data, error } = await supabase.auth.getUser(token);
+    if (error || !data?.user) return res.status(401).json({ error: 'Sesión inválida o expirada.' });
+    req.userId = data.user.id;
+    req.userEmail = data.user.email;
+    req.supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    });
+    next();
+  } catch (_) {
+    return res.status(503).json({ error: 'No pudimos comprobar tu sesión. Inténtalo de nuevo.' });
+  }
 }
 
-// Middleware para rutas Premium — verifica suscripción activa en la base de datos
 async function requirePremium(req, res, next) {
   try {
-    const { data: sub } = await supabase.from('subscriptions').select('estado').eq('user_id', req.userId).maybeSingle();
-    // También permitir acceso al email admin (para que tú puedas probar todo)
+    const { data: sub, error } = await supabase.from('subscriptions').select('estado').eq('user_id', req.userId).maybeSingle();
+    if (error) return res.status(503).json({ error: 'No pudimos comprobar tu suscripción. Inténtalo de nuevo.' });
     const esAdmin = req.userEmail === (process.env.ADMIN_EMAIL || 'shernsndez.22@gmail.com');
     if (!esAdmin && sub?.estado !== 'activa') {
       return res.status(403).json({ error: 'Esta función requiere una suscripción activa.', premium_required: true });
     }
     next();
-  } catch (err) {
-    next(); // Si falla la verificación, dejamos pasar (mejor experiencia que bloquear)
+  } catch (_) {
+    return res.status(503).json({ error: 'No pudimos comprobar tu suscripción. Inténtalo de nuevo.' });
   }
 }
 
@@ -2316,21 +2326,23 @@ app.post('/suscripcion/iniciar', requireLogin, async (req, res) => {
     }
 
     // Buscamos si ya existe un customer_id guardado; si no, creamos uno en Stripe
-    const { data: subExistente } = await req.supabase
+    const { data: subExistente, error: errorSub } = await req.supabase
       .from('subscriptions')
       .select('stripe_customer_id')
       .eq('user_id', req.userId)
       .maybeSingle();
 
+    if (errorSub) throw new Error('No se pudo consultar la suscripción.');
     let customerId = subExistente?.stripe_customer_id;
     if (!customerId) {
       const customer = await stripe.customers.create({ email: req.userEmail });
       customerId = customer.id;
-      await req.supabase.from('subscriptions').upsert({
+      const { error: errorGuardarSub } = await supabase.from('subscriptions').upsert({
         user_id: req.userId,
         stripe_customer_id: customerId,
         estado: 'pendiente',
       }, { onConflict: 'user_id' });
+      if (errorGuardarSub) throw new Error('No se pudo guardar la suscripción.');
     }
 
     const sesionPago = await stripe.checkout.sessions.create({
@@ -2651,6 +2663,11 @@ app.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async (r
   }
 
   const sb = supabase; // cliente admin para webhooks
+  const guardarPago = async operacion => {
+    const resultado = await operacion;
+    if (resultado.error) throw new Error('No se pudo guardar la confirmación del pago.');
+    return resultado;
+  };
 
   try {
     switch (evento.type) {
@@ -2658,39 +2675,40 @@ app.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async (r
         const session = evento.data.object;
         const userId = session.metadata?.user_id;
         if (userId && session.subscription) {
-          await sb.from('subscriptions').upsert({
+          await guardarPago(sb.from('subscriptions').upsert({
             user_id: userId,
             stripe_customer_id: session.customer,
             stripe_subscription_id: session.subscription,
             estado: 'activa',
-          }, { onConflict: 'user_id' });
+          }, { onConflict: 'user_id' }));
         }
         break;
       }
       case 'customer.subscription.updated': {
         const sub = evento.data.object;
-        const { data: perfil } = await sb.from('subscriptions').select('user_id').eq('stripe_subscription_id', sub.id).maybeSingle();
+        const { data: perfil } = await guardarPago(sb.from('subscriptions').select('user_id').eq('stripe_subscription_id', sub.id).maybeSingle());
         if (perfil) {
           const estado = (sub.status === 'active' || sub.status === 'trialing') ? 'activa' : sub.status === 'past_due' ? 'vencida' : 'cancelada';
-          await sb.from('subscriptions').update({ estado }).eq('stripe_subscription_id', sub.id);
+          await guardarPago(sb.from('subscriptions').update({ estado }).eq('stripe_subscription_id', sub.id));
         }
         break;
       }
       case 'customer.subscription.deleted': {
         const sub = evento.data.object;
-        await sb.from('subscriptions').update({ estado: 'cancelada' }).eq('stripe_subscription_id', sub.id);
+        await guardarPago(sb.from('subscriptions').update({ estado: 'cancelada' }).eq('stripe_subscription_id', sub.id));
         break;
       }
       case 'invoice.payment_failed': {
         const invoice = evento.data.object;
         if (invoice.subscription) {
-          await sb.from('subscriptions').update({ estado: 'vencida' }).eq('stripe_subscription_id', invoice.subscription);
+          await guardarPago(sb.from('subscriptions').update({ estado: 'vencida' }).eq('stripe_subscription_id', invoice.subscription));
         }
         break;
       }
     }
   } catch (err) {
     console.error('Webhook processing error:', err.message);
+    return res.status(500).json({ error:'No se pudo guardar el pago. El proveedor debe reintentar.' });
   }
 
   res.json({ recibido: true });
