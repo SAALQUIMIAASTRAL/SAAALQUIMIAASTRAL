@@ -1624,8 +1624,8 @@ app.post('/mes-astrologico', requireLogin, async (req, res) => {
     if (!perfil) return res.status(400).json({ error:'Primero guarda tus datos de nacimiento.' });
     const tz = zonaHorariaDesdeReq(req);
     const actual = partesEnZona(tz);
-    const anio = Number(req.body?.anio || actual.year);
-    const mes = Number(req.body?.mes || actual.month);
+    const anio = actual.year;
+    const mes = actual.month;
     if (!Number.isInteger(anio) || anio < 1900 || anio > 2100 || !Number.isInteger(mes) || mes < 1 || mes > 12) return res.status(400).json({ error:'Elige un mes y un año válidos.' });
     const dias = new Date(Date.UTC(anio,mes,0)).getUTCDate();
     const refrescar = req.body?.forzar_recalculo === true;
@@ -1670,6 +1670,7 @@ app.post('/mes-astrologico', requireLogin, async (req, res) => {
         punto_natal:NOMBRES_PLANETAS_MES[e.stationed_planet || e.natal_planet] || e.stationed_planet || e.natal_planet,
         aspecto:nombreAspecto[String(e.aspect_type || '').toLowerCase()] || e.aspect_type,
         area:e.area || e.life_area || '', interpretacion:e.interpretation || e.description || '',
+        orbe:typeof e.orb === 'number' ? e.orb : null,
       }];
     }) : [];
     if (general.status === 'rejected') console.error('Eventos mensuales:', general.reason?.response?.status || general.reason?.message);
