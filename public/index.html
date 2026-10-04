@@ -584,7 +584,75 @@
 
   .zoom-modal-bg{display:none;position:fixed;inset:0;background:rgba(20,14,20,0.92);z-index:60;align-items:center;justify-content:center;padding:20px;overflow:auto;}
   .zoom-modal-bg.open{display:flex;}
-  .zoom-modal-bg svg{width:100%;height:auto;background:#fff;border-radius:12px;}
+  .zoom-modal-bg svg{width:100%;height:auto;background:#fff;border-radius:18px;}
+  .carta-rueda-card{
+    background:linear-gradient(180deg,#fff 0%,var(--page-bg) 100%);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:14px;
+    box-shadow:0 8px 24px rgba(45,27,78,.06);
+  }
+  .carta-rueda-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:12px;
+  }
+  .carta-rueda-title{
+    font-family:'Cormorant Garamond',serif;
+    font-size:22px;
+    line-height:1.1;
+    font-weight:700;
+    color:var(--plum);
+  }
+  .carta-rueda-sub{
+    font-family:'Work Sans',sans-serif;
+    font-size:12.5px;
+    line-height:1.45;
+    color:var(--ink-dim);
+    margin-top:3px;
+  }
+  .carta-rueda-frame{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:8px;
+    overflow:hidden;
+  }
+  .carta-rueda-frame svg{
+    width:100% !important;
+    height:auto !important;
+    display:block;
+    background:#fff;
+  }
+  .carta-rueda-leyenda{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:6px;
+    margin-top:12px;
+    padding:11px 12px;
+    background:var(--marigold-soft);
+    border-radius:14px;
+    color:var(--plum);
+    font-family:'Work Sans',sans-serif;
+    font-size:12.5px;
+    line-height:1.45;
+  }
+  .carta-rueda-acciones{
+    display:flex;
+    gap:8px;
+    margin-top:12px;
+  }
+  .carta-rueda-acciones button{
+    flex:1;
+    min-height:40px;
+    border-radius:100px;
+    font-family:'Work Sans',sans-serif;
+    font-size:13px !important;
+    font-weight:600;
+    cursor:pointer;
+  }
   .zoom-close-btn{position:fixed;top:16px;right:16px;background:#fff;border:none;border-radius:50%;width:36px;height:36px;font-size:18px;z-index:61;cursor:pointer;}
   .lectura-modal-bg{display:none;position:fixed;inset:0;background:var(--page-bg);z-index:62;padding:0;overflow:hidden;flex-direction:column;}
   .lectura-modal-bg.open{display:flex;}
@@ -1232,13 +1300,13 @@
                 <button class="btn-primary" id="btn-calcular-carta" onclick="calcularCartaReal()" style="font-size:12px;padding:10px 6px;">Ver mi carta</button>
                 <button class="btn-primary" onclick="verResumenNatal()" style="background:var(--marigold);font-size:12px;padding:10px 6px;">Mi personalidad</button>
               </div>
-              <button class="btn-primary" id="btn-carta-visual" style="background:var(--lilac);width:100%;margin-bottom:8px;" onclick="verCartaVisual()">Ver gráfico de carta 🔮</button>
+              <button class="btn-primary" id="btn-carta-visual" style="background:var(--lilac);width:100%;margin-bottom:8px;" onclick="verCartaVisual()">Ver rueda natal</button>
             </div>
             <!-- Resultados FUERA del calc-form para que cerrar no rompa los botones -->
             <div id="carta-resultado-chips" style="margin-top:8px;"></div>
             <div id="resumen-natal-contenedor" style="margin-top:8px;"></div>
             <div id="carta-visual-contenedor" style="margin-top:8px;cursor:pointer;" onclick="verEnGrande()"></div>
-            <div id="zoom-hint" style="font-size:11.5px;color:var(--ink-dim);text-align:center;margin-top:4px;"></div>
+            <div id="zoom-hint" style="font-size:12.5px;color:var(--ink-dim);text-align:center;margin-top:7px;"></div>
           </div>
 
           <div class="section" data-tab="ciclos">
@@ -5276,43 +5344,85 @@
     if (!silencioso) { boton.textContent = 'Calcular mi carta natal'; boton.disabled = false; }
   }
 
+  let _cartaVisualSvgSesion = null;
+
+  function renderizarRuedaNatal(svg, desdeCache) {
+    const contenedor = document.getElementById('carta-visual-contenedor');
+    if (!contenedor || !svg) return;
+
+    contenedor.innerHTML = `
+      <div class="carta-rueda-card">
+        <div class="carta-rueda-head">
+          <div>
+            <div class="carta-rueda-title">Tu rueda natal</div>
+            <div class="carta-rueda-sub">El mapa visual de tu carta de nacimiento.</div>
+          </div>
+        </div>
+        <div class="carta-rueda-frame" id="carta-rueda-frame">${svg}</div>
+        <div class="carta-rueda-leyenda">
+          <div><b>Anillo exterior:</b> los 12 signos del zodiaco.</div>
+          <div><b>Números:</b> tus 12 casas astrológicas.</div>
+          <div><b>Símbolos planetarios:</b> dónde estaba cada planeta al nacer.</div>
+          <div><b>Líneas del centro:</b> aspectos, es decir, cómo se relacionan tus planetas entre sí.</div>
+        </div>
+        <div class="carta-rueda-acciones">
+          <button type="button" onclick="event.stopPropagation();verEnGrande()" style="background:var(--lilac);color:#fff;border:none;">Ampliar rueda</button>
+          <button type="button" onclick="event.stopPropagation();cerrarCartaVisual()" style="background:#fff;color:var(--plum);border:1px solid var(--line);">Cerrar</button>
+        </div>
+      </div>`;
+
+    const svgEl = contenedor.querySelector('svg');
+    if (svgEl) {
+      svgEl.removeAttribute('width');
+      svgEl.removeAttribute('height');
+      svgEl.setAttribute('preserveAspectRatio','xMidYMid meet');
+      svgEl.style.width = '100%';
+      svgEl.style.height = 'auto';
+      svgEl.style.display = 'block';
+    }
+    const hint = document.getElementById('zoom-hint');
+    if (hint) hint.textContent = desdeCache ? 'Rueda guardada · no se volvió a calcular' : 'Toca “Ampliar rueda” para verla en pantalla completa';
+  }
+
+  function cerrarCartaVisual() {
+    const c = document.getElementById('carta-visual-contenedor');
+    const h = document.getElementById('zoom-hint');
+    if (c) c.innerHTML = '';
+    if (h) h.textContent = '';
+  }
+
   async function verCartaVisual() {
     const boton = document.getElementById('btn-carta-visual');
     const contenedor = document.getElementById('carta-visual-contenedor');
     const chips = document.getElementById('carta-resultado-chips'); if (chips) chips.innerHTML = '';
     const rn = document.getElementById('resumen-natal-contenedor'); if (rn) rn.innerHTML = '';
-    boton.textContent = 'Generando tu rueda...';
+
+    if (_cartaVisualSvgSesion) {
+      renderizarRuedaNatal(_cartaVisualSvgSesion, true);
+      return;
+    }
+
+    boton.textContent = 'Abriendo tu rueda...';
     boton.disabled = true;
     try {
       const r = await fetchAuth('/carta-visual', { method: 'POST', headers: {} });
       const data = await r.json();
       if (!r.ok) {
-        contenedor.innerHTML = `<div style="color:#a5442f;font-size:12px;">${data.error || 'No se pudo generar.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
-        boton.textContent = 'Ver mi carta en rueda 🔮';
-        boton.disabled = false;
+        contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo abrir tu rueda natal.'}</div>`;
         return;
       }
       if (data.svg) {
-        const _bcCv = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="event.stopPropagation();document.getElementById('carta-visual-contenedor').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
-        contenedor.innerHTML = _bcCv + `<div style="border-radius:14px;overflow:hidden;background:var(--paper);border:1px solid var(--line);">${data.svg}</div>`;
-        document.getElementById('zoom-hint').textContent = '👆 Toca la carta para verla en grande';
-        // Hacer que el SVG sea responsive
-        const svgEl = contenedor.querySelector('svg');
-        if (svgEl) {
-          svgEl.removeAttribute('width');
-          svgEl.removeAttribute('height');
-          svgEl.style.width = '100%';
-          svgEl.style.height = 'auto';
-          svgEl.style.display = 'block';
-        }
+        _cartaVisualSvgSesion = data.svg;
+        renderizarRuedaNatal(data.svg, !!data.desde_cache);
       } else {
-        contenedor.innerHTML = `<pre style="white-space:pre-wrap;font-size:9px;color:var(--plum);">${JSON.stringify(data.crudo, null, 2)}</pre>`;
+        contenedor.innerHTML = '<div class="disclaimer">No se recibió el gráfico de la carta.</div>';
       }
     } catch (err) {
-      contenedor.innerHTML = `<div style="color:#a5442f;font-size:12px;">${err.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
+    } finally {
+      boton.textContent = 'Ver rueda natal';
+      boton.disabled = false;
     }
-    boton.textContent = 'Ver mi carta en rueda 🔮';
-    boton.disabled = false;
   }
 
   function irAPagar() {
@@ -6466,11 +6576,20 @@
   }
 
   function verEnGrande() {
-    const original = document.getElementById('carta-visual-contenedor').innerHTML;
-    if (!original) return;
-    document.getElementById('zoom-modal-content').innerHTML = original;
+    const frame = document.getElementById('carta-rueda-frame');
+    if (!frame || !frame.innerHTML.trim()) return;
+    const modal = document.getElementById('zoom-modal-content');
+    modal.innerHTML = '<div style="background:#fff;border-radius:18px;padding:8px;max-width:760px;width:min(92vw,760px);margin:auto;">' + frame.innerHTML + '</div>';
+    const svgEl = modal.querySelector('svg');
+    if (svgEl) {
+      svgEl.removeAttribute('width');
+      svgEl.removeAttribute('height');
+      svgEl.style.width = '100%';
+      svgEl.style.height = 'auto';
+      svgEl.style.display = 'block';
+    }
     document.getElementById('zoom-modal-bg').classList.add('open');
-    activarPanZoom(document.getElementById('zoom-modal-content'));
+    activarPanZoom(modal);
   }
   function cerrarZoom() {
     document.getElementById('zoom-modal-bg').classList.remove('open');
