@@ -2294,9 +2294,26 @@ app.post('/suscripcion/iniciar', requireLogin, async (req, res) => {
       semestral: process.env.STRIPE_PRICE_ID_SEMESTRAL,
       anual: process.env.STRIPE_PRICE_ID_ANUAL,
     };
-    const plan = PRECIOS_POR_PLAN[req.body?.plan] ? req.body.plan : 'mensual';
+    const plan = req.body?.plan || 'mensual';
+    if (!['mensual','semestral','anual'].includes(plan)) return res.status(400).json({ error:'Elige un plan válido.' });
     const priceId = PRECIOS_POR_PLAN[plan];
     if (!priceId) return res.status(400).json({ error: `Falta configurar el precio de Stripe para el plan "${plan}".` });
+
+    // Validar el precio real del proveedor, no solo el texto mostrado en pantalla.
+    const esperado = {
+      mensual:{ importe:499, intervalo:'month', cantidad:1 },
+      semestral:{ importe:2599, intervalo:'month', cantidad:6 },
+      anual:{ importe:4599, intervalo:'year', cantidad:1 },
+    }[plan];
+    const precio = await stripe.prices.retrieve(priceId);
+    const servicioPruebas = /pruebas/i.test(req.get('host') || '') || process.env.BILLING_ENV !== 'production';
+    if (servicioPruebas && precio.livemode) return res.status(503).json({ error:'Los cobros reales están deshabilitados en pruebas.' });
+    if (!precio.active || precio.currency !== 'usd' || precio.unit_amount !== esperado.importe ||
+        precio.recurring?.interval !== esperado.intervalo || precio.recurring?.interval_count !== esperado.cantidad ||
+        precio.recurring?.usage_type !== 'licensed' || precio.billing_scheme !== 'per_unit' ||
+        precio.transform_quantity) {
+      return res.status(503).json({ error:'El precio del plan necesita revisión antes de iniciar el pago.' });
+    }
 
     // Buscamos si ya existe un customer_id guardado; si no, creamos uno en Stripe
     const { data: subExistente } = await req.supabase
@@ -2322,7 +2339,7 @@ app.post('/suscripcion/iniciar', requireLogin, async (req, res) => {
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
       subscription_data: {
-        trial_period_days: 7,
+        trial_period_days: 3,
         metadata: { user_id: req.userId, plan },
       },
       success_url: `${req.headers.origin || 'https://tuapp.com'}/pago-exitoso`,
@@ -2623,11 +2640,11 @@ app.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async (r
   const sig = req.headers['stripe-signature'];
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
+  if (!webhookSecret) return res.status(503).json({ error:'La confirmación de pagos aún no está configurada.' });
+  if (!sig) return res.status(400).json({ error:'Falta la firma del proveedor.' });
   let evento;
   try {
-    evento = webhookSecret
-      ? stripe.webhooks.constructEvent(req.body, sig, webhookSecret)
-      : JSON.parse(req.body.toString());
+    evento = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
   } catch (err) {
     console.error('Webhook error:', err.message);
     return res.status(400).json({ error: err.message });
