@@ -950,6 +950,31 @@
     font-size:12.8px;
     line-height:1.55;
   }
+  .reloc-factor .micro{
+    display:inline-block;
+    margin-bottom:5px;
+    font-size:10.5px;
+    font-weight:700;
+    letter-spacing:.35px;
+    text-transform:uppercase;
+    color:var(--marigold-dark);
+  }
+  .reloc-factor .resumen{
+    color:var(--plum);
+    font-size:13px;
+    line-height:1.5;
+  }
+  .reloc-factor details{
+    margin-top:8px;
+    padding-top:8px;
+    border-top:1px solid var(--line);
+  }
+  .reloc-factor details summary{
+    cursor:pointer;
+    font-size:11.5px;
+    font-weight:700;
+    color:var(--marigold-dark);
+  }
   .reloc-tech{
     margin-top:12px;
     border-top:1px solid var(--line);
@@ -1992,7 +2017,7 @@
           <div class="section carta-destacada" data-tab="carta" id="carta-relocacion">
             <div class="carta-etiqueta">Tu carta en otra ciudad</div>
             <h2>Relocación</h2>
-            <div class="desc">Tu carta natal no cambia, pero al vivir en otra ciudad cambian las casas y el énfasis de algunas áreas de vida. Aquí puedes ver <b>qué se vuelve más importante para ti en ese lugar</b>.</div>
+            <div class="desc">Tu carta natal sigue siendo la misma, pero en otra ciudad cambian las casas. Eso puede hacer que ciertos temas —trabajo, relaciones, hogar, identidad o bienestar— se vuelvan más visibles en tu vida cotidiana.</div>
 
             <div class="reloc-explica">
               <div class="reloc-explica-item"><span>💼</span><div><b>Trabajo</b><small>Si aumenta la visibilidad, ambición o foco profesional.</small></div></div>
@@ -7245,18 +7270,52 @@
 
       const limpiarReloc = (txt) => limpiarTextoAPI(String(txt || '').replace(/\s+/g,' ').trim());
 
-      const cards = factores.map(f => {
+      // Agrupar factores parecidos para que la lectura no repita lo mismo varias veces.
+      const gruposReloc = new Map();
+      factores.forEach(f => {
         const c = clasificar(f);
         const texto = limpiarReloc(f.interpretation || f.description || f.factor || '');
+        const clave = c.titulo;
+        if (!gruposReloc.has(clave)) {
+          gruposReloc.set(clave, { ...c, textos: [] });
+        }
+        if (texto && !gruposReloc.get(clave).textos.includes(texto)) {
+          gruposReloc.get(clave).textos.push(texto);
+        }
+      });
+
+      const RESUMEN_RELOC = {
+        'Trabajo y proyección':'Aquí puede tomar más peso tu carrera, tu visibilidad o la forma en que quieres avanzar profesionalmente.',
+        'Relaciones y vínculos':'Este lugar puede hacer más importantes la pareja, los socios, las amistades o la manera en que te relacionas.',
+        'Hogar y vida privada':'Puede aumentar tu necesidad de pertenencia, estabilidad, hogar, familia o conexión con tus raíces.',
+        'Identidad y presencia':'Aquí puede cambiar cómo te muestras, cómo te perciben los demás o la manera en que afirmas quién eres.',
+        'Dinero y recursos':'Puede poner más atención en ingresos, seguridad material, recursos y decisiones económicas.',
+        'Expansión y aprendizaje':'Puede favorecer estudios, viajes, nuevas ideas, apertura cultural o una sensación de crecimiento.',
+        'Creatividad y disfrute':'Puede activar más el romance, la expresión creativa, el disfrute y las ganas de mostrar tus talentos.',
+        'Rutina y bienestar':'Puede volver más importantes tus hábitos, tu ritmo diario, el trabajo cotidiano y el cuidado personal.',
+        'Cambios profundos':'Puede mover temas intensos de intimidad, control, confianza, recursos compartidos o transformación personal.',
+        'Vida interior':'Puede aumentar la introspección, la sensibilidad, la necesidad de silencio o el trabajo emocional interno.',
+        'Área destacada':'Hay un tema de tu carta que gana más protagonismo en esta ciudad.'
+      };
+
+      const cards = [...gruposReloc.values()].map(g => {
+        const resumen = RESUMEN_RELOC[g.titulo] || RESUMEN_RELOC['Área destacada'];
+        const detalle = g.textos.join(' ');
         return `
           <div class="reloc-factor">
-            <div class="head"><span>${c.icon}</span><span>${c.titulo}</span></div>
-            <div class="body">${texto}</div>
+            <div class="head"><span>${g.icon}</span><span>${g.titulo}</span></div>
+            <div class="micro">Qué cambia aquí</div>
+            <div class="resumen">${resumen}</div>
+            ${detalle ? `
+              <details>
+                <summary>Ver por qué aparece en tu carta</summary>
+                <div class="body" style="margin-top:7px;">${detalle}</div>
+              </details>` : ''}
           </div>`;
       }).join('');
 
       const intro = factores.length
-        ? `En <b>${ciudad}</b> algunas áreas de tu carta toman más protagonismo. No significa que todo vaya a cambiar, sino que ciertos temas pueden sentirse más presentes en tu experiencia cotidiana.`
+        ? `En <b>${ciudad}</b> estas son las áreas que pueden sentirse más activas para ti. Úsalo para entender qué parte de tu vida podría ganar más atención en ese lugar.`
         : `No aparecen cambios especialmente destacados para <b>${ciudad}</b> en este cálculo.`;
 
       let htmlReloc = `
@@ -7275,7 +7334,7 @@
       if (detalle) {
         htmlReloc += `
           <details class="reloc-tech">
-            <summary>Ver detalle astrológico</summary>
+            <summary>Ver detalle completo del cálculo</summary>
             <div style="margin-top:8px;">${detalle}</div>
           </details>`;
       }
