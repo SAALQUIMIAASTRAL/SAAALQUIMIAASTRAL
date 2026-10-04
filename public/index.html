@@ -3940,7 +3940,7 @@
           <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:36px;color:var(--marigold);margin-bottom:12px;letter-spacing:1px;">${NOMBRES_MES[mesConsulta - 1]} ${anioConsulta}</div>
         </div>`;
       const zona = data.contexto_tiempo?.timezone || 'UTC';
-      html += `<div class="disclaimer" style="text-align:center;margin-bottom:14px;">Los movimientos más importantes del mes en curso.<br>Fechas y horas en ${escaparTextoMes(zona)}.</div>`;
+      html += `<div class="disclaimer" style="text-align:center;margin-bottom:14px;">Los movimientos más importantes del mes en curso.</div>`;
       const panoramaDetallado = generarPanoramaActualMes(generales, eventosPersonales, estadoGeneral, estadoPersonal);
       html += acordeonItemMes('nivel1-panorama', 'Panorama del mes', panoramaDetallado, true);
 
@@ -3949,9 +3949,9 @@
         : generales.length
           ? generales.map((e,i) => {
             const fecha = formatearFechaEs(e.fecha);
-            const cuando = fecha + (e.hora ? ' · ' + e.hora : '');
+            const cuando = fecha;
             const detalle = `<div class="cuerpo">
-              <div class="mes-evento-fecha">${escaparTextoMes(cuando)} · ${escaparTextoMes(zona)}</div>
+              <div class="mes-evento-fecha">${escaparTextoMes(cuando)}</div>
               <p>${escaparTextoMes(e.accion || e.texto)}</p>
             </div>`;
             return acordeonItemMes('evento-mes-' + i, escaparTextoMes(e.titulo), detalle, false, { tema:escaparTextoMes(cuando) });
@@ -3965,7 +3965,7 @@
         : eventosPersonales.length
           ? eventosPersonales.map(e => `
             <div class="tarjeta-lectura neutral" style="margin-bottom:10px;">
-              <div class="titulo">${formatearFechaEs(e.fecha)}${e.hora ? ' · ' + e.hora : ''}</div>
+              <div class="titulo">${formatearFechaEs(e.fecha)}</div>
               <div class="cuerpo">${escaparTextoMes(e.planeta_transito)} en ${escaparTextoMes(e.aspecto)} con tu ${escaparTextoMes(e.punto_natal)}.</div>
               <div class="cuerpo" style="margin-top:6px;">${escaparTextoMes(resumenPersonalMes(e))}</div>
             </div>`).join('')
