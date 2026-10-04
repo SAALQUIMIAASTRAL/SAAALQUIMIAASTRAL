@@ -5156,11 +5156,13 @@
   }
 
   async function abrirPortalPago() {
-    // En Android nativo, la suscripción se gestiona desde Google Play, nunca desde Stripe
-    // (Google no permite cobros/gestión externa dentro de la app nativa).
-    if (esAndroidNativo()) {
+    // En las apps nativas, gestionar la suscripción en la tienda correspondiente.
+    if (esAndroidNativo() || esIOSNativo()) {
       const NativePurchases = window.Capacitor?.Plugins?.NativePurchases;
-      if (NativePurchases) { await NativePurchases.manageSubscriptions(); return; }
+      if (!NativePurchases) return mostrarMensajeGlobal('La gestión de compras aún no está disponible en esta versión.', 'amarillo');
+      try { await NativePurchases.manageSubscriptions(); }
+      catch (_) { mostrarMensajeGlobal('No se pudo abrir la gestión de suscripciones. Intenta de nuevo.', 'rojo'); }
+      return;
     }
     const errorEl = document.getElementById('perfil-portal-error');
     errorEl.textContent = '';
@@ -6163,10 +6165,30 @@
     }
   }
 
+  // Comprobar el servidor antes de abrir una compra en la tienda.
+  async function comprasNativasPreparadas() {
+    try {
+      const r = await fetchAuth('/suscripcion/configuracion-nativa', { headers:{} });
+      const data = await leerJsonSeguro(r);
+      const plataforma = esAndroidNativo() ? 'google_play' : 'app_store';
+      if (!r.ok || data.disponible !== true || !data.plataformas?.includes(plataforma)) {
+        mostrarMensajeGlobal('Las compras aún están en preparación. No se iniciará ningún cobro.', 'amarillo');
+        return false;
+      }
+      return true;
+    } catch (_) {
+      mostrarMensajeGlobal('No se pudo comprobar la conexión con la tienda. Intenta de nuevo.', 'rojo');
+      return false;
+    }
+  }
+
   // Compra real usando Google Play Billing (Android) o StoreKit (iOS) — mismo plugin
   // @capgo/native-purchases para ambos. Se accede vía el puente estándar Capacitor.Plugins,
   // que es como se usa cualquier plugin nativo de Capacitor desde HTML plano (sin bundler).
+  let _compraNativaEnCurso = false;
   async function accionSuscribirseNativa() {
+    if (_compraNativaEnCurso) return;
+    _compraNativaEnCurso = true;
     const boton = document.getElementById('btn-suscribirse');
     boton.textContent = 'Un momento...';
     boton.disabled = true;
@@ -6174,8 +6196,13 @@
       const NativePurchases = window.Capacitor?.Plugins?.NativePurchases;
       if (!NativePurchases) throw new Error('El módulo de compras no está disponible en esta build.');
 
+      if (!await comprasNativasPreparadas()) return;
       const enAndroid = esAndroidNativo();
       const config = enAndroid ? PLANES_ANDROID[_planElegido] : PLANES_IOS[_planElegido];
+      if (!config?.productId || (enAndroid && (!config.planId || config.planId.startsWith('PENDIENTE')))) {
+        mostrarMensajeGlobal('Este plan aún está en preparación.', 'amarillo');
+        return;
+      }
       const resultado = await NativePurchases.purchaseProduct({
         productIdentifier: config.productId,
         ...(enAndroid ? { planIdentifier: config.planId } : {}), // planIdentifier solo aplica en Android
@@ -6198,9 +6225,9 @@
         }),
       });
       const data = await leerJsonSeguro(r);
-      if (!r.ok) throw new Error(data.error || 'No se pudo validar la compra.');
+      if (!r.ok || data.activa !== true) throw new Error(data.error || 'No se pudo validar la compra.');
 
-      mostrarMensajeGlobal('¡Suscripción activada! Bienvenida a Premium 🌙', 'verde');
+      mostrarMensajeGlobal('Tu suscripción está activa.', 'verde');
       SESION.suscripcion = 'activa';
       boton.textContent = 'Suscrita ✓';
     } catch (e) {
@@ -6209,11 +6236,19 @@
       if (!/cancel/i.test(e.message || '')) {
         mostrarMensajeGlobal('No se pudo completar la compra: ' + e.message, 'rojo');
       }
+    } finally {
+      _compraNativaEnCurso = false;
+      if (SESION.suscripcion !== 'activa') {
+        boton.textContent = 'Suscribirme';
+        boton.disabled = false;
+      }
     }
   }
 
   // Restaurar compras (requisito de Google/Apple — botón visible en Mi cuenta)
   async function accionRestaurarCompras() {
+    if (!esAndroidNativo() && !esIOSNativo()) return mostrarMensajeGlobal('Restaura tus compras desde la app de iOS o Android.', 'amarillo');
+    if (!await comprasNativasPreparadas()) return;
     try {
       const NativePurchases = window.Capacitor?.Plugins?.NativePurchases;
       if (!NativePurchases) return mostrarMensajeGlobal('No disponible en esta versión.', 'amarillo');
@@ -6238,7 +6273,7 @@
           }),
         });
         const data = await leerJsonSeguro(r);
-        if (r.ok) { mostrarMensajeGlobal('Compra restaurada correctamente.', 'verde'); SESION.suscripcion = 'activa'; return; }
+        if (r.ok && data.activa === true) { mostrarMensajeGlobal('Compra restaurada correctamente.', 'verde'); SESION.suscripcion = 'activa'; return; }
       }
       mostrarMensajeGlobal('No encontramos ninguna compra activa para restaurar.', 'amarillo');
     } catch (e) {
