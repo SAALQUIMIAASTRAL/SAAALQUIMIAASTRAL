@@ -2501,20 +2501,54 @@
     const punto = PLANETAS_SOLO_NOMBRE_ES[a.natal_point] || a.natal_point;
     return `Hace ${aspectoEs(a.type)} con tu ${punto} natal (orbe ${a.orb?.toFixed ? a.orb.toFixed(1) : a.orb}°).`;
   }
+  function palabrasClaveEclipse(ecl) {
+    const areas = [];
+    const sensaciones = [];
+    const AREA_SENTIR = {
+      identity:'redefinirte · mostrarte distinto',
+      health:'bajar el ritmo · escuchar el cuerpo',
+      finance:'revisar seguridad · dinero y prioridades',
+      career:'cambios de rumbo · mayor exposición',
+      love:'intensidad afectiva · decisiones vinculares',
+      relationships:'límites · conversaciones importantes',
+      spirituality:'más intuición · necesidad de silencio',
+      family:'movimientos familiares · necesidad de contención',
+      home:'cambios en casa · búsqueda de estabilidad',
+      creativity:'más impulso creativo · ganas de expresarte',
+      communication:'mente activa · conversaciones decisivas',
+      community:'cambios en grupos · nuevas conexiones',
+      friendship:'revisión de amistades · nuevas afinidades',
+      service:'reordenar rutinas · sentirte más útil',
+      power:'intensidad · deseo de recuperar control',
+    };
+    (ecl.activations || []).forEach(a => {
+      const area = AREAS_VIDA_ES[a.life_area] || a.life_area;
+      if (area && !areas.includes(area)) areas.push(area);
+      const frase = AREA_SENTIR[a.life_area];
+      if (frase && !sensaciones.includes(frase)) sensaciones.push(frase);
+    });
+    return {
+      sentir: sensaciones.slice(0,2).join(' · ') || 'más sensibilidad · necesidad de reajuste',
+      area: areas.slice(0,2).join(' y ') || 'un área importante de tu carta'
+    };
+  }
+
   function tarjetaEclipse(ecl, posicion) {
     const tipo = TIPOS_ECLIPSE_ES[ecl.type] || ecl.type;
     const posTexto = posicion ? `en ${signoEs(posicion.sign)} ${posicion.degree}°${posicion.minute}'` : '';
+    const claves = palabrasClaveEclipse(ecl);
     return `
       <div class="card-lectura">
         <div class="card-titulo">${tipo} ${posTexto}</div>
         <div class="card-etiqueta">${formatearFechaEs(ecl.date)}</div>
-        ${(ecl.activations || []).map(a => `<div class="card-cuerpo" style="margin-top:4px;">• ${describirActivacion(a)}</div>`).join('')}
+        <div class="card-cuerpo" style="margin-top:7px;"><b>Qué puedes sentir:</b> ${claves.sentir}.</div>
+        <div class="card-cuerpo" style="margin-top:4px;"><b>Área que mueve:</b> ${claves.area}.</div>
       </div>`;
   }
 
   async function verEclipses() {
     const contenedor = document.getElementById('eclipses-resultado');
-    contenedor.innerHTML = '<div class="disclaimer">Consultando eclipses...</div>';
+    contenedor.innerHTML = samLoading('Revisando tus próximos eclipses...');
     try {
       const r = await fetchAuth('/eclipses-natal', { method: 'POST', headers: {} });
       const data = await r.json();
@@ -2534,27 +2568,8 @@
       if (importantes?.length) {
         const botonCerrar = `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button onclick="cerrar('eclipses-resultado')" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
 
-        let htmlPrincipal = '';
-        const ip = data.interpretacion_principal;
-        if (ip?.interpretation) {
-          const tv = ip.interpretation.timing_windows;
-          htmlPrincipal = `
-            <div style="background:var(--moon-navy);border-radius:14px;padding:16px;color:#fff;margin-bottom:14px;">
-              <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:16px;margin-bottom:8px;">✨ Tu eclipse más importante</div>
-              <div style="font-size:12.5px;color:#e8dcf0;line-height:1.6;margin-bottom:10px;">${limpiarTextoAPI(ip.interpretation.general || '')}</div>
-              ${tv ? `
-                <div style="font-size:11px;color:#c9bfe0;margin-bottom:4px;"><b>Antes:</b> ${tv.pre_eclipse || ''}</div>
-                <div style="font-size:11px;color:#c9bfe0;margin-bottom:4px;"><b>El día:</b> ${tv.eclipse_day || ''}</div>
-                <div style="font-size:11px;color:#c9bfe0;margin-bottom:10px;"><b>Después:</b> ${tv.post_eclipse || ''}</div>
-              ` : ''}
-              ${ip.interpretation.advice?.length ? `
-                <div style="font-size:11px;color:#e8b978;font-weight:600;margin-bottom:4px;">✨ Consejos</div>
-                ${ip.interpretation.advice.map(a => `<div style="font-size:12px;color:#f2e6ec;margin-bottom:3px;">• ${a}</div>`).join('')}
-              ` : ''}
-            </div>`;
-        }
-
-        contenedor.innerHTML = botonCerrar + htmlPrincipal + importantes.slice(0, 5).map(ecl => tarjetaEclipse(ecl, posicionesPorId[ecl.eclipse_id])).join('');
+        contenedor.innerHTML = botonCerrar +
+          importantes.slice(0, 5).map(ecl => tarjetaEclipse(ecl, posicionesPorId[ecl.eclipse_id])).join('');
       } else {
         contenedor.innerHTML = `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(data, null, 2)}</pre>`;
       }
@@ -4005,7 +4020,7 @@
 
   async function verHoroscopoDiario() {
     const contenedor = document.getElementById('horoscopo-resultado');
-    contenedor.innerHTML = '<div class="disclaimer">Generando tu horóscopo...</div>';
+    contenedor.innerHTML = samLoading('Leyendo tus tránsitos de hoy...');
     try {
       const r = await fetchAuth('/horoscopo-diario', { method: 'POST', headers: {} });
       const data = await r.json();
@@ -6265,7 +6280,7 @@
 
   async function cargarLunaReal() {
     const contenedor = document.getElementById('luna-cruda');
-    contenedor.innerHTML = '<div class="disclaimer">Consultando la luna de hoy...</div>';
+    contenedor.innerHTML = samLoading('Mirando la Luna de hoy...');
     try {
       const r = await fetchAuth('/luna', { method: 'POST', headers: {} });
       const data = await r.json();
@@ -6316,7 +6331,7 @@
 
   async function verLunaVacia() {
     const contenedor = document.getElementById('luna-vacia-resultado');
-    contenedor.innerHTML = '<div class="disclaimer">Revisando si hay Luna Vacía hoy...</div>';
+    contenedor.innerHTML = samLoading('Revisando la Luna Vacía de Curso...');
     const _cerrar = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('luna-vacia-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
     try {
       const r = await fetchAuth('/luna-vacia', { method: 'POST', headers: {} });
