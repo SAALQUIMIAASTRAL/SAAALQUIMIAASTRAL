@@ -6296,68 +6296,128 @@
       if (avisoMercurio) avisoMercurio.innerHTML = '';
       if (contenedorPersonal) contenedorPersonal.innerHTML = '';
 
-      // Convertimos los tránsitos personales del mes en categorías de uso cotidiano.
-      const personalesPorCategoria = {
-        cabello:new Set(), tatuaje:new Set(), negocio:new Set(), credito:new Set(),
-        contrato:new Set(), entrevista:new Set(), cirugia:new Set()
-      };
-
-      Object.entries(diasPersonal).forEach(([dia, mensajes]) => {
-        const texto = (mensajes || []).join(' ').toLowerCase();
-        const d = Number(dia);
-        if (!d) return;
-
-        if (/venus|ascendente|imagen personal|belleza/.test(texto)) personalesPorCategoria.cabello.add(d);
-        if (/sol|júpiter|medio cielo|mc|marte|liderar|visibilidad|carrera|lanzamientos|arrancar proyectos|oportunidades/.test(texto)) {
-          personalesPorCategoria.negocio.add(d);
+      const TEMAS_PERSONALES = [
+        {
+          key:'imagen',
+          emoji:'✨',
+          titulo:'Imagen y visibilidad',
+          match:/ascendente|imagen personal|primeras impresiones|visibilidad|mostrarte|destacar|liderar/i,
+          mensaje:'Buen momento para mostrarte, cuidar tu presencia, hacerte notar o tener conversaciones donde quieres causar una buena impresión.'
+        },
+        {
+          key:'amor',
+          emoji:'💖',
+          titulo:'Amor y vínculos',
+          match:/venus|amor|relaciones|pareja|belleza|atracción|descendente/i,
+          mensaje:'Días favorables para el amor, conectar con otros, disfrutar, cuidar tu imagen o dedicar tiempo a vínculos importantes.'
+        },
+        {
+          key:'dinero',
+          emoji:'💰',
+          titulo:'Dinero y oportunidades',
+          match:/júpiter|dinero|oportunidades|crecer|expandirte|prosperidad|crédito/i,
+          mensaje:'Puede ser un buen momento para revisar oportunidades, mover temas de dinero o abrir conversaciones que ayuden a crecer.'
+        },
+        {
+          key:'trabajo',
+          emoji:'🚀',
+          titulo:'Trabajo y proyección',
+          match:/medio cielo|midheaven|\bmc\b|carrera|lanzamientos|proyectos|imagen pública|liderar/i,
+          mensaje:'Buen momento para presentar ideas, avanzar proyectos, tener reuniones importantes o ganar más visibilidad profesional.'
+        },
+        {
+          key:'comunicacion',
+          emoji:'💬',
+          titulo:'Conversaciones y acuerdos',
+          match:/mercurio|comunicar|firmar|negociar|acuerdos|contratos|mensajes/i,
+          mensaje:'Favorece conversaciones claras, negociaciones, acuerdos y temas que necesitan una respuesta o una decisión.'
+        },
+        {
+          key:'accion',
+          emoji:'🔥',
+          titulo:'Acción y empuje',
+          match:/marte|tomar acción|arrancar proyectos|energía extra|iniciativa/i,
+          mensaje:'Tienes más empuje para actuar, resolver pendientes, iniciar algo o avanzar en lo que venía detenido.'
+        },
+        {
+          key:'estructura',
+          emoji:'🪨',
+          titulo:'Orden y compromisos',
+          match:/saturno|estructura|responsabilidad|compromisos serios/i,
+          mensaje:'Buen momento para ordenar, poner límites, asumir compromisos o tomar decisiones más serias y sostenibles.'
+        },
+        {
+          key:'emocional',
+          emoji:'🌙',
+          titulo:'Bienestar emocional',
+          match:/luna|bienestar emocional|hogar|familia|raíces|vida privada/i,
+          mensaje:'Días para bajar el ritmo, atender lo emocional, cuidar el hogar o dar espacio a temas familiares importantes.'
         }
-        if (/júpiter|saturno|venus|dinero|estructura|responsabilidad|oportunidades/.test(texto)) {
-          personalesPorCategoria.credito.add(d);
-        }
-        if (/mercurio|saturno|descendente|firmar|negociar|acuerdos|compromisos/.test(texto)) {
-          personalesPorCategoria.contrato.add(d);
-        }
-        if (/sol|júpiter|medio cielo|mc|ascendente|mercurio|visibilidad|carrera|imagen personal|comunicar/.test(texto)) {
-          personalesPorCategoria.entrevista.add(d);
-        }
-        // Tatuajes y cirugías se mantienen solo como referencia lunar general:
-        // no usamos tránsitos personales para sugerir decisiones médicas/procedimientos.
-      });
-
-      const actividades = [
-        { key:'cabello', emoji:'✂️', titulo:'Cabello', sirve:'Para cortes cuando buscas crecimiento o más volumen.', generales:c.cortarte_el_cabello || [] },
-        { key:'tatuaje', emoji:'🎨', titulo:'Tatuaje', sirve:'Referencia tradicional para elegir una fase lunar más tranquila.', generales:c.tatuarte || [] },
-        { key:'negocio', emoji:'🚀', titulo:'Negocio o lanzamiento', sirve:'Para presentar, publicar o poner en marcha algo importante.', generales:c.lanzar_negocio || [] },
-        { key:'credito', emoji:'💳', titulo:'Dinero o crédito', sirve:'Para revisar movimientos financieros, solicitudes o compromisos de dinero.', generales:c.pedir_credito || [] },
-        { key:'contrato', emoji:'✍️', titulo:'Contratos y acuerdos', sirve:'Para negociar, conversar condiciones o formalizar acuerdos.', generales:c.firmar_contrato || [] },
-        { key:'entrevista', emoji:'💼', titulo:'Entrevistas y exposición', sirve:'Para reuniones, entrevistas, presentaciones y momentos donde quieres destacar.', generales:c.entrevista_trabajo || [] },
-        { key:'cirugia', emoji:'🩺', titulo:'Procedimientos médicos', sirve:'Solo referencia de tradición astrológica; la fecha médica debe decidirse con tu profesional de salud.', generales:c.cirugias || [] },
       ];
 
-      const renderDias = (actividad) => {
-        const generales = new Set((actividad.generales || []).map(Number));
-        const personales = personalesPorCategoria[actividad.key] || new Set();
-        const todos = [...new Set([...generales, ...personales])].filter(Boolean).sort((a,b)=>a-b);
-        if (!todos.length) return '<span style="color:var(--ink-dim);font-weight:500;">Sin fechas destacadas este mes.</span>';
-        return todos.map(d => personales.has(d)
-          ? `<span class="personal">${d}⭐</span>`
-          : `<span>${d}</span>`
-        ).join(' · ');
-      };
+      const grupos = new Map();
+      Object.entries(diasPersonal).forEach(([dia, mensajes]) => {
+        const d = Number(dia);
+        if (!d) return;
+        const lista = Array.isArray(mensajes) ? mensajes : [mensajes];
+        lista.forEach(msg => {
+          const texto = String(msg || '');
+          const tema = TEMAS_PERSONALES.find(t => t.match.test(texto)) || {
+            key:'otros', emoji:'⭐', titulo:'Día favorable para ti',
+            mensaje:'Tu carta marca este día como especialmente favorable para mover un tema importante.'
+          };
+          if (!grupos.has(tema.key)) grupos.set(tema.key,{...tema,dias:new Set()});
+          grupos.get(tema.key).dias.add(d);
+        });
+      });
+
+      const gruposHtml = [...grupos.values()]
+        .sort((a,b)=>Math.min(...a.dias)-Math.min(...b.dias))
+        .map(g => {
+          const dias=[...g.dias].sort((a,b)=>a-b);
+          return `
+            <div class="dia-proposito">
+              <div class="emoji">${g.emoji}</div>
+              <div class="contenido">
+                <div class="titulo">${g.titulo}</div>
+                <div class="fechas">Días ${dias.join(', ')} · ${nombreMes}</div>
+                <div class="sirve">${g.mensaje}</div>
+              </div>
+            </div>`;
+        }).join('');
+
+      const actividades = [
+        { emoji:'✂️', titulo:'Cabello', sirve:'Para cortes cuando buscas crecimiento o más volumen.', generales:c.cortarte_el_cabello || [] },
+        { emoji:'🎨', titulo:'Tatuaje', sirve:'Referencia tradicional para elegir una fase lunar más tranquila.', generales:c.tatuarte || [] },
+        { emoji:'🚀', titulo:'Negocio o lanzamiento', sirve:'Para presentar, publicar o poner en marcha algo importante.', generales:c.lanzar_negocio || [] },
+        { emoji:'💳', titulo:'Dinero o crédito', sirve:'Para revisar solicitudes, movimientos o compromisos de dinero.', generales:c.pedir_credito || [] },
+        { emoji:'✍️', titulo:'Contratos y acuerdos', sirve:'Para negociar, conversar condiciones o formalizar acuerdos.', generales:c.firmar_contrato || [] },
+        { emoji:'💼', titulo:'Entrevistas y exposición', sirve:'Para entrevistas, reuniones, presentaciones y momentos donde quieres destacar.', generales:c.entrevista_trabajo || [] },
+        { emoji:'🩺', titulo:'Procedimientos médicos', sirve:'Solo referencia de tradición astrológica; la fecha médica debe decidirse con tu profesional de salud.', generales:c.cirugias || [] },
+      ];
+
+      const generalesHtml = actividades.map(a => {
+        const dias=[...new Set((a.generales||[]).map(Number))].filter(Boolean).sort((x,y)=>x-y);
+        if(!dias.length) return '';
+        return `
+          <div class="dia-proposito">
+            <div class="emoji">${a.emoji}</div>
+            <div class="contenido">
+              <div class="titulo">${a.titulo}</div>
+              <div class="fechas">Días ${dias.join(', ')} · ${nombreMes}</div>
+              <div class="sirve">${a.sirve}</div>
+            </div>
+          </div>`;
+      }).join('');
 
       if (contenedorUnificado) {
         contenedorUnificado.innerHTML = `
-          <div class="dias-leyenda">⭐ = ese día también tiene un tránsito favorable en <b>tu carta personal</b>. Los días sin estrella corresponden a la guía lunar general.</div>
-          ${actividades.map(a => `
-            <div class="dia-proposito">
-              <div class="emoji">${a.emoji}</div>
-              <div class="contenido">
-                <div class="titulo">${a.titulo}</div>
-                <div class="sirve">${a.sirve}</div>
-                <div class="fechas">${renderDias(a)} <span style="font-weight:400;color:var(--ink-dim);">· ${nombreMes}</span></div>
-              </div>
-            </div>
-          `).join('')}
+          ${gruposHtml ? `
+            <div class="dias-leyenda"><b>⭐ Según tu carta</b> — agrupamos los días que tienen el mismo significado para que sea más fácil leerlos.</div>
+            ${gruposHtml}
+          ` : ''}
+          <div class="dias-leyenda" style="margin-top:12px;"><b>🌙 Guía lunar general</b> — fechas basadas en la fase y el signo de la Luna.</div>
+          ${generalesHtml || '<div class="disclaimer">No hay fechas generales destacadas este mes.</div>'}
           <div class="disclaimer">Estas fechas son una guía astrológica. Para decisiones médicas o financieras importantes, usa también el criterio de tu profesional correspondiente.</div>
         `;
       }
@@ -6368,7 +6428,7 @@
     } catch (err) {
       alert(err.message);
     } finally {
-      boton.textContent = 'Actualizar fechas de este mes';
+      boton.textContent = 'Ver fechas exactas de este mes';
       boton.disabled = false;
     }
   }
