@@ -1362,6 +1362,7 @@
   #cartas-carousel .seleccionada { border-color:var(--marigold);box-shadow:0 0 0 2px var(--marigold-soft); }
   .persona-menu { position:absolute;right:4px;top:4px;z-index:2; }
   .persona-menu[open] { z-index:3; }
+  .persona-menu:not([open]) > div { display:none; }
   .persona-menu summary { list-style:none;cursor:pointer;min-width:36px;min-height:36px;display:flex;align-items:center;justify-content:center;font-size:24px;border-radius:50%;color:var(--plum); }
   .persona-menu summary::-webkit-details-marker { display:none; }
   .persona-menu > div { position:absolute;right:0;top:36px;min-width:130px;padding:6px;background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:0 4px 14px rgba(45,27,78,.14); }
@@ -2196,8 +2197,13 @@
           </div>
 
           <div class="section carta-destacada" data-tab="carta" id="carta-estrellas">
-            <div class="carta-etiqueta">Puntos especiales</div>
-            <h2>Estrellas fijas</h2>
+            <details class="carta-desplegable" id="estrellas-desplegable">
+              <summary>
+                <span class="carta-etiqueta">Puntos especiales</span>
+                <span class="carta-desplegable-titulo">Estrellas fijas</span>
+                <span class="carta-desplegable-indicador" aria-hidden="true"></span>
+              </summary>
+              <div class="carta-desplegable-contenido">
             <div class="desc">Mira si alguna estrella fija toca un planeta importante de tu carta y qué tema puede intensificar en tu personalidad, talentos o desafíos.</div>
             <div class="card-lectura" style="margin-bottom:12px;background:var(--paper);">
               <div class="card-titulo">✦ ¿Para qué me sirve?</div>
@@ -2205,6 +2211,8 @@
             </div>
             <button class="btn-primary" onclick="verEstrellasFijas()">Ver qué estrellas tocan mi carta</button>
             <div id="estrellas-resultado" style="margin-top:14px;"></div>
+              </div>
+            </details>
           </div>
 
           <div class="section" data-tab="personas">
@@ -2400,8 +2408,13 @@
           </div>
 
           <div class="section carta-destacada" data-tab="carta" id="carta-relocacion">
-            <div class="carta-etiqueta">Tu carta en otra ciudad</div>
-            <h2>Relocación</h2>
+            <details class="carta-desplegable" id="reloc-desplegable">
+              <summary>
+                <span class="carta-etiqueta">Tu carta en otra ciudad</span>
+                <span class="carta-desplegable-titulo">Relocación</span>
+                <span class="carta-desplegable-indicador" aria-hidden="true"></span>
+              </summary>
+              <div class="carta-desplegable-contenido">
             <div class="desc">Tus planetas conservan sus signos y sus aspectos natales. Al calcular tu carta para otra ciudad, cambian el Ascendente, el Medio Cielo y las casas: cambia el escenario donde expresas esas energías. Compara qué temas toman protagonismo allí antes de decidir dónde vivir.</div>
 
             <div class="reloc-explica">
@@ -2417,6 +2430,8 @@
               <button class="btn-primary" onclick="calcularRelocacion()">Ver mi carta en esta ciudad</button>
               <div id="reloc-resultado" style="margin-top:14px;"></div>
             </div>
+              </div>
+            </details>
           </div>
 
 
@@ -3055,6 +3070,24 @@
     }
   }
 
+  function cerrarMenusPersonas(excepto = null) {
+    document.querySelectorAll('.persona-menu[open]').forEach(menu => {
+      if (menu === excepto) return;
+      menu.open = false;
+      menu.querySelector('summary')?.setAttribute('aria-expanded', 'false');
+    });
+  }
+  document.addEventListener('click', evento => {
+    cerrarMenusPersonas(evento.target?.closest?.('.persona-menu') || null);
+  }, true);
+  document.addEventListener('keydown', evento => {
+    if (evento.key !== 'Escape') return;
+    const abierto = document.querySelector('.persona-menu[open]');
+    if (!abierto) return;
+    cerrarMenusPersonas();
+    abierto.querySelector('summary')?.focus();
+  });
+
   async function cargarCartasGuardadas() {
     try {
       const r = await fetchAuth(`/otras-cartas?_t=${Date.now()}`, { headers: {}, cache: 'no-store' });
@@ -3088,6 +3121,7 @@
         etiqueta.textContent = nombre;
         ver.append(inicial, etiqueta);
         ver.onclick = () => {
+          cerrarMenusPersonas();
           if (selectorSin) selectorSin.value = String(c.id);
           cambiarModoSinastria();
           verDetalleOtraCarta(c.id, nombre.replace(/'/g, ''));
@@ -3097,19 +3131,27 @@
         const titulo = document.createElement('summary');
         titulo.textContent = '⋯';
         titulo.setAttribute('aria-label', 'Opciones de ' + nombre);
+        titulo.setAttribute('aria-expanded', 'false');
+        titulo.onclick = evento => {
+          evento.preventDefault();
+          const abrir = !menu.open;
+          cerrarMenusPersonas();
+          menu.open = abrir;
+          titulo.setAttribute('aria-expanded', String(abrir));
+        };
         const acciones = document.createElement('div');
         const editar = document.createElement('button');
         editar.type = 'button';
         editar.textContent = 'Editar datos';
         editar.onclick = async () => {
-          menu.open = false;
+          cerrarMenusPersonas();
           if (!_otrasCartasCache[c.id]) await verDetalleOtraCarta(c.id, nombre.replace(/'/g, ''));
           editarOtraCarta(c.id);
         };
         const eliminar = document.createElement('button');
         eliminar.type = 'button';
         eliminar.textContent = 'Eliminar';
-        eliminar.onclick = () => { menu.open = false; eliminarCartaOtro(c.id, nombre); };
+        eliminar.onclick = () => { cerrarMenusPersonas(); eliminarCartaOtro(c.id, nombre); };
         acciones.append(editar, eliminar);
         menu.append(titulo, acciones);
         chip.append(ver, menu);
@@ -7419,6 +7461,7 @@
   }
 
   function cambiarPestana(nombre) {
+    cerrarMenusPersonas();
     if (nombre === 'alquimia') {
       const practicas = document.getElementById('rituales-contenedor');
       if (practicas && !practicas.innerHTML.trim()) practicas.innerHTML = generarRitualesDelMes(_calMesActual);
