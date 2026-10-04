@@ -1218,7 +1218,7 @@
               <div class="row"><span class="g">↑</span>Ascendente en <b id="banda-asc">··</b></div>
               <div class="row"><span class="g">☽</span>Luna en <b id="banda-luna">··</b></div>
             </div>
-            <span class="link-arrow" onclick="document.getElementById('seccion-carta-natal').scrollIntoView({behavior:'smooth', block:'start'})" style="cursor:pointer;">Ver carta completa ›</span>
+            <span class="link-arrow" onclick="irHoroscopoHoy()" style="cursor:pointer;">Lee tu horóscopo de hoy ›</span>
           </div>
 
           <div id="evento-astrologico-banner"></div>
@@ -1640,6 +1640,19 @@
 <script>
   function calcularDemo(){
     document.getElementById('calc-result').classList.add('show');
+  }
+
+  function irHoroscopoHoy() {
+    cambiarPestana('ciclos');
+    requestAnimationFrame(() => {
+      const resultado = document.getElementById('horoscopo-resultado');
+      const seccion = resultado?.closest('.section') || resultado;
+      if (seccion) seccion.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setTimeout(() => {
+        const contenido = (resultado?.textContent || '').trim();
+        if (!contenido) verHoroscopoDiario();
+      }, 250);
+    });
   }
 
   async function calcularACG(){
