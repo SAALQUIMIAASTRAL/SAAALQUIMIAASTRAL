@@ -1588,6 +1588,14 @@
     min-height:44px;padding:3px 2px;gap:2px;font-size:clamp(9px,2.6vw,11px);
   }
   body.app-nativa .bottomnav .it .g{font-size:18px;}
+  /* iOS tenía una regla más específica que mantenía los botones en 48px. */
+  body.app-nativa.app-ios .bottomnav{
+    padding:2px max(4px,env(safe-area-inset-right,0px)) calc(2px + env(safe-area-inset-bottom,0px)) max(4px,env(safe-area-inset-left,0px));
+  }
+  body.app-nativa.app-ios .bottomnav .it{
+    min-height:40px;padding:2px 2px;gap:1px;font-size:10px;line-height:1.15;
+  }
+  body.app-nativa.app-ios .bottomnav .it .g{font-size:16px;}
   .install-btn{bottom:calc(var(--alto-nav) + 10px);}
   .auth-overlay,#pantalla-mi-perfil,#pantalla-legal{padding:calc(22px + env(safe-area-inset-top,0px)) calc(20px + env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) calc(20px + env(safe-area-inset-left,0px));}
   .auth-overlay > *{flex-shrink:0;}
