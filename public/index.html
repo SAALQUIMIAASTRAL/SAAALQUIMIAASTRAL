@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <title>Sam Alquimia Astral — App móvil</title>
 <!-- VERSION-APP: v192-energia-dia-mas-rapida -->
 <!-- CONSOLIDADO: incluye v159 (reintento carta natal) + v160 (11 puntos: sesión, mensajes, contraseñas, JSON seguro, correo único, safe area, zoom mapa, agrupación ciudades) + v161 (posición del ojo) + v162 (frases variadas ACG) + v163 (diversidad de planetas en ciudades) + v164 (texto luna de hoy) + v165 (diario oculto por defecto) -->
@@ -1535,10 +1535,89 @@
     #transitos-hoy-resultado .cielo-signo{font-size:12px !important;}
   }
 
+
+  /* Adaptación real a teléfono, tablet y escritorio, sin marco de teléfono simulado. */
+  :root{--alto-app:100vh;--alto-nav:76px;}
+  @supports(height:100dvh){:root{--alto-app:100dvh;}}
+  html,body{height:100%;overflow:hidden;}
+  .page{width:100%;height:var(--alto-app);padding:0;min-width:0;}
+  .page > div{width:100%;min-width:0;max-width:1100px;}
+  .phone,body.app-nativa .phone{width:100%;max-width:100%;height:100%;padding:0;border-radius:0;background:var(--page-bg);box-shadow:none;}
+  .screen,body.app-nativa .screen{width:100%;height:100%;min-height:0;border-radius:0;}
+  .notch{display:none;}
+  .topbar{min-height:64px;gap:8px;background:var(--paper);padding:calc(8px + env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) 8px max(12px,env(safe-area-inset-left,0px));}
+  .topbar .menu,.topbar .right{display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;flex:none;}
+  .topbar .brand{min-width:0;justify-content:center;text-align:center;font-size:clamp(17px,3.9vw,24px);line-height:1.15;}
+  .topbar .brand .g{flex:none;}
+  .season-banner{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-height:22%;overflow-y:auto;overflow-wrap:anywhere;}
+  .scroll{min-height:0;min-width:0;overflow-x:hidden;overscroll-behavior-y:contain;padding:0 env(safe-area-inset-right,0px) 24px env(safe-area-inset-left,0px);scroll-padding-block:16px;}
+  .band{padding-top:22px;}
+  .bottomnav{position:relative;inset:auto;flex:none;gap:2px;width:100%;padding:8px max(4px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(4px,env(safe-area-inset-left,0px));}
+  .bottomnav .it{flex:1;min-width:0;min-height:48px;padding:6px 2px;font-size:clamp(10px,2.8vw,13px);line-height:1.25;text-align:center;}
+  .bottomnav .it .g{font-size:22px;}
+  .install-btn{bottom:calc(var(--alto-nav) + 10px);}
+  .auth-overlay,#pantalla-mi-perfil,#pantalla-legal{padding:calc(22px + env(safe-area-inset-top,0px)) calc(20px + env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) calc(20px + env(safe-area-inset-left,0px));}
+  .auth-overlay > *{flex-shrink:0;}
+  #pantalla-legal #legal-contenido{flex-shrink:1;}
+  .auth-overlay input,.auth-overlay select,.auth-overlay textarea,.calc-form input{font-size:16px!important;min-width:0;max-width:100%;}
+  .calc-row > label{min-width:0;}
+  .calc-row input{width:100%;}
+  .lectura-topbar{padding-top:calc(12px + env(safe-area-inset-top,0px));padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px));gap:12px;}
+  .lectura-topbar h3{min-width:0;overflow-wrap:anywhere;}
+  .lectura-topbar button,.zoom-close-btn{width:44px;height:44px;flex:none;}
+  .lectura-contenido{min-height:0;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px));}
+  .zoom-modal-bg{padding:calc(14px + env(safe-area-inset-top,0px)) calc(14px + env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) calc(14px + env(safe-area-inset-left,0px));}
+  .zoom-close-btn{top:calc(12px + env(safe-area-inset-top,0px));right:calc(12px + env(safe-area-inset-right,0px));}
+  .acg-fullscreen{max-height:100%;min-height:0;}
+  .acg-map-viewport{min-height:160px;flex:1;}
+  .section{min-width:0;overflow-wrap:anywhere;}
+  .side-note{display:none;}
+  .notif-fila{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:12px 0;font-size:15px;}
+  .notif-fila input[type="checkbox"]{width:22px;height:22px;accent-color:var(--marigold-dark);flex:none;}
+  .notif-hora{display:flex;flex-direction:column;gap:7px;margin:14px 0;}
+  .notif-hora input{width:100%;min-height:44px;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--paper);color:var(--plum);}
+  @media(min-width:700px){
+    .section,.band{max-width:900px;margin-left:auto;margin-right:auto;}
+    .section{margin-top:14px;margin-bottom:14px;padding:22px;}
+    .band{border-radius:0 0 20px 20px;}
+    .auth-overlay{padding-left:max(24px,calc((100% - 660px)/2));padding-right:max(24px,calc((100% - 660px)/2));}
+    .bottomnav{justify-content:center;gap:14px;}
+    .bottomnav .it{flex:0 1 140px;}
+  }
+  @media(min-width:1100px) and (min-height:600px){
+    .page{padding:16px 0;}
+    .screen{border-radius:20px;border:1px solid var(--line);box-shadow:0 12px 40px rgba(45,27,78,.12);}
+    body.app-nativa .page{padding:0;}
+  }
+  @media(max-width:360px){.topbar{gap:4px;}.topbar .brand{font-size:17px;}.section{margin-inline:8px;padding:14px 12px;}}
+  @media(max-height:500px) and (orientation:landscape){.topbar{min-height:48px;padding-top:env(safe-area-inset-top,0px);padding-bottom:0;}.bottomnav .it{flex-direction:row;justify-content:center;gap:6px;min-height:44px;}.bottomnav{padding-top:4px;padding-bottom:calc(4px + env(safe-area-inset-bottom,0px));}}
+
 </style>
 </head>
 <body>
 <script>
+  // Mantener el alto visible cuando cambia la orientación o aparece el teclado.
+  (function () {
+    var pendiente = false;
+    function ajustar() {
+      pendiente = false;
+      var v = window.visualViewport;
+      if (v && Math.abs(v.scale - 1) > 0.05) return;
+      var alto = v ? v.height : window.innerHeight;
+      if (alto > 0) document.documentElement.style.setProperty('--alto-app', alto + 'px');
+    }
+    function pedir() { if (!pendiente) { pendiente = true; requestAnimationFrame(ajustar); } }
+    ajustar();
+    window.addEventListener('resize', pedir);
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', pedir);
+    document.addEventListener('DOMContentLoaded', function () {
+      var nav = document.querySelector('.bottomnav');
+      if (nav && window.ResizeObserver) new ResizeObserver(function () {
+        document.documentElement.style.setProperty('--alto-nav', nav.getBoundingClientRect().height + 'px');
+      }).observe(nav);
+    }, { once:true });
+  })();
+
   // Si la app corre dentro del contenedor nativo (iOS/Android vía Capacitor),
   // quitamos el marco decorativo de teléfono: aquí la pantalla YA es un teléfono real.
   (function () {
@@ -1914,7 +1993,12 @@
       <span>🔔 Notificaciones</span><span id="chev-sec-notif">▼</span>
     </button>
     <div id="sec-notif" style="display:none;padding:0 14px 14px;">
-      <div style="font-size:12px;color:var(--ink-dim);text-align:center;padding:8px;">🚀 Próximamente — notificaciones push de tránsitos y horóscopo diario.</div>
+      <p class="desc">Elige cuándo quieres recordar consultar tu horóscopo y la guía de hoy.</p>
+      <label class="notif-fila" for="notif-diaria-activa"><span>Recordatorio diario</span><input id="notif-diaria-activa" type="checkbox"></label>
+      <label class="notif-hora" for="notif-diaria-hora"><span>Hora del aviso</span><input id="notif-diaria-hora" type="time" value="09:00"></label>
+      <p class="disclaimer">Se usa la hora de este teléfono. El ahorro de batería puede retrasar el aviso.</p>
+      <button id="notif-guardar" class="btn-primary" type="button" onclick="guardarNotificacionesDiarias()">Guardar preferencia</button>
+      <div id="notif-diaria-msg" class="auth-error" style="margin-top:12px;"></div>
     </div>
   </div>
 
@@ -2506,7 +2590,7 @@
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedorLineas.innerHTML = mensajeLimiteExcedido(); return; }
-        contenedorLineas.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        contenedorLineas.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(data.error || 'No se pudo calcular.')}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
 
@@ -2686,7 +2770,7 @@
         contenedorLineas.innerHTML = _cerrar_acg + '<div class="disclaimer">No se encontraron líneas para mostrar.</div>';
       }
     } catch (err) {
-      contenedorLineas.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
+      contenedorLineas.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(err.message)}</div>`;
     }
     if (boton) { boton.textContent = 'Ver mis líneas reales'; boton.disabled = false; }
   }
@@ -2956,16 +3040,16 @@
       contenedor.innerHTML = `
         <div style="background:var(--marigold-soft);border-radius:12px;padding:14px;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-            <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:16px;color:var(--plum);">Carta de ${nombre}</div>
+            <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:16px;color:var(--plum);">Carta de ${escaparTextoMes(nombre)}</div>
             <button onclick="document.getElementById('carta-otro-detalle').innerHTML='';" style="background:var(--paper);border:none;border-radius:100px;padding:5px 12px;font-size:11px;color:var(--plum);cursor:pointer;">Cerrar ✕</button>
           </div>
           ${filasPlanetas}
           <button class="btn-primary" style="background:var(--lilac);margin-top:10px;" onclick="verVisualOtraCarta('${id}')">Ver su carta en rueda 🔮</button>
-          <button class="btn-primary" style="background:var(--marigold);margin-top:10px;" onclick="verResumenOtraCarta('${id}', '${nombre}')">Ver análisis de personalidad</button>
-          <button class="btn-primary" style="background:var(--blush-1);margin-top:10px;" onclick="verFuncionOtraCarta('${id}', '${nombre}', 'numerologia')">Su numerología</button>
+          <button class="btn-primary" style="background:var(--marigold);margin-top:10px;" onclick="verResumenOtraCarta('${id}', ${escaparTextoMes(JSON.stringify(nombre))})">Ver análisis de personalidad</button>
+          <button class="btn-primary" style="background:var(--blush-1);margin-top:10px;" onclick="verFuncionOtraCarta('${id}', ${escaparTextoMes(JSON.stringify(nombre))}, 'numerologia')">Su numerología</button>
           <div style="display:flex;gap:8px;margin-top:10px;">
             <button class="btn-primary" style="background:var(--ink-dim);" onclick="editarOtraCarta('${id}')">✏️ Editar datos</button>
-            <button class="btn-primary" style="background:#a5442f;" onclick="eliminarOtraCarta('${id}', '${nombre}')">🗑 Eliminar</button>
+            <button class="btn-primary" style="background:#a5442f;" onclick="eliminarOtraCarta('${id}', ${escaparTextoMes(JSON.stringify(nombre))})">🗑 Eliminar</button>
           </div>
           <div id="carta-otro-visual" style="margin-top:12px;"></div>
           <div id="carta-otro-resumen" style="margin-top:12px;"></div>
@@ -2973,7 +3057,7 @@
         </div>
       `;
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(err.message)}</div>`;
     }
   }
 
@@ -2992,7 +3076,7 @@
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = _cerrarExtra + mensajeLimiteExcedido(); return; }
-        contenedor.innerHTML = _cerrarExtra + `<div class="disclaimer" style="color:var(--error-text);">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        contenedor.innerHTML = _cerrarExtra + `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(data.error || 'No se pudo calcular.')}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
       if (funcion === 'astrocartografia') {
@@ -3003,13 +3087,13 @@
         contenedor.innerHTML = _cerrarExtra + renderizarInforme(data[llaves[funcion]], 'carta-otro-extra');
       }
     } catch (err) {
-      contenedor.innerHTML = _cerrarExtra + `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
+      contenedor.innerHTML = _cerrarExtra + `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(err.message)}</div>`;
     }
   }
 
   async function verResumenOtraCarta(id, nombre) {
     const contenedor = document.getElementById('carta-otro-resumen');
-    contenedor.innerHTML = '<div class="disclaimer">Generando el análisis de ' + nombre + '...</div>';
+    contenedor.innerHTML = '<div class="disclaimer">Generando el análisis de ' + escaparTextoMes(nombre) + '...</div>';
     const _cerrarResumen = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('carta-otro-resumen').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
     try {
       const r = await fetchAuth('/otras-cartas/' + id + '/resumen', { method: 'POST', headers: {} });
@@ -3020,7 +3104,7 @@
       }
       contenedor.innerHTML = _cerrarResumen + renderizarInforme(data.reporte, 'carta-otro-resumen');
     } catch (err) {
-      contenedor.innerHTML = _cerrarResumen + `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
+      contenedor.innerHTML = _cerrarResumen + `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(err.message)}</div>`;
     }
   }
 
@@ -3040,7 +3124,7 @@
         contenedor.innerHTML = '<div class="disclaimer">No se pudo generar el dibujo.</div>';
       }
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(err.message)}</div>`;
     }
   }
 
@@ -3130,7 +3214,7 @@
     } catch (e) {
       console.error('cargarCartasGuardadas falló:', e.message);
       const carousel = document.getElementById('cartas-carousel');
-      if (carousel) carousel.insertAdjacentHTML('afterbegin', `<div style="font-size:10px;color:var(--error-text);">No se pudo cargar la lista: ${e.message}</div>`);
+      if (carousel) carousel.insertAdjacentHTML('afterbegin', `<div style="font-size:10px;color:var(--error-text);">No se pudo cargar la lista: ${escaparTextoMes(e.message)}</div>`);
     }
   }
 
@@ -3173,7 +3257,7 @@
     const contenedor = document.getElementById('carta-otro-detalle');
     contenedor.innerHTML += `
       <div id="confirmar-eliminar-carta" style="background:#fdeceb;border:1px solid #e8b4ac;border-radius:12px;padding:14px;margin-top:10px;">
-        <div style="font-size:13px;color:var(--error-text);margin-bottom:10px;">¿Eliminar la carta de ${nombre}? Esto no se puede deshacer.</div>
+        <div style="font-size:13px;color:var(--error-text);margin-bottom:10px;">¿Eliminar la carta de ${escaparTextoMes(nombre)}? Esto no se puede deshacer.</div>
         <div style="display:flex;gap:8px;">
           <button onclick="confirmarEliminarOtraCarta('${id}')" style="flex:1;background:#a5442f;color:#fff;border:none;border-radius:100px;padding:9px;font-size:12.5px;cursor:pointer;">Sí, eliminar</button>
           <button onclick="document.getElementById('confirmar-eliminar-carta').remove()" style="flex:1;background:var(--paper);border:1px solid var(--line);border-radius:100px;padding:9px;font-size:12.5px;color:var(--plum);cursor:pointer;">Cancelar</button>
@@ -3191,7 +3275,7 @@
       document.getElementById('carta-otro-detalle').innerHTML = '';
       cargarCartasGuardadas();
     } catch (err) {
-      if (cajaConfirmar) cajaConfirmar.innerHTML = `<div style="font-size:12px;color:var(--error-text);">${err.message}</div>`;
+      if (cajaConfirmar) cajaConfirmar.innerHTML = `<div style="font-size:12px;color:var(--error-text);">${escaparTextoMes(err.message)}</div>`;
     }
   }
 
@@ -3239,7 +3323,7 @@
         verDetalleOtraCarta(data.carta?.id, data.carta?.nombre || cuerpo.nombre);
       }
     } catch (err) {
-      resultado.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
+      resultado.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(err.message)}</div>`;
     }
   }
 
@@ -3338,7 +3422,7 @@
         contenedor.innerHTML = `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(data, null, 2)}</pre>`;
       }
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(err.message)}</div>`;
     }
   }
 
@@ -3801,7 +3885,7 @@
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
         const _cerrar_energia_resultado = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('energia-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
-      contenedor.innerHTML = _cerrar_energia_resultado + `<div class="disclaimer" style="color:var(--error-text);">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+      contenedor.innerHTML = _cerrar_energia_resultado + `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(data.error || 'No se pudo calcular.')}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
 
@@ -3880,7 +3964,7 @@
         contenedor.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('energia-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>` + renderizarInforme(data.ciclos, null);
       }
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(err.message)}</div>`;
     }
   }
 
@@ -4072,7 +4156,7 @@
       });
       const data = await leerJsonSeguro(r);
       if (solicitud !== _solicitudMesAlquimia) return;
-      if (!r.ok) { contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${data.error || 'No se pudo calcular tu mes.'}</div>`; return; }
+      if (!r.ok) { contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(data.error || 'No se pudo calcular tu mes.')}</div>`; return; }
 
       const mesConsulta = data.mes;
       const anioConsulta = data.anio;
@@ -4139,7 +4223,7 @@
 
     } catch (e) {
       if (solicitud !== _solicitudMesAlquimia) return;
-      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${e.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(e.message)}</div>`;
     }
   }
 
@@ -4575,10 +4659,10 @@
             <div style="font-size:11px;color:var(--ink-dim);">▸ ${e.fecha}${e.estado_animo ? ' · ' + e.estado_animo : ''}${e.luna_signo ? ' · ☽ ' + signoEs(e.luna_signo) : ''}${e.dia_personal ? ' · Día ' + e.dia_personal : ''}</div>
             <button onclick="event.stopPropagation();eliminarEntradaDiario('${e.id}')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--ink-dim);">✕</button>
           </div>
-          <div class="cuerpo" id="diario-cuerpo-${idx}" style="display:none;">${e.texto}</div>
+          <div class="cuerpo" id="diario-cuerpo-${idx}" style="display:none;">${escaparTextoMes(e.texto)}</div>
         </div>
       `).join('');
-    } catch (e) { lista.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${e.message}</div>`; }
+    } catch (e) { lista.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(e.message)}</div>`; }
   }
 
   async function eliminarEntradaDiario(id) {
@@ -4641,7 +4725,7 @@
 
       contenedor.innerHTML = html ? botonCerrar + html : renderizarInforme(data.horoscopo, 'horoscopo-resultado');
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(err.message)}</div>`;
     }
   }
 
@@ -4702,7 +4786,7 @@
         if (adminDiv) adminDiv.style.display = 'block';
       }
     } catch (e) {
-      lista.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${e.message}</div>`;
+      lista.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(e.message)}</div>`;
     }
   }
 
@@ -4908,7 +4992,7 @@
     const chat = document.getElementById('ia-chat');
     const cargando = document.getElementById('ia-cargando');
 
-    chat.innerHTML += `<div style="background:var(--marigold-soft);border-radius:10px 10px 4px 10px;padding:8px 12px;font-size:12.5px;color:var(--plum);align-self:flex-end;max-width:85%;">${pregunta}</div>`;
+    chat.innerHTML += `<div style="background:var(--marigold-soft);border-radius:10px 10px 4px 10px;padding:8px 12px;font-size:12.5px;color:var(--plum);align-self:flex-end;max-width:85%;">${escaparTextoMes(pregunta)}</div>`;
     input.value = '';
     cargando.style.display = 'block';
     chat.scrollTop = chat.scrollHeight;
@@ -4927,12 +5011,110 @@
       iaHistorial.push({ role: 'assistant', content: respuesta });
       if (iaHistorial.length > 10) iaHistorial = iaHistorial.slice(-10);
 
-      chat.innerHTML += `<div style="background:var(--paper);border:1px solid var(--line);border-radius:10px 10px 10px 4px;padding:8px 12px;font-size:12.5px;color:var(--plum);align-self:flex-start;max-width:90%;line-height:1.55;">🤖 ${respuesta}</div>`;
+      chat.innerHTML += `<div style="background:var(--paper);border:1px solid var(--line);border-radius:10px 10px 10px 4px;padding:8px 12px;font-size:12.5px;color:var(--plum);align-self:flex-start;max-width:90%;line-height:1.55;">🤖 ${escaparTextoMes(respuesta)}</div>`;
       chat.scrollTop = chat.scrollHeight;
     } catch (e) {
       cargando.style.display = 'none';
-      chat.innerHTML += `<div style="font-size:12px;color:var(--error-text);padding:8px;">Error: ${e.message}</div>`;
+      chat.innerHTML += `<div style="font-size:12px;color:var(--error-text);padding:8px;">Error: ${escaparTextoMes(e.message)}</div>`;
     }
+  }
+
+
+  // Preferencia por cuenta y recordatorio local: no hay envío de datos ni llamadas de IA.
+  const ID_RECORDATORIO_DIARIO = 775001;
+  let _notificacionesGuardando = false;
+  let _notificacionesEscuchando = false;
+  function pluginNotificaciones() {
+    const c = window.Capacitor;
+    if (!c?.isNativePlatform?.() || !c?.isPluginAvailable?.('LocalNotifications')) return null;
+    return c.Plugins?.LocalNotifications || null;
+  }
+  function claveNotificaciones() {
+    const email = SESION.email || localStorage.getItem('saa_email');
+    return email ? 'saa_notificacion_diaria:' + email.toLowerCase() : null;
+  }
+  function leerPreferenciaNotificaciones() {
+    try {
+      const clave = claveNotificaciones();
+      const p = clave ? JSON.parse(localStorage.getItem(clave) || '{}') : {};
+      return { activa:p.activa === true, hora:/^([01]\d|2[0-3]):[0-5]\d$/.test(p.hora || '') ? p.hora : '09:00' };
+    } catch (_) { return { activa:false, hora:'09:00' }; }
+  }
+  function cargarPreferenciasNotificaciones() {
+    const p = leerPreferenciaNotificaciones();
+    document.getElementById('notif-diaria-activa').checked = p.activa;
+    document.getElementById('notif-diaria-hora').value = p.hora;
+    const el = document.getElementById('notif-diaria-msg');
+    el.textContent = '';
+    el.classList.remove('show');
+    if (!pluginNotificaciones()) mostrarMensaje('notif-diaria-msg', 'Puedes guardar tu hora. El aviso necesita la nueva versión instalada de iOS o Android.', 'amarillo');
+  }
+  async function cancelarRecordatorioDiario() {
+    const plugin = pluginNotificaciones();
+    if (plugin) await plugin.cancel({ notifications:[{ id:ID_RECORDATORIO_DIARIO }] });
+  }
+  async function programarRecordatorioDiario(p, pedirPermiso) {
+    const plugin = pluginNotificaciones();
+    if (!plugin) return 'sin_modulo';
+    if (!p.activa) { await cancelarRecordatorioDiario(); return 'apagado'; }
+    let permiso = await plugin.checkPermissions();
+    if (permiso.display !== 'granted' && pedirPermiso) permiso = await plugin.requestPermissions();
+    if (permiso.display !== 'granted') return 'sin_permiso';
+    const [hour, minute] = p.hora.split(':').map(Number);
+    if (window.Capacitor.getPlatform() === 'android') await plugin.createChannel({
+      id:'guia-diaria', name:'Guía diaria', description:'Recordatorio para consultar tu horóscopo', importance:3
+    });
+    await cancelarRecordatorioDiario();
+    const resultado = await plugin.schedule({ notifications:[{
+      id:ID_RECORDATORIO_DIARIO, title:'Tu guía de hoy', body:'Descubre tu horóscopo y los temas que se mueven hoy en tu carta.',
+      schedule:{ on:{ hour,minute }, repeats:true }, channelId:'guia-diaria', extra:{ destino:'hoy' },
+      isExactNotification:false, foreground:false
+    }] });
+    if (!resultado?.notifications?.some(n => n.id === ID_RECORDATORIO_DIARIO)) throw new Error('No se confirmó el recordatorio.');
+    return resultado?.warning ? 'con_advertencia' : 'programado';
+  }
+  async function guardarNotificacionesDiarias() {
+    if (_notificacionesGuardando) return;
+    const clave = claveNotificaciones();
+    if (!clave) return mostrarMensaje('notif-diaria-msg','Inicia sesión para guardar tu preferencia.','amarillo');
+    const p = { activa:document.getElementById('notif-diaria-activa').checked, hora:document.getElementById('notif-diaria-hora').value };
+    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(p.hora)) return mostrarMensaje('notif-diaria-msg','Elige una hora válida.','rojo');
+    _notificacionesGuardando = true;
+    const boton = document.getElementById('notif-guardar');
+    boton.disabled = true;
+    try {
+      const estado = await programarRecordatorioDiario(p,true);
+      localStorage.setItem(clave,JSON.stringify(p));
+      if (estado === 'sin_modulo') mostrarMensaje('notif-diaria-msg','Hora guardada. Los avisos se activarán al instalar la nueva versión de iOS o Android y dar permiso.','amarillo');
+      else if (estado === 'sin_permiso') mostrarMensaje('notif-diaria-msg','Hora guardada. Activa el permiso de notificaciones en los ajustes de tu teléfono para recibir el aviso.','amarillo');
+      else if (estado === 'apagado' || !p.activa) mostrarMensaje('notif-diaria-msg','Recordatorio diario desactivado.','verde');
+      else mostrarMensaje('notif-diaria-msg','Recordatorio guardado para las ' + p.hora + '. La entrega depende de los ajustes de tu teléfono.',estado === 'con_advertencia' ? 'amarillo' : 'verde');
+      await escucharNotificacionesDiarias();
+    } catch (_) {
+      mostrarMensaje('notif-diaria-msg','No se pudo guardar el recordatorio. Intenta de nuevo.','rojo');
+    } finally { _notificacionesGuardando = false; boton.disabled = false; }
+  }
+  async function escucharNotificacionesDiarias() {
+    const plugin = pluginNotificaciones();
+    if (!plugin || _notificacionesEscuchando) return;
+    _notificacionesEscuchando = true;
+    try {
+      await plugin.addListener('localNotificationActionPerformed', event => {
+        if (event.notification?.id !== ID_RECORDATORIO_DIARIO) return;
+        if (SESION.token) { mostrarPantalla(null); cambiarPestana('hoy'); }
+        else mostrarPantalla('login');
+      });
+      await plugin.addListener('localNotificationReceived', event => {
+        if (event.id === ID_RECORDATORIO_DIARIO && SESION.token) mostrarMensajeGlobal('Tu guía de hoy: entra en Hoy para consultar tu horóscopo.','amarillo');
+      });
+    } catch (_) { _notificacionesEscuchando = false; }
+  }
+  async function restaurarRecordatorioDiario() {
+    try {
+      await escucharNotificacionesDiarias();
+      if (claveNotificaciones()) await programarRecordatorioDiario(leerPreferenciaNotificaciones(),false);
+      else await cancelarRecordatorioDiario();
+    } catch (_) {}
   }
 
   const CUENTA_SECCIONES = [
@@ -4940,6 +5122,7 @@
     ['sec-correo', 'Mi correo'],
     ['sec-pass', 'Mi contraseña'],
     ['sec-apariencia', 'Apariencia'],
+    ['sec-notif', 'Notificaciones'],
     ['sec-idioma', 'Idioma'],
     ['sec-sugerencias', 'Sugerencias y ayuda'],
     ['sec-legal', 'Legal'],
@@ -4974,18 +5157,6 @@
     });
 
     // Reubicar opciones que estaban repetidas fuera del menú.
-    const secApariencia = document.getElementById('sec-apariencia');
-    const secNotif = document.getElementById('sec-notif');
-    if (secApariencia && secNotif && !document.getElementById('cuenta-notif-integradas')) {
-      const bloque = document.createElement('div');
-      bloque.id = 'cuenta-notif-integradas';
-      bloque.className = 'cuenta-subgrupo';
-      bloque.innerHTML = '<div class="cuenta-subgrupo-titulo">Notificaciones</div>';
-      while (secNotif.firstChild) bloque.appendChild(secNotif.firstChild);
-      secApariencia.appendChild(bloque);
-      if (secNotif.parentElement) secNotif.parentElement.style.display = 'none';
-    }
-
     const secLegal = document.getElementById('sec-legal');
     const secPrivados = document.getElementById('sec-datos-privados');
     if (secLegal && secPrivados && !document.getElementById('cuenta-privacidad-integrada')) {
@@ -4999,7 +5170,7 @@
     }
 
     // Candado visual: estas dos secciones ya viven dentro de Apariencia y Legal.
-    ['sec-notif','sec-datos-privados'].forEach(id => {
+    ['sec-datos-privados'].forEach(id => {
       const sec = document.getElementById(id);
       if (sec?.parentElement) sec.parentElement.style.display = 'none';
     });
@@ -5021,7 +5192,7 @@
       wrapper.style.display = 'none';
       sec.style.display = 'none';
     });
-    ['sec-notif','sec-datos-privados'].forEach(id => {
+    ['sec-datos-privados'].forEach(id => {
       const sec = document.getElementById(id);
       if (sec?.parentElement) sec.parentElement.style.display = 'none';
     });
@@ -5052,6 +5223,7 @@
     });
 
     if (id === 'sec-datos') cargarDatosParaEditar();
+    if (id === 'sec-notif') cargarPreferenciasNotificaciones();
     const pantalla = document.getElementById('pantalla-mi-perfil');
     if (pantalla) pantalla.scrollTop = 0;
   }
@@ -5083,11 +5255,11 @@
       if (!p) { resumen.innerHTML = '<span style="color:var(--ink-dim);">No hay datos guardados todavía.</span>'; return; }
       const fechaLegible = p.fecha_nacimiento ? new Date(p.fecha_nacimiento + 'T00:00:00').toLocaleDateString('es-MX', { day:'numeric', month:'long', year:'numeric' }) : '—';
       resumen.innerHTML = `
-        <div><b>Nombre:</b> ${p.nombre || '—'}</div>
+        <div><b>Nombre:</b> ${escaparTextoMes(p.nombre || '—')}</div>
         <div><b>Fecha:</b> ${fechaLegible}</div>
         <div><b>Hora:</b> ${(p.hora_nacimiento || '12:00').slice(0,5)}</div>
-        <div><b>Ciudad:</b> ${p.ciudad_nacimiento || '—'}${p.latitud ? ' <span style="color:var(--armonia);font-size:11px;">✓ ubicación exacta</span>' : ''}</div>
-        <div><b>País:</b> ${p.pais_codigo || '—'}</div>
+        <div><b>Ciudad:</b> ${escaparTextoMes(p.ciudad_nacimiento || '—')}${p.latitud ? ' <span style="color:var(--armonia);font-size:11px;">✓ ubicación exacta</span>' : ''}</div>
+        <div><b>País:</b> ${escaparTextoMes(p.pais_codigo || '—')}</div>
       `;
     } catch (e) {
       resumen.innerHTML = '<span style="color:var(--error-text);">No se pudieron cargar tus datos.</span>';
@@ -5145,7 +5317,7 @@
       SESION.nombre = data.perfil?.nombre || SESION.nombre;
       const greet = document.getElementById('greeting-word');
       const nombreEl = document.querySelector('.band h1');
-      if (nombreEl && SESION.nombre) nombreEl.innerHTML = `<span id="greeting-word">${greet ? greet.textContent : 'Hola'}</span>, ${SESION.nombre}`;
+      if (nombreEl && SESION.nombre) nombreEl.innerHTML = `<span id="greeting-word">${greet ? greet.textContent : 'Hola'}</span>, ${escaparTextoMes(SESION.nombre)}`;
       cancelarEdicionDatos();
       await cargarDatosParaEditar();
       document.getElementById('editar-datos-msg').style.color = 'var(--armonia)';
@@ -5450,6 +5622,7 @@
   }
 
   function cerrarSesion() {
+    cancelarRecordatorioDiario().catch(() => {});
     localStorage.removeItem('saa_token');
     localStorage.removeItem('saa_refresh');
     localStorage.removeItem('saa_email');
@@ -5611,7 +5784,7 @@
     SESION.nombre = perfil?.nombre || 'Usuaria';
     const greet = document.getElementById('greeting-word');
     const nombreEl = document.querySelector('.band h1');
-    if (nombreEl) nombreEl.innerHTML = `<span id="greeting-word">${greet ? greet.textContent : 'Hola'}</span>, ${SESION.nombre}`;
+    if (nombreEl) nombreEl.innerHTML = `<span id="greeting-word">${greet ? greet.textContent : 'Hola'}</span>, ${escaparTextoMes(SESION.nombre)}`;
     cargarFotoPerfilGuardada(); // Cargar foto de perfil si existe (guardada localmente)
     restaurarTamanoFuente();
     await calcularCartaReal(true); // asegura que la carta exista (la calcula si hace falta, silenciosamente)
@@ -5649,7 +5822,7 @@
         body: JSON.stringify({ mes, anio }),
       });
       const data = await r.json();
-      if (!r.ok) { contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${data.error || 'No se pudo cargar el calendario.'}</div>`; return; }
+      if (!r.ok) { contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(data.error || 'No se pudo cargar el calendario.')}</div>`; return; }
 
       const porDia = {};
       (data.detalle_dias || []).forEach(d => { porDia[d.dia] = d; });
@@ -5686,7 +5859,7 @@
         <div id="cal-lunar-detalle-dia" style="margin-top:12px;"></div>
       `;
     } catch (e) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">No se pudo cargar el calendario: ${e.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">No se pudo cargar el calendario: ${escaparTextoMes(e.message)}</div>`;
     }
   }
 
@@ -5803,6 +5976,7 @@
   }
 
   async function revisarPerfilYArrancar(reintentos = 3) {
+    restaurarRecordatorioDiario();
     if (!SESION.token) return mostrarPantalla('bienvenida');
 
     let r;
@@ -6001,7 +6175,7 @@
       }
     } catch (err) {
       if (!silencioso) {
-        chips.innerHTML = `<div class="row" style="color:var(--error-text);">${err.message}</div>` +
+        chips.innerHTML = `<div class="row" style="color:var(--error-text);">${escaparTextoMes(err.message)}</div>` +
           (err.detalle ? `<pre style="white-space:pre-wrap;font-size:9px;color:var(--error-text);opacity:0.7;padding:8px;">${typeof err.detalle === 'string' ? err.detalle : JSON.stringify(err.detalle, null, 2)}</pre>` : '');
       } else {
         console.error('calcularCartaReal (silencioso) falló:', err.message);
@@ -6078,7 +6252,7 @@
       const r = await fetchAuth('/carta-visual', { method: 'POST', headers: {} });
       const data = await r.json();
       if (!r.ok) {
-        contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${data.error || 'No se pudo abrir tu rueda natal.'}</div>`;
+        contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(data.error || 'No se pudo abrir tu rueda natal.')}</div>`;
         return;
       }
       if (data.svg) {
@@ -6088,7 +6262,7 @@
         contenedor.innerHTML = '<div class="disclaimer">No se recibió el gráfico de la carta.</div>';
       }
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(err.message)}</div>`;
     } finally {
       boton.textContent = 'Ver rueda natal';
       boton.disabled = false;
@@ -6358,7 +6532,7 @@
         contenedor.innerHTML = botonCerrarLocal + `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(hoy, null, 2)}</pre>`;
       }
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(err.message)}</div>`;
     }
   }
 
@@ -6423,7 +6597,7 @@
       const _cerrar_transitos_ok = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('transitos-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
       contenedor.innerHTML = _cerrar_transitos_ok + renderizarTransitosPersonales(data.transitos);
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(err.message)}</div>`;
     }
   }
 
@@ -6435,7 +6609,7 @@
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
-        contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(data.error || 'No se pudo calcular.')}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
       const d = data.estrellas?.data || {};
@@ -6473,7 +6647,7 @@
       }
       contenedor.innerHTML = htmlEstrellas;
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(err.message)}</div>`;
     }
   }
 
@@ -6486,12 +6660,12 @@
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
         const _cerrar_numerologia_error = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('numerologia-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
-      contenedor.innerHTML = _cerrar_numerologia_error + `<div class="disclaimer" style="color:var(--error-text);">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+      contenedor.innerHTML = _cerrar_numerologia_error + `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(data.error || 'No se pudo calcular.')}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
       contenedor.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('numerologia-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>` + renderizarInforme(data.numerologia, null);
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(err.message)}</div>`;
     }
   }
 
@@ -6553,7 +6727,7 @@
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
-        contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(data.error || 'No se pudo calcular.')}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
 
@@ -6567,7 +6741,7 @@
       if (cd?.planetary_positions?.length) {
         let svgFlor = '';
         try { svgFlor = dibujarFlorArmonica(cd.planetary_positions, cd.aspects); }
-        catch(e) { svgFlor = `<div class="disclaimer" style="color:var(--error-text);">Error dibujando: ${e.message}</div>`; }
+        catch(e) { svgFlor = `<div class="disclaimer" style="color:var(--error-text);">Error dibujando: ${escaparTextoMes(e.message)}</div>`; }
 
         const posiciones = cd.planetary_positions.map(p => `
           <div class="carta-real-row">${nombrePlanetaEs(p.name)} en <b>${signoEs(p.sign)} ${p.degree !== undefined ? Math.floor(p.degree)+'°' : ''}</b></div>
@@ -6585,7 +6759,7 @@
         contenedor.innerHTML = botonCerrar + `<pre style="white-space:pre-wrap;font-size:9px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify({keys_flor:Object.keys(flor||{}), keys_cd:Object.keys(cd||{}), pos_count:cd?.planetary_positions?.length}, null, 2)}</pre>`;
       }
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(err.message)}</div>`;
     }
   }
 
@@ -6610,7 +6784,7 @@
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
         const _cerrar_compuesta_resultado = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('compuesta-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
-      contenedor.innerHTML = _cerrar_compuesta_resultado + `<div class="disclaimer" style="color:var(--error-text);">${data.error}<br><pre style="font-size:9px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+      contenedor.innerHTML = _cerrar_compuesta_resultado + `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(data.error)}<br><pre style="font-size:9px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
       const botonCerrar = `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button onclick="cerrar('compuesta-resultado')" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
@@ -6657,7 +6831,7 @@
       if (!html) html = renderizarInforme(data.carta_compuesta, 'compuesta-resultado');
       contenedor.innerHTML = botonCerrar + (html || '<div class="disclaimer">Sin datos disponibles.</div>');
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(err.message)}</div>`;
     }
   }
 
@@ -6714,7 +6888,7 @@
       const nombreOtra = document.getElementById('sin-carta-guardada').selectedOptions[0]?.textContent || 'esta persona';
       contenedor.innerHTML = _bcSin + renderizarSinastriaSimple(data.reporte, nombreOtra);
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(err.message)}</div>`;
     }
   }
 
@@ -6822,7 +6996,7 @@
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
         const _cerrar_resumen_natal_error = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('resumen-natal-contenedor').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
-      contenedor.innerHTML = _cerrar_resumen_natal_error + `<div class="disclaimer" style="color:var(--error-text);">${data.error || 'No se pudo generar.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+      contenedor.innerHTML = _cerrar_resumen_natal_error + `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(data.error || 'No se pudo generar.')}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
       const _cerrar_resumen_natal_ok = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('resumen-natal-contenedor').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
@@ -6857,7 +7031,7 @@
       contenedor.innerHTML = htmlPersonalidad;
     } catch (err) {
       const _cerrar_resumen_natal_contenedor = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('resumen-natal-contenedor').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;font-family:'Work Sans',sans-serif;">Cerrar ✕</button></div>`;
-      contenedor.innerHTML = _cerrar_resumen_natal_contenedor + `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
+      contenedor.innerHTML = _cerrar_resumen_natal_contenedor + `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(err.message)}</div>`;
     }
   }
 
@@ -7139,7 +7313,7 @@
         : '';
       await verLunaVacia(true);
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(err.message)}</div>`;
     }
   }
 
@@ -7154,7 +7328,7 @@
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = _cerrar + mensajeLimiteExcedido(); return; }
-        contenedor.innerHTML = _cerrar + `<div class="disclaimer" style="color:var(--error-text);">${data.error || 'No se pudo consultar.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        contenedor.innerHTML = _cerrar + `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(data.error || 'No se pudo consultar.')}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
       const cs = data.voc?.data?.current_status || data.voc?.current_status || {};
@@ -7197,7 +7371,7 @@
         contenedor.innerHTML = _cerrar + `<pre style="white-space:pre-wrap;font-size:9px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(data.voc, null, 2)}</pre>`;
       }
     } catch (err) {
-      contenedor.innerHTML = _cerrar + `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
+      contenedor.innerHTML = _cerrar + `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(err.message)}</div>`;
     }
   }
 
@@ -7216,7 +7390,7 @@
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = _cerrar + mensajeLimiteExcedido(); return; }
-        contenedor.innerHTML = _cerrar + `<div class="disclaimer" style="color:var(--error-text);">${data.error || 'No se pudo calcular.'}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
+        contenedor.innerHTML = _cerrar + `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(data.error || 'No se pudo calcular.')}<br><pre style="white-space:pre-wrap;font-size:9px;margin-top:6px;">${JSON.stringify(data.detalle_tecnico, null, 2)}</pre></div>`;
         return;
       }
       const h = data.horaria?.data || data.horaria || {};
@@ -7225,7 +7399,7 @@
         contenedor.innerHTML = _cerrar + `
           <div class="card-lectura">
             <div class="card-etiqueta">Tu pregunta</div>
-            <div class="card-titulo" style="font-size:13px;">${pregunta}</div>
+            <div class="card-titulo" style="font-size:13px;">${escaparTextoMes(pregunta)}</div>
             <div class="card-cuerpo" style="margin-top:8px;">${respuestaTexto}</div>
           </div>
         `;
@@ -7235,7 +7409,7 @@
         contenedor.innerHTML = _cerrar + `
           <div class="card-lectura" style="margin-bottom:10px;">
             <div class="card-etiqueta">Tu pregunta</div>
-            <div class="card-titulo" style="font-size:13px;">${pregunta}</div>
+            <div class="card-titulo" style="font-size:13px;">${escaparTextoMes(pregunta)}</div>
           </div>
           <div class="card-lectura" style="margin-bottom:10px;background:${rad.is_radical ? 'var(--marigold-soft)' : '#fdeceb'};">
             <div class="card-titulo" style="font-size:13px;">${rad.is_radical ? '✅ Carta válida para juzgar' : '⚠️ Carta con reservas'} (${Math.round(rad.score || 0)}% de confianza)</div>
@@ -7247,13 +7421,13 @@
         contenedor.innerHTML = _cerrar + `
           <div class="card-lectura" style="margin-bottom:10px;">
             <div class="card-etiqueta">Tu pregunta</div>
-            <div class="card-titulo" style="font-size:13px;">${pregunta}</div>
+            <div class="card-titulo" style="font-size:13px;">${escaparTextoMes(pregunta)}</div>
           </div>
         ` + renderizarInforme(data.horaria, null);
       }
       cargarHorariasGuardadas();
     } catch (err) {
-      contenedor.innerHTML = _cerrar + `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
+      contenedor.innerHTML = _cerrar + `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(err.message)}</div>`;
     }
   }
 
@@ -7263,7 +7437,7 @@
     try {
       const r = await fetchAuth('/horarias-guardadas', { headers: {} });
       const data = await r.json();
-      if (!r.ok) { contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${data.error || 'No se pudo cargar.'}</div>`; return; }
+      if (!r.ok) { contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(data.error || 'No se pudo cargar.')}</div>`; return; }
       const preguntas = data.preguntas || [];
       if (!preguntas.length) { contenedor.innerHTML = '<div class="disclaimer">Todavía no has guardado ninguna pregunta.</div>'; return; }
       contenedor.innerHTML = preguntas.map(p => `
@@ -7272,13 +7446,13 @@
             <div class="card-etiqueta">${new Date(p.created_at).toLocaleDateString('es-MX', { day:'numeric', month:'short', year:'numeric' })} ${p.revisada ? '· ✅ Revisada' : '· ⏳ Pendiente'}</div>
             <button onclick="eliminarHorariaGuardada('${p.id}')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--ink-dim);">✕</button>
           </div>
-          <div class="card-titulo" style="font-size:13px;">${p.pregunta}</div>
-          ${p.respuesta ? `<div class="card-cuerpo" style="margin-top:6px;">${p.respuesta}</div>` : ''}
+          <div class="card-titulo" style="font-size:13px;">${escaparTextoMes(p.pregunta)}</div>
+          ${p.respuesta ? `<div class="card-cuerpo" style="margin-top:6px;">${escaparTextoMes(p.respuesta)}</div>` : ''}
           ${!p.revisada ? `<button onclick="marcarHorariaRevisada('${p.id}')" style="margin-top:8px;background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:11.5px;color:var(--plum);cursor:pointer;">✅ Marcar como revisada (¿se cumplió?)</button>` : ''}
         </div>
       `).join('');
     } catch (e) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${e.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(e.message)}</div>`;
     }
   }
 
@@ -7383,7 +7557,7 @@
           <div style="position:relative;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:14px 8px 12px;font-family:'Cormorant Garamond',serif;">
             <div style="font-size:12px;font-weight:700;color:#e8b978;letter-spacing:2px;">${carta.numero}</div>
             <div style="font-size:58px;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.4));">${carta.emoji}</div>
-            <div style="font-size:14px;font-weight:700;color:#f2e6ec;text-align:center;text-transform:uppercase;letter-spacing:1px;line-height:1.25;">${carta.nombre}</div>
+            <div style="font-size:14px;font-weight:700;color:#f2e6ec;text-align:center;text-transform:uppercase;letter-spacing:1px;line-height:1.25;">${escaparTextoMes(carta.nombre)}</div>
           </div>
         </div>
         <div style="background:var(--marigold-soft);border-radius:12px;padding:14px;text-align:center;max-width:320px;">
@@ -7489,7 +7663,7 @@
       const data = await r.json();
       if (!r.ok) {
         if (detectarLimiteExcedido(data)) { contenedor.innerHTML = mensajeLimiteExcedido(); return; }
-        contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${data.error || 'No se pudo calcular.'}</div>`;
+        contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(data.error || 'No se pudo calcular.')}</div>`;
         return;
       }
 
@@ -7591,7 +7765,7 @@
 
       contenedor.innerHTML = htmlReloc;
     } catch (err) {
-      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${err.message}</div>`;
+      contenedor.innerHTML = `<div class="disclaimer" style="color:var(--error-text);">${escaparTextoMes(err.message)}</div>`;
     }
   }
 
