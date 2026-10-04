@@ -624,6 +624,80 @@
   #pantalla-mi-perfil .auth-field input,
   #pantalla-mi-perfil .auth-field select,
   #pantalla-mi-perfil textarea{font-size:16px !important;}
+
+  #pantalla-mi-perfil .cuenta-menu-card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:22px;
+    overflow:hidden;
+    box-shadow:0 4px 14px rgba(45,27,78,.045);
+    margin-bottom:16px;
+  }
+  #pantalla-mi-perfil .cuenta-menu-row{
+    width:100%;
+    min-height:58px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    border:0;
+    border-bottom:1px solid var(--line);
+    background:#fff;
+    padding:0 17px;
+    color:var(--plum);
+    font-family:'Work Sans',sans-serif;
+    font-size:16px !important;
+    text-align:left;
+    cursor:pointer;
+  }
+  #pantalla-mi-perfil .cuenta-menu-row:last-child{border-bottom:0;}
+  #pantalla-mi-perfil .cuenta-menu-row .chevron{
+    color:var(--lilac);
+    font-size:27px !important;
+    font-weight:400;
+    line-height:1;
+    flex:none;
+  }
+  #pantalla-mi-perfil .cuenta-subnav{
+    display:none;
+    align-items:center;
+    gap:10px;
+    margin:0 0 16px;
+  }
+  #pantalla-mi-perfil .cuenta-subnav.show{display:flex;}
+  #pantalla-mi-perfil .cuenta-back{
+    border:0;
+    background:transparent;
+    color:var(--marigold-dark);
+    font-family:'Work Sans',sans-serif;
+    font-size:14px !important;
+    font-weight:600;
+    padding:5px 0;
+    cursor:pointer;
+    flex:none;
+  }
+  #pantalla-mi-perfil .cuenta-subtitle{
+    font-family:'Cormorant Garamond',serif;
+    font-size:24px !important;
+    line-height:1.1;
+    font-weight:700;
+    color:var(--plum);
+    min-width:0;
+  }
+  #pantalla-mi-perfil .cuenta-detalle-activo{
+    display:block !important;
+    background:#fff !important;
+    border:1px solid var(--line);
+    border-radius:18px !important;
+    margin:0 !important;
+    padding:18px !important;
+    overflow:visible !important;
+  }
+  #pantalla-mi-perfil .cuenta-detalle-activo > button:first-child{display:none !important;}
+  #pantalla-mi-perfil .cuenta-detalle-activo > div[id^="sec-"]{
+    display:block !important;
+    padding:0 !important;
+  }
   .auth-overlay .sub{font-size:13px;color:var(--ink-dim);margin-bottom:22px;}
   .auth-field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;font-size:12px;color:var(--ink-dim);}
   .auth-field input,.auth-field select{
@@ -897,22 +971,25 @@
 
         <div class="auth-overlay" id="pantalla-mi-perfil">
   <!-- HEADER -->
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+  <div id="cuenta-header-main" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
     <h1 style="margin:0;font-size:20px;">✦ Mi cuenta</h1>
     <button onclick="mostrarPantalla(null)" style="background:var(--marigold-soft);border:none;border-radius:50%;width:34px;height:34px;font-size:16px;cursor:pointer;color:var(--plum);">✕</button>
   </div>
 
   <!-- FOTO DE PERFIL -->
-  <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:16px;gap:6px;">
-    <label for="input-foto-perfil" style="cursor:pointer;">
+  <div id="cuenta-perfil-cabecera" style="display:flex;align-items:center;margin-bottom:18px;gap:14px;">
+    <label for="input-foto-perfil" style="cursor:pointer;flex:none;">
       <div style="width:80px;height:80px;border-radius:50%;overflow:hidden;border:2px solid var(--marigold);background:linear-gradient(135deg,var(--lilac),var(--marigold));">
         <img id="foto-perfil-preview" src="" style="width:100%;height:100%;object-fit:cover;display:none;">
         <div id="foto-perfil-inicial" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#fff;">✦</div>
       </div>
     </label>
     <input type="file" id="input-foto-perfil" accept="image/*" style="display:none;" onchange="subirFotoPerfil(this)">
-    <label for="input-foto-perfil" style="font-size:12px;color:var(--marigold-dark);font-weight:600;cursor:pointer;">📷 Cambiar foto</label>
-    <div style="font-size:13px;color:var(--ink-dim);" id="perfil-email-mostrar"></div>
+    <div style="min-width:0;flex:1;">
+      <div id="perfil-nombre-mostrar" style="font-family:'Cormorant Garamond',serif;font-size:27px;line-height:1.1;font-weight:700;color:var(--plum);margin-bottom:3px;"></div>
+      <div style="font-size:14px;color:var(--ink-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="perfil-email-mostrar"></div>
+      <label for="input-foto-perfil" style="display:inline-block;margin-top:7px;font-size:13px;color:var(--marigold-dark);font-weight:600;cursor:pointer;">Cambiar foto</label>
+    </div>
   </div>
 
   <!-- SECCIONES DESPLEGABLES -->
@@ -4109,10 +4186,102 @@
     }
   }
 
+  const CUENTA_SECCIONES = [
+    ['sec-datos', 'Mis datos de nacimiento'],
+    ['sec-correo', 'Mi correo'],
+    ['sec-pass', 'Mi contraseña'],
+    ['sec-apariencia', 'Apariencia'],
+    ['sec-idioma', 'Idioma'],
+    ['sec-sugerencias', 'Sugerencias y ayuda'],
+    ['sec-legal', 'Legal'],
+    ['sec-quien', 'Quién soy'],
+  ];
+
+  function inicializarMenuCuenta() {
+    const pantalla = document.getElementById('pantalla-mi-perfil');
+    if (!pantalla || document.getElementById('cuenta-menu-principal')) return;
+
+    const primeraSeccion = document.getElementById(CUENTA_SECCIONES[0][0]);
+    const primerWrapper = primeraSeccion?.parentElement;
+    if (!primerWrapper) return;
+
+    const subnav = document.createElement('div');
+    subnav.id = 'cuenta-subnav';
+    subnav.className = 'cuenta-subnav';
+    subnav.innerHTML = '<button class="cuenta-back" onclick="volverMenuCuenta()">‹ Mi cuenta</button><div class="cuenta-subtitle" id="cuenta-subtitle"></div>';
+    pantalla.insertBefore(subnav, primerWrapper);
+
+    const menu = document.createElement('div');
+    menu.id = 'cuenta-menu-principal';
+    menu.className = 'cuenta-menu-card';
+    menu.innerHTML = CUENTA_SECCIONES.map(([id, titulo]) =>
+      `<button class="cuenta-menu-row" type="button" onclick="abrirSubCuenta('${id}', '${titulo.replace(/'/g,"\\'")}')"><span>${titulo}</span><span class="chevron">›</span></button>`
+    ).join('');
+    pantalla.insertBefore(menu, primerWrapper);
+
+    CUENTA_SECCIONES.forEach(([id]) => {
+      const sec = document.getElementById(id);
+      if (sec?.parentElement) sec.parentElement.style.display = 'none';
+    });
+  }
+
+  function volverMenuCuenta() {
+    const menu = document.getElementById('cuenta-menu-principal');
+    const subnav = document.getElementById('cuenta-subnav');
+    const cabecera = document.getElementById('cuenta-perfil-cabecera');
+    if (menu) menu.style.display = 'block';
+    if (subnav) subnav.classList.remove('show');
+    if (cabecera) cabecera.style.display = 'flex';
+
+    CUENTA_SECCIONES.forEach(([id]) => {
+      const sec = document.getElementById(id);
+      const wrapper = sec?.parentElement;
+      if (!wrapper) return;
+      wrapper.classList.remove('cuenta-detalle-activo');
+      wrapper.style.display = 'none';
+      sec.style.display = 'none';
+    });
+    const pantallaMiCuenta = document.getElementById('pantalla-mi-perfil');
+    if (pantallaMiCuenta) pantallaMiCuenta.scrollTop = 0;
+  }
+
+  function abrirSubCuenta(id, titulo) {
+    inicializarMenuCuenta();
+    const menu = document.getElementById('cuenta-menu-principal');
+    const subnav = document.getElementById('cuenta-subnav');
+    const subtitle = document.getElementById('cuenta-subtitle');
+    const cabecera = document.getElementById('cuenta-perfil-cabecera');
+
+    if (menu) menu.style.display = 'none';
+    if (subnav) subnav.classList.add('show');
+    if (subtitle) subtitle.textContent = titulo;
+    if (cabecera) cabecera.style.display = 'none';
+
+    CUENTA_SECCIONES.forEach(([secId]) => {
+      const sec = document.getElementById(secId);
+      const wrapper = sec?.parentElement;
+      if (!wrapper) return;
+      const activo = secId === id;
+      wrapper.style.display = activo ? 'block' : 'none';
+      wrapper.classList.toggle('cuenta-detalle-activo', activo);
+      sec.style.display = activo ? 'block' : 'none';
+    });
+
+    if (id === 'sec-datos') cargarDatosParaEditar();
+    const pantalla = document.getElementById('pantalla-mi-perfil');
+    if (pantalla) pantalla.scrollTop = 0;
+  }
+
   function abrirPerfil() {
     mostrarPantalla('mi-perfil');
     cargarFotoPerfilGuardada();
-    cargarDatosParaEditar();
+    inicializarMenuCuenta();
+    volverMenuCuenta();
+
+    const nombre = document.getElementById('perfil-nombre-mostrar');
+    const correo = document.getElementById('perfil-email-mostrar');
+    if (nombre) nombre.textContent = SESION.nombre || 'Mi cuenta';
+    if (correo) correo.textContent = SESION.email || localStorage.getItem('saa_email') || '';
   }
 
   let _datosNacimientoActuales = null;
@@ -4309,7 +4478,7 @@
     }, 50);
   }
   function volverDeLegal() {
-    if (_legalOrigen === 'mi-perfil') { mostrarPantalla(null); abrirPerfil(); }
+    if (_legalOrigen === 'mi-perfil') abrirPerfil();
     else mostrarPantalla('registro');
   }
 
