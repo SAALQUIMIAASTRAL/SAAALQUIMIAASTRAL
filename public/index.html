@@ -1335,6 +1335,32 @@
   .carta-desplegable[open] > summary .carta-desplegable-indicador { transform:rotate(225deg); }
   .carta-desplegable-contenido { padding-top:14px; }
 
+
+  #cartas-carousel.personas-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;overflow:visible;padding:4px 0; }
+  #cartas-carousel .chart-chip { width:auto;min-width:0;border:1px solid var(--line);border-radius:16px;padding:14px 8px;background:var(--paper);position:relative; }
+  #cartas-carousel .lbl { display:block;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;max-width:none;line-height:1.35; }
+  .persona-ver { border:0;background:transparent;color:var(--plum);font:inherit;cursor:pointer;display:block;width:100%;padding:0; }
+  #cartas-carousel .chart-chip.add { border:1.5px dashed var(--lilac); }
+  #cartas-carousel .seleccionada { border-color:var(--marigold);box-shadow:0 0 0 2px var(--marigold-soft); }
+  .persona-menu { position:absolute;right:4px;top:4px;z-index:2; }
+  .persona-menu[open] { z-index:3; }
+  .persona-menu summary { list-style:none;cursor:pointer;min-width:36px;min-height:36px;display:flex;align-items:center;justify-content:center;font-size:24px;border-radius:50%;color:var(--plum); }
+  .persona-menu summary::-webkit-details-marker { display:none; }
+  .persona-menu > div { position:absolute;right:0;top:36px;min-width:130px;padding:6px;background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:0 4px 14px rgba(45,27,78,.14); }
+  .persona-menu button { display:block;width:100%;min-height:40px;text-align:left;padding:8px;border:0;background:transparent;color:var(--plum);font:inherit;font-size:13px;cursor:pointer; }
+  .personas-hint { margin-bottom:10px; }
+  .personas-vinculo { background:var(--marigold-soft);border-radius:10px;padding:10px 12px;color:var(--plum);font-size:14px;overflow-wrap:anywhere; }
+  .personas-compuesta,.personas-preguntas { margin-top:16px;border-top:1px solid var(--line);padding-top:14px; }
+  .personas-compuesta > summary,.personas-preguntas > summary { list-style:none;display:flex;justify-content:space-between;gap:10px;cursor:pointer;min-height:44px;align-items:center;font-size:16px;font-weight:600;color:var(--plum); }
+  .personas-compuesta > summary::-webkit-details-marker,.personas-preguntas > summary::-webkit-details-marker { display:none; }
+  .personas-preguntas > summary::after { content:'+'; }
+  .personas-preguntas[open] > summary::after { content:'−'; }
+  .personas-preguntas ul { padding-left:20px;color:var(--plum);font-size:14px;line-height:1.6; }
+  .personas-preguntas li { margin-bottom:8px; }
+  .personas-compuesta[open] > summary span { transform:rotate(180deg); }
+  #sin-calcular:disabled, #compuesta-calcular:disabled { opacity:.5;cursor:default; }
+  .persona-ver:focus-visible,.persona-menu summary:focus-visible,.personas-compuesta summary:focus-visible { outline:2px solid var(--marigold);outline-offset:3px;border-radius:8px; }
+
 </style>
 </head>
 <body>
@@ -1881,9 +1907,10 @@
 
           <div class="section" data-tab="personas">
             <h2>Tus personas</h2>
-            <div class="desc">Calcula hasta 8 cartas astrales: la tuya, tu pareja, tu familia o tus amigas.</div>
-            <div class="charts-scroll" id="cartas-carousel">
-              <div class="chart-chip add" onclick="mostrarFormularioCarta()"><div class="circ">+</div><div class="lbl">Agregar</div></div>
+            <div class="desc">Guarda las cartas de tu pareja, familia o amistades y explora sus vínculos contigo.</div>
+            <div class="desc personas-hint">Toca una persona para ver su carta.</div>
+            <div class="charts-scroll personas-grid" id="cartas-carousel">
+              <button type="button" class="chart-chip add persona-ver" onclick="mostrarFormularioCarta()"><span class="circ">+</span><span class="lbl">Agregar persona</span></button>
             </div>
             <div class="charts-count" id="cartas-count"></div>
             <div id="carta-otro-detalle" style="margin-top:14px;"></div>
@@ -1907,18 +1934,33 @@
 
           <div class="section" data-tab="personas">
             <h2>Sinastría</h2>
-            <div class="desc">Compara tu carta con la de otra persona (pareja, amiga, familiar).</div>
+            <div class="desc">Explora cómo se relacionan: cómo expresan cariño, qué necesita cada uno y dónde conectan o chocan. También sirve para vínculos familiares y amistades.</div>
             <div class="calc-form">
               <label>¿Con quién?
                 <select id="sin-carta-guardada" onchange="cambiarModoSinastria()" style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:var(--plum);background:#fff;">
-                  <option value="">Elige a alguien de "Tus personas" arriba ↑</option>
+                  <option value="">Selecciona una persona</option>
                 </select>
               </label>
               <div id="sin-campos-nuevos" style="display:none;"></div>
-              <button class="btn-primary" onclick="calcularSinastria()">Ver compatibilidad</button>
-              <button class="btn-primary" style="background:var(--lilac);margin-top:8px;" onclick="calcularCartaCompuesta()">Carta compuesta — ¿qué pasa entre nosotros?</button>
+              <div id="personas-vinculo" class="personas-vinculo" aria-live="polite">Elige con quién explorar tu vínculo.</div>
+              <button type="button" class="btn-primary" id="sin-calcular" onclick="calcularSinastria()" disabled>Explorar nuestro vínculo</button>
+              <details class="personas-preguntas">
+                <summary>¿Qué puedes explorar sobre el amor?</summary>
+                <ul>
+                  <li>Cómo expresa cariño cada uno y qué necesita para sentirse querido.</li>
+                  <li>Dónde nace la atracción y qué afinidades comparten.</li>
+                  <li>Cómo se comunican y qué diferencias pueden generar tensión.</li>
+                  <li>Qué temas conviene conversar para cuidar la convivencia.</li>
+                </ul>
+                <div class="disclaimer">Busca estos temas en la lectura según los aspectos de sus cartas. La atracción, la comunicación y el compromiso son dimensiones distintas; la carta no decide por ustedes.</div>
+              </details>
               <div id="sinastria-resultado" style="margin-top:14px;"></div>
-              <div id="compuesta-resultado" style="margin-top:14px;"></div>
+              <details class="personas-compuesta">
+                <summary>Carta compuesta <span aria-hidden="true">⌄</span></summary>
+                <div class="desc" style="margin-top:12px;">Qué dinámica forman juntos y qué temas toman fuerza en la relación.</div>
+                <button type="button" class="btn-primary" id="compuesta-calcular" style="background:var(--lilac);" onclick="calcularCartaCompuesta()" disabled>Ver la carta del vínculo</button>
+                <div id="compuesta-resultado" style="margin-top:14px;"></div>
+              </details>
             </div>
           </div>
 
@@ -2808,22 +2850,67 @@
       }
       const data = await r.json();
       const carousel = document.getElementById('cartas-carousel');
-      const chipsHtml = (data.cartas || []).map(c => `
-        <div class="chart-chip" style="cursor:pointer; position:relative;">
-          <button onclick="event.stopPropagation(); eliminarCartaOtro('${c.id}', '${(c.nombre || '').replace(/'/g, '')}')" style="position:absolute; top:-4px; right:6px; background:var(--danger,#a5442f); color:#fff; border:none; border-radius:50%; width:18px; height:18px; font-size:11px; line-height:1; cursor:pointer; z-index:2;">✕</button>
-          <div onclick="verDetalleOtraCarta('${c.id}', '${(c.nombre || '').replace(/'/g, '')}')">
-            <div class="circ">${(c.nombre || '?')[0].toUpperCase()}</div><div class="lbl">${c.nombre}</div>
-          </div>
-        </div>
-      `).join('');
-      carousel.innerHTML = chipsHtml + '<div class="chart-chip add" onclick="mostrarFormularioCarta()"><div class="circ">+</div><div class="lbl">Agregar</div></div>';
-      document.getElementById('cartas-count').textContent = `${(data.cartas || []).length} de 8 cartas creadas`;
-
       const selectorSin = document.getElementById('sin-carta-guardada');
-      if (selectorSin) {
-        selectorSin.innerHTML = '<option value="">Elige a alguien de "Tus personas" arriba ↑</option>' +
-          (data.cartas || []).map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+      const seleccionAnterior = selectorSin?.value || '';
+      const cartas = data.cartas || [];
+      carousel.replaceChildren();
+      if (selectorSin) selectorSin.replaceChildren(new Option('Selecciona una persona', ''));
+      cartas.forEach(c => {
+        const nombre = c.nombre || 'Sin nombre';
+        const chip = document.createElement('div');
+        chip.className = 'chart-chip persona-tarjeta';
+        chip.dataset.personaId = String(c.id);
+        const ver = document.createElement('button');
+        ver.type = 'button';
+        ver.className = 'persona-ver';
+        ver.setAttribute('aria-label', 'Ver carta de ' + nombre);
+        const inicial = document.createElement('span');
+        inicial.className = 'circ';
+        inicial.textContent = nombre[0].toUpperCase();
+        const etiqueta = document.createElement('span');
+        etiqueta.className = 'lbl';
+        etiqueta.textContent = nombre;
+        ver.append(inicial, etiqueta);
+        ver.onclick = () => {
+          if (selectorSin) selectorSin.value = String(c.id);
+          cambiarModoSinastria();
+          verDetalleOtraCarta(c.id, nombre.replace(/'/g, ''));
+        };
+        const menu = document.createElement('details');
+        menu.className = 'persona-menu';
+        const titulo = document.createElement('summary');
+        titulo.textContent = '⋯';
+        titulo.setAttribute('aria-label', 'Opciones de ' + nombre);
+        const acciones = document.createElement('div');
+        const editar = document.createElement('button');
+        editar.type = 'button';
+        editar.textContent = 'Editar datos';
+        editar.onclick = async () => {
+          menu.open = false;
+          if (!_otrasCartasCache[c.id]) await verDetalleOtraCarta(c.id, nombre.replace(/'/g, ''));
+          editarOtraCarta(c.id);
+        };
+        const eliminar = document.createElement('button');
+        eliminar.type = 'button';
+        eliminar.textContent = 'Eliminar';
+        eliminar.onclick = () => { menu.open = false; eliminarCartaOtro(c.id, nombre); };
+        acciones.append(editar, eliminar);
+        menu.append(titulo, acciones);
+        chip.append(ver, menu);
+        carousel.append(chip);
+        if (selectorSin) selectorSin.add(new Option(nombre, String(c.id)));
+      });
+      if (cartas.length < 8) {
+        const agregar = document.createElement('button');
+        agregar.type = 'button';
+        agregar.className = 'chart-chip add persona-ver';
+        agregar.innerHTML = '<span class="circ">+</span><span class="lbl">Agregar persona</span>';
+        agregar.onclick = mostrarFormularioCarta;
+        carousel.append(agregar);
       }
+      document.getElementById('cartas-count').textContent = cartas.length + ' de 8 cartas guardadas';
+      if (selectorSin && cartas.some(c => String(c.id) === seleccionAnterior)) selectorSin.value = seleccionAnterior;
+      cambiarModoSinastria();
     } catch (e) {
       console.error('cargarCartasGuardadas falló:', e.message);
       const carousel = document.getElementById('cartas-carousel');
@@ -6506,7 +6593,28 @@
 
   function cambiarModoSinastria() {
     const id = document.getElementById('sin-carta-guardada').value;
-    document.getElementById('sin-campos-nuevos').style.display = id ? 'none' : 'block';
+    document.getElementById('sin-campos-nuevos').style.display = 'none';
+    const selector = document.getElementById('sin-carta-guardada');
+    const nombre = id ? selector.options[selector.selectedIndex]?.textContent : '';
+    const contexto = document.getElementById('personas-vinculo');
+    const nuevaSeleccion = id || '';
+    if (contexto && contexto.dataset.personaId !== nuevaSeleccion) {
+      ['sinastria-resultado', 'compuesta-resultado'].forEach(key => {
+        const resultado = document.getElementById(key);
+        if (resultado) resultado.innerHTML = '';
+      });
+      contexto.dataset.personaId = nuevaSeleccion;
+    }
+    if (contexto) contexto.textContent = id ? 'Tu carta + ' + nombre : 'Elige con quién explorar tu vínculo.';
+    ['sin-calcular', 'compuesta-calcular'].forEach(key => {
+      const boton = document.getElementById(key);
+      if (boton) boton.disabled = !id;
+    });
+    document.querySelectorAll('#cartas-carousel [data-persona-id]').forEach(chip => {
+      const activo = chip.dataset.personaId === id;
+      chip.classList.toggle('seleccionada', activo);
+      chip.querySelector('.persona-ver')?.setAttribute('aria-pressed', String(activo));
+    });
   }
 
   async function calcularSinastria() {
