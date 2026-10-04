@@ -676,10 +676,10 @@
   .bottomnav .it .g{font-size:18px;line-height:1;transition:transform 0.18s;}
   .bottomnav .it.active{color:var(--marigold);background:var(--marigold-soft);}
   .bottomnav .it.active .g{transform:scale(1.1);}
-  /* La barra conserva 48 px táctiles; solo se recorta el relleno exterior sobrante. */
+  /* La barra conserva la posición y el área táctil de los botones; se reduce el margen superior. */
   @media(max-width:600px){
-    .bottomnav{padding:4px 4px calc(4px + env(safe-area-inset-bottom,0px));}
-    .bottomnav .it{min-height:48px;padding:0 2px;gap:1px;}
+    .bottomnav{padding:4px 4px calc(12px + env(safe-area-inset-bottom,0px));}
+    .bottomnav .it{min-height:48px;padding:4px 2px;gap:3px;}
   }
   [data-tab]{display:none;}
   [data-tab].tab-activa{display:block;}
