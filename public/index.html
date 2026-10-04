@@ -6138,7 +6138,7 @@
           return `
           <div class="card-lectura" style="margin-bottom:10px;">
             <div class="card-titulo">✦ ${e.star}</div>
-            <div class="card-etiqueta">${nombrePlanetaEs(e.planet)} ${ASPECTO_ES_ESTRELLA[e.aspect] || e.aspect}</div>
+            <div class="card-etiqueta">${nombrePlanetaEs(e.planet)} ${ASPECTO_ES_ESTRELLA[e.aspect] || e.aspect} ${e.star}</div>
             <div class="star-use"><b>¿Qué te ayuda a entender?</b><br>${area}.</div>
             ${e.interpretation ? `<div class="card-cuerpo" style="color:var(--plum);margin-top:9px;">${limpiarTextoAPI(e.interpretation)}</div>` : ''}
           </div>`;
