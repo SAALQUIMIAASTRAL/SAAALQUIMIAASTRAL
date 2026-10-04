@@ -1476,7 +1476,7 @@
           </div>
 
           <div class="section" data-tab="alquimia" id="rituales-section">
-            <h2 id="rituales-titulo">🕯️ Rituales para Octubre</h2>
+            <h2 id="rituales-titulo">🕯️ Rituales del mes</h2>
             <div id="rituales-contenedor" style="margin-top:14px;"></div>
           </div>
 
@@ -3154,6 +3154,7 @@
 
   // ===== RITUALES PARA EL MES =====
   function generarRitualesDelMes(mesNum) {
+    const anioSiguiente = new Date().getFullYear() + 1;
     const ritualesDefMes = {
       1: [ // ENERO
         {
@@ -3640,7 +3641,7 @@
             'Mitad de diciembre: SUELTA el año entero.',
             'Escribe TODO lo que fue difícil, doloroso, humillante, que pedía mucho.',
             'Agradécele CADA cosa por enseñarte algo crucial.',
-            'Luego quema FUERTE diciendo: **Integro las lecciones. Suelto el peso. Entro a 2025 libre**.',
+            `Luego quema FUERTE diciendo: **Integro las lecciones. Suelto el peso. Entro a ${anioSiguiente} libre**.`,
             'Este ritual es sagrado — hazlo con reverencia y rabia si la hay.',
             'Después: limpia tu espacio, abre ventanas, deja entrar aire fresco.'
           ]
@@ -3650,7 +3651,7 @@
           pasos: [
             'Últimos días de diciembre: escribe tu carta al año nuevo.',
             'No un "deseo del año nuevo" — una CARTA: quién quieres SER, no qué quieres TENER.',
-            '**Querido 2025, llego como... Prometo... Merezco... Dejo ir... Recibo**',
+            `**Querido ${anioSiguiente}, llego como... Prometo... Merezco... Dejo ir... Recibo**`,
             'Guarda la carta para leer en enero 1.',
             'Celebra: fuego, música, gente que amas, lo que se sienta celebratorio PARA TI.',
             '**Cierra el año como diosa. Abre el siguiente como reina de tu propia vida**.'
