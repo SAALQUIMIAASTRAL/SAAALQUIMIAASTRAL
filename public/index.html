@@ -2017,7 +2017,7 @@
           <div class="section carta-destacada" data-tab="carta" id="carta-relocacion">
             <div class="carta-etiqueta">Tu carta en otra ciudad</div>
             <h2>Relocación</h2>
-            <div class="desc">Tu carta natal sigue siendo la misma, pero en otra ciudad cambian las casas. Eso puede hacer que ciertos temas —trabajo, relaciones, hogar, identidad o bienestar— se vuelvan más visibles en tu vida cotidiana.</div>
+            <div class="desc">Tus planetas conservan sus signos y sus aspectos natales. Al calcular tu carta para otra ciudad, cambian el Ascendente, el Medio Cielo y las casas: cambia el escenario donde expresas esas energías. Compara qué temas toman protagonismo allí antes de decidir dónde vivir.</div>
 
             <div class="reloc-explica">
               <div class="reloc-explica-item"><span>💼</span><div><b>Trabajo</b><small>Si aumenta la visibilidad, ambición o foco profesional.</small></div></div>
@@ -2235,34 +2235,46 @@
 
       // Qué podría ayudarte específicamente en una ciudad según qué planeta+línea la activa
       const AYUDA_CIUDAD_PLANETA_LINEA = {
-        'Sun-AC': 'Aquí tu identidad brilla con más fuerza — buen lugar para reinventarte, liderar o ser vista como realmente eres.',
-        'Sun-MC': 'Ciudad ideal para el reconocimiento profesional — tu carrera y tu propósito de vida se vuelven más visibles aquí.',
-        'Sun-DS': 'Aquí atraes relaciones (de pareja o negocios) con personas seguras de sí mismas — el vínculo con otros se vuelve central.',
-        'Sun-IC': 'Buen lugar para construir raíces, familia y un hogar que sea reflejo genuino de quién eres.',
-        'Moon-AC': 'Tu sensibilidad y tu intuición se activan aquí — buen lugar para sanar emocionalmente o reconectar contigo misma.',
-        'Moon-MC': 'Puedes construir una carrera ligada al cuidado, la crianza o lo emocional (salud, terapia, hostelería).',
-        'Moon-DS': 'Las relaciones aquí se sienten más profundas y familiares — buen lugar para el hogar compartido o vínculos de por vida.',
-        'Moon-IC': 'Ciudad muy fuerte para el hogar y la familia — puede sentirse como "volver a casa" aunque sea la primera vez que vas.',
-        'Venus-AC': 'Aquí te ven (y te sientes) más atractiva, magnética y en armonía — favorece el amor propio y la belleza personal.',
-        'Venus-MC': 'Muy buena para carreras creativas, de belleza, moda o cualquier cosa donde el buen gusto y el encanto abran puertas.',
-        'Venus-DS': 'Una de las mejores ubicaciones para el amor — facilita conocer pareja o fortalecer relaciones existentes.',
-        'Venus-IC': 'Un hogar bello y armonioso — buen lugar para decorar, embellecer tu espacio y sentirte en paz.',
-        'Mars-AC': 'Tu energía y determinación se disparan aquí — bueno para emprender, competir o defender lo que quieres, con cuidado de no sobre-exigirte.',
-        'Mars-MC': 'Carrera con mucha acción y ambición — puedes avanzar rápido, pero cuida el estrés y el ritmo acelerado.',
-        'Mars-DS': 'Relaciones intensas y apasionadas — también puede traer más conflicto, así que conviene comunicarte con claridad.',
-        'Mars-IC': 'Mucha energía en el hogar — bueno para proyectos de renovación, pero cuida la tensión familiar.',
-        'Jupiter-AC': 'Una de las mejores líneas que puedes pisar — expansión, buena suerte y crecimiento personal notorio aquí.',
-        'Jupiter-MC': 'Excelente para la carrera — oportunidades, reconocimiento y crecimiento profesional real.',
-        'Jupiter-DS': 'Relaciones que expanden tu vida — sociedades, matrimonios o alianzas con buena fortuna.',
-        'Jupiter-IC': 'Abundancia en el hogar — buen lugar para invertir en propiedad o hacer crecer tu vida familiar.',
-        'Saturn-AC': 'Aquí se pide madurez y disciplina — no es la más fácil, pero construir algo aquí te da bases muy sólidas a largo plazo.',
-        'Saturn-MC': 'Carrera seria y estructurada — los logros toman tiempo, pero son duraderos y respetados.',
-        'Saturn-DS': 'Relaciones con compromiso real, aunque puede costar más trabajo — bueno para vínculos serios y a largo plazo.',
-        'Saturn-IC': 'Puede sentirse pesado en lo familiar al inicio, pero construye una base de hogar muy sólida con el tiempo.',
-        'Mercury-AC': 'Tu mente se agiliza aquí — buen lugar para estudiar, escribir o comunicar tus ideas con claridad.',
-        'Mercury-MC': 'Carreras de comunicación, ventas, enseñanza o negocios se benefician mucho aquí.',
-        'Mercury-DS': 'Relaciones basadas en la conversación y el entendimiento mutuo — bueno para socios de negocio o parejas con quien hablas de todo.',
-        'Mercury-IC': 'Buen lugar para estudiar en casa, trabajar remoto o tener una vida familiar donde se habla y se conecta mucho.',
+        'Sun-AC': 'Aquí favorece: iniciativa, confianza y expresión personal.',
+        'Sun-MC': 'Aquí favorece: visibilidad, liderazgo y reconocimiento profesional.',
+        'Sun-DS': 'Para conectar: colaborar y compartir proyectos con otras personas.',
+        'Sun-IC': 'Para echar raíces: crear un hogar donde puedas expresarte.',
+        'Moon-AC': 'Para reconectar: reconocer tus emociones y escuchar tus necesidades.',
+        'Moon-MC': 'Aquí destaca: el trato con el público y los proyectos de cuidado.',
+        'Moon-DS': 'Para conectar: cultivar cercanía y apoyo emocional en tus vínculos.',
+        'Moon-IC': 'Ideal para: sentir pertenencia, descansar y crear hogar.',
+        'Venus-AC': 'Aquí favorece: expresión personal, belleza y apertura social.',
+        'Venus-MC': 'Aquí favorece: proyectos creativos, estética y relaciones profesionales.',
+        'Venus-DS': 'Para conectar: disfrutar la compañía, el romance y la cooperación.',
+        'Venus-IC': 'Ideal para: embellecer tu espacio y disfrutar la vida en casa.',
+        'Mars-AC': 'Para dar el paso: emprender, moverte y defender tus decisiones.',
+        'Mars-MC': 'Para avanzar: asumir retos y poner tus proyectos en marcha.',
+        'Mars-DS': 'Aquí se activa: la iniciativa, la pasión y la negociación en pareja.',
+        'Mars-IC': 'Para poner manos a la obra: renovar tu espacio y atender asuntos familiares.',
+        'Jupiter-AC': 'Para expandirte: aprender, explorar y abrirte a nuevas experiencias.',
+        'Jupiter-MC': 'Para crecer: ampliar tu actividad profesional y buscar oportunidades.',
+        'Jupiter-DS': 'Para conectar: intercambiar conocimientos y ampliar tus alianzas.',
+        'Jupiter-IC': 'Para echar raíces: explorar nuevas formas de vivir y crear hogar.',
+        'Saturn-AC': 'Para construir: fortalecer autonomía, disciplina y límites personales.',
+        'Saturn-MC': 'Para consolidar: ordenar tu carrera y sostener metas a largo plazo.',
+        'Saturn-DS': 'Para comprometerte: aclarar acuerdos, responsabilidades y límites.',
+        'Saturn-IC': 'Para construir una base: organizar el hogar y las responsabilidades familiares.',
+        'Mercury-AC': 'Aquí favorece: aprender, escribir y expresar tus ideas.',
+        'Mercury-MC': 'Aquí favorece: comunicación, enseñanza, ventas y contactos profesionales.',
+        'Mercury-DS': 'Para conectar: conversar, negociar y compartir ideas.',
+        'Mercury-IC': 'Ideal para: estudiar en casa, trabajar a distancia y abrir el diálogo familiar.',
+        'Uranus-AC': 'Para renovarte: explorar tu independencia y otras formas de expresarte.',
+        'Uranus-MC': 'Para innovar: probar otros caminos profesionales y proyectos diferentes.',
+        'Uranus-DS': 'Aquí se activa: la libertad y la revisión de acuerdos en tus relaciones.',
+        'Uranus-IC': 'Para renovar tu vida privada: explorar otras formas de hogar y convivencia.',
+        'Neptune-AC': 'Para explorar: sensibilidad, imaginación y expresión artística.',
+        'Neptune-MC': 'Aquí destaca: la creatividad y la búsqueda de sentido en tu trabajo.',
+        'Neptune-DS': 'Para conectar: cultivar empatía sin perder tus límites.',
+        'Neptune-IC': 'Ideal para: buscar silencio, inspiración y un espacio de retiro.',
+        'Pluto-AC': 'Para profundizar: revisar tu identidad y recuperar autonomía.',
+        'Pluto-MC': 'Aquí se activa: la relación con la autoridad y el poder profesional.',
+        'Pluto-DS': 'Para profundizar: revisar la confianza, la intimidad y los límites compartidos.',
+        'Pluto-IC': 'Aquí se activa: la revisión de raíces, dinámicas familiares y vida privada.',
       };
       const SIGNIFICADO_PLANETA_ACG = {
         Sun: { energia: 'vitalidad y reconocimiento personal', consejo: 'buen lugar si buscas que te vean, liderar o reinventarte' },
@@ -2277,7 +2289,7 @@
         Pluto: { energia: 'transformación profunda y poder personal', consejo: 'zona de cambios intensos — nada se queda igual aquí' },
       };
       function resumenCiudad(closestLine) {
-        if (!closestLine) return { area:'Tu experiencia en ese lugar', ayuda:'Puede activar una parte importante de tu carta.', cuida:'' };
+        if (!closestLine) return { area:'Tu experiencia en ese lugar', ayuda:'Consulta una línea concreta para conocer el enfoque de este lugar.', cuida:'' };
         const planeta = Object.keys(SIGNIFICADO_PLANETA_ACG).find(p => closestLine.includes(p));
         const linea = ['AC','MC','DS','IC'].find(l => new RegExp('(^|[^A-Z])' + l + '([^A-Z]|$)').test(closestLine)) || null;
         const exacto = planeta && linea ? AYUDA_CIUDAD_PLANETA_LINEA[`${planeta}-${linea}`] : null;
@@ -2297,7 +2309,7 @@
         const p = planeta ? SIGNIFICADO_PLANETA_ACG[planeta] : null;
         return {
           area: linea ? areasLinea[linea] : (p?.energia || 'una parte importante de tu carta'),
-          ayuda: exacto || (p ? `Puede potenciar ${p.energia}; ${p.consejo}.` : 'Puede activar una parte importante de tu carta.'),
+          ayuda: exacto || (p ? `Aquí destaca: ${p.energia}.` : 'Consulta una línea concreta para conocer el enfoque de este lugar.'),
           cuida: planeta ? (cuidados[planeta] || '') : ''
         };
       }
@@ -7284,39 +7296,40 @@
         }
       });
 
-      const RESUMEN_RELOC = {
-        'Trabajo y proyección':'Aquí puede tomar más peso tu carrera, tu visibilidad o la forma en que quieres avanzar profesionalmente.',
-        'Relaciones y vínculos':'Este lugar puede hacer más importantes la pareja, los socios, las amistades o la manera en que te relacionas.',
-        'Hogar y vida privada':'Puede aumentar tu necesidad de pertenencia, estabilidad, hogar, familia o conexión con tus raíces.',
-        'Identidad y presencia':'Aquí puede cambiar cómo te muestras, cómo te perciben los demás o la manera en que afirmas quién eres.',
-        'Dinero y recursos':'Puede poner más atención en ingresos, seguridad material, recursos y decisiones económicas.',
-        'Expansión y aprendizaje':'Puede favorecer estudios, viajes, nuevas ideas, apertura cultural o una sensación de crecimiento.',
-        'Creatividad y disfrute':'Puede activar más el romance, la expresión creativa, el disfrute y las ganas de mostrar tus talentos.',
-        'Rutina y bienestar':'Puede volver más importantes tus hábitos, tu ritmo diario, el trabajo cotidiano y el cuidado personal.',
-        'Cambios profundos':'Puede mover temas intensos de intimidad, control, confianza, recursos compartidos o transformación personal.',
-        'Vida interior':'Puede aumentar la introspección, la sensibilidad, la necesidad de silencio o el trabajo emocional interno.',
-        'Área destacada':'Hay un tema de tu carta que gana más protagonismo en esta ciudad.'
+      const GUIA_RELOC = {
+        'Trabajo y proyección': { area:'Carrera, exposición pública y responsabilidades profesionales.', practica:'Dar a conocer tu trabajo y definir el siguiente paso profesional.', cuida:'La presión por rendir o medir tu valor solo por tus logros.' },
+        'Relaciones y vínculos': { area:'Pareja, sociedades y acuerdos con otras personas.', practica:'Revisar cómo colaboras y qué necesitas de tus vínculos.', cuida:'Ceder demasiado o dejar acuerdos importantes sin hablar.' },
+        'Hogar y vida privada': { area:'Hogar, familia y sensación de pertenencia.', practica:'Crear una base cotidiana que responda a tus necesidades.', cuida:'Cargar con responsabilidades familiares sin reservar espacio propio.' },
+        'Identidad y presencia': { area:'Tu manera de presentarte y tomar la iniciativa.', practica:'Explorar cómo quieres mostrarte y tomar decisiones propias.', cuida:'Cambiar para encajar o asumir más de lo que puedes sostener.' },
+        'Dinero y recursos': { area:'Ingresos, recursos propios y seguridad material.', practica:'Ordenar prioridades y revisar cómo administras tus recursos.', cuida:'Confundir un cambio de lugar con una mejora económica asegurada.' },
+        'Expansión y aprendizaje': { area:'Estudios, viajes, creencias y apertura cultural.', practica:'Aprender, ampliar perspectivas y explorar otros entornos.', cuida:'Prometerte más de lo que permiten tu tiempo y presupuesto.' },
+        'Creatividad y disfrute': { area:'Expresión creativa, romance y proyectos personales.', practica:'Dar espacio a tus talentos y al disfrute cotidiano.', cuida:'Buscar aprobación o descuidar compromisos por entusiasmo.' },
+        'Rutina y bienestar': { area:'Hábitos, trabajo diario y cuidado personal.', practica:'Construir una rutina y un ritmo de trabajo sostenibles.', cuida:'Sobrecargarte o dejar el descanso siempre para después.' },
+        'Cambios profundos': { area:'Intimidad, confianza y recursos compartidos.', practica:'Revisar límites y acuerdos sobre lo que compartes.', cuida:'Dinámicas de control o compromisos económicos poco claros.' },
+        'Vida interior': { area:'Introspección, descanso y necesidad de privacidad.', practica:'Reservar tiempo para reflexionar y recuperar energía.', cuida:'Aislarte demasiado o postergar asuntos que requieren acción.' },
       };
 
       const cards = [...gruposReloc.values()].map(g => {
-        const resumen = RESUMEN_RELOC[g.titulo] || RESUMEN_RELOC['Área destacada'];
+        const guia = GUIA_RELOC[g.titulo];
         const detalle = g.textos.join(' ');
         return `
           <div class="reloc-factor">
             <div class="head"><span>${g.icon}</span><span>${g.titulo}</span></div>
-            <div class="micro">Qué cambia aquí</div>
-            <div class="resumen">${resumen}</div>
+            ${guia ? `<div class="micro">Área que toma protagonismo</div>
+            <div class="resumen">${guia.area}</div>
+            <div class="body" style="margin-top:8px;"><b>Qué puedes trabajar:</b> ${guia.practica}</div>
+            <div class="body" style="margin-top:6px;"><b>Conviene cuidar:</b> ${guia.cuida}</div>` : ''}
             ${detalle ? `
               <details>
-                <summary>Ver por qué aparece en tu carta</summary>
+                <summary>Qué indica tu carta en esta ciudad</summary>
                 <div class="body" style="margin-top:7px;">${detalle}</div>
               </details>` : ''}
           </div>`;
       }).join('');
 
       const intro = factores.length
-        ? `En <b>${ciudad}</b> estas son las áreas que pueden sentirse más activas para ti. Úsalo para entender qué parte de tu vida podría ganar más atención en ese lugar.`
-        : `No aparecen cambios especialmente destacados para <b>${ciudad}</b> en este cálculo.`;
+        ? `En <b>${ciudad}</b> estas son las áreas que pueden sentirse más activas para ti. Las orientaciones describen temas para trabajar; que un área se active no significa que todo allí sea fácil. Abre cada detalle para ver lo que indica tu carta.`
+        : `Este resultado no incluye una síntesis de áreas para <b>${ciudad}</b>. Revisa el detalle para ver si hay cambios de casas o de ángulos.`;
 
       let htmlReloc = `
         <div style="display:flex;justify-content:flex-end;margin-bottom:6px;">
@@ -7637,3 +7650,4 @@
 </script>
 </body>
 </html>
+
