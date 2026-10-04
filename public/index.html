@@ -1589,7 +1589,11 @@
   }
   body.app-nativa .bottomnav .it .g{font-size:18px;}
   /* iOS tenía una regla más específica que mantenía los botones en 48px. */
+  body.app-nativa.app-ios .scroll{
+    padding-bottom:calc(var(--alto-nav, 60px) + 12px);
+  }
   body.app-nativa.app-ios .bottomnav{
+    position:absolute;left:0;right:0;bottom:0;
     padding:2px max(4px,env(safe-area-inset-right,0px)) calc(2px + env(safe-area-inset-bottom,0px)) max(4px,env(safe-area-inset-left,0px));
   }
   body.app-nativa.app-ios .bottomnav .it{
