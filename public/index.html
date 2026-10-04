@@ -1652,6 +1652,9 @@
             <div id="dias-poder-personal"></div>
 
             <div id="calendario-general-bloque">
+              <div style="display:flex;justify-content:flex-end;margin-bottom:6px;">
+                <button type="button" onclick="cerrarDiasPropicios()" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button>
+              </div>
               <div class="card-lectura" style="background:var(--paper);">
                 <div class="card-titulo">📅 Tus mejores días del mes</div>
                 <div class="card-cuerpo" style="color:var(--ink-dim);">Calcula para unir en una sola lista los días generales del ciclo lunar y los días que además destacan para ti según tu carta.</div>
@@ -6280,7 +6283,14 @@
 
   const MESES_ES = ['', 'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
+  function cerrarDiasPropicios() {
+    const bloque = document.getElementById('calendario-general-bloque');
+    if (bloque) bloque.style.display = 'none';
+  }
+
   async function calcularCalendarioLunar(boton) {
+    const bloque = document.getElementById('calendario-general-bloque');
+    if (bloque) bloque.style.display = 'block';
     boton.innerHTML = samLoading('Calculando tus mejores días...');
     boton.disabled = true;
     try {
@@ -6418,7 +6428,7 @@
       if (contenedorUnificado) {
         contenedorUnificado.innerHTML = `
           ${gruposHtml ? `
-            <div class="dias-leyenda"><b>⭐ Según tu carta</b> — agrupamos los días que tienen el mismo significado para que sea más fácil leerlos.</div>
+            <div class="dias-leyenda"><b>⭐ Tus fechas personales</b> — calculadas según tu carta natal.</div>
             ${gruposHtml}
           ` : ''}
           <div class="dias-leyenda" style="margin-top:12px;"><b>🌙 Guía lunar general</b> — fechas basadas en la fase y el signo de la Luna.</div>
