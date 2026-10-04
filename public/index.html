@@ -653,6 +653,65 @@
     font-weight:600;
     cursor:pointer;
   }
+
+  .ciclos-portada{
+    background:linear-gradient(135deg,rgba(151,116,205,.16),rgba(201,168,76,.10));
+    border:1px solid var(--line);
+    border-radius:22px;
+    padding:16px;
+    margin-bottom:14px;
+  }
+  .ciclos-portada h2{
+    margin:0 0 5px;
+    font-family:'Cormorant Garamond',serif;
+    font-size:24px;
+    color:var(--plum);
+  }
+  .ciclos-portada p{
+    margin:0;
+    font-size:13px;
+    line-height:1.55;
+    color:var(--ink-dim);
+  }
+  .ciclos-nav{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    margin-top:13px;
+  }
+  .ciclos-nav button{
+    border:1px solid var(--line);
+    background:#fff;
+    color:var(--plum);
+    border-radius:14px;
+    padding:10px 11px;
+    font-family:'Work Sans',sans-serif;
+    font-size:12.5px !important;
+    font-weight:600;
+    text-align:left;
+    cursor:pointer;
+  }
+  .ciclos-nav button b{
+    display:block;
+    font-family:'Cormorant Garamond',serif;
+    font-size:16px;
+    margin-bottom:2px;
+  }
+  [data-tab="ciclos"].ciclo-destacado{
+    border:1px solid var(--line);
+    border-radius:18px;
+    background:#fff;
+    box-shadow:0 5px 18px rgba(45,27,78,.045);
+  }
+  .ciclos-etiqueta{
+    display:inline-block;
+    font-size:10.5px !important;
+    font-weight:700;
+    letter-spacing:.45px;
+    text-transform:uppercase;
+    color:var(--marigold-dark);
+    margin-bottom:6px;
+  }
   .zoom-close-btn{position:fixed;top:16px;right:16px;background:#fff;border:none;border-radius:50%;width:36px;height:36px;font-size:18px;z-index:61;cursor:pointer;}
   .lectura-modal-bg{display:none;position:fixed;inset:0;background:var(--page-bg);z-index:62;padding:0;overflow:hidden;flex-direction:column;}
   .lectura-modal-bg.open{display:flex;}
@@ -1309,9 +1368,21 @@
             <div id="zoom-hint" style="font-size:12.5px;color:var(--ink-dim);text-align:center;margin-top:7px;"></div>
           </div>
 
-          <div class="section" data-tab="ciclos">
+          <div class="ciclos-portada" data-tab="ciclos" id="ciclos-portada">
+            <h2>Tus ciclos</h2>
+            <p>Lo que cambia con el cielo y cómo se mueve para ti: hoy, la Luna, eclipses y fechas útiles del mes.</p>
+            <div class="ciclos-nav">
+              <button type="button" onclick="irASeccionCiclos('ciclos-horoscopo')"><b>Hoy</b>Tu horóscopo personal</button>
+              <button type="button" onclick="irASeccionCiclos('ciclos-luna')"><b>Luna</b>Fase y calendario lunar</button>
+              <button type="button" onclick="irASeccionCiclos('ciclos-eclipses')"><b>Eclipses</b>Próximas fechas</button>
+              <button type="button" onclick="irASeccionCiclos('ciclos-dias-propicios')"><b>Días propicios</b>Organiza el mes</button>
+            </div>
+          </div>
+
+          <div class="section ciclo-destacado" data-tab="ciclos" id="ciclos-horoscopo">
+            <div class="ciclos-etiqueta">Para hoy</div>
             <h2>Tu día según tu carta</h2>
-            <div class="desc">Calculado con tu carta natal real.</div>
+            <div class="desc">Una lectura breve basada en tu carta natal y los tránsitos de hoy.</div>
             <button class="btn-primary" onclick="verHoroscopoDiario()">Ver mi horóscopo de hoy</button>
             <div id="horoscopo-resultado" style="margin-top:14px;"></div>
           </div>
@@ -1338,9 +1409,10 @@
             <button class="btn-outline" style="width:100%;margin-top:8px;" id="diario-btn-ver" onclick="alternarEntradasDiario()">Ver entradas anteriores</button>
           </div>
 
-          <div class="section" data-tab="ciclos">
+          <div class="section ciclo-destacado" data-tab="ciclos" id="ciclos-eclipses">
+            <div class="ciclos-etiqueta">Próximos movimientos</div>
             <h2>Próximos eclipses</h2>
-            <div class="desc">Cómo los próximos eclipses afectan tu carta natal — ordenados por fecha. Se actualiza cada 6 meses.</div>
+            <div class="desc">Consulta las próximas fechas y cómo pueden tocar puntos importantes de tu carta natal.</div>
             <button class="btn-primary" onclick="verEclipses()">Ver cómo me afecta</button>
             <div id="eclipses-resultado" style="margin-top:14px;"></div>
           </div>
@@ -1433,9 +1505,10 @@
             <div id="tarot-resultado" style="margin-top:14px;"></div>
           </div>
 
-          <div class="section" data-tab="ciclos">
+          <div class="section ciclo-destacado" data-tab="ciclos" id="ciclos-luna">
+            <div class="ciclos-etiqueta">Luna</div>
             <h2>Ciclo lunar</h2>
-            <div class="desc" id="luna-intro">Qué significa cada fase y cómo aprovecharla.</div>
+            <div class="desc" id="luna-intro">Fase, signo, calendario mensual y cómo usar el ciclo lunar como guía.</div>
 
             <button class="btn-primary" style="margin-bottom:14px;" onclick="cargarLunaReal()">Ver la luna de hoy en el cielo</button>
             <div id="luna-cruda" style="margin-bottom:14px;"></div>
@@ -1464,9 +1537,10 @@
             <div id="calendario-lunar-mes"></div>
           </div>
 
-          <div class="section" data-tab="ciclos">
-            <h2>¿Cuándo hacer cada cosa?</h2>
-            <div class="desc">La Luna influye en todo. Aquí las fechas del mes donde la energía favorece cada tipo de acción.</div>
+          <div class="section ciclo-destacado" data-tab="ciclos" id="ciclos-dias-propicios">
+            <div class="ciclos-etiqueta">Planifica tu mes</div>
+            <h2>Días propicios del mes</h2>
+            <div class="desc">Usa el ciclo lunar como una guía para elegir momentos más favorables para distintas actividades.</div>
             <button class="btn-primary" style="margin-bottom:10px;" onclick="calcularCalendarioLunar(this)">Ver fechas exactas de este mes</button>
             <div id="aviso-mercurio-retro"></div>
             <div id="dias-poder-personal"></div>
@@ -6482,6 +6556,14 @@
         </div>
       </div>
     `;
+  }
+
+  function irASeccionCiclos(id) {
+    cambiarPestana('ciclos');
+    requestAnimationFrame(() => {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   }
 
   function cambiarPestana(nombre) {
