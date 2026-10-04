@@ -1414,6 +1414,10 @@
   .alquimia-mes-selector { display:block;font:400 14px/1.5 'Work Sans',sans-serif;color:var(--plum);margin:12px 0 16px; }
   .alquimia-mes-selector input { display:block;width:100%;box-sizing:border-box;margin-top:6px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;min-height:44px; }
   .mes-evento-fecha { color:var(--marigold-dark);font:600 14px/1.5 'Work Sans',sans-serif;margin-bottom:8px; }
+
+  .mes-panorama-lectura { font:400 14px/1.6 'Work Sans',sans-serif;color:var(--plum); }
+  .mes-panorama-lectura p { margin:0 0 12px; }
+  .mes-panorama-lectura p:last-child { margin-bottom:0; }
 </style>
 </head>
 <body>
@@ -1913,8 +1917,7 @@
           <div class="section alquimia-tarjeta" data-tab="alquimia" id="alquimia-mes">
             <div class="carta-etiqueta">Lo que viene para ti</div>
             <h2>Tu mes astrológico</h2>
-            <div class="desc">Consulta los movimientos del mes y los temas que activan en tu carta. Abre cada bloque para ver las fechas y su explicación.</div>
-            <label class="alquimia-mes-selector">Mes que quieres explorar<input type="month" id="alquimia-mes-elegido"></label>
+            <div class="desc">Una lectura breve del mes en curso, sus eventos importantes y los tránsitos que destacan en tu carta.</div>
             <div id="mes-astrologico-contenido"><div class="disclaimer">Elige «Ver mi mes» para consultar sus fechas y movimientos.</div></div>
             <div style="display:flex;gap:8px;margin-top:10px;">
               <button class="btn-outline" style="flex:1;" onclick="cargarMesAstrologico()">Ver mi mes</button>
@@ -3836,6 +3839,58 @@
     icono.textContent = yaAbierto ? '▼' : '▲';
   }
 
+  function seleccionarEventosImportantesMes(eventos) {
+    const vistos = new Set();
+    const unicos = eventos.filter(e => {
+      const clave = [e.tipo,e.titulo,e.fecha,e.hora].join('|');
+      if (vistos.has(clave)) return false;
+      vistos.add(clave); return true;
+    });
+    const prioridad = e => e.tipo?.includes('eclipse') ? 0 : e.tipo === 'station' ? 1 : e.tipo === 'lunation' ? 2 : /^Sol entra/.test(e.titulo || '') ? 3 : 4;
+    return unicos.sort((a,b) => prioridad(a)-prioridad(b) || a.fecha.localeCompare(b.fecha))
+      .slice(0,8).sort((a,b) => (a.fecha+(a.hora||'')).localeCompare(b.fecha+(b.hora||'')));
+  }
+  function seleccionarTransitosImportantesMes(eventos) {
+    const grupos = new Map();
+    eventos.forEach(e => {
+      const clave = [e.planeta_transito,e.aspecto,e.punto_natal].join('|');
+      const anterior = grupos.get(clave);
+      if (!anterior || (e.orbe ?? Infinity) < (anterior.orbe ?? Infinity)) grupos.set(clave,e);
+    });
+    const orden = e => ['Sol','Luna','Ascendente','Medio Cielo','Venus','Mercurio','Marte'].indexOf(e.punto_natal);
+    return [...grupos.values()].sort((a,b) => (a.orbe ?? Infinity)-(b.orbe ?? Infinity) || (orden(a)<0?99:orden(a))-(orden(b)<0?99:orden(b)))
+      .slice(0,6).sort((a,b) => a.fecha.localeCompare(b.fecha));
+  }
+  function generarPanoramaActualMes(generales, personales, generalDisponible, personalDisponible) {
+    if (!generalDisponible) return '<div class="disclaimer">No se pudo completar el panorama del mes. Toca actualizar para consultar sus eventos.</div>';
+    const relevantes = [...generales].sort((a,b) => {
+      const p = e => e.tipo?.includes('eclipse') ? 0 : e.tipo === 'station' ? 1 : e.tipo === 'lunation' ? 2 : 3;
+      return p(a)-p(b) || a.fecha.localeCompare(b.fecha);
+    }).slice(0,4).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+    const frases = relevantes.flatMap(e => [
+      `El día ${Number(e.fecha.slice(-2))}, ${e.titulo.charAt(0).toLowerCase() + e.titulo.slice(1)}.`,
+      e.accion || e.texto
+    ]);
+    if (personalDisponible && personales.length) {
+      const e = [...personales].sort((a,b)=>(a.orbe ?? Infinity)-(b.orbe ?? Infinity))[0];
+      frases.push(`En tu carta destaca ${e.planeta_transito} en ${e.aspecto} con tu ${e.punto_natal}, el día ${Number(e.fecha.slice(-2))}.`);
+      const tema = {
+        'Sol':'Observa cómo ese contacto se refleja en tus decisiones y en la confianza para mostrarte.',
+        'Luna':'Pon atención a tus necesidades emocionales y a cómo buscas apoyo.',
+        'Mercurio':'Observa qué conversaciones o decisiones requieren más atención.',
+        'Venus':'Revisa qué necesitas en tus vínculos y qué valoras al compartir con otros.',
+        'Marte':'Observa cómo distribuyes tu esfuerzo y cómo respondes al desacuerdo.',
+        'Ascendente':'Pon atención a cómo te presentas y a las iniciativas que quieres tomar.',
+        'Medio Cielo':'Revisa tus prioridades profesionales y los compromisos que asumes.'
+      };
+      if (tema[e.punto_natal]) frases.push(tema[e.punto_natal]);
+    } else if (!personalDisponible) frases.push('Los tránsitos personales aún no están disponibles; esta lectura describe el cielo general.');
+    if (!frases.length) return '<div class="disclaimer">La consulta no devolvió datos suficientes para redactar el panorama. Toca actualizar para reintentar.</div>';
+    const parrafos = [];
+    for (let i=0;i<frases.length;i+=4) parrafos.push('<p>' + frases.slice(i,i+4).map(escaparTextoMes).join(' ') + '</p>');
+    return '<div class="mes-panorama-lectura">' + parrafos.join('') + '</div>';
+  }
+
   let _solicitudMesAlquimia = 0;
   function escaparTextoMes(valor) {
     return String(valor || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -3843,27 +3898,25 @@
 
   async function cargarMesAstrologico(forzarRecalculo) {
     const contenedor = document.getElementById('mes-astrologico-contenido');
-    const selectorMes = document.getElementById('alquimia-mes-elegido');
-    const seleccionado = selectorMes?.value || `${_calAnioActual}-${String(_calMesActual).padStart(2,'0')}`;
-    const [anioConsulta, mesConsulta] = seleccionado.split('-').map(Number);
-    if (selectorMes) selectorMes.value = seleccionado;
     const solicitud = ++_solicitudMesAlquimia;
     contenedor.innerHTML = samLoading('');
     try {
       const r = await fetchAuth('/mes-astrologico', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mes: mesConsulta, anio: anioConsulta, forzar_recalculo: !!forzarRecalculo }),
+        body: JSON.stringify({ forzar_recalculo: !!forzarRecalculo }),
       });
       const data = await leerJsonSeguro(r);
       if (solicitud !== _solicitudMesAlquimia) return;
       if (!r.ok) { contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${data.error || 'No se pudo calcular tu mes.'}</div>`; return; }
 
+      const mesConsulta = data.mes;
+      const anioConsulta = data.anio;
       const m = data.mes_astrologico || {};
-      const generales = m.eventos_generales || [];
+      const generales = seleccionarEventosImportantesMes(m.eventos_generales || []);
       const estadoGeneral = m.estado_general === 'disponible';
       const estadoPersonal = m.estado_personal === 'disponible';
-      const eventosPersonales = m.eventos_destacados || [];
+      const eventosPersonales = seleccionarTransitosImportantesMes(m.eventos_destacados || []);
       const areas = m.areas_destacadas || [];
 
       // Resumen breve visible de entrada
@@ -3872,16 +3925,9 @@
           <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:36px;color:var(--marigold);margin-bottom:12px;letter-spacing:1px;">${NOMBRES_MES[mesConsulta - 1]} ${anioConsulta}</div>
         </div>`;
       const zona = data.contexto_tiempo?.timezone || 'UTC';
-      const totalEventos = generales.length + eventosPersonales.length;
-      html += `<div class="disclaimer" style="text-align:center;margin-bottom:14px;">${totalEventos ? totalEventos + ' movimientos para explorar este mes.' : 'Consulta el estado de cada bloque.'}<br>Fechas y horas en ${zona}.</div>`;
-
-      const grupos = {};
-      generales.forEach(e => {
-        const tema = e.tipo === 'sign_ingress' ? 'Cambios de signo' : e.tipo === 'station' ? 'Cambios de movimiento' : e.tipo === 'lunation' ? 'Lunas del mes' : 'Eclipses';
-        grupos[tema] = (grupos[tema] || 0) + 1;
-      });
-      const panoramaDetallado = `<div class="cuerpo">${Object.entries(grupos).map(([tema,n]) => '<p>' + tema + ': <b>' + n + '</b></p>').join('') || (estadoGeneral ? 'No se devolvieron eventos generales para este rango.' : 'Los eventos generales todavía no están disponibles. Usa el botón de actualizar para reintentar.')}<p>${estadoPersonal ? 'Tránsitos que tocan tu carta: <b>' + eventosPersonales.length + '</b>.' : 'La consulta de tránsitos personales no pudo completarse.'}</p></div>`;
-      html += acordeonItemMes('nivel1-panorama', 'Panorama del mes', panoramaDetallado, false);
+      html += `<div class="disclaimer" style="text-align:center;margin-bottom:14px;">Los movimientos más importantes del mes en curso.<br>Fechas y horas en ${escaparTextoMes(zona)}.</div>`;
+      const panoramaDetallado = generarPanoramaActualMes(generales, eventosPersonales, estadoGeneral, estadoPersonal);
+      html += acordeonItemMes('nivel1-panorama', 'Panorama del mes', panoramaDetallado, true);
 
       const cuerpoEventosClave = !estadoGeneral
         ? '<div class="disclaimer">No se pudieron cargar los eventos del mes. Toca actualizar para volver a consultar.</div>'
@@ -3899,7 +3945,7 @@
             return acordeonItemMes('evento-mes-' + i, escaparTextoMes(e.titulo), detalle, false, { tema:escaparTextoMes(cuando) });
           }).join('')
           : '<div class="disclaimer">La consulta no devolvió eventos para este rango. Puedes actualizar para volver a consultarlo.</div>';
-      html += acordeonItemMes('nivel1-eventosclave', '⭐ Eventos clave', cuerpoEventosClave, false);
+      html += acordeonItemMes('nivel1-eventosclave', 'Eventos importantes', cuerpoEventosClave, false);
 
       // ===== 3) CÓMO TE AFECTA A TI (ANÁLISIS PERSONALIZADO) =====
       const cuerpoPersonal = !estadoPersonal
@@ -3912,7 +3958,7 @@
               ${e.interpretacion ? '<div class="cuerpo" style="margin-top:8px;">' + limpiarTextoAPI(e.interpretacion) + '</div>' : ''}
             </div>`).join('')
           : '<div class="disclaimer">La consulta no devolvió tránsitos personales con el orbe de 2° para este mes.</div>';
-      html += acordeonItemMes('nivel1-personal', '🎯 Cómo te afecta a ti', cuerpoPersonal, false);
+      html += acordeonItemMes('nivel1-personal', 'Lo más importante en tu carta', cuerpoPersonal, false);
 
       contenedor.innerHTML = html;
 
@@ -6922,8 +6968,6 @@
 
   function cambiarPestana(nombre) {
     if (nombre === 'alquimia') {
-      const selectorMes = document.getElementById('alquimia-mes-elegido');
-      if (selectorMes && !selectorMes.value) selectorMes.value = `${_calAnioActual}-${String(_calMesActual).padStart(2,'0')}`;
       const practicas = document.getElementById('rituales-contenedor');
       if (practicas && !practicas.innerHTML.trim()) practicas.innerHTML = generarRitualesDelMes(_calMesActual);
     }
