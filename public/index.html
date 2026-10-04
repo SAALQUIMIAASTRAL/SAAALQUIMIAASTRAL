@@ -556,6 +556,38 @@
   .day-item .when{font-size:11px;color:var(--marigold-dark);font-weight:600;margin-bottom:3px;}
   .day-item p{font-size:11.5px;color:var(--ink-dim);margin:0;line-height:1.4;}
   .day-item:last-child{border-bottom:none;}
+  .dia-proposito{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:12px 13px;
+    margin-bottom:8px;
+    display:flex;
+    gap:11px;
+    align-items:flex-start;
+  }
+  .dia-proposito .emoji{
+    width:38px;height:38px;flex:none;border-radius:11px;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--marigold-soft);font-size:19px;
+  }
+  .dia-proposito .contenido{min-width:0;flex:1;}
+  .dia-proposito .titulo{
+    font-size:14px;font-weight:700;color:var(--plum);margin-bottom:2px;
+  }
+  .dia-proposito .sirve{
+    font-size:12.5px;line-height:1.45;color:var(--ink-dim);margin-bottom:7px;
+  }
+  .dia-proposito .fechas{
+    font-size:13px;line-height:1.5;color:var(--plum);font-weight:600;
+  }
+  .dia-proposito .personal{
+    color:var(--marigold-dark);font-weight:700;
+  }
+  .dias-leyenda{
+    font-size:11.5px;line-height:1.5;color:var(--ink-dim);
+    padding:10px 12px;background:var(--marigold-soft);border-radius:12px;margin-bottom:10px;
+  }
   .day-item .ic{width:36px;height:36px;border-radius:10px;background:var(--marigold-soft);display:flex;align-items:center;justify-content:center;font-size:16px;flex:none;}
   .day-item h4{font-size:13.5px;margin:0 0 2px;}
   .day-item .when{font-size:11.5px;color:var(--marigold);font-weight:600;margin-bottom:3px;}
@@ -1615,42 +1647,11 @@
             <div id="dias-poder-personal"></div>
 
             <div id="calendario-general-bloque">
-              <div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('calendario-general-bloque').style.display='none'" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>
-              <div class="card-lectura">
-                <div class="card-titulo">📅 Calendario general (tradición astrológica)</div>
-                <div class="card-cuerpo" style="color:var(--ink-dim);">Estas fechas son iguales para todas las usuarias — están basadas en la fase y el signo de la Luna, no en tu carta personal.</div>
+              <div class="card-lectura" style="background:var(--paper);">
+                <div class="card-titulo">📅 Tus mejores días del mes</div>
+                <div class="card-cuerpo" style="color:var(--ink-dim);">Calcula para unir en una sola lista los días generales del ciclo lunar y los días que además destacan para ti según tu carta.</div>
               </div>
-
-              <div class="day-item">
-                <div class="ic">✂️</div>
-                <div><h4>Cortarte el cabello</h4><div class="when" id="fechas-cabello">Luna creciente en Tauro o Leo</div><p>Se asocia con crecimiento más rápido y con más volumen.</p></div>
-              </div>
-              <div class="day-item">
-                <div class="ic">🎨</div>
-                <div><h4>Tatuarte</h4><div class="when" id="fechas-tatuaje">Luna menguante, evitando Escorpio</div><p>Tradicionalmente se prefiere para mejor cicatrización y menos sensibilidad.</p></div>
-              </div>
-              <div class="day-item">
-                <div class="ic">🚀</div>
-                <div><h4>Lanzar tu negocio o producto</h4><div class="when" id="fechas-negocio">Luna nueva o creciente en tu signo</div><p>Energía de inicio: ideal para anunciar algo y que tome impulso.</p></div>
-              </div>
-              <div class="day-item">
-                <div class="ic">💳</div>
-                <div><h4>Pedir un crédito</h4><div class="when" id="fechas-credito">Luna creciente en Tauro o Capricornio</div><p>Se asocia con estabilidad y compromisos que crecen de forma sólida.</p></div>
-              </div>
-              <div class="day-item">
-                <div class="ic">✍️</div>
-                <div><h4>Firmar un contrato</h4><div class="when" id="fechas-contrato">Luna creciente en Virgo, Libra o Capricornio</div><p>Favorece los acuerdos claros y duraderos.</p></div>
-              </div>
-              <div class="day-item">
-                <div class="ic">💼</div>
-                <div><h4>Entrevista de trabajo</h4><div class="when" id="fechas-entrevista">Luna creciente en Leo, Capricornio o Sagitario</div><p>Ayuda a mostrar confianza y buena impresión.</p></div>
-              </div>
-              <div class="day-item">
-                <div class="ic">🩺</div>
-                <div><h4>Cirugías</h4><div class="when" id="fechas-cirugia">Luna menguante, evitando Luna llena</div><p>La tradición sugiere menguante para recuperaciones más tranquilas.</p></div>
-              </div>
-
-              <div class="disclaimer">Estas son guías de la tradición astrológica, pensadas para acompañar tu intuición — no sustituyen la opinión de tu médico, cirujano o asesor financiero.</div>
+              <div id="dias-propicios-unificados"></div>
             </div>
           </div>
 
@@ -6275,7 +6276,7 @@
   const MESES_ES = ['', 'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
   async function calcularCalendarioLunar(boton) {
-    boton.innerHTML = samLoading('');
+    boton.innerHTML = samLoading('Calculando tus mejores días...');
     boton.disabled = true;
     try {
       const r = await fetchAuth('/calendario-lunar', { method: 'POST', headers: {} });
@@ -6284,53 +6285,92 @@
         if (detectarLimiteExcedido(data)) { alert('Se acabaron los créditos gratis de este mes.'); return; }
         throw new Error(data.error || 'No se pudo calcular.');
       }
-      const c = data.calendario;
-      const nombreMes = MESES_ES[data.mes] || data.mes;
-      const fmt = (arr) => arr && arr.length ? `Días ${arr.join(', ')} de ${nombreMes}` : `Ninguno en ${nombreMes}`;
-      document.getElementById('fechas-cabello').textContent = fmt(c.cortarte_el_cabello);
-      document.getElementById('fechas-tatuaje').textContent = fmt(c.tatuarte);
-      document.getElementById('fechas-negocio').textContent = fmt(c.lanzar_negocio);
-      document.getElementById('fechas-credito').textContent = fmt(c.pedir_credito);
-      document.getElementById('fechas-contrato').textContent = fmt(c.firmar_contrato);
-      document.getElementById('fechas-entrevista').textContent = fmt(c.entrevista_trabajo);
-      document.getElementById('fechas-cirugia').textContent = fmt(c.cirugias);
 
+      const c = data.calendario || {};
+      const nombreMes = MESES_ES[data.mes] || data.mes;
+      const diasPersonal = data.dias_poder_personal || {};
       const avisoMercurio = document.getElementById('aviso-mercurio-retro');
-      if (data.mercurio_retrogrado) {
-        avisoMercurio.innerHTML = '<div class="disclaimer" style="background:#fbe6e3;color:#a5442f;border-radius:10px;padding:10px 12px;margin-bottom:12px;">☿ Mercurio está retrógrado este mes — mejor revisar dos veces contratos, mensajes importantes y acuerdos antes de firmar.</div>';
-      } else {
-        avisoMercurio.innerHTML = '';
+      const contenedorPersonal = document.getElementById('dias-poder-personal');
+      const contenedorUnificado = document.getElementById('dias-propicios-unificados');
+
+      if (avisoMercurio) avisoMercurio.innerHTML = '';
+      if (contenedorPersonal) contenedorPersonal.innerHTML = '';
+
+      // Convertimos los tránsitos personales del mes en categorías de uso cotidiano.
+      const personalesPorCategoria = {
+        cabello:new Set(), tatuaje:new Set(), negocio:new Set(), credito:new Set(),
+        contrato:new Set(), entrevista:new Set(), cirugia:new Set()
+      };
+
+      Object.entries(diasPersonal).forEach(([dia, mensajes]) => {
+        const texto = (mensajes || []).join(' ').toLowerCase();
+        const d = Number(dia);
+        if (!d) return;
+
+        if (/venus|ascendente|imagen personal|belleza/.test(texto)) personalesPorCategoria.cabello.add(d);
+        if (/sol|júpiter|medio cielo|mc|marte|liderar|visibilidad|carrera|lanzamientos|arrancar proyectos|oportunidades/.test(texto)) {
+          personalesPorCategoria.negocio.add(d);
+        }
+        if (/júpiter|saturno|venus|dinero|estructura|responsabilidad|oportunidades/.test(texto)) {
+          personalesPorCategoria.credito.add(d);
+        }
+        if (/mercurio|saturno|descendente|firmar|negociar|acuerdos|compromisos/.test(texto)) {
+          personalesPorCategoria.contrato.add(d);
+        }
+        if (/sol|júpiter|medio cielo|mc|ascendente|mercurio|visibilidad|carrera|imagen personal|comunicar/.test(texto)) {
+          personalesPorCategoria.entrevista.add(d);
+        }
+        // Tatuajes y cirugías se mantienen solo como referencia lunar general:
+        // no usamos tránsitos personales para sugerir decisiones médicas/procedimientos.
+      });
+
+      const actividades = [
+        { key:'cabello', emoji:'✂️', titulo:'Cabello', sirve:'Para cortes cuando buscas crecimiento o más volumen.', generales:c.cortarte_el_cabello || [] },
+        { key:'tatuaje', emoji:'🎨', titulo:'Tatuaje', sirve:'Referencia tradicional para elegir una fase lunar más tranquila.', generales:c.tatuarte || [] },
+        { key:'negocio', emoji:'🚀', titulo:'Negocio o lanzamiento', sirve:'Para presentar, publicar o poner en marcha algo importante.', generales:c.lanzar_negocio || [] },
+        { key:'credito', emoji:'💳', titulo:'Dinero o crédito', sirve:'Para revisar movimientos financieros, solicitudes o compromisos de dinero.', generales:c.pedir_credito || [] },
+        { key:'contrato', emoji:'✍️', titulo:'Contratos y acuerdos', sirve:'Para negociar, conversar condiciones o formalizar acuerdos.', generales:c.firmar_contrato || [] },
+        { key:'entrevista', emoji:'💼', titulo:'Entrevistas y exposición', sirve:'Para reuniones, entrevistas, presentaciones y momentos donde quieres destacar.', generales:c.entrevista_trabajo || [] },
+        { key:'cirugia', emoji:'🩺', titulo:'Procedimientos médicos', sirve:'Solo referencia de tradición astrológica; la fecha médica debe decidirse con tu profesional de salud.', generales:c.cirugias || [] },
+      ];
+
+      const renderDias = (actividad) => {
+        const generales = new Set((actividad.generales || []).map(Number));
+        const personales = personalesPorCategoria[actividad.key] || new Set();
+        const todos = [...new Set([...generales, ...personales])].filter(Boolean).sort((a,b)=>a-b);
+        if (!todos.length) return '<span style="color:var(--ink-dim);font-weight:500;">Sin fechas destacadas este mes.</span>';
+        return todos.map(d => personales.has(d)
+          ? `<span class="personal">${d}⭐</span>`
+          : `<span>${d}</span>`
+        ).join(' · ');
+      };
+
+      if (contenedorUnificado) {
+        contenedorUnificado.innerHTML = `
+          <div class="dias-leyenda">⭐ = ese día también tiene un tránsito favorable en <b>tu carta personal</b>. Los días sin estrella corresponden a la guía lunar general.</div>
+          ${actividades.map(a => `
+            <div class="dia-proposito">
+              <div class="emoji">${a.emoji}</div>
+              <div class="contenido">
+                <div class="titulo">${a.titulo}</div>
+                <div class="sirve">${a.sirve}</div>
+                <div class="fechas">${renderDias(a)} <span style="font-weight:400;color:var(--ink-dim);">· ${nombreMes}</span></div>
+              </div>
+            </div>
+          `).join('')}
+          <div class="disclaimer">Estas fechas son una guía astrológica. Para decisiones médicas o financieras importantes, usa también el criterio de tu profesional correspondiente.</div>
+        `;
       }
 
-      // Días de poder personal — cruzando tu carta natal real
-      const contenedorPersonal = document.getElementById('dias-poder-personal');
-      const diasPersonal = data.dias_poder_personal || {};
-      const clavesDias = Object.keys(diasPersonal).map(Number).sort((a, b) => a - b);
-      if (clavesDias.length) {
-        contenedorPersonal.innerHTML = `
-          <div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('dias-poder-personal').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>
-          <div class="card-lectura" style="background:var(--marigold-soft);border:1px solid var(--marigold-mid);margin-bottom:14px;">
-            <div class="card-titulo">✨ Tus días de poder personal en ${nombreMes}</div>
-            <div class="card-cuerpo" style="color:var(--ink-dim);margin-bottom:8px;">Calculado cruzando los tránsitos del mes con tu carta natal real — estos días específicos son buenos para ti, no genéricos.</div>
-            ${clavesDias.map(dia => `
-              <div style="margin-bottom:6px;font-size:12.5px;">
-                <b style="color:var(--marigold-dark);">Día ${dia}:</b>
-                <span style="color:var(--plum);">${diasPersonal[dia].join('; ')}</span>
-              </div>
-            `).join('')}
-          </div>
-        `;
-      } else if (data.dias_poder_personal_error) {
-        contenedorPersonal.innerHTML = `<div class="disclaimer" style="color:#a5442f;margin-bottom:14px;">No se pudo calcular tus días de poder personal este mes. <span style="opacity:0.7;font-size:10.5px;">(detalle técnico disponible en consola)</span></div>`;
+      if (data.dias_poder_personal_error) {
         console.error('dias_poder_personal_error:', data.dias_poder_personal_error);
-      } else {
-        contenedorPersonal.innerHTML = `<div class="disclaimer" style="margin-bottom:14px;">Este mes no hay tránsitos especialmente favorables (Sol, Venus o Júpiter en buen ángulo con tu carta) — es un mes más tranquilo, no significa que sea malo.</div>`;
       }
     } catch (err) {
       alert(err.message);
+    } finally {
+      boton.textContent = 'Actualizar fechas de este mes';
+      boton.disabled = false;
     }
-    boton.textContent = 'Ver fechas exactas de este mes';
-    boton.disabled = false;
   }
 
   const FASES_LUNARES_ES = {
