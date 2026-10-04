@@ -1301,6 +1301,40 @@
   .reflexion-modal-cerrar:hover{
     background:var(--plum-light);transform:translateY(-2px);
   }
+
+  .carta-desplegable > summary {
+    position:relative;
+    display:block;
+    padding-right:32px;
+    cursor:pointer;
+    list-style:none;
+  }
+  .carta-desplegable > summary::-webkit-details-marker { display:none; }
+  .carta-desplegable > summary:focus-visible { outline:2px solid var(--marigold); outline-offset:6px; border-radius:8px; }
+  .carta-desplegable > summary .carta-etiqueta { display:block; }
+  .carta-desplegable-titulo {
+    display:block;
+    font-family:'Cormorant Garamond',serif;
+    font-size:26px;
+    font-weight:700;
+    color:var(--plum);
+    line-height:1.2;
+    border-left:3px solid var(--marigold);
+    padding-left:10px;
+  }
+  .carta-desplegable-indicador {
+    position:absolute;
+    right:5px;
+    top:50%;
+    width:10px;
+    height:10px;
+    border-right:2px solid var(--plum);
+    border-bottom:2px solid var(--plum);
+    transform:translateY(-50%) rotate(45deg);
+  }
+  .carta-desplegable[open] > summary .carta-desplegable-indicador { transform:rotate(225deg); }
+  .carta-desplegable-contenido { padding-top:14px; }
+
 </style>
 </head>
 <body>
@@ -1996,8 +2030,13 @@
           -->
 
           <div class="section carta-destacada" data-tab="carta" id="carta-astrocartografia">
-            <div class="carta-etiqueta">Tu mapa en el mundo</div>
-            <h2>Astrocartografía</h2>
+            <details class="carta-desplegable" id="acg-desplegable">
+              <summary>
+                <span class="carta-etiqueta">Tu mapa en el mundo</span>
+                <span class="carta-desplegable-titulo">Astrocartografía</span>
+                <span class="carta-desplegable-indicador" aria-hidden="true"></span>
+              </summary>
+              <div class="carta-desplegable-contenido">
             <div class="desc">Descubre qué lugares pueden favorecer amor, trabajo, expansión, hogar, creatividad o cambios importantes según las líneas de tu carta.</div>
             <div class="card-lectura" style="margin-bottom:12px;background:var(--paper);">
               <div class="card-titulo">🗺️ ¿Cómo leerlo?</div>
@@ -2012,6 +2051,8 @@
             <div class="desc" style="text-align:center;margin-bottom:14px;" id="acg-zoom-hint"></div>
             <div id="acg-lines"></div>
             <div class="disclaimer">Calculado con tu fecha, hora y lugar de nacimiento reales.</div>
+              </div>
+            </details>
           </div>
 
           <div class="section carta-destacada" data-tab="carta" id="carta-relocacion">
@@ -7178,7 +7219,11 @@
     cambiarPestana('carta');
     requestAnimationFrame(() => {
       const el = document.getElementById(id);
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (el) {
+        const desplegable = el.querySelector('details.carta-desplegable');
+        if (desplegable) desplegable.open = true;
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     });
   }
 
