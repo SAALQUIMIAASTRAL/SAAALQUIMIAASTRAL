@@ -176,6 +176,9 @@
   /* Cuando la app corre DENTRO de la app nativa (iOS/Android vía Capacitor),
      quitamos el marco decorativo de teléfono: la pantalla real YA es un teléfono,
      no necesita otro dibujado encima. Esta clase la agrega el script de abajo. */
+  body.app-nativa .page{
+    width:100%;min-height:100dvh;padding:0;
+  }
   body.app-nativa .phone{
     width:100%;max-width:100%;background:transparent;
     border-radius:0;padding:0;box-shadow:none;
@@ -199,6 +202,15 @@
     display:flex;align-items:center;justify-content:space-between;
     padding:6px 18px 12px;flex:none;
   }
+  body.app-nativa .topbar{
+    min-height:40px;padding:3px 14px 5px;gap:8px;
+  }
+  body.app-nativa .topbar .menu{flex:0 0 24px;}
+  body.app-nativa .topbar .brand{
+    flex:1;min-width:0;justify-content:center;white-space:nowrap;font-size:15.5px;
+  }
+  body.app-nativa .topbar .right{flex:0 0 26px;justify-content:flex-end;}
+  body.app-nativa .topbar .avatar{width:24px;height:24px;}
   .topbar .menu{font-size:18px;color:var(--plum);}
   .topbar .brand{display:flex;align-items:center;gap:6px;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:17px;color:var(--plum);}
   .topbar .brand .g{color:var(--marigold);}
@@ -215,6 +227,8 @@
     padding:8px 18px;font-size:11.5px;color:var(--plum);flex:none;
   }
   .season-banner .now{font-weight:600;display:flex;align-items:center;gap:5px;}
+  body.app-nativa .season-banner{padding:6px 12px;gap:6px;font-size:11px;line-height:1.25;}
+  body.app-nativa .season-banner .now{gap:4px;}
   .season-banner .next{color:var(--ink-dim);}
 
   .band{position:relative;background:linear-gradient(160deg,var(--blush-1) 0%,var(--plum-solid) 60%,var(--blush-2) 100%);padding:calc(22px + env(safe-area-inset-top, 0px)) 18px 28px;overflow:hidden;}
