@@ -470,6 +470,7 @@
     background:var(--marigold-soft);border:1px solid rgba(181,101,47,0.3);border-radius:12px;
     padding:12px 14px;font-size:12px;line-height:1.55;color:var(--plum);margin-bottom:14px;
   }
+  .natal-highlight:empty,.aspects-table:empty,.how-to-use:empty{display:none !important;}
   .aspects-table{margin-bottom:14px;}
   .aspects-table .row{
     display:flex;align-items:center;justify-content:space-between;
@@ -1511,15 +1512,19 @@
             <div class="desc" id="luna-intro">Fase, signo, calendario mensual y cómo usar el ciclo lunar como guía.</div>
 
             <button class="btn-primary" style="margin-bottom:14px;" onclick="cargarLunaReal()">Ver la luna de hoy en el cielo</button>
-            <div id="luna-cruda" style="margin-bottom:14px;"></div>
-
-            <button class="btn-ghost-round" style="margin-bottom:14px;" onclick="verLunaVacia()">🌑 ¿Hay Luna Vacía de Curso hoy?</button>
-            <div id="luna-vacia-resultado" style="margin-bottom:14px;"></div>
 
             <div class="moon-now" id="moon-now">
               <div class="moon-sphere" id="moon-now-esfera" style="background:radial-gradient(circle at 35% 30%, #4a4560, #1b1730 70%);"></div>
-              <div><h4 id="moon-now-title">Luna Nueva</h4><p id="moon-now-sub"></p></div>
+              <div style="min-width:0;">
+                <h4 id="moon-now-title">Luna de hoy</h4>
+                <p id="moon-now-sub">Toca el botón para ver fase, signo y cómo aprovecharla.</p>
+                <div id="moon-now-meaning" style="font-size:12px;line-height:1.45;color:#f2e6ec;margin-top:7px;"></div>
+                <div id="moon-voc-mini" style="margin-top:8px;"></div>
+              </div>
             </div>
+
+            <div id="luna-cruda" style="margin-bottom:14px;"></div>
+            <div id="luna-vacia-resultado" style="display:none;"></div>
 
             <div class="natal-highlight" id="natal-highlight"></div>
 
@@ -6322,17 +6327,30 @@
       };
       const faseLunaHoy = data.luna?.data?.lunar_metrics?.moon_phase || '';
       const consejoDia = CONSEJOS_FASE[faseLunaHoy] || '';
+
+      // Aprovechar la tarjeta lunar principal: fase + signo + utilidad práctica.
+      if (m) {
+        const tituloLuna = document.getElementById('moon-now-title');
+        const subLuna = document.getElementById('moon-now-sub');
+        const significadoLuna = document.getElementById('moon-now-meaning');
+        if (tituloLuna) tituloLuna.textContent = `${faseLunarEs(m.moon_phase)} en ${signoEs(m.moon_sign)}`;
+        if (subLuna) subLuna.textContent = `Día lunar ${m.moon_day} · ${Math.round(m.moon_illumination)}% iluminada`;
+        if (significadoLuna) significadoLuna.textContent = consejoDia.replace(/^.*?—\s*/, '');
+      }
       const consejoHtml = consejoDia ? `<div style="background:linear-gradient(135deg,var(--blush-2),var(--blush-1));border-radius:12px;padding:12px 14px;color:#fff;margin-bottom:10px;font-size:12.5px;line-height:1.6;display:flex;align-items:center;gap:8px;">${svgLuna(faseLunaHoy, 22)}<span>${consejoDia}</span></div>` : '';
       contenedor.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('luna-cruda').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>` + consejoHtml + resumenHtml + renderizarInforme(data.luna, null);
+      await verLunaVacia(true);
     } catch (err) {
       contenedor.innerHTML = `<div class="disclaimer" style="color:#a5442f;">${err.message}</div>`;
     }
   }
 
-  async function verLunaVacia() {
-    const contenedor = document.getElementById('luna-vacia-resultado');
-    contenedor.innerHTML = samLoading('Revisando la Luna Vacía de Curso...');
-    const _cerrar = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('luna-vacia-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
+  async function verLunaVacia(integrada = false) {
+    const contenedor = integrada ? document.getElementById('moon-voc-mini') : document.getElementById('luna-vacia-resultado');
+    if (!contenedor) return;
+    contenedor.style.display = '';
+    contenedor.innerHTML = integrada ? '<span style="font-size:11.5px;color:#c9bfe0;">Revisando Luna Vacía...</span>' : samLoading('Revisando la Luna Vacía de Curso...');
+    const _cerrar = integrada ? '' : `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('luna-vacia-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
     try {
       const r = await fetchAuth('/luna-vacia', { method: 'POST', headers: {} });
       const data = await r.json();
@@ -6351,7 +6369,9 @@
         if (!iso) return '';
         try { return new Date(iso).toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit' }); } catch (e) { return iso; }
       };
-      if (activo === true) {
+      if (activo === true && integrada) {
+        contenedor.innerHTML = `<div style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:100px;padding:6px 9px;font-size:11.5px;color:#fff;">🌑 <b>Luna Vacía:</b> ${inicio && fin ? `${fmtHora(inicio)}–${fmtHora(fin)}` : 'sí, hoy'}</div>`;
+      } else if (activo === true) {
         contenedor.innerHTML = _cerrar + `
           <div style="background:linear-gradient(135deg,#6a4c93,#2D1B4E);border-radius:14px;padding:16px 18px;color:#fff;margin-bottom:10px;">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
@@ -6370,6 +6390,8 @@
             <b>⚠️ Evita en esa ventana:</b> firmar contratos, mandar ese mensaje importante, comprar algo grande, dar el "sí" definitivo.
           </div>
         `;
+      } else if (activo === false && integrada) {
+        contenedor.innerHTML = '<div style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:100px;padding:6px 9px;font-size:11.5px;color:#fff;">✓ <b>Luna Vacía:</b> no en este momento</div>';
       } else if (activo === false) {
         const proximaInfo = fin ? `<div style="font-size:11.5px;color:var(--ink-dim);margin-top:6px;">Próximo cambio de signo (${signoActual ? signoEs(signoActual) : ''} → ${signoSiguiente ? signoEs(signoSiguiente) : ''}): ${new Date(fin).toLocaleString('es-MX', { day:'numeric', month:'long', hour:'numeric', minute:'2-digit' })}</div>` : '';
         contenedor.innerHTML = _cerrar + `<div class="disclaimer">Hoy no hay Luna Vacía de Curso — es un día normal para iniciar cosas nuevas.${proximaInfo}</div>`;
