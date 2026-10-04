@@ -857,6 +857,31 @@
     color:var(--marigold-dark);
     margin-bottom:6px;
   }
+  .acg-map-shell{
+    background:linear-gradient(180deg,#fff,var(--paper));
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:8px;
+    box-shadow:0 8px 24px rgba(45,27,78,.06);
+    overflow:hidden;
+  }
+  .acg-map-shell svg{display:block;width:100% !important;height:auto !important;min-height:210px;}
+  .acg-map-legend{
+    display:flex;justify-content:space-between;gap:8px;align-items:center;
+    margin:8px 2px 14px;font-size:11.5px;color:var(--ink-dim);
+  }
+  .acg-city-card{
+    background:#fff;border:1px solid var(--line);border-radius:16px;
+    padding:13px 14px;margin-bottom:9px;
+  }
+  .acg-city-card .city{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:var(--plum);}
+  .acg-city-card .line{font-size:11px;color:var(--marigold-dark);font-weight:700;margin:2px 0 8px;}
+  .acg-city-card .use{font-size:13px;line-height:1.5;color:var(--plum);}
+  .acg-city-card .watch{font-size:12px;line-height:1.45;color:var(--ink-dim);margin-top:5px;}
+  .star-use{
+    background:var(--marigold-soft);border-radius:11px;padding:9px 10px;margin-top:8px;
+    font-size:12.5px;line-height:1.5;color:var(--plum);
+  }
   .zoom-close-btn{position:fixed;top:16px;right:16px;background:#fff;border:none;border-radius:50%;width:36px;height:36px;font-size:18px;z-index:61;cursor:pointer;}
   .lectura-modal-bg{display:none;position:fixed;inset:0;background:var(--page-bg);z-index:62;padding:0;overflow:hidden;flex-direction:column;}
   .lectura-modal-bg.open{display:flex;}
@@ -1606,8 +1631,12 @@
           <div class="section carta-destacada" data-tab="carta" id="carta-estrellas">
             <div class="carta-etiqueta">Puntos especiales</div>
             <h2>Estrellas fijas</h2>
-            <div class="desc">Descubre si alguna estrella fija importante está en contacto directo con puntos de tu carta natal.</div>
-            <button class="btn-primary" onclick="verEstrellasFijas()">Ver mis estrellas fijas</button>
+            <div class="desc">Mira si alguna estrella fija toca un planeta importante de tu carta y qué tema puede intensificar en tu personalidad, talentos o desafíos.</div>
+            <div class="card-lectura" style="margin-bottom:12px;background:var(--paper);">
+              <div class="card-titulo">✦ ¿Para qué me sirve?</div>
+              <div class="card-cuerpo" style="color:var(--ink-dim);">Para reconocer rasgos o temas muy marcados de tu carta que a veces no se explican solo con signo, casa o aspecto.</div>
+            </div>
+            <button class="btn-primary" onclick="verEstrellasFijas()">Ver qué estrellas tocan mi carta</button>
             <div id="estrellas-resultado" style="margin-top:14px;"></div>
           </div>
 
@@ -1764,7 +1793,11 @@
           <div class="section carta-destacada" data-tab="carta" id="carta-astrocartografia">
             <div class="carta-etiqueta">Tu mapa en el mundo</div>
             <h2>Astrocartografía</h2>
-            <div class="desc">Mira en qué lugares del mundo distintas partes de tu carta natal se sienten con más fuerza.</div>
+            <div class="desc">Descubre qué lugares pueden favorecer amor, trabajo, expansión, hogar, creatividad o cambios importantes según las líneas de tu carta.</div>
+            <div class="card-lectura" style="margin-bottom:12px;background:var(--paper);">
+              <div class="card-titulo">🗺️ ¿Cómo leerlo?</div>
+              <div class="card-cuerpo" style="color:var(--ink-dim);">No todos los lugares sirven para lo mismo. La app te muestra <b>qué puede potenciar cada ciudad</b> y también dónde conviene ir con más cuidado.</div>
+            </div>
 
             <div class="calc-form" style="margin-bottom:16px;">
               <button class="btn-primary" id="acg-boton" onclick="calcularACG()">Ver mis líneas reales</button>
@@ -1967,12 +2000,12 @@
 
       if (contenedorMapa) {
         contenedorMapa.innerHTML = data.svg
-          ? `<div style="background:#fff;border-radius:14px;padding:8px;border:1px solid var(--line);overflow:hidden;">${data.svg}</div>`
+          ? `<div class="acg-map-shell">${data.svg}</div>`
           : '';
         const svgEl = contenedorMapa.querySelector('svg');
         if (svgEl) { svgEl.style.width = '100%'; svgEl.style.height = 'auto'; svgEl.removeAttribute('width'); svgEl.removeAttribute('height'); }
         const hint = document.getElementById('acg-zoom-hint');
-        if (hint) hint.textContent = data.svg ? '👆 Toca el mapa para verlo en grande' : '';
+        if (hint) hint.innerHTML = data.svg ? '<div class="acg-map-legend"><span>🗺️ Tus líneas alrededor del mundo</span><span>↗ Toca para ampliar</span></div>' : '';
       }
 
       const iconos = { Sun:'☀️', Moon:'🌙', Venus:'💗', Mars:'🔥', Jupiter:'🚀', Saturn:'🪐', Mercury:'☿️' };
@@ -2023,29 +2056,30 @@
         Neptune: { energia: 'intuición y sensibilidad espiritual', consejo: 'ideal para arte, espiritualidad, pero cuida idealizar de más' },
         Pluto: { energia: 'transformación profunda y poder personal', consejo: 'zona de cambios intensos — nada se queda igual aquí' },
       };
-      function ayudaEspecificaCiudad(closestLine) {
-        if (!closestLine) return '';
-        const planetasEncontrados = Object.keys(SIGNIFICADO_PLANETA_ACG).filter(p => closestLine.includes(p));
-        if (!planetasEncontrados.length) return '';
-        if (planetasEncontrados.length === 1) {
-          const p = SIGNIFICADO_PLANETA_ACG[planetasEncontrados[0]];
-          return `Aquí se activa tu energía de ${p.energia} — ${p.consejo}.`;
-        }
-        const p1 = SIGNIFICADO_PLANETA_ACG[planetasEncontrados[0]];
-        const p2 = SIGNIFICADO_PLANETA_ACG[planetasEncontrados[1]];
-        const consejo2Cap = p2.consejo.charAt(0).toUpperCase() + p2.consejo.slice(1);
-        // Varias formas de redactar la misma combinación — se elige una según los planetas
-        // exactos (siempre la misma para esa combinación, pero distinta entre combinaciones),
-        // para que no todas las frases empiecen igual solo por compartir un planeta.
-        const plantillas = [
-          `Aquí se mezclan dos energías: ${p1.energia}, y ${p2.energia}. Por un lado, ${p1.consejo}; por otro, ${p2.consejo}.`,
-          `Esta zona activa tu ${p1.energia} junto con tu ${p2.energia}. ${consejo2Cap}, sin dejar de lado que ${p1.consejo}.`,
-          `Una combinación potente: ${p1.energia} de la mano de ${p2.energia}. ${p1.consejo.charAt(0).toUpperCase() + p1.consejo.slice(1)}, y también ${p2.consejo}.`,
-          `Sientes aquí tanto ${p1.energia} como ${p2.energia} — ${p2.consejo}, mientras que ${p1.consejo}.`,
-        ];
-        // Índice determinístico basado en los nombres de los planetas (misma combinación → misma frase siempre)
-        const semilla = (planetasEncontrados[0] + planetasEncontrados[1]).split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-        return plantillas[semilla % plantillas.length];
+      function resumenCiudad(closestLine) {
+        if (!closestLine) return { area:'Tu experiencia en ese lugar', ayuda:'Puede activar una parte importante de tu carta.', cuida:'' };
+        const planeta = Object.keys(SIGNIFICADO_PLANETA_ACG).find(p => closestLine.includes(p));
+        const linea = ['AC','MC','DS','IC'].find(l => new RegExp('(^|[^A-Z])' + l + '([^A-Z]|$)').test(closestLine)) || null;
+        const exacto = planeta && linea ? AYUDA_CIUDAD_PLANETA_LINEA[`${planeta}-${linea}`] : null;
+        const areasLinea = {
+          AC:'identidad, presencia y nuevos comienzos',
+          MC:'carrera, reconocimiento y dirección profesional',
+          DS:'pareja, socios y relaciones importantes',
+          IC:'hogar, raíces, familia y vida privada'
+        };
+        const cuidados = {
+          Mars:'Cuida la prisa, el conflicto o exigirte de más.',
+          Saturn:'Puede sentirse más exigente o lento; funciona mejor con paciencia y constancia.',
+          Uranus:'Puede traer cambios repentinos o poca estabilidad.',
+          Neptune:'Cuida idealizar personas, lugares o promesas.',
+          Pluto:'Puede remover temas intensos de control, poder o cambios profundos.'
+        };
+        const p = planeta ? SIGNIFICADO_PLANETA_ACG[planeta] : null;
+        return {
+          area: linea ? areasLinea[linea] : (p?.energia || 'una parte importante de tu carta'),
+          ayuda: exacto || (p ? `Puede potenciar ${p.energia}; ${p.consejo}.` : 'Puede activar una parte importante de tu carta.'),
+          cuida: planeta ? (cuidados[planeta] || '') : ''
+        };
       }
 
       let htmlLineas = '';
@@ -2086,15 +2120,15 @@
       if (gruposFinales.length) {
         htmlLineas += `<div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin-bottom:8px;">📍 Ciudades donde tu energía se activa más</div>`;
         htmlLineas += gruposFinales.map(g => {
-          const ayuda = ayudaEspecificaCiudad(g.closest_line);
+          const resumen = resumenCiudad(g.closest_line);
           return `
-          <div class="card-lectura">
-            <div class="card-titulo">${g.ciudades.join(' · ')}</div>
-            <div class="card-etiqueta">Cerca de tu línea de ${traducirNombresPlanetasEnFrase(g.closest_line) || 'energía activa'}</div>
-            ${ayuda ? `<div class="card-cuerpo" style="color:var(--plum);margin-top:4px;">${ayuda}</div>` : ''}
+          <div class="acg-city-card">
+            <div class="city">📍 ${g.ciudades.join(' · ')}</div>
+            <div class="line">${traducirNombresPlanetasEnFrase(g.closest_line) || 'Línea activa'} · ${resumen.area}</div>
+            <div class="use"><b>Te puede ayudar con:</b> ${resumen.ayuda}</div>
+            ${resumen.cuida ? `<div class="watch"><b>Ten en cuenta:</b> ${resumen.cuida}</div>` : ''}
           </div>
         `}).join('');
-        htmlLineas += '<div style="font-family:\'Cormorant Garamond\',serif;font-weight:700;font-size:14.5px;color:var(--plum);margin:14px 0 8px;">Qué significa cada línea</div>';
       }
 
       const _cerrar_acg = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('acg-mapa').innerHTML='';document.getElementById('acg-lines').innerHTML='';document.getElementById('acg-zoom-hint').textContent='';" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
@@ -5979,12 +6013,31 @@
       const ASPECTO_ES_ESTRELLA = { conjunction: 'en conjunción con', opposition: 'en oposición con' };
       let htmlEstrellas = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('estrellas-resultado').innerHTML=''" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:5px 13px;font-size:11.5px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
       if (todas.length) {
-        htmlEstrellas += todas.map(e => `
+        const PARA_QUE_ESTRELLA = {
+          Sun:'identidad, seguridad personal y forma de destacar',
+          Moon:'emociones, necesidades afectivas, hogar y sensación de pertenencia',
+          Mercury:'mente, comunicación, estudios y forma de tomar decisiones',
+          Venus:'amor, vínculos, autoestima, belleza y valores',
+          Mars:'deseo, iniciativa, valentía y manera de actuar',
+          Jupiter:'expansión, oportunidades, confianza y crecimiento',
+          Saturn:'límites, responsabilidades, madurez y aprendizajes a largo plazo',
+          Uranus:'independencia, cambios, originalidad y necesidad de libertad',
+          Neptune:'intuición, sensibilidad, imaginación y tendencia a idealizar',
+          Pluto:'intensidad, poder personal, crisis y procesos profundos',
+          Ascendant:'imagen personal, identidad y la impresión que causas',
+          Medium_Coeli:'vocación, carrera, reputación y dirección profesional'
+        };
+        htmlEstrellas += `<div class="dias-leyenda"><b>Cómo leerlas:</b> la estrella no reemplaza a tu planeta natal; puede remarcar o intensificar algunos de sus temas.</div>`;
+        htmlEstrellas += todas.map(e => {
+          const area = PARA_QUE_ESTRELLA[e.planet] || 'un tema importante de tu carta';
+          return `
           <div class="card-lectura" style="margin-bottom:10px;">
-            <div class="card-titulo">${nombrePlanetaEs(e.planet)} ${ASPECTO_ES_ESTRELLA[e.aspect] || e.aspect} ${e.star}${e.star_data?.traditional_name ? ` <span style="font-weight:400;font-size:11px;color:var(--ink-dim);">(${e.star_data.traditional_name})</span>` : ''}</div>
-            <div class="card-cuerpo" style="color:var(--plum);margin-top:4px;">${e.interpretation || ''}</div>
-          </div>
-        `).join('');
+            <div class="card-titulo">✦ ${e.star}</div>
+            <div class="card-etiqueta">${nombrePlanetaEs(e.planet)} ${ASPECTO_ES_ESTRELLA[e.aspect] || e.aspect}</div>
+            <div class="star-use"><b>¿Qué te ayuda a entender?</b><br>${area}.</div>
+            ${e.interpretation ? `<div class="card-cuerpo" style="color:var(--plum);margin-top:9px;">${limpiarTextoAPI(e.interpretation)}</div>` : ''}
+          </div>`;
+        }).join('');
       } else {
         htmlEstrellas += '<div class="disclaimer">No se encontraron estrellas fijas activas en tu carta esta vez.</div>';
       }
