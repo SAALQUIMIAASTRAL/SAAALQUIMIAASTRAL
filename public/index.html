@@ -1993,7 +1993,17 @@
         <input type="range" id="slider-tamano-fuente" min="90" max="120" value="100" step="5"
           oninput="cambiarTamanoFuente(this.value)" onchange="cambiarTamanoFuente(this.value)" ontouchend="cambiarTamanoFuente(this.value)"
           style="width:100%;height:8px;border-radius:4px;background:linear-gradient(to right,var(--lilac),var(--marigold));outline:none;-webkit-appearance:none;appearance:none;touch-action:pan-x;">
-        <style>#slider-tamano-fuente::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:var(--paper);border:3px solid var(--lilac);cursor:pointer;}</style>
+        <style>#slider-tamano-fuente::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:var(--paper);border:3px solid var(--lilac);cursor:pointer;}/* Barra inferior: alto compacto y área segura del dispositivo. */
+  .bottomnav{
+    padding-top:0 !important;
+    padding-bottom:env(safe-area-inset-bottom,0px) !important;
+  }
+  .bottomnav .it{
+    min-height:48px !important;
+    padding-top:0 !important;
+    padding-bottom:0 !important;
+  }
+</style>
         <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-dim);margin-top:6px;"><span>Pequeño</span><span>Normal</span><span>Grande</span></div>
       </div>
     </div>
