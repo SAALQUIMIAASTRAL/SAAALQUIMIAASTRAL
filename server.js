@@ -143,6 +143,28 @@ async function cacheCieloPublico(clave, ttl, calcular, forzar = false) {
   });
 }
 
+// ============================================================
+// Fase lunar astrológica — la Luna Nueva y la Llena se mantienen ~3 días
+// ============================================================
+// La API marca "Waxing Crescent" (Creciente) apenas pasa la conjunción, con 1%
+// de luz. Astrológicamente la Luna Nueva se vive durante los primeros ~3 días
+// (hasta ~8% de luz creciente) y la Llena los ~3 días alrededor del plenilunio.
+// Esta función ajusta SOLO el nombre que se muestra, usando el % de iluminación
+// y la dirección (creciente/menguante) que ya trae la fase original de la API.
+function faseLunarCoherente(fase, iluminacionPct) {
+  if (iluminacionPct === undefined || iluminacionPct === null) return fase;
+  const texto = String(fase || '');
+  const creciendo = texto.indexOf('Waxing') !== -1 || texto.indexOf('New') !== -1;
+  const menguando = texto.indexOf('Waning') !== -1;
+  // Cerca del plenilunio: Luna Llena durante la franja luminosa.
+  if (iluminacionPct >= 97) return 'Full Moon';
+  // Primeros ~3 días del ciclo (creciente con poca luz): sigue siendo Luna Nueva.
+  if (iluminacionPct <= 8 && creciendo) return 'New Moon';
+  // Final del ciclo (menguante con muy poca luz): también se lee como Luna Nueva inminente.
+  if (iluminacionPct <= 3 && menguando) return 'New Moon';
+  return fase;
+}
+
 const TTL = {
   PERFIL: 5 * 60 * 1000,                 // 5 min
   TRANSITOS_HOY: 30 * 60 * 1000,         // 30 min (compartida entre usuarios)
@@ -1152,7 +1174,7 @@ app.post('/home-summary', requireLogin, async (req, res) => {
     const resumen = {
       luna: luna ? {
         signo: luna.moon_sign,
-        fase: luna.moon_phase,
+        fase: faseLunarCoherente(luna.moon_phase, luna.moon_illumination),
         iluminacion: Math.round(luna.moon_illumination),
         dia_lunar: luna.moon_day,
       } : null,
@@ -1912,7 +1934,7 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
           return {
             dia,
             signo: m?.moon_sign || null,
-            fase: m?.moon_phase || null,
+            fase: faseLunarCoherente(m?.moon_phase || null, typeof m?.moon_illumination === 'number' ? m.moon_illumination : null),
             iluminacion: typeof m?.moon_illumination === 'number' ? Math.round(m.moon_illumination) : null,
           };
         } catch (e) {
