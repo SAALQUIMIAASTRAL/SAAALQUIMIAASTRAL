@@ -3252,9 +3252,9 @@
     const esEquinoccioOSolsticio = ['Aries','Cáncer','Libra','Capricornio'].includes(next.sign);
     const palabra = esEquinoccioOSolsticio ? (next.sign === 'Aries' || next.sign === 'Libra' ? 'equinoccio' : 'solsticio') : 'entrada';
     let textoFaltante = '';
-    if (hours < 1) textoFaltante = `¡Es hoy! Faltan ${Math.round(hours * 60)} minutos para el ${palabra}/entrada a ${next.sign} ${next.emoji}`;
-    else if (hours < 24) textoFaltante = `¡Es hoy! Faltan ${Math.round(hours)} horas para el ${palabra}/entrada a ${next.sign} ${next.emoji}`;
-    else if (days <= 10) textoFaltante = `Faltan ${days} días para el ${palabra}/entrada a ${next.sign} ${next.emoji}`;
+    if (hours < 1) textoFaltante = `¡Es hoy! Faltan ${Math.round(hours * 60)} minutos para la ${palabra} a ${next.sign} ${next.emoji}`;
+    else if (hours < 24) textoFaltante = `¡Es hoy! Faltan ${Math.round(hours)} horas para la ${palabra} a ${next.sign} ${next.emoji}`;
+    else if (days <= 10) textoFaltante = `Faltan ${days} días para la ${palabra} a ${next.sign} ${next.emoji}`;
 
     const tituloActual = `${current.emoji} ¡Feliz temporada ${current.sign}! Feliz retorno solar a todos los ${current.sign} ✨`;
 
