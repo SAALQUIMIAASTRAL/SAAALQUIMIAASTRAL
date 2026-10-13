@@ -6736,15 +6736,25 @@
     };
 
     let html = '';
-    fechasOrdenadas.forEach(fecha => {
+    fechasOrdenadas.forEach((fecha, idx) => {
       // De todos los aspectos de ese día, quedarnos solo con los 3 más relevantes (orbe más pequeño = más exacto)
       const delDia = porDia.get(fecha)
         .slice()
         .sort((a, b) => Math.abs(a.orb ?? 99) - Math.abs(b.orb ?? 99))
         .slice(0, 3);
 
-      html += `<div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:17px;line-height:1.25;color:var(--marigold-dark);margin:16px 0 8px;">${formatearFecha(fecha)}</div>`;
-      html += delDia.map(ev => {
+      const idAcordeon = `transito-dia-${idx}`;
+      const estaExpandido = idx === 0 ? 'block' : 'none'; // Solo el primer día expandido
+      const estrella = idx === 0 ? '✦' : '✧';
+
+      html += `
+        <div style="border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:10px;">
+          <div style="padding:12px 14px;background:var(--page-bg);cursor:pointer;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);" onclick="document.getElementById('${idAcordeon}').style.display = document.getElementById('${idAcordeon}').style.display === 'none' ? 'block' : 'none'">
+            <strong style="color:var(--plum);font-size:13px;">${formatearFecha(fecha)}</strong>
+            <span style="color:var(--marigold);font-weight:bold;font-size:16px;">${estrella}</span>
+          </div>
+          <div id="${idAcordeon}" style="display:${estaExpandido};padding:12px 14px;background:var(--paper);">
+            ${delDia.map(ev => {
         const p1 = nombrePlanetaEs(ev.transiting_planet);
         const p2 = nombrePlanetaEs(ev.stationed_planet);
         const asp = aspectoEs(ev.aspect_type);
@@ -6756,7 +6766,10 @@
             <div class="card-cuerpo" style="color:var(--plum);margin-top:6px;font-size:15.5px !important;line-height:1.65;">${interp}</div>
           </div>
         `;
-      }).join('');
+      }).join('')}
+          </div>
+        </div>
+      `;
     });
     return html;
   }
