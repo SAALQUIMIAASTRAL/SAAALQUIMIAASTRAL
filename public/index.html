@@ -3250,7 +3250,7 @@
     const current = getCurrentSeason(now);
     const { next, days, hours } = getNextSeasonChange(now);
     const esEquinoccioOSolsticio = ['Aries','Cáncer','Libra','Capricornio'].includes(next.sign);
-    const palabra = esEquinoccioOSolsticio ? (next.sign === 'Aries' || next.sign === 'Libra' ? 'equinoccio' : 'solsticio') : 'entrada';
+    const palabra = esEquinoccioOSolsticio ? (next.sign === 'Aries' || next.sign === 'Libra' ? 'equinoccio' : 'solsticio') : 'entrada del Sol';
     let textoFaltante = '';
     if (hours < 1) textoFaltante = `¡Es hoy! Faltan ${Math.round(hours * 60)} minutos para la ${palabra} a ${next.sign} ${next.emoji}`;
     else if (hours < 24) textoFaltante = `¡Es hoy! Faltan ${Math.round(hours)} horas para la ${palabra} a ${next.sign} ${next.emoji}`;
