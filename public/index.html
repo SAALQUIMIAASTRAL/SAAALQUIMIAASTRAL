@@ -6086,13 +6086,26 @@
 
       // Precarga la esfera lunar con los datos reales
       if (data.luna) {
+        // Calcular fase correcta basada en iluminación
+        const faseCorrecta = calcularFaseLunar(data.luna.iluminacion);
+
         const moonNowTitle = document.getElementById('moon-now-title');
         const moonNowSub = document.getElementById('moon-now-sub');
-        if (moonNowTitle) moonNowTitle.textContent = `${faseLunarEs(data.luna.fase)} en ${signoEs(data.luna.signo)}`;
+        if (moonNowTitle) moonNowTitle.textContent = `${faseLunarEs(faseCorrecta)} en ${signoEs(data.luna.signo)}`;
         if (moonNowSub) moonNowSub.textContent = `Día lunar ${data.luna.dia_lunar} · ${data.luna.iluminacion}% iluminada`;
+
+        // Llenar Favorece y Cuida
+        const guia = obtenerGuiaLuna(faseCorrecta, data.luna.signo);
+        const favorece = document.getElementById('moon-guide-favorece');
+        const cuida = document.getElementById('moon-guide-cuida');
+        const moonGuide = document.getElementById('moon-guide');
+        if (favorece) favorece.textContent = guia.favorece;
+        if (cuida) cuida.textContent = guia.cuida;
+        if (moonGuide) moonGuide.style.display = 'block';
+
         const esfera = document.getElementById('moon-now-esfera');
         if (esfera && data.luna.iluminacion !== undefined) {
-          const creciendo = data.luna.fase?.includes('Waxing');
+          const creciendo = faseCorrecta?.includes('Waxing');
           const illum = Math.max(4, Math.min(96, data.luna.iluminacion));
           esfera.style.background = illum >= 96
             ? 'radial-gradient(circle at 35% 30%, #fdfaf3, #c9c4b5 70%)'
@@ -7412,6 +7425,67 @@
     'Last Quarter':'Cuarto Menguante', 'Waning Crescent':'Luna Menguante',
   };
   function faseLunarEs(f) { return FASES_LUNARES_ES[f] || f; }
+
+  // Calcular fase lunar correcta basada en iluminación (%)
+  function calcularFaseLunar(iluminacion) {
+    if (iluminacion <= 6) return 'New Moon';
+    if (iluminacion <= 25) return 'Waxing Crescent';
+    if (iluminacion <= 31) return 'First Quarter';
+    if (iluminacion <= 69) return 'Waxing Gibbous';
+    if (iluminacion <= 75) return 'Full Moon';
+    if (iluminacion <= 94) return 'Waning Gibbous';
+    if (iluminacion <= 100) return 'Last Quarter';
+    return 'Waning Crescent';
+  }
+
+  // Info de cada fase lunar: qué favorece y qué cuidar (por signo)
+  const FASES_GUIA = {
+    'New Moon': {
+      'Escorpio': {
+        favorece: 'Transformación profunda · Investigar verdades ocultas · Regeneración · Poder personal · Intimidad emocional',
+        cuida: 'No obsesionarse · Evitar manipulación · No guardar resentimientos · No aislarse emocionalmente'
+      },
+      'default': {
+        favorece: 'Nuevos comienzos · Sembrar intenciones · Limpiar lo viejo · Iniciar proyectos · Renovación',
+        cuida: 'No fuerces resultados · Sé paciente · Evita decisiones precipitadas · Descansa lo necesario'
+      }
+    },
+    'Waxing Crescent': {
+      'Escorpio': {
+        favorece: 'Desarrollar tu poder · Investigación · Conexiones profundas · Magia práctica · Movimiento estratégico',
+        cuida: 'No muestres todo tu juego · Evita conflictos directos · Protege tu energía · No confíes fácilmente'
+      },
+      'default': {
+        favorece: 'Construir impulso · Tomar primeros pasos · Aprender y practicar · Sembrar semillas · Confianza',
+        cuida: 'No desistas rápido · Mantén consistencia · Evita distracciones · Continúa enfocado'
+      }
+    },
+    'Full Moon': {
+      'Escorpio': {
+        favorece: 'Culminación de ciclos · Revelar verdades · Poder sexual y mágico · Liberación · Transformación final',
+        cuida: 'No tengas comportamientos obsesivos · Evita confrontaciones · Maneja emociones intensas · Canaliza la rabia'
+      },
+      'default': {
+        favorece: 'Ver resultados · Celebrar logros · Revelar lo oculto · Culminación · Manifestación máxima',
+        cuida: 'No exageres celebración · Evita decisiones emotivas · Cuida tu energía · Duerme bien'
+      }
+    },
+    'Waning Crescent': {
+      'Escorpio': {
+        favorece: 'Soltar lo que no sirve · Fin de ciclos tóxicos · Reflexión profunda · Renacimiento · Introspección',
+        cuida: 'No hagas venganza · Evita drama · No guardes rencores · Cierra con honestidad'
+      },
+      'default': {
+        favorece: 'Soltar lo viejo · Descansar · Reflexión · Limpieza energética · Cierre de ciclos',
+        cuida: 'No inicies lo nuevo aún · Evita gastos grandes · Prioriza descanso · Introspecciona'
+      }
+    }
+  };
+
+  function obtenerGuiaLuna(faseEng, signo) {
+    const guia = FASES_GUIA[faseEng] || {};
+    return guia[signo] || guia['default'] || { favorece: '—', cuida: '—' };
+  }
 
   // La fase reportada por la API es la fuente de verdad.
   // No inferimos Luna Llena/Nueva solo por porcentaje de iluminación:
