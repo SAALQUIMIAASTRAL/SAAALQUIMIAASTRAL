@@ -1660,6 +1660,147 @@
   @media(max-width:360px){.topbar{gap:4px;}.topbar .brand{font-size:17px;}.section{margin-inline:8px;padding:14px 12px;}}
   @media(max-height:500px) and (orientation:landscape){.topbar{min-height:48px;padding-top:env(safe-area-inset-top,0px);padding-bottom:0;}.bottomnav .it{flex-direction:row;justify-content:center;gap:6px;min-height:44px;}.bottomnav{padding-top:4px;padding-bottom:calc(4px + env(safe-area-inset-bottom,0px));}}
 
+  /* --- MODAL ONBOARDING --- */
+  .onboarding-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 16px;
+  }
+  .onboarding-modal.hidden {
+    display: none;
+  }
+  .onboarding-content {
+    background: var(--paper);
+    border-radius: 20px;
+    padding: 28px 22px;
+    max-width: 340px;
+    width: 100%;
+    box-shadow: 0 10px 40px rgba(45, 27, 78, 0.15);
+    animation: slideUp 0.35s ease-out;
+    position: relative;
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .onboarding-step {
+    display: none;
+    text-align: center;
+  }
+  .onboarding-step.active {
+    display: block;
+    animation: fadeIn 0.3s ease-out;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .onboarding-icon {
+    font-size: 48px;
+    margin-bottom: 14px;
+  }
+  .onboarding-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--plum);
+    margin: 0 0 12px;
+    line-height: 1.3;
+  }
+  .onboarding-text {
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--ink-dim);
+    margin: 0 0 20px;
+  }
+  .onboarding-signature {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-style: italic;
+    color: var(--marigold-dark);
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+  }
+  .onboarding-highlight {
+    color: var(--marigold-dark);
+    font-weight: 600;
+  }
+  .onboarding-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin: 16px 0;
+  }
+  .onboarding-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--line);
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  .onboarding-dot.active {
+    background: var(--marigold);
+    width: 20px;
+    border-radius: 4px;
+  }
+  .onboarding-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  .onboarding-btn {
+    flex: 1;
+    padding: 11px 14px;
+    border: none;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Work Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .onboarding-btn-primary {
+    background: var(--marigold);
+    color: white;
+  }
+  .onboarding-btn-primary:active {
+    opacity: 0.9;
+  }
+  .onboarding-btn-secondary {
+    background: var(--marigold-soft);
+    color: var(--marigold-dark);
+  }
+  .onboarding-btn-secondary:active {
+    opacity: 0.8;
+  }
+  .onboarding-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    color: var(--plum);
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+  }
+  .onboarding-close:active {
+    opacity: 1;
+  }
+
 </style>
 </head>
 <body>
@@ -1709,6 +1850,65 @@
   <div>
     <div class="phone">
       <div class="screen">
+        <!-- MODAL ONBOARDING -->
+        <div id="onboarding-modal" class="onboarding-modal hidden">
+          <div class="onboarding-content">
+            <button class="onboarding-close" onclick="cerrarOnboarding()">✕</button>
+
+            <!-- Paso 1: Qué es la astrología -->
+            <div class="onboarding-step active" data-step="0">
+              <div class="onboarding-icon">🌟</div>
+              <h2 class="onboarding-title">¿Qué es la Astrología?</h2>
+              <p class="onboarding-text">Es una herramienta milenaria para entender cómo los astros (el sol, la luna, los planetas) influyen en tu personalidad, emociones y momentos de vida. Una brújula para conocerte más.</p>
+              <p style="font-size:13px;font-style:italic;color:var(--marigold-dark);margin-top:12px;line-height:1.6;"><span class="onboarding-highlight">«Los millonarios no usan astrología,<br>los billonarios sí.»</span><br>— J.P. Morgan</p>
+            </div>
+
+            <!-- Paso 2: Numerología -->
+            <div class="onboarding-step" data-step="1">
+              <div class="onboarding-icon">🔢</div>
+              <h2 class="onboarding-title">Numerología</h2>
+              <p class="onboarding-text">Los números también hablan. Tu fecha de nacimiento tiene un mensaje. Aquí descubres los números que rigen tu destino y tu propósito de vida.</p>
+            </div>
+
+            <!-- Paso 3: Tu Carta Astral -->
+            <div class="onboarding-step" data-step="2">
+              <div class="onboarding-icon">🌍</div>
+              <h2 class="onboarding-title">Tu Carta Astral</h2>
+              <p class="onboarding-text">Tu mapa cósmico personal. Con tu fecha, hora y lugar de nacimiento creamos tu carta: quién eres realmente según el cielo del día que naciste.</p>
+            </div>
+
+            <!-- Paso 4: Hoy -->
+            <div class="onboarding-step" data-step="3">
+              <div class="onboarding-icon">☀️</div>
+              <h2 class="onboarding-title">Tu Energía de Hoy</h2>
+              <p class="onboarding-text">Aquí ves <span class="onboarding-highlight">exactamente cómo está el cielo hoy</span> y cómo te afecta. No es horóscopo genérico: los astros cruzados con TU carta astral.</p>
+            </div>
+
+            <!-- Paso 5: Ciclos y Sinastria -->
+            <div class="onboarding-step" data-step="4">
+              <div class="onboarding-icon">💝</div>
+              <h2 class="onboarding-title">Ciclos & Sinastria</h2>
+              <p class="onboarding-text"><span class="onboarding-highlight">La luna, los mejores días</span> para ti, cuándo viajar, cuándo empezar algo... y cómo encajas astrológicamente con la persona que amas.</p>
+              <div class="onboarding-signature">— Sam Alquimia Astral</div>
+            </div>
+
+            <!-- Puntos de navegación -->
+            <div class="onboarding-dots">
+              <span class="onboarding-dot active" onclick="irAlPaso(0)"></span>
+              <span class="onboarding-dot" onclick="irAlPaso(1)"></span>
+              <span class="onboarding-dot" onclick="irAlPaso(2)"></span>
+              <span class="onboarding-dot" onclick="irAlPaso(3)"></span>
+              <span class="onboarding-dot" onclick="irAlPaso(4)"></span>
+            </div>
+
+            <!-- Botones -->
+            <div class="onboarding-buttons">
+              <button class="onboarding-btn onboarding-btn-secondary" onclick="pasoAnterior()">← Atrás</button>
+              <button class="onboarding-btn onboarding-btn-primary" onclick="pasoSiguiente()">Siguiente →</button>
+            </div>
+          </div>
+        </div>
+
         <div class="notch"><div class="pill"></div></div>
 
         <!-- Pantalla de BIENVENIDA -->
@@ -2665,6 +2865,71 @@
 <script>
   function calcularDemo(){
     document.getElementById('calc-result').classList.add('show');
+  }
+
+  // --- FUNCIONES ONBOARDING ---
+  let pasoActualOnboarding = 0;
+
+  function mostrarOnboarding() {
+    // Solo mostrar si es la primera vez (localStorage)
+    try {
+      const yaVisto = localStorage.getItem('saa_onboarding_visto');
+      if (!yaVisto) {
+        const modal = document.getElementById('onboarding-modal');
+        if (modal) modal.classList.remove('hidden');
+        localStorage.setItem('saa_onboarding_visto', 'true');
+      }
+    } catch (e) {}
+  }
+
+  function cerrarOnboarding() {
+    const modal = document.getElementById('onboarding-modal');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  function irAlPaso(n) {
+    pasoActualOnboarding = n;
+    actualizarVistaOnboarding();
+  }
+
+  function pasoSiguiente() {
+    if (pasoActualOnboarding < 4) {
+      pasoActualOnboarding++;
+      actualizarVistaOnboarding();
+    } else {
+      cerrarOnboarding();
+    }
+  }
+
+  function pasoAnterior() {
+    if (pasoActualOnboarding > 0) {
+      pasoActualOnboarding--;
+      actualizarVistaOnboarding();
+    }
+  }
+
+  function actualizarVistaOnboarding() {
+    // Actualizar pasos
+    document.querySelectorAll('.onboarding-step').forEach((step, idx) => {
+      step.classList.toggle('active', idx === pasoActualOnboarding);
+    });
+
+    // Actualizar puntos de navegación
+    document.querySelectorAll('.onboarding-dot').forEach((dot, idx) => {
+      dot.classList.toggle('active', idx === pasoActualOnboarding);
+    });
+
+    // Cambiar texto del botón en el último paso
+    const btnPrimario = document.querySelector('.onboarding-btn-primary');
+    if (btnPrimario) {
+      btnPrimario.textContent = pasoActualOnboarding === 4 ? '¡Empezar!' : 'Siguiente →';
+    }
+
+    // Ocultar botón "Atrás" en el primer paso
+    const btnSecundario = document.querySelector('.onboarding-btn-secondary');
+    if (btnSecundario) {
+      btnSecundario.style.display = pasoActualOnboarding === 0 ? 'none' : 'block';
+    }
   }
 
   function irHoroscopoHoy() {
@@ -8349,6 +8614,9 @@
         }
       } catch (e) { /* si falla la limpieza, igual intentamos registrar abajo */ }
       navigator.serviceWorker.register('service-worker.js?v=193').catch(() => {});
+
+      // Mostrar onboarding en la primera carga
+      setTimeout(() => mostrarOnboarding(), 500);
     });
   }
 </script>
