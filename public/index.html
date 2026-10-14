@@ -1963,8 +1963,8 @@
           <div class="sub" style="text-align:center;margin-bottom:20px;">Entra para ver tu cielo</div>
 
           <div class="auth-error" id="login-error"></div>
-          <div class="auth-field"><label>Correo</label><input type="email" id="login-email"></div>
-          <div class="auth-field campo-pass"><label>Contraseña</label><input type="password" id="login-pass"><button type="button" class="ojo-toggle" onclick="alternarOjo('login-pass', this)">👁</button></div>
+          <div class="auth-field"><label>Correo</label><input type="email" id="login-email" name="email" autocomplete="username" autocapitalize="off" spellcheck="false"></div>
+          <div class="auth-field campo-pass"><label>Contraseña</label><input type="password" id="login-pass" name="password" autocomplete="current-password"><button type="button" class="ojo-toggle" onclick="alternarOjo('login-pass', this)">👁</button></div>
           <div style="text-align:right;margin:-8px 0 14px;"><a onclick="mostrarPantalla('olvide')" style="font-size:12px;color:var(--ink-dim);cursor:pointer;text-decoration:underline;">¿Olvidaste tu contraseña?</a></div>
           <button class="btn-primary" onclick="accionLogin()">Entrar</button>
           <div class="auth-switch">¿Aún no tienes cuenta? <a onclick="mostrarPantalla('registro')">Regístrate gratis</a></div>
@@ -1997,8 +1997,8 @@
           <div class="sub">Empieza gratis, descubre tu cielo hoy</div>
           <div class="auth-error" id="registro-error"></div>
           <div class="auth-field"><label>Tu nombre</label><input type="text" id="registro-nombre" placeholder="¿Cómo te llamas?"></div>
-          <div class="auth-field"><label>Correo</label><input type="email" id="registro-email"></div>
-          <div class="auth-field campo-pass"><label>Contraseña</label><input type="password" id="registro-pass" placeholder="Mínimo 6 caracteres"><button type="button" class="ojo-toggle" onclick="alternarOjo('registro-pass', this)">👁</button></div>
+          <div class="auth-field"><label>Correo</label><input type="email" id="registro-email" name="email" autocomplete="username" autocapitalize="off" spellcheck="false"></div>
+          <div class="auth-field campo-pass"><label>Contraseña</label><input type="password" id="registro-pass" name="new-password" autocomplete="new-password" placeholder="Mínimo 6 caracteres"><button type="button" class="ojo-toggle" onclick="alternarOjo('registro-pass', this)">👁</button></div>
           <div class="auth-field campo-pass"><label>Confirmar contraseña</label><input type="password" id="registro-pass2" placeholder="Repite tu contraseña"><button type="button" class="ojo-toggle" onclick="alternarOjo('registro-pass2', this)">👁</button></div>
           <label style="display:flex;align-items:flex-start;gap:8px;font-size:11.5px;color:var(--ink-dim);margin:6px 0 12px;line-height:1.4;">
             <input type="checkbox" id="registro-acepta-terminos" style="margin-top:2px;">
@@ -3341,6 +3341,36 @@
     nombre: null,
   };
 
+  // Renovación compartida: los refresh tokens son de un solo uso. Si varias llamadas
+  // reciben 401 a la vez, todas deben esperar la MISMA renovación (si no, la segunda
+  // falla y la app expulsa a la usuaria aunque su sesión siga válida).
+  let _renovacionEnCurso = null;
+  function renovarSesionCompartida() {
+    if (!SESION.refresh) return Promise.resolve(false);
+    if (_renovacionEnCurso) return _renovacionEnCurso;
+    _renovacionEnCurso = (async () => {
+      try {
+        const rr = await fetch(BACKEND + '/auth/refresh', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Timezone': zonaHorariaDispositivo() },
+          body: JSON.stringify({ refresh_token: SESION.refresh }),
+        });
+        if (!rr.ok) return false;
+        const dd = await rr.json();
+        SESION.token = dd.sesion.access_token;
+        SESION.refresh = dd.sesion.refresh_token || SESION.refresh;
+        localStorage.setItem('saa_token', SESION.token);
+        localStorage.setItem('saa_refresh', SESION.refresh);
+        return true;
+      } catch (e) {
+        return false; // error de red: no expulsar, se reintenta después
+      } finally {
+        setTimeout(() => { _renovacionEnCurso = null; }, 1500);
+      }
+    })();
+    return _renovacionEnCurso;
+  }
+
   // fetchAuth: igual que fetch() pero con renovación automática de token
   function zonaHorariaDispositivo() {
     try {
@@ -3359,22 +3389,10 @@
     let r = await fetch(apiUrl(url), { ...opciones, headers });
 
     if (r.status === 401 && SESION.refresh) {
-      try {
-        const rr = await fetch(BACKEND + '/auth/refresh', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Timezone': zonaHorariaDispositivo() },
-          body: JSON.stringify({ refresh_token: SESION.refresh }),
-        });
-        if (rr.ok) {
-          const dd = await rr.json();
-          SESION.token = dd.sesion.access_token;
-          SESION.refresh = dd.sesion.refresh_token || SESION.refresh;
-          localStorage.setItem('saa_token', SESION.token);
-          if (SESION.refresh) localStorage.setItem('saa_refresh', SESION.refresh);
-          const headers2 = { ...headersBase, Authorization: 'Bearer ' + SESION.token };
-          r = await fetch(apiUrl(url), { ...opciones, headers: headers2 });
-        }
-      } catch (e) { /* si falla, devuelve el 401 original */ }
+      if (await renovarSesionCompartida()) {
+        const headers2 = { ...headersBase, Authorization: 'Bearer ' + SESION.token };
+        r = await fetch(apiUrl(url), { ...opciones, headers: headers2 });
+      }
     }
     return r;
   }
@@ -6490,20 +6508,9 @@
 
     // Intentar renovar el token si hay refresh disponible
     if (r.status === 401 && SESION.refresh) {
-      try {
-        const rr = await fetch(BACKEND + '/auth/refresh', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refresh_token: SESION.refresh }),
-        });
-        if (rr.ok) {
-          const dd = await rr.json();
-          SESION.token = dd.sesion.access_token;
-          SESION.refresh = dd.sesion.refresh_token || SESION.refresh;
-          localStorage.setItem('saa_token', SESION.token);
-          if (SESION.refresh) localStorage.setItem('saa_refresh', SESION.refresh);
-          r = await fetchAuth('/perfil', { headers: {} });
-        }
-      } catch (e) { /* si falla la renovación, seguimos abajo con la lógica de estado real */ }
+      if (await renovarSesionCompartida()) {
+        r = await fetchAuth('/perfil', { headers: {} });
+      }
     }
 
     // Solo cerramos sesión cuando el servidor de verdad rechaza la autenticación (401),
