@@ -1697,6 +1697,50 @@ app.get('/otras-cartas', requireLogin, async (req, res) => {
   res.json({ cartas:data || [] });
 });
 
+// Mapea el nombre de un signo (3 letras, inglés o español) a su índice 0-11 (Aries=0)
+const SIGNO_INDICE_ECLIPSE = {
+  Ari:0, Aries:0,
+  Tau:1, Taurus:1, Tauro:1,
+  Gem:2, Gemini:2, 'Géminis':2, Geminis:2,
+  Can:3, Cancer:3, 'Cáncer':3,
+  Leo:4,
+  Vir:5, Virgo:5,
+  Lib:6, Libra:6,
+  Sco:7, Scorpio:7, Escorpio:7,
+  Sag:8, Sagittarius:8, Sagitario:8,
+  Cap:9, Capricorn:9, Capricornio:9,
+  Aqu:10, Aquarius:10, Acuario:10,
+  Pis:11, Pisces:11, Piscis:11,
+};
+
+// Convierte una posición zodiacal {sign, degree, minute} a longitud eclíptica absoluta (0-360)
+function longitudAbsolutaZodiac(zp) {
+  if (!zp) return null;
+  const idx = SIGNO_INDICE_ECLIPSE[zp.sign];
+  if (idx === undefined || idx === null) return null;
+  const grado = Number(zp.degree) || 0;
+  const minuto = Number(zp.minute) || 0;
+  return idx * 30 + grado + minuto / 60;
+}
+
+// Dada una longitud absoluta y las 12 cúspides de la carta, devuelve el número de casa (1-12)
+// que CONTIENE esa longitud. Maneja el cruce por 0° Aries.
+function casaDesdeLongitud(lon, cuspides) {
+  if (lon == null || !Array.isArray(cuspides) || cuspides.length !== 12) return null;
+  const c = [...cuspides].sort((a, b) => (a.house || 0) - (b.house || 0));
+  for (let i = 0; i < 12; i++) {
+    const inicio = Number(c[i].absolute_longitude);
+    const fin = Number(c[(i + 1) % 12].absolute_longitude);
+    if (inicio < fin) {
+      if (lon >= inicio && lon < fin) return c[i].house;
+    } else {
+      // La casa cruza 0° Aries (p. ej. cúspide en Piscis → cúspide en Aries)
+      if (lon >= inicio || lon < fin) return c[i].house;
+    }
+  }
+  return null;
+}
+
 // RUTA: Próximos eclipses y cómo afectan tu carta natal
 app.post('/eclipses-natal', requireLogin, async (req, res) => {
   try {
@@ -1737,10 +1781,28 @@ app.post('/eclipses-natal', requireLogin, async (req, res) => {
       } catch (e) { /* si falla, seguimos sin ella */ }
     }
 
+    // Calcular en qué casa de la carta natal de la usuaria cae cada eclipse.
+    // Usamos las cúspides REALES de su carta (no datos genéricos de la API).
+    let casasNatales = {};
+    try {
+      const { data: cartaRow } = await req.supabase
+        .from('natal_charts').select('datos_carta').eq('user_id', req.userId).maybeSingle();
+      const cuspides = cartaRow?.datos_carta?.chart_data?.house_cusps;
+      const listaEcl = proximos?.data?.data?.eclipses || proximos?.data?.eclipses || [];
+      if (Array.isArray(cuspides) && cuspides.length === 12 && Array.isArray(listaEcl)) {
+        for (const e of listaEcl) {
+          const lon = longitudAbsolutaZodiac(e.zodiac_position);
+          const casa = casaDesdeLongitud(lon, cuspides);
+          if (e.eclipse_id && casa) casasNatales[e.eclipse_id] = casa;
+        }
+      }
+    } catch (e) { /* si falla, seguimos sin las casas */ }
+
     const respuestaEclipses = {
       proximos_eclipses: proximos.data || proximos,
       como_te_afecta: revision.data || revision,
       interpretacion_principal: interpretacionCompleta,
+      casas_natales: casasNatales,
     };
     cacheSet(cacheKey, respuestaEclipses, TTL.ECLIPSES);
     res.json(respuestaEclipses);

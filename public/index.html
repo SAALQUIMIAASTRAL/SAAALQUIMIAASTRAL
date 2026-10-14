@@ -3775,42 +3775,37 @@
     };
   }
 
-  function tarjetaEclipse(ecl, posicion) {
+  // Qué área de vida representa cada casa (en lenguaje cálido y personal)
+  const DESCRIP_CASA_ECLIPSE = {
+    1: 'tu identidad, tu imagen y cómo te muestras al mundo',
+    2: 'tu dinero, tus recursos y aquello que valoras',
+    3: 'tu forma de comunicarte, tus hermanos y tu entorno cercano',
+    4: 'tu hogar, tu familia y tus raíces',
+    5: 'tu creatividad, el romance y lo que te hace disfrutar',
+    6: 'tu día a día, tu salud y tu trabajo',
+    7: 'tus relaciones, tu pareja y tus asociaciones',
+    8: 'lo que compartes con otros, la intimidad y tus procesos de transformación',
+    9: 'tus viajes, tus estudios y tu visión de la vida',
+    10: 'tu carrera, tu vocación y tu lugar público',
+    11: 'tus amistades, tus grupos y tus proyectos a futuro',
+    12: 'tu mundo interior, lo espiritual y lo que necesitas soltar',
+  };
+
+  function tarjetaEclipse(ecl, posicion, casaNatal) {
     const tipo = TIPOS_ECLIPSE_ES[ecl.type] || ecl.type;
     const posTexto = posicion ? `en ${signoEs(posicion.sign)} ${posicion.degree}°${posicion.minute}'` : '';
     const claves = palabrasClaveEclipse(ecl);
 
-    // Extraer casa desde activations (si existe)
-    const activations = ecl.activations || [];
-    const primeraActivacion = activations[0];
-    const casa = primeraActivacion?.house || null;
-    const casaNombre = casa ? `Casa ${casa}` : '';
-
-    // Descripción simple de qué significa cada casa
-    const DESCRIP_CASAS = {
-      1: 'Tu identidad, imagen y cómo te muestras al mundo cambia.',
-      2: 'Tus recursos, finanzas y valores se redefinen.',
-      3: 'Comunicación, hermanos y aprendizaje se transforman.',
-      4: 'Tu hogar, familia y raíces se mueven.',
-      5: 'Creatividad, romance y expresión personal se intensifican.',
-      6: 'Rutinas, salud y trabajo se reorganizan.',
-      7: 'Relaciones, asociaciones y contratos cambian significativamente.',
-      8: 'Transformación profunda, finanzas compartidas y renacimiento.',
-      9: 'Viajes, educación superior y filosofía se amplían.',
-      10: 'Tu carrera, reputación y propósito público se redefinan.',
-      11: 'Amistades, grupos y aspiraciones futuras se transforman.',
-      12: 'Lo interno, lo espiritual y lo oculto se revelan.'
-    };
-
-    const descripCasa = casa && DESCRIP_CASAS[casa] ? DESCRIP_CASAS[casa] : '';
-    const textoLugar = casa ? `🏠 Este eclipse tocará tu ${casaNombre}` : '';
+    const descripCasa = casaNatal && DESCRIP_CASA_ECLIPSE[casaNatal] ? DESCRIP_CASA_ECLIPSE[casaNatal] : '';
+    const bloqueCasa = casaNatal
+      ? `<div class="card-cuerpo" style="margin-top:7px;"><b>🏠 Este eclipse tocará tu Casa ${casaNatal}</b>${descripCasa ? ` — mueve ${descripCasa}.` : '.'}</div>`
+      : '';
 
     return `
       <div class="card-lectura">
         <div class="card-titulo">${tipo} ${posTexto}</div>
         <div class="card-etiqueta">${formatearFechaEs(ecl.date)}</div>
-        ${textoLugar ? `<div class="card-cuerpo" style="margin-top:7px;font-weight:bold;"><b>${textoLugar}</b></div>` : ''}
-        ${descripCasa ? `<div class="card-cuerpo" style="margin-top:4px;font-style:italic;color:var(--plum);">${descripCasa}</div>` : ''}
+        ${bloqueCasa}
         <div class="card-cuerpo" style="margin-top:7px;"><b>Qué puedes sentir:</b> ${claves.sentir}.</div>
         <div class="card-cuerpo" style="margin-top:4px;"><b>Área que mueve:</b> ${claves.area}.</div>
       </div>`;
@@ -3834,12 +3829,13 @@
       const listaConPosicion = data.proximos_eclipses?.data?.eclipses || [];
       const posicionesPorId = {};
       listaConPosicion.forEach(e => { posicionesPorId[e.eclipse_id] = e.zodiac_position; });
+      const casasPorId = data.casas_natales || {};
 
       if (importantes?.length) {
         const botonCerrar = `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button onclick="cerrar('eclipses-resultado')" style="background:var(--marigold-soft);border:none;border-radius:100px;padding:6px 14px;font-size:12px;color:var(--plum);cursor:pointer;">Cerrar ✕</button></div>`;
 
         contenedor.innerHTML = botonCerrar +
-          importantes.slice(0, 5).map(ecl => tarjetaEclipse(ecl, posicionesPorId[ecl.eclipse_id])).join('');
+          importantes.slice(0, 5).map(ecl => tarjetaEclipse(ecl, posicionesPorId[ecl.eclipse_id], casasPorId[ecl.eclipse_id])).join('');
       } else {
         contenedor.innerHTML = `<pre style="white-space:pre-wrap;font-size:10px;color:var(--plum);background:var(--marigold-soft);border-radius:12px;padding:14px;">${JSON.stringify(data, null, 2)}</pre>`;
       }
