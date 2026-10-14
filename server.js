@@ -531,10 +531,10 @@ async function requireLogin(req, res, next) {
 
 async function requirePremium(req, res, next) {
   try {
-    const { data: sub, error } = await supabase.from('subscriptions').select('estado').eq('user_id', req.userId).maybeSingle();
+    const { data: sub, error } = await supabase.from('subscriptions').select('estado, plataforma, fecha_vencimiento').eq('user_id', req.userId).maybeSingle();
     if (error) return res.status(503).json({ error: 'No pudimos comprobar tu suscripción. Inténtalo de nuevo.' });
     const esAdmin = req.userEmail === (process.env.ADMIN_EMAIL || 'shernsndez.22@gmail.com');
-    if (!esAdmin && sub?.estado !== 'activa') {
+    if (!esAdmin && !suscripcionActiva(sub)) {
       return res.status(403).json({ error: 'Esta función requiere una suscripción activa.', premium_required: true });
     }
     next();
@@ -2436,10 +2436,94 @@ app.post('/transitos-personales', requireLogin, async (req, res) => {
 // Las tiendas no deben abrir pagos mientras falte la validación de comprobantes.
 // Solo activar disponibilidad cuando estén implementadas y probadas compras,
 // renovaciones, vencimiento, restauración y vinculación a la cuenta.
+// Google Play se activa solo cuando hay credenciales y el interruptor está en 'true'.
+const GOOGLE_PLAY_PACKAGE = process.env.GOOGLE_PLAY_PACKAGE || 'com.samalquimiaastral.app';
+const GOOGLE_PLAY_ACTIVO = process.env.GOOGLE_PLAY_ACTIVO === 'true' && !!process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON;
+const PRODUCTOS_GOOGLE_PLAY = { 'com.samalquimiaastral.app.mensual':'mensual', 'com.samalquimiaastral.app.seismeses':'semestral', 'com.samalquimiaastral.app.anual':'anual' };
+
 app.get('/suscripcion/configuracion-nativa', requireLogin, (req, res) => {
   res.set('Cache-Control', 'no-store');
-  res.json({ disponible:false, plataformas:[] });
+  res.json(GOOGLE_PLAY_ACTIVO ? { disponible:true, plataformas:['google_play'] } : { disponible:false, plataformas:[] });
 });
+
+let _tokenGooglePlay = { valor: null, expira: 0 };
+async function tokenGooglePlay() {
+  if (_tokenGooglePlay.valor && Date.now() < _tokenGooglePlay.expira - 60000) return _tokenGooglePlay.valor;
+  const cuenta = JSON.parse(process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON);
+  const ahora = Math.floor(Date.now() / 1000);
+  const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
+  const cabecera = b64({ alg:'RS256', typ:'JWT' });
+  const reclamos = b64({ iss:cuenta.client_email, scope:'https://www.googleapis.com/auth/androidpublisher', aud:'https://oauth2.googleapis.com/token', iat:ahora, exp:ahora + 3600 });
+  const firma = crypto.createSign('RSA-SHA256').update(`${cabecera}.${reclamos}`).sign(cuenta.private_key, 'base64url');
+  const r = await fetch('https://oauth2.googleapis.com/token', {
+    method:'POST',
+    headers:{ 'Content-Type':'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ grant_type:'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion:`${cabecera}.${reclamos}.${firma}` }),
+    signal: AbortSignal.timeout(10000),
+  });
+  const d = await r.json();
+  if (!r.ok || !d.access_token) throw new Error('Autenticación con Google Play fallida');
+  _tokenGooglePlay = { valor: d.access_token, expira: Date.now() + d.expires_in * 1000 };
+  return d.access_token;
+}
+
+// Valida una compra de Google Play contra la API oficial y activa premium.
+// Nunca confía en lo que manda el cliente: el estado y la fecha vienen de Google.
+app.post('/suscripcion/validar-compra-nativa', requireLogin, async (req, res) => {
+  try {
+    if (!GOOGLE_PLAY_ACTIVO) return res.status(503).json({ error:'Las compras aún están en preparación.' });
+    const { plataforma, plan, productId, purchaseToken } = req.body || {};
+    if (plataforma !== 'google_play' || typeof purchaseToken !== 'string' || purchaseToken.length < 10 || purchaseToken.length > 4096) {
+      return res.status(400).json({ error:'Datos de compra inválidos.' });
+    }
+    if (!PRODUCTOS_GOOGLE_PLAY[productId]) return res.status(400).json({ error:'Producto no reconocido.' });
+    const planFinal = PRODUCTOS_GOOGLE_PLAY[productId];
+
+    const token = await tokenGooglePlay();
+    const url = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${GOOGLE_PLAY_PACKAGE}/purchases/subscriptionsv2/tokens/${encodeURIComponent(purchaseToken)}`;
+    const r = await fetch(url, { headers:{ Authorization:'Bearer ' + token }, signal: AbortSignal.timeout(10000) });
+    if (!r.ok) return res.status(402).json({ error:'No pudimos confirmar tu compra. Usa "Restaurar compras" en un momento.' });
+    const d = await r.json();
+
+    const linea = d.lineItems?.[0];
+    const activa = ['SUBSCRIPTION_STATE_ACTIVE', 'SUBSCRIPTION_STATE_IN_GRACE_PERIOD'].includes(d.subscriptionState);
+    const vence = linea?.expiryTime ? new Date(linea.expiryTime) : null;
+    if (!activa || linea?.productId !== productId || !vence || vence <= new Date()) {
+      return res.status(402).json({ error:'Tu compra no está activa en Google Play.' });
+    }
+
+    // Una misma compra no puede activar dos cuentas.
+    const { data: usada } = await supabase.from('subscriptions').select('user_id')
+      .eq('transaction_id', purchaseToken).neq('user_id', req.userId).maybeSingle();
+    if (usada) return res.status(409).json({ error:'Esta compra ya está vinculada a otra cuenta.' });
+
+    const { error } = await supabase.from('subscriptions').upsert({
+      user_id: req.userId,
+      estado: 'activa',
+      plan: planFinal,
+      plataforma: 'google_play',
+      provider: 'google_play',
+      product_id: productId,
+      transaction_id: purchaseToken,
+      fecha_inicio: d.startTime || new Date().toISOString(),
+      fecha_vencimiento: vence.toISOString(),
+    }, { onConflict:'user_id' });
+    if (error) throw new Error('No se pudo guardar la suscripción.');
+
+    res.json({ ok:true, activa:true, estado:'activa', plan: planFinal, vence_el: vence.toISOString() });
+  } catch (err) {
+    console.error('Validación Google Play:', err.message);
+    res.status(500).json({ error:'No pudimos activar tu suscripción. Intenta de nuevo o usa "Restaurar compras".' });
+  }
+});
+
+// Una compra de Google Play vencida no cuenta como activa aunque el estado diga 'activa'.
+// (Hasta tener notificaciones en tiempo real de Google, esta revisión evita premium eterno.)
+function suscripcionActiva(sub) {
+  if (!sub || sub.estado !== 'activa') return false;
+  if (sub.plataforma === 'google_play' && sub.fecha_vencimiento && new Date(sub.fecha_vencimiento) <= new Date()) return false;
+  return true;
+}
 
 app.post('/suscripcion/iniciar', requireLogin, async (req, res) => {
   try {
