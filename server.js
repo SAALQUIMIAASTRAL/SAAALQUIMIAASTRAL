@@ -20,7 +20,7 @@ app.use((req, res, next) => {
 app.use(cors());
 app.use((req, res, next) => {
   if (req.originalUrl === '/webhooks/stripe') return next();
-  express.json()(req, res, next);
+  express.json({ limit: '3mb' })(req, res, next);
 });
 app.use(express.static('public'));
 
@@ -803,6 +803,46 @@ app.get('/perfil', requireLogin, async (req, res) => {
 
   if (error) return res.status(400).json({ error: error.message });
   res.json({ perfil: data, suscripcion: sub?.estado || 'ninguna' });
+});
+
+// RUTA: Subir/actualizar la foto de perfil (se guarda en Supabase Storage, igual en todos los dispositivos)
+app.post('/subir-foto-perfil', requireLogin, async (req, res) => {
+  try {
+    const dataUrl = req.body?.foto;
+    if (!dataUrl || typeof dataUrl !== 'string') {
+      return res.status(400).json({ error: 'No se recibió ninguna imagen.' });
+    }
+    // Esperamos un data URL: data:image/jpeg;base64,xxxxx
+    const m = /^data:(image\/(jpeg|png|webp));base64,(.+)$/i.exec(dataUrl);
+    if (!m) return res.status(400).json({ error: 'Formato de imagen no válido.' });
+    const contentType = m[1];
+    const ext = m[2].toLowerCase() === 'jpeg' ? 'jpg' : m[2].toLowerCase();
+    const buffer = Buffer.from(m[3], 'base64');
+    if (buffer.length > 3 * 1024 * 1024) {
+      return res.status(400).json({ error: 'La imagen es demasiado grande (máximo 3 MB).' });
+    }
+
+    // Una sola foto por usuaria: la sobrescribimos (upsert) para no acumular archivos.
+    const ruta = `${req.userId}.${ext}`;
+    const { error: upErr } = await supabase.storage
+      .from('avatares')
+      .upload(ruta, buffer, { contentType, upsert: true, cacheControl: '3600' });
+    if (upErr) return res.status(500).json({ error: 'No se pudo guardar la foto.', detalle_tecnico: upErr.message });
+
+    // URL pública + parámetro de versión para evitar que el navegador muestre la foto vieja cacheada
+    const { data: pub } = supabase.storage.from('avatares').getPublicUrl(ruta);
+    const fotoUrl = `${pub.publicUrl}?v=${Date.now()}`;
+
+    // Guardamos la URL en el perfil para poder leerla desde cualquier dispositivo
+    await supabase.from('profiles').update({ foto_url: fotoUrl }).eq('id', req.userId);
+    // Limpiar caché del perfil para que la próxima lectura traiga la foto nueva
+    cacheBorrar(cacheHash('perfil', req.userId));
+
+    res.json({ foto_url: fotoUrl });
+  } catch (err) {
+    console.error('subir-foto-perfil:', err.message);
+    res.status(500).json({ error: 'No se pudo guardar la foto.' });
+  }
 });
 
 // ============================================================
