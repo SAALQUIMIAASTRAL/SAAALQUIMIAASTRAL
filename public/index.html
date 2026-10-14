@@ -3779,10 +3779,38 @@
     const tipo = TIPOS_ECLIPSE_ES[ecl.type] || ecl.type;
     const posTexto = posicion ? `en ${signoEs(posicion.sign)} ${posicion.degree}°${posicion.minute}'` : '';
     const claves = palabrasClaveEclipse(ecl);
+
+    // Extraer casa desde activations (si existe)
+    const activations = ecl.activations || [];
+    const primeraActivacion = activations[0];
+    const casa = primeraActivacion?.house || null;
+    const casaNombre = casa ? `Casa ${casa}` : '';
+
+    // Descripción simple de qué significa cada casa
+    const DESCRIP_CASAS = {
+      1: 'Tu identidad, imagen y cómo te muestras al mundo cambia.',
+      2: 'Tus recursos, finanzas y valores se redefinen.',
+      3: 'Comunicación, hermanos y aprendizaje se transforman.',
+      4: 'Tu hogar, familia y raíces se mueven.',
+      5: 'Creatividad, romance y expresión personal se intensifican.',
+      6: 'Rutinas, salud y trabajo se reorganizan.',
+      7: 'Relaciones, asociaciones y contratos cambian significativamente.',
+      8: 'Transformación profunda, finanzas compartidas y renacimiento.',
+      9: 'Viajes, educación superior y filosofía se amplían.',
+      10: 'Tu carrera, reputación y propósito público se redefinan.',
+      11: 'Amistades, grupos y aspiraciones futuras se transforman.',
+      12: 'Lo interno, lo espiritual y lo oculto se revelan.'
+    };
+
+    const descripCasa = casa && DESCRIP_CASAS[casa] ? DESCRIP_CASAS[casa] : '';
+    const textoLugar = casa ? `🏠 Este eclipse tocará tu ${casaNombre}` : '';
+
     return `
       <div class="card-lectura">
         <div class="card-titulo">${tipo} ${posTexto}</div>
         <div class="card-etiqueta">${formatearFechaEs(ecl.date)}</div>
+        ${textoLugar ? `<div class="card-cuerpo" style="margin-top:7px;font-weight:bold;"><b>${textoLugar}</b></div>` : ''}
+        ${descripCasa ? `<div class="card-cuerpo" style="margin-top:4px;font-style:italic;color:var(--plum);">${descripCasa}</div>` : ''}
         <div class="card-cuerpo" style="margin-top:7px;"><b>Qué puedes sentir:</b> ${claves.sentir}.</div>
         <div class="card-cuerpo" style="margin-top:4px;"><b>Área que mueve:</b> ${claves.area}.</div>
       </div>`;
