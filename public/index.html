@@ -1963,8 +1963,8 @@
           <div class="sub" style="text-align:center;margin-bottom:20px;">Entra para ver tu cielo</div>
 
           <div class="auth-error" id="login-error"></div>
-          <div class="auth-field"><label>Correo</label><input type="email" id="login-email"></div>
-          <div class="auth-field campo-pass"><label>Contraseña</label><input type="password" id="login-pass"><button type="button" class="ojo-toggle" onclick="alternarOjo('login-pass', this)">👁</button></div>
+          <div class="auth-field"><label>Correo</label><input type="email" id="login-email" name="email" autocomplete="username" autocapitalize="off" spellcheck="false"></div>
+          <div class="auth-field campo-pass"><label>Contraseña</label><input type="password" id="login-pass" name="password" autocomplete="current-password"><button type="button" class="ojo-toggle" onclick="alternarOjo('login-pass', this)">👁</button></div>
           <div style="text-align:right;margin:-8px 0 14px;"><a onclick="mostrarPantalla('olvide')" style="font-size:12px;color:var(--ink-dim);cursor:pointer;text-decoration:underline;">¿Olvidaste tu contraseña?</a></div>
           <button class="btn-primary" onclick="accionLogin()">Entrar</button>
           <div class="auth-switch">¿Aún no tienes cuenta? <a onclick="mostrarPantalla('registro')">Regístrate gratis</a></div>
@@ -1997,8 +1997,8 @@
           <div class="sub">Empieza gratis, descubre tu cielo hoy</div>
           <div class="auth-error" id="registro-error"></div>
           <div class="auth-field"><label>Tu nombre</label><input type="text" id="registro-nombre" placeholder="¿Cómo te llamas?"></div>
-          <div class="auth-field"><label>Correo</label><input type="email" id="registro-email"></div>
-          <div class="auth-field campo-pass"><label>Contraseña</label><input type="password" id="registro-pass" placeholder="Mínimo 6 caracteres"><button type="button" class="ojo-toggle" onclick="alternarOjo('registro-pass', this)">👁</button></div>
+          <div class="auth-field"><label>Correo</label><input type="email" id="registro-email" name="email" autocomplete="username" autocapitalize="off" spellcheck="false"></div>
+          <div class="auth-field campo-pass"><label>Contraseña</label><input type="password" id="registro-pass" name="new-password" autocomplete="new-password" placeholder="Mínimo 6 caracteres"><button type="button" class="ojo-toggle" onclick="alternarOjo('registro-pass', this)">👁</button></div>
           <div class="auth-field campo-pass"><label>Confirmar contraseña</label><input type="password" id="registro-pass2" placeholder="Repite tu contraseña"><button type="button" class="ojo-toggle" onclick="alternarOjo('registro-pass2', this)">👁</button></div>
           <label style="display:flex;align-items:flex-start;gap:8px;font-size:11.5px;color:var(--ink-dim);margin:6px 0 12px;line-height:1.4;">
             <input type="checkbox" id="registro-acepta-terminos" style="margin-top:2px;">
