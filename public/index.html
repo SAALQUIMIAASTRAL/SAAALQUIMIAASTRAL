@@ -3341,6 +3341,36 @@
     nombre: null,
   };
 
+  // Renovación compartida: los refresh tokens son de un solo uso. Si varias llamadas
+  // reciben 401 a la vez, todas deben esperar la MISMA renovación (si no, la segunda
+  // falla y la app expulsa a la usuaria aunque su sesión siga válida).
+  let _renovacionEnCurso = null;
+  function renovarSesionCompartida() {
+    if (!SESION.refresh) return Promise.resolve(false);
+    if (_renovacionEnCurso) return _renovacionEnCurso;
+    _renovacionEnCurso = (async () => {
+      try {
+        const rr = await fetch(BACKEND + '/auth/refresh', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Timezone': zonaHorariaDispositivo() },
+          body: JSON.stringify({ refresh_token: SESION.refresh }),
+        });
+        if (!rr.ok) return false;
+        const dd = await rr.json();
+        SESION.token = dd.sesion.access_token;
+        SESION.refresh = dd.sesion.refresh_token || SESION.refresh;
+        localStorage.setItem('saa_token', SESION.token);
+        localStorage.setItem('saa_refresh', SESION.refresh);
+        return true;
+      } catch (e) {
+        return false; // error de red: no expulsar, se reintenta después
+      } finally {
+        setTimeout(() => { _renovacionEnCurso = null; }, 1500);
+      }
+    })();
+    return _renovacionEnCurso;
+  }
+
   // fetchAuth: igual que fetch() pero con renovación automática de token
   function zonaHorariaDispositivo() {
     try {
@@ -3359,22 +3389,10 @@
     let r = await fetch(apiUrl(url), { ...opciones, headers });
 
     if (r.status === 401 && SESION.refresh) {
-      try {
-        const rr = await fetch(BACKEND + '/auth/refresh', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Timezone': zonaHorariaDispositivo() },
-          body: JSON.stringify({ refresh_token: SESION.refresh }),
-        });
-        if (rr.ok) {
-          const dd = await rr.json();
-          SESION.token = dd.sesion.access_token;
-          SESION.refresh = dd.sesion.refresh_token || SESION.refresh;
-          localStorage.setItem('saa_token', SESION.token);
-          if (SESION.refresh) localStorage.setItem('saa_refresh', SESION.refresh);
-          const headers2 = { ...headersBase, Authorization: 'Bearer ' + SESION.token };
-          r = await fetch(apiUrl(url), { ...opciones, headers: headers2 });
-        }
-      } catch (e) { /* si falla, devuelve el 401 original */ }
+      if (await renovarSesionCompartida()) {
+        const headers2 = { ...headersBase, Authorization: 'Bearer ' + SESION.token };
+        r = await fetch(apiUrl(url), { ...opciones, headers: headers2 });
+      }
     }
     return r;
   }
@@ -6490,20 +6508,9 @@
 
     // Intentar renovar el token si hay refresh disponible
     if (r.status === 401 && SESION.refresh) {
-      try {
-        const rr = await fetch(BACKEND + '/auth/refresh', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refresh_token: SESION.refresh }),
-        });
-        if (rr.ok) {
-          const dd = await rr.json();
-          SESION.token = dd.sesion.access_token;
-          SESION.refresh = dd.sesion.refresh_token || SESION.refresh;
-          localStorage.setItem('saa_token', SESION.token);
-          if (SESION.refresh) localStorage.setItem('saa_refresh', SESION.refresh);
-          r = await fetchAuth('/perfil', { headers: {} });
-        }
-      } catch (e) { /* si falla la renovación, seguimos abajo con la lógica de estado real */ }
+      if (await renovarSesionCompartida()) {
+        r = await fetchAuth('/perfil', { headers: {} });
+      }
     }
 
     // Solo cerramos sesión cuando el servidor de verdad rechaza la autenticación (401),
