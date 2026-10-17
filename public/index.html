@@ -2428,7 +2428,6 @@
             <div id="mes-astrologico-contenido"><div class="disclaimer">Elige «Ver mi mes» para consultar sus fechas y movimientos.</div></div>
             <div style="display:flex;gap:8px;margin-top:10px;">
               <button class="btn-outline" style="flex:1;" onclick="cargarMesAstrologico()">Ver mi mes</button>
-              <button class="btn-outline" style="width:44px;flex:none;" title="Recalcular sin usar lo guardado" onclick="cargarMesAstrologico(true)">🔄</button>
             </div>
           </div>
 
@@ -6746,7 +6745,7 @@
       svgEl.style.display = 'block';
     }
     const hint = document.getElementById('zoom-hint');
-    if (hint) hint.textContent = desdeCache ? 'Rueda guardada · no se volvió a calcular' : 'Toca “Ampliar rueda” para verla en pantalla completa';
+    if (hint) hint.textContent = 'Toca “Ampliar rueda” para verla en pantalla completa';
   }
 
   function cerrarCartaVisual() {
