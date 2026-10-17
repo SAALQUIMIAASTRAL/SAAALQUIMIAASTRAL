@@ -2021,13 +2021,13 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
     // La clave incluye el día UTC actual para que "hoy" se recalcule con la hora real
     // (igual que el encabezado), no con una hora fija del mediodía.
     const ahoraUTC = new Date();
-    const cacheLunaMesKey = cacheHash('calendario-lunar-global-v3', `${anio}-${mes}-${ahoraUTC.toISOString().slice(0, 10)}`);
+    const cacheLunaMesKey = cacheHash('calendario-lunar-global-v3', `${anio}-${mes}-${local.year}-${local.month}-${local.day}-${ahoraUTC.getUTCHours()}`);
     let resultados = cacheGet(cacheLunaMesKey);
 
     if (!resultados) {
       const dias = Array.from({ length: diasEnMes }, (_, i) => i + 1);
       resultados = await Promise.all(dias.map(async (dia) => {
-        const esHoy = anio === ahoraUTC.getUTCFullYear() && mes === ahoraUTC.getUTCMonth() + 1 && dia === ahoraUTC.getUTCDate();
+        const esHoy = anio === local.year && mes === local.month && dia === local.day;
         try {
           const r = await astrologyApi.post('/analysis/lunar-analysis', {
             datetime_location: {
