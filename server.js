@@ -2018,23 +2018,17 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
 
     // 1) EFEMÉRIDES LUNARES GLOBALES DEL MES
     // No dependen de la carta natal: una sola serie mensual sirve a todos los usuarios.
-    // La clave incluye el día UTC actual para que "hoy" se recalcule con la hora real
-    // (igual que el encabezado), no con una hora fija del mediodía.
-    const ahoraUTC = new Date();
-    const cacheLunaMesKey = cacheHash('calendario-lunar-global-v3', `${anio}-${mes}-${local.year}-${local.month}-${local.day}-${ahoraUTC.getUTCHours()}`);
+    const cacheLunaMesKey = cacheHash('calendario-lunar-global-v2', `${anio}-${mes}`);
     let resultados = cacheGet(cacheLunaMesKey);
 
     if (!resultados) {
       const dias = Array.from({ length: diasEnMes }, (_, i) => i + 1);
       resultados = await Promise.all(dias.map(async (dia) => {
-        const esHoy = anio === local.year && mes === local.month && dia === local.day;
         try {
           const r = await astrologyApi.post('/analysis/lunar-analysis', {
             datetime_location: {
               year: anio, month: mes, day: dia,
-              hour: esHoy ? ahoraUTC.getUTCHours() : 12,
-              minute: esHoy ? ahoraUTC.getUTCMinutes() : 0,
-              second: esHoy ? ahoraUTC.getUTCSeconds() : 0,
+              hour: 12, minute: 0, second: 0,
               city: 'Greenwich', country_code: 'GB',
             },
             report_options: { language: 'es' },
@@ -2052,6 +2046,22 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
       }));
       // Un mes lunar pasado/futuro no cambia: 7 días en memoria reduce llamadas repetidas.
       cacheSet(cacheLunaMesKey, resultados, 7 * 24 * 60 * 60 * 1000);
+    }
+
+    // Hoy: la Luna real del momento, el mismo dato global que usa el encabezado
+    // (una sola consulta compartida, caché de 30 min). No depende del país del usuario.
+    if (anio === local.year && mes === local.month) {
+      const lunaAhora = await obtenerLunaGlobalActual().catch(() => null);
+      const mAhora = lunaAhora?.luna?.data?.lunar_metrics;
+      if (mAhora) {
+        resultados = resultados.slice();
+        resultados[local.day - 1] = {
+          dia: local.day,
+          signo: mAhora.moon_sign || null,
+          fase: faseLunarCoherente(mAhora.moon_phase || null, typeof mAhora.moon_illumination === 'number' ? mAhora.moon_illumination : null),
+          iluminacion: typeof mAhora.moon_illumination === 'number' ? Math.round(mAhora.moon_illumination) : null,
+        };
+      }
     }
 
     // 2) DATOS PERSONALES DEL MES
