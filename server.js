@@ -283,17 +283,20 @@ function normalizarEspanolMX(texto) {
 // Si la IA devuelve un número distinto de textos (o JSON roto), en vez de dejar el bloque
 // en inglés o mezclado, partimos la lista a la mitad y reintentamos cada mitad por separado.
 // Solo si un texto suelto falla se reporta el error (y no se guarda en caché).
-async function partirYReintentar(lista, motivo) {
-  if (lista.length <= 1) return { textos: lista, debug: motivo };
+async function partirYReintentar(lista, motivo, intento = 0) {
+  if (lista.length <= 1) {
+    if (intento < 2) return traducirBloqueSinCache(lista, intento + 1);
+    return { textos: lista, debug: motivo };
+  }
   const mitad = Math.ceil(lista.length / 2);
   const [a, b] = await Promise.all([
-    traducirBloqueSinCache(lista.slice(0, mitad)),
-    traducirBloqueSinCache(lista.slice(mitad)),
+    traducirBloqueSinCache(lista.slice(0, mitad), intento),
+    traducirBloqueSinCache(lista.slice(mitad), intento),
   ]);
   return { textos: [...a.textos, ...b.textos], debug: a.debug || b.debug };
 }
 
-async function traducirBloqueSinCache(lista) {
+async function traducirBloqueSinCache(lista, intento = 0) {
   lista = lista.map(normalizarEspanolMX);
   if (!process.env.ANTHROPIC_API_KEY) {
     console.error('traducirBloque: falta ANTHROPIC_API_KEY en las variables de entorno');
@@ -325,11 +328,11 @@ async function traducirBloqueSinCache(lista) {
       traducidos = JSON.parse(texto);
     } catch (eParse) {
       console.error('traducirBloque: no se pudo parsear. Texto crudo:', texto.slice(0, 800));
-      return await partirYReintentar(lista, `No se pudo parsear como JSON. Texto crudo: ${texto.slice(0, 500)}`);
+      return await partirYReintentar(lista, `No se pudo parsear como JSON. Texto crudo: ${texto.slice(0, 500)}`, intento);
     }
     if (!Array.isArray(traducidos) || traducidos.length !== lista.length || traducidos.some(t => typeof t !== 'string' || !t.trim())) {
       console.error('traducirBloque: tamaño no coincide. Esperado', lista.length, 'recibido', Array.isArray(traducidos) ? traducidos.length : typeof traducidos);
-      return await partirYReintentar(lista, `Array no coincide en tamaño. Esperado ${lista.length}, recibido ${Array.isArray(traducidos) ? traducidos.length : typeof traducidos}`);
+      return await partirYReintentar(lista, `Array no coincide en tamaño. Esperado ${lista.length}, recibido ${Array.isArray(traducidos) ? traducidos.length : typeof traducidos}`, intento);
     }
     return { textos: traducidos.map(normalizarEspanolMX), debug: null };
   } catch (e) {
