@@ -290,10 +290,14 @@ function normalizarEspanolMX(texto) {
 // Palabras que existen en inglés y no en español. Si una traducción trae alguna,
 // se considera que quedó mezclada y se reintenta.
 const PALABRAS_INGLES = /\b(the|and|with|that|which|this|your|you|from|into|can|may|will|their|they|are|is|of|to|for|be|it)\b/gi;
+function palabrasInglesas(texto) {
+  if (typeof texto !== 'string') return [];
+  return texto.match(PALABRAS_INGLES) || [];
+}
+// Umbral de 2: una sola coincidencia suelta (p. ej. un "to" o "is" dentro de una cita o un nombre)
+// disparaba reintentos innecesarios con llamadas extra a la IA.
 function pareceIngles(texto) {
-  if (typeof texto !== 'string') return false;
-  const coincidencias = texto.match(PALABRAS_INGLES) || [];
-  return coincidencias.length >= 1;
+  return palabrasInglesas(texto).length >= 2;
 }
 
 // Si la IA devuelve un número distinto de textos (o JSON roto), en vez de dejar el bloque
@@ -346,9 +350,18 @@ async function traducirBloqueSinCache(lista, intento = 0) {
       console.error('traducirBloque: no se pudo parsear. Texto crudo:', texto.slice(0, 800));
       return await partirYReintentar(lista, `No se pudo parsear como JSON. Texto crudo: ${texto.slice(0, 500)}`, intento);
     }
-    if (!Array.isArray(traducidos) || traducidos.length !== lista.length || traducidos.some(t => typeof t !== 'string' || !t.trim() || pareceIngles(t))) {
+    if (!Array.isArray(traducidos) || traducidos.length !== lista.length) {
       console.error('traducirBloque: tamaño no coincide. Esperado', lista.length, 'recibido', Array.isArray(traducidos) ? traducidos.length : typeof traducidos);
       return await partirYReintentar(lista, `Array no coincide en tamaño. Esperado ${lista.length}, recibido ${Array.isArray(traducidos) ? traducidos.length : typeof traducidos}`, intento);
+    }
+    if (traducidos.some(t => typeof t !== 'string' || !t.trim())) {
+      console.error('traducirBloque: respuesta con textos vacíos o no string');
+      return await partirYReintentar(lista, 'Respuesta con textos vacíos o no string', intento);
+    }
+    const mezclados = traducidos.filter(t => pareceIngles(t));
+    if (mezclados.length) {
+      console.error('traducirBloque: texto mezclado con inglés. Palabras:', [...new Set(mezclados.flatMap(palabrasInglesas))].join(', '));
+      return await partirYReintentar(lista, 'Traducción mezclada con inglés', intento);
     }
     return { textos: traducidos.map(normalizarEspanolMX), debug: null };
   } catch (e) {
@@ -379,35 +392,97 @@ async function persistenteSet(llave, valor) {
   } catch (_) { console.warn('No se pudo guardar caché persistente.'); }
 }
 
-async function traducirBloque(lista) {
-  const clave = claveAhorro('traduccion-es-MX-v3', lista);
-  const llavePersistente = cacheHash('traduccion-es-MX-v3', lista);
-  return consultaUnica(clave, async () => {
-    const guardado = cacheGet(clave);
-    if (guardado !== null) return { textos:[...guardado] };
-    const persistido = await persistenteGet(llavePersistente);
-    if (Array.isArray(persistido) && persistido.length === lista.length) {
-      cacheSet(clave, persistido, 7 * 24 * 60 * 60 * 1000);
-      return { textos: [...persistido], debug: null };
-    }
-    const resultado = await traducirBloqueSinCache(lista);
-    if (!resultado.debug && Array.isArray(resultado.textos) && resultado.textos.length === lista.length) {
-      cacheSet(clave, resultado.textos, 7 * 24 * 60 * 60 * 1000);
-      await persistenteSet(llavePersistente, resultado.textos);
-    }
-    return resultado;
-  });
+// Caché de traducción POR FRASE: cada texto tiene su propia llave, así un texto que ya se tradujo
+// nunca se vuelve a pagar, aunque cambie el resto de la lista. Va a memoria y a Supabase (cache_persistente).
+const VERSION_TRADUCCION = 'traduccion-es-MX-v4';
+const TAMANO_BLOQUE_TRADUCCION = 12;
+const TTL_TRADUCCION = 7 * 24 * 60 * 60 * 1000;
+
+// Lectura por lotes: una sola consulta a Supabase por cada 200 llaves.
+async function persistenteGetMuchos(llaves) {
+  const encontrados = new Map();
+  for (let i = 0; i < llaves.length; i += 200) {
+    try {
+      const { data, error } = await supabase.from('cache_persistente').select('clave,datos').in('clave', llaves.slice(i, i + 200));
+      if (error || !Array.isArray(data)) continue;
+      for (const fila of data) {
+        if (fila.datos?.version === 2 && typeof fila.datos.valor === 'string') encontrados.set(fila.clave, fila.datos.valor);
+      }
+    } catch (_) { /* si falla, simplemente se traduce */ }
+  }
+  return encontrados;
+}
+
+// Escritura por lotes en segundo plano: no bloquea la respuesta al usuario.
+function persistenteSetMuchos(entradas) {
+  for (let i = 0; i < entradas.length; i += 200) {
+    const filas = entradas.slice(i, i + 200).map(e => ({
+      clave: e.clave, datos: { version: 2, valor: e.valor }, updated_at: new Date().toISOString(),
+    }));
+    supabase.from('cache_persistente').upsert(filas, { onConflict: 'clave' }).then(({ error }) => {
+      if (error) console.warn('No se pudo guardar caché de traducciones:', error.code || 'error');
+    }).catch(() => console.warn('No se pudo guardar caché de traducciones.'));
+  }
 }
 
 async function traducirTextosConIA(textos) {
   const lista = (textos || []).filter(t => t && typeof t === 'string');
   if (!lista.length) return { textos: [], debug: 'sin textos que traducir' };
-  const TAMANO_BLOQUE = 12;
-  const bloques = [];
-  for (let i = 0; i < lista.length; i += TAMANO_BLOQUE) bloques.push(lista.slice(i, i + TAMANO_BLOQUE));
-  const resultados = await Promise.all(bloques.map(traducirBloque));
-  const textosFinal = resultados.flatMap(r => r.textos);
-  const primerError = resultados.find(r => r.debug)?.debug || null;
+
+  const llaves = lista.map(t => cacheHash(VERSION_TRADUCCION, t));
+  const resultado = new Array(lista.length);
+  let pendientes = [];
+
+  // 1) Memoria
+  lista.forEach((_, i) => {
+    const enMemoria = cacheGet(llaves[i]);
+    if (typeof enMemoria === 'string') resultado[i] = enMemoria;
+    else pendientes.push(i);
+  });
+
+  // 2) Supabase (solo para lo que no está en memoria)
+  if (pendientes.length) {
+    const persistidos = await persistenteGetMuchos(pendientes.map(i => llaves[i]));
+    const faltan = [];
+    for (const i of pendientes) {
+      const valor = persistidos.get(llaves[i]);
+      if (valor !== undefined) {
+        resultado[i] = valor;
+        cacheSet(llaves[i], valor, TTL_TRADUCCION);
+      } else {
+        faltan.push(i);
+      }
+    }
+    pendientes = faltan;
+  }
+
+  // 3) IA solo para lo que sigue faltando, en bloques de 12
+  let primerError = null;
+  if (pendientes.length) {
+    const bloques = [];
+    for (let i = 0; i < pendientes.length; i += TAMANO_BLOQUE_TRADUCCION) bloques.push(pendientes.slice(i, i + TAMANO_BLOQUE_TRADUCCION));
+    const salidas = await Promise.all(bloques.map(idx => {
+      const clave = claveAhorro(VERSION_TRADUCCION, idx.map(i => llaves[i]));
+      return consultaUnica(clave, () => traducirBloqueSinCache(idx.map(i => lista[i])));
+    }));
+    const nuevas = [];
+    salidas.forEach((salida, b) => {
+      const idx = bloques[b];
+      if (salida.debug) { primerError = primerError || salida.debug; return; }
+      // Solo se guarda lo que salió bien; los fallos no se persisten para no dejar texto en inglés para siempre.
+      if (!Array.isArray(salida.textos) || salida.textos.length !== idx.length) return;
+      idx.forEach((i, k) => {
+        const valor = salida.textos[k];
+        resultado[i] = valor;
+        cacheSet(llaves[i], valor, TTL_TRADUCCION);
+        nuevas.push({ clave: llaves[i], valor });
+      });
+    });
+    if (nuevas.length) persistenteSetMuchos(nuevas);
+  }
+
+  // Cualquier texto que no se pudo traducir se devuelve en su versión original normalizada
+  const textosFinal = lista.map((t, i) => resultado[i] ?? normalizarEspanolMX(t));
   return { textos: textosFinal, debug: primerError };
 }
 
