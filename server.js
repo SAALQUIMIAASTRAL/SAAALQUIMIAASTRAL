@@ -2452,25 +2452,10 @@ app.post('/energia-del-dia', requireLogin, async (req, res) => {
         },
         report_options: { language: 'es' },
       }).catch(err => ({ error: err?.response?.data || err.message })),
-      // Tránsitos de HOY sobre la carta natal de esta persona (personalizado por suscriptora)
-      astrologyApi.post('/analysis/natal-transit-report', {
-        subject: birthDataDesdePerfil(perfil),
-        transit_time: {
-          date_range: {
-            start_date: { year: hoy.year, month: hoy.month, day: hoy.day },
-            end_date: { year: hoy.year, month: hoy.month, day: hoy.day },
-          },
-        },
-        orb: 3,
-        options: {
-          active_points: ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Pluto', 'Neptune', 'Uranus'],
-          fixed_stars: { language: 'es' },
-        },
-        report_options: { tradition: 'psychological', language: 'es' },
-      }).catch(err => ({ error: err?.response?.data || err.message })),
+      obtenerTransitos7Dias(perfil, tzEnergia).catch(err => ({ error: err?.response?.data || err.message })),
     ]);
 
-    const eventosTransitosHoy = (transitos.data?.data?.events || transitos.data?.events || [])
+    const eventosTransitosHoy = (transitos?.transitos?.data?.events || transitos?.transitos?.events || [])
       .filter(ev => String(ev.date_local || ev.date || ev.exact_date || ev.transit_date || '').slice(0, 10) === diaEnergia);
     const respuestaEnergia = {
       ciclos: ciclos.data || ciclos,
@@ -2546,67 +2531,70 @@ app.post('/flor-armonica', requireLogin, async (req, res) => {
 });
 
 // RUTA: Tránsitos personalizados (próximos 30 días)
+// Tránsitos de los próximos 7 días desde hoy (día local). Un solo cálculo por persona y día:
+// lo reutilizan la sección "Lo que se mueve para ti" y la energía de hoy (sin consultar dos veces).
+async function obtenerTransitos7Dias(perfil, tz) {
+  const hoyLocal = diaLocalStr(tz);
+  const cacheKey = cacheHash('transitos-v3', birthDataDesdePerfil(perfil), hoyLocal);
+  const cached = cacheGet(cacheKey);
+  if (cached) return cached;
+  const llaveTransitos = cacheHash('transitos-7dias-v1', birthDataDesdePerfil(perfil), hoyLocal);
+  const persistidos = await persistenteGet(llaveTransitos);
+  if (persistidos) { cacheSet(cacheKey, persistidos, TTL.TRANSITOS_PERSONALES); return persistidos; }
+
+  const [anioL, mesL, diaL] = hoyLocal.split('-').map(Number);
+  const hoy = new Date(Date.UTC(anioL, mesL - 1, diaL));
+  const desde5dias = new Date(hoy.getTime() - 5 * 24 * 60 * 60 * 1000);
+  const en7dias = new Date(hoy.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+  const respuesta = await astrologyApi.post('/analysis/natal-transit-report', {
+    subject: birthDataDesdePerfil(perfil),
+    transit_time: {
+      date_range: {
+        start_date: { year: desde5dias.getUTCFullYear(), month: desde5dias.getUTCMonth() + 1, day: desde5dias.getUTCDate() },
+        end_date: { year: en7dias.getUTCFullYear(), month: en7dias.getUTCMonth() + 1, day: en7dias.getUTCDate() },
+      },
+    },
+    orb: 5,
+    options: {
+      active_points: ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Pluto', 'Neptune', 'Uranus'],
+      fixed_stars: { language: 'es' },
+    },
+    report_options: { tradition: 'psychological', language: 'es' },
+  });
+
+  // Ordenar cronológicamente y quedarnos solo con hoy en adelante (los 7 próximos días)
+  const eventosCrudos = respuesta.data?.data?.events || respuesta.data?.events || [];
+  const obtenerFecha = (ev) => ev.date_local || ev.date || ev.exact_date || ev.transit_date || null;
+  const hoyStr = hoy.toISOString().slice(0, 10);
+  const en7diasStr = en7dias.toISOString().slice(0, 10);
+  const eventosOrdenados = eventosCrudos
+    .filter(ev => {
+      const f = obtenerFecha(ev);
+      return f && f.slice(0, 10) >= hoyStr && f.slice(0, 10) <= en7diasStr;
+    })
+    .sort((a, b) => {
+      const fa = obtenerFecha(a), fb = obtenerFecha(b);
+      if (!fa || !fb) return 0;
+      return new Date(fa) - new Date(fb);
+    });
+
+  const datosLimpios = { ...respuesta.data };
+  if (datosLimpios?.data?.events) datosLimpios.data.events = eventosOrdenados;
+  else if (datosLimpios?.events) datosLimpios.events = eventosOrdenados;
+
+  const respuestaTransitos = { transitos: datosLimpios };
+  await traducirInterpretacionesEnObjeto(respuestaTransitos);
+  cacheSet(cacheKey, respuestaTransitos, TTL.TRANSITOS_PERSONALES);
+  await persistenteSet(llaveTransitos, respuestaTransitos);
+  return respuestaTransitos;
+}
+
 app.post('/transitos-personales', requireLogin, async (req, res) => {
   try {
     const perfil = await leerPerfil(req);
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
-
-    // Ventana de 7 días desde el día local de la persona (no UTC).
-    const tzTransitos = zonaHorariaDesdeReq(req);
-    const hoyLocal = diaLocalStr(tzTransitos);
-    const cacheKey = cacheHash(req.userId, 'transitos-v3', hoyLocal);
-    const cached = cacheGet(cacheKey);
-    if (cached) return res.json(cached);
-    const llaveTransitos = cacheHash('transitos-7dias-v1', birthDataDesdePerfil(perfil), hoyLocal);
-    const persistidosTransitos = await persistenteGet(llaveTransitos);
-    if (persistidosTransitos) { cacheSet(cacheKey, persistidosTransitos, TTL.TRANSITOS_PERSONALES); return res.json(persistidosTransitos); }
-
-    const [anioL, mesL, diaL] = hoyLocal.split('-').map(Number);
-    const hoy = new Date(Date.UTC(anioL, mesL - 1, diaL));
-    const desde5dias = new Date(hoy.getTime() - 5 * 24 * 60 * 60 * 1000);
-    const en7dias = new Date(hoy.getTime() + 7 * 24 * 60 * 60 * 1000);
-
-    const respuesta = await astrologyApi.post('/analysis/natal-transit-report', {
-      subject: birthDataDesdePerfil(perfil),
-      transit_time: {
-        date_range: {
-          start_date: { year: desde5dias.getUTCFullYear(), month: desde5dias.getUTCMonth() + 1, day: desde5dias.getUTCDate() },
-          end_date: { year: en7dias.getUTCFullYear(), month: en7dias.getUTCMonth() + 1, day: en7dias.getUTCDate() },
-        },
-      },
-      orb: 5,
-      options: {
-        active_points: ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Pluto', 'Neptune', 'Uranus'],
-        fixed_stars: { language: 'es' },
-      },
-      report_options: { tradition: 'psychological', language: 'es' },
-    });
-
-    // Ordenar cronológicamente y quedarnos solo con hoy en adelante (los 7 próximos días)
-    const eventosCrudos = respuesta.data?.data?.events || respuesta.data?.events || [];
-    const obtenerFecha = (ev) => ev.date_local || ev.date || ev.exact_date || ev.transit_date || null;
-    const hoyStr = hoy.toISOString().slice(0, 10);
-    const en7diasStr = en7dias.toISOString().slice(0, 10);
-    const eventosOrdenados = eventosCrudos
-      .filter(ev => {
-        const f = obtenerFecha(ev);
-        return f && f.slice(0, 10) >= hoyStr && f.slice(0, 10) <= en7diasStr;
-      })
-      .sort((a, b) => {
-        const fa = obtenerFecha(a), fb = obtenerFecha(b);
-        if (!fa || !fb) return 0;
-        return new Date(fa) - new Date(fb);
-      });
-
-    // Inyectar los eventos ordenados de vuelta en la respuesta
-    const datosLimpios = { ...respuesta.data };
-    if (datosLimpios?.data?.events) datosLimpios.data.events = eventosOrdenados;
-    else if (datosLimpios?.events) datosLimpios.events = eventosOrdenados;
-
-    const respuestaTransitos = { transitos: datosLimpios };
-    await traducirInterpretacionesEnObjeto(respuestaTransitos);
-    cacheSet(cacheKey, respuestaTransitos, TTL.TRANSITOS_PERSONALES);
-    await persistenteSet(llaveTransitos, respuestaTransitos);
+    const respuestaTransitos = await obtenerTransitos7Dias(perfil, zonaHorariaDesdeReq(req));
     res.json(respuestaTransitos);
   } catch (err) {
     console.error(err?.response?.data || err.message);
