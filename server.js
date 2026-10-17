@@ -732,8 +732,22 @@ app.get('/buscar-ciudad', async (req, res) => {
 // ============================================================
 // RUTA: Guardar/actualizar el perfil (ciudad + país)
 // ============================================================
+// Actualiza solo el nombre completo (opcional). Vacío = se borra. No toca datos natales.
+app.post('/perfil/nombre-completo', requireLogin, async (req, res) => {
+  try {
+    const limpio = String(req.body?.nombre_completo || '').trim().slice(0, 120) || null;
+    const { error } = await req.supabase.from('profiles').update({ nombre_completo: limpio }).eq('id', req.userId);
+    if (error) return res.status(400).json({ error: error.message });
+    cacheBorrar(cacheHash('perfil', req.userId));
+    cacheBorrar(cacheHash(req.userId, 'numerologia', 'propia', hoyStr()));
+    res.json({ ok: true, nombre_completo_guardado: !!limpio });
+  } catch (err) {
+    res.status(500).json({ error: 'No se pudo quitar el nombre completo.' });
+  }
+});
+
 app.post('/perfil', requireLogin, async (req, res) => {
-  const { nombre, fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo, latitud, longitud } = req.body;
+  const { nombre, fecha_nacimiento, hora_nacimiento, ciudad_nacimiento, pais_codigo, latitud, longitud, nombre_completo } = req.body;
 
   // Leemos el perfil anterior antes de guardar. Así distinguimos una edición del nombre
   // de un cambio real en los datos natales y no borramos/recalculamos la carta sin necesidad.
@@ -751,6 +765,11 @@ app.post('/perfil', requireLogin, async (req, res) => {
     ciudad_nacimiento,
     pais_codigo,
   };
+  // Nombre completo de nacimiento: opcional. Solo sirve para la numerología basada en nombre.
+  if (nombre_completo !== undefined) {
+    const limpio = String(nombre_completo || '').trim().slice(0, 120);
+    datosAGuardar.nombre_completo = limpio || null;
+  }
   // Solo actualizamos coordenadas si vienen (evita borrar unas ya guardadas al editar solo el nombre, por ejemplo)
   if (typeof latitud === 'number' && !isNaN(latitud)) datosAGuardar.latitud = latitud;
   if (typeof longitud === 'number' && !isNaN(longitud)) datosAGuardar.longitud = longitud;
@@ -764,6 +783,7 @@ app.post('/perfil', requireLogin, async (req, res) => {
   if (error) return res.status(400).json({ error: error.message });
 
   cacheBorrar(cacheHash('perfil', req.userId));
+  cacheBorrar(cacheHash(req.userId, 'numerologia', 'propia', hoyStr()));
 
   const normalizarNumero = v => (v === null || v === undefined || v === '' ? null : Number(v));
   const cambioNatal = !perfilAnterior || [
@@ -2240,8 +2260,22 @@ app.post('/numerologia', requireLogin, async (req, res) => {
       language: 'es',
     });
 
+    // Sin nombre completo de nacimiento, los números que salen del nombre serían incorrectos:
+    // se ocultan y solo se muestran los que dependen de la fecha.
+    const NUMEROS_POR_NOMBRE = ['destiny', 'expression', 'soul_urge', 'personality', 'maturity', 'subconscious_self', 'hidden_passion', 'karmic_lessons', 'balance', 'rational_thought'];
+    // Las cartas de otras personas no tienen nombre completo guardado: se tratan igual.
+    let nombreCompletoGuardado = false;
+    if (!otraCartaId) {
+      const perfilNum = await leerPerfil(req);
+      nombreCompletoGuardado = !!(perfilNum && perfilNum.nombre_completo);
+    }
+    if (!nombreCompletoGuardado && respuesta.data?.data?.pythagorean) {
+      const pit = respuesta.data.data.pythagorean;
+      for (const k of NUMEROS_POR_NOMBRE) delete pit[k];
+    }
+
     await traducirInterpretacionesEnObjeto(respuesta.data);
-    const r = { numerologia: respuesta.data };
+    const r = { numerologia: respuesta.data, nombre_completo_guardado: nombreCompletoGuardado };
     cacheSet(cacheKey, r, TTL.NUMEROLOGIA);
     res.json(r);
   } catch (err) {
