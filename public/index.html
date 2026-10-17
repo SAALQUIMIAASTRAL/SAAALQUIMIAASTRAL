@@ -5856,6 +5856,13 @@
   function mostrarPantalla(nombre) {
     document.querySelectorAll('.auth-overlay').forEach(el => el.classList.remove('show'));
     if (nombre) document.getElementById('pantalla-' + nombre).classList.add('show');
+    // Al abrir el inicio de sesión, rellena el correo guardado en este dispositivo (la contraseña la guarda el teléfono).
+    if (nombre === 'login') {
+      try {
+        const campo = document.getElementById('login-email');
+        if (campo && !campo.value) campo.value = localStorage.getItem('saa_email') || '';
+      } catch (e) {}
+    }
   }
 
   // Lee la respuesta como JSON de forma segura. Si el servidor devolvió HTML por error
@@ -6134,7 +6141,6 @@
     cancelarRecordatorioDiario().catch(() => {});
     localStorage.removeItem('saa_token');
     localStorage.removeItem('saa_refresh');
-    localStorage.removeItem('saa_email');
     SESION = { token: null, nombre: null };
     mostrarPantalla('login');
   }
