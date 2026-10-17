@@ -6432,7 +6432,8 @@
       // Precarga la esfera lunar con los datos reales
       if (data.luna) {
         // Calcular fase correcta basada en iluminación
-        const faseCorrecta = calcularFaseLunar(data.luna.iluminacion);
+        // Usa la fase real que manda el servidor; el porcentaje solo sirve de respaldo.
+        const faseCorrecta = data.luna.fase || calcularFaseLunar(data.luna.iluminacion);
 
         const moonNowTitle = document.getElementById('moon-now-title');
         const moonNowSub = document.getElementById('moon-now-sub');
