@@ -643,20 +643,55 @@ async function obtenerCieloGlobalActual() {
 // ============================================================
 // Middleware: verifica que la usuaria haya iniciado sesión
 // ============================================================
+// Caché breve de verificación de sesión: evita preguntar a Supabase Auth en CADA toque de pantalla.
+// Se guarda por token (hasheado, nunca el token en claro) durante 45s. Una sesión cerrada o expulsada
+// se deja de aceptar en 45s como máximo; el login, el correo y el uso entre dispositivos no cambian.
+const sesionesVerificadas = new Map(); // hashToken -> { userId, email, expira }
+const TTL_SESION = 45 * 1000;
+const MAX_SESIONES = 5000;
+function sesionCacheGet(hash) {
+  const it = sesionesVerificadas.get(hash);
+  if (!it) return null;
+  if (Date.now() >= it.expira) { sesionesVerificadas.delete(hash); return null; }
+  return it;
+}
+function sesionCacheSet(hash, userId, email) {
+  if (sesionesVerificadas.size >= MAX_SESIONES) {
+    for (const [k, v] of sesionesVerificadas) { if (Date.now() >= v.expira) sesionesVerificadas.delete(k); }
+    if (sesionesVerificadas.size >= MAX_SESIONES) sesionesVerificadas.delete(sesionesVerificadas.keys().next().value);
+  }
+  sesionesVerificadas.set(hash, { userId, email, expira: Date.now() + TTL_SESION });
+}
+function clienteSupabaseDeUsuaria(token) {
+  return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  });
+}
+
 async function requireLogin(req, res, next) {
   res.set('Cache-Control', 'no-store');
   const coincidencia = /^Bearer\s+(\S+)$/i.exec(req.headers.authorization || '');
   if (!coincidencia) return res.status(401).json({ error: 'No iniciaste sesión.' });
   const token = coincidencia[1];
+  const hashToken = cacheHash('sesion-v1', token);
+
+  // Si verificamos este mismo token hace menos de 45s, no volvemos a preguntarle a Supabase.
+  const enCache = sesionCacheGet(hashToken);
+  if (enCache) {
+    req.userId = enCache.userId;
+    req.userEmail = enCache.email;
+    req.supabase = clienteSupabaseDeUsuaria(token);
+    return next();
+  }
+
   try {
     const { data, error } = await supabase.auth.getUser(token);
     if (error || !data?.user) return res.status(401).json({ error: 'Sesión inválida o expirada.' });
     req.userId = data.user.id;
     req.userEmail = data.user.email;
-    req.supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-    });
+    sesionCacheSet(hashToken, data.user.id, data.user.email);
+    req.supabase = clienteSupabaseDeUsuaria(token);
     next();
   } catch (_) {
     return res.status(503).json({ error: 'No pudimos comprobar tu sesión. Inténtalo de nuevo.' });
