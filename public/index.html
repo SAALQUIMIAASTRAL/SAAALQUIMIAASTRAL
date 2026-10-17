@@ -4428,6 +4428,14 @@
     document.querySelectorAll('#diario-animo-btns button').forEach(b => b.style.background = 'var(--marigold-soft)');
     btn.style.background = 'var(--marigold-mid)';
     document.getElementById('diario-animo-val').value = valor;
+    // Además de guardar el estado, lo escribe en el texto (sin emoji) para que se vea en la entrada.
+    const palabra = valor.replace(/^\S+\s*/, '').trim();
+    const area = document.getElementById('diario-texto');
+    if (area && palabra) {
+      const actual = area.value.trimEnd();
+      area.value = (actual ? actual + ' ' : '') + `Hoy me siento ${palabra.toLowerCase()}.`;
+      area.focus();
+    }
   }
 
   async function guardarDiario() {
