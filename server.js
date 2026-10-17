@@ -2038,6 +2038,11 @@ app.post('/mes-astrologico', requireLogin, rutaSinDuplicados('/mes-astrologico',
       return consultaUnica(personalKey, async () => {
       const guardado = cacheGet(personalKey);
       if (guardado && !refrescar) return guardado;
+      const llaveMes = cacheHash('transitos-mensuales-v3', anio, mes, birthDataDesdePerfil(perfil));
+      if (!refrescar) {
+        const persistidoMes = await persistenteGet(llaveMes);
+        if (Array.isArray(persistidoMes) && persistidoMes.length) { cacheSet(personalKey, persistidoMes, TTL.CALENDARIO_LUNAR); return persistidoMes; }
+      }
       const r = await astrologyApi.post('/analysis/natal-transit-report', {
         subject:birthDataDesdePerfil(perfil),
         transit_time:{ date_range:{ start_date:{year:anio,month:mes,day:1},end_date:{year:anio,month:mes,day:dias} } },
@@ -2046,6 +2051,7 @@ app.post('/mes-astrologico', requireLogin, rutaSinDuplicados('/mes-astrologico',
       const eventos = r.data?.data?.events || r.data?.events;
       if (!Array.isArray(eventos)) throw new Error('La consulta personal no incluyó su lista de tránsitos.');
       cacheSet(personalKey,eventos,TTL.CALENDARIO_LUNAR);
+      await persistenteSet(llaveMes, eventos);
       return eventos;
       });
     }
@@ -2455,6 +2461,9 @@ app.post('/horoscopo-diario', requireLogin, async (req, res) => {
     const cacheKey = cacheHash(req.userId, 'horoscopo', hoyStr());
     const cached = cacheGet(cacheKey);
     if (cached) return res.json(cached);
+    const llaveHoroscopo = cacheHash('horoscopo-diario-v1', hoyStr(), birthDataDesdePerfil(perfil));
+    const persistidoHoroscopo = await persistenteGet(llaveHoroscopo);
+    if (persistidoHoroscopo) { cacheSet(cacheKey, persistidoHoroscopo, TTL.HOROSCOPO); return res.json(persistidoHoroscopo); }
 
     const respuesta = await astrologyApi.post('/horoscope/personal/daily/text', {
       subject: birthDataDesdePerfil(perfil),
@@ -2464,6 +2473,7 @@ app.post('/horoscopo-diario', requireLogin, async (req, res) => {
     const respuestaHoroscopo = { horoscopo: respuesta.data };
     await traducirInterpretacionesEnObjeto(respuestaHoroscopo);
     cacheSet(cacheKey, respuestaHoroscopo, TTL.HOROSCOPO);
+    await persistenteSet(llaveHoroscopo, respuestaHoroscopo);
     res.json(respuestaHoroscopo);
   } catch (err) {
     console.error(err?.response?.data || err.message);
