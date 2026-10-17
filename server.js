@@ -222,6 +222,12 @@ function partesEnZona(tz, instante = new Date()) {
   }
 }
 
+// Día local de la persona en formato YYYY-MM-DD (cambia a medianoche en su zona horaria).
+function diaLocalStr(tz) {
+  const p = partesEnZona(tz);
+  return `${p.year}-${String(p.month).padStart(2, '0')}-${String(p.day).padStart(2, '0')}`;
+}
+
 function fechaLocalMexico(tz) {
   const p = partesEnZona(tz);
   return `${String(p.year).padStart(4,'0')}-${String(p.month).padStart(2,'0')}-${String(p.day).padStart(2,'0')}`;
@@ -2420,22 +2426,27 @@ app.post('/energia-del-dia', requireLogin, async (req, res) => {
     const perfil = await leerPerfil(req);
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
-    const hoy = new Date();
-    const cacheKey = cacheHash(req.userId, 'energia', hoyStr());
+    const tzEnergia = zonaHorariaDesdeReq(req);
+    const hoy = partesEnZona(tzEnergia);
+    const diaEnergia = diaLocalStr(tzEnergia);
+    const cacheKey = cacheHash(req.userId, 'energia', diaEnergia);
     const cached = cacheGet(cacheKey);
     if (cached) return res.json(cached);
+    const llaveEnergia = cacheHash('energia-dia-v2', birthDataDesdePerfil(perfil), diaEnergia);
+    const persistidaEnergia = await persistenteGet(llaveEnergia);
+    if (persistidaEnergia) { cacheSet(cacheKey, persistidaEnergia, TTL.ENERGIA_DIA); return res.json(persistidaEnergia); }
 
     const [ciclos, luna] = await Promise.all([
       astrologyApi.post('/numerology/personal-cycles', {
         subject: birthDataDesdePerfil(perfil),
-        target_date: { year: hoy.getUTCFullYear(), month: hoy.getUTCMonth() + 1, day: hoy.getUTCDate() },
+        target_date: { year: hoy.year, month: hoy.month, day: hoy.day },
         language: 'es',
         include: ['personal_day', 'personal_month', 'personal_year'],
       }).catch(err => ({ error: err?.response?.data || err.message })),
       astrologyApi.post('/analysis/lunar-analysis', {
         datetime_location: {
-          year: hoy.getUTCFullYear(), month: hoy.getUTCMonth() + 1, day: hoy.getUTCDate(),
-          hour: hoy.getUTCHours(), minute: hoy.getUTCMinutes(), second: 0,
+          year: hoy.year, month: hoy.month, day: hoy.day,
+          hour: hoy.hour, minute: hoy.minute, second: 0,
           city: perfil.ciudad_nacimiento || 'Mexico City', country_code: perfil.pais_codigo || 'MX',
         },
         report_options: { language: 'es' },
@@ -2445,6 +2456,7 @@ app.post('/energia-del-dia', requireLogin, async (req, res) => {
     const respuestaEnergia = { ciclos: ciclos.data || ciclos, luna: luna.data || luna };
     await traducirInterpretacionesEnObjeto(respuestaEnergia);
     cacheSet(cacheKey, respuestaEnergia, TTL.ENERGIA_DIA);
+    await persistenteSet(llaveEnergia, respuestaEnergia);
     res.json(respuestaEnergia);
   } catch (err) {
     console.error(err?.response?.data || err.message);
@@ -2457,11 +2469,12 @@ app.post('/horoscopo-diario', requireLogin, async (req, res) => {
     const perfil = await leerPerfil(req);
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
-    const hoy = new Date().toISOString().slice(0, 10);
-    const cacheKey = cacheHash(req.userId, 'horoscopo', hoyStr());
+    const tzHoroscopo = zonaHorariaDesdeReq(req);
+    const diaHoroscopo = diaLocalStr(tzHoroscopo);
+    const cacheKey = cacheHash(req.userId, 'horoscopo', diaHoroscopo);
     const cached = cacheGet(cacheKey);
     if (cached) return res.json(cached);
-    const llaveHoroscopo = cacheHash('horoscopo-diario-v1', hoyStr(), birthDataDesdePerfil(perfil));
+    const llaveHoroscopo = cacheHash('horoscopo-diario-v2', diaHoroscopo, birthDataDesdePerfil(perfil));
     const persistidoHoroscopo = await persistenteGet(llaveHoroscopo);
     if (persistidoHoroscopo) { cacheSet(cacheKey, persistidoHoroscopo, TTL.HOROSCOPO); return res.json(persistidoHoroscopo); }
 
