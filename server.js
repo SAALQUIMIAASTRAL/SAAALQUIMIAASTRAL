@@ -2018,16 +2018,23 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
 
     // 1) EFEMÉRIDES LUNARES GLOBALES DEL MES
     // No dependen de la carta natal: una sola serie mensual sirve a todos los usuarios.
-    const cacheLunaMesKey = cacheHash('calendario-lunar-global-v2', `${anio}-${mes}`);
+    // La clave incluye el día UTC actual para que "hoy" se recalcule con la hora real
+    // (igual que el encabezado), no con una hora fija del mediodía.
+    const ahoraUTC = new Date();
+    const cacheLunaMesKey = cacheHash('calendario-lunar-global-v3', `${anio}-${mes}-${ahoraUTC.toISOString().slice(0, 10)}`);
     let resultados = cacheGet(cacheLunaMesKey);
 
     if (!resultados) {
       const dias = Array.from({ length: diasEnMes }, (_, i) => i + 1);
       resultados = await Promise.all(dias.map(async (dia) => {
+        const esHoy = anio === ahoraUTC.getUTCFullYear() && mes === ahoraUTC.getUTCMonth() + 1 && dia === ahoraUTC.getUTCDate();
         try {
           const r = await astrologyApi.post('/analysis/lunar-analysis', {
             datetime_location: {
-              year: anio, month: mes, day: dia, hour: 12, minute: 0, second: 0,
+              year: anio, month: mes, day: dia,
+              hour: esHoy ? ahoraUTC.getUTCHours() : 12,
+              minute: esHoy ? ahoraUTC.getUTCMinutes() : 0,
+              second: esHoy ? ahoraUTC.getUTCSeconds() : 0,
               city: 'Greenwich', country_code: 'GB',
             },
             report_options: { language: 'es' },
