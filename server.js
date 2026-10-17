@@ -280,6 +280,15 @@ function normalizarEspanolMX(texto) {
     .replace(/\bmóvil\b/gi, 'celular');
 }
 
+// Palabras que existen en inglés y no en español. Si una traducción trae alguna,
+// se considera que quedó mezclada y se reintenta.
+const PALABRAS_INGLES = /\b(the|and|with|that|which|this|your|you|from|into|can|may|will|their|they|are|is|of|to|for|be|it)\b/gi;
+function pareceIngles(texto) {
+  if (typeof texto !== 'string') return false;
+  const coincidencias = texto.match(PALABRAS_INGLES) || [];
+  return coincidencias.length >= 1;
+}
+
 // Si la IA devuelve un número distinto de textos (o JSON roto), en vez de dejar el bloque
 // en inglés o mezclado, partimos la lista a la mitad y reintentamos cada mitad por separado.
 // Solo si un texto suelto falla se reporta el error (y no se guarda en caché).
@@ -330,7 +339,7 @@ async function traducirBloqueSinCache(lista, intento = 0) {
       console.error('traducirBloque: no se pudo parsear. Texto crudo:', texto.slice(0, 800));
       return await partirYReintentar(lista, `No se pudo parsear como JSON. Texto crudo: ${texto.slice(0, 500)}`, intento);
     }
-    if (!Array.isArray(traducidos) || traducidos.length !== lista.length || traducidos.some(t => typeof t !== 'string' || !t.trim())) {
+    if (!Array.isArray(traducidos) || traducidos.length !== lista.length || traducidos.some(t => typeof t !== 'string' || !t.trim() || pareceIngles(t))) {
       console.error('traducirBloque: tamaño no coincide. Esperado', lista.length, 'recibido', Array.isArray(traducidos) ? traducidos.length : typeof traducidos);
       return await partirYReintentar(lista, `Array no coincide en tamaño. Esperado ${lista.length}, recibido ${Array.isArray(traducidos) ? traducidos.length : typeof traducidos}`, intento);
     }
@@ -344,7 +353,7 @@ async function traducirBloqueSinCache(lista, intento = 0) {
 // Traduce una lista completa dividiéndola en bloques de 25 (respuestas grandes como
 // sinastría pueden traer 60+ textos, y un solo bloque gigante es más frágil/lento)
 async function traducirBloque(lista) {
-  const clave = claveAhorro('traduccion-es-MX-v2', lista);
+  const clave = claveAhorro('traduccion-es-MX-v3', lista);
   return consultaUnica(clave, async () => {
     const guardado = cacheGet(clave);
     if (guardado !== null) return { textos:[...guardado] };
