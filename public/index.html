@@ -2122,6 +2122,7 @@
       <div id="editar-datos-form" style="display:none;">
         <div class="auth-error" id="editar-datos-error"></div>
         <div class="auth-field"><label>Nombre</label><input type="text" id="editar-nombre" placeholder="Tu nombre"></div>
+        <div class="auth-field"><label>Nombre completo, como en tu acta (opcional)</label><input type="text" id="editar-nombre-completo" placeholder="Opcional" autocomplete="off"><div style="font-size:11.5px;color:var(--ink-dim);margin-top:4px;line-height:1.4;">Lo usamos solo para calcular tus números del nombre (alma, personalidad y expresión). Con un apodo el resultado sería incorrecto. Nadie más lo ve. Para quitarlo, borra el texto y guarda.</div></div>
         <div class="auth-field"><label>Fecha de nacimiento</label><input type="date" id="editar-fecha"></div>
         <div class="auth-field"><label>Hora de nacimiento</label><input type="time" id="editar-hora"><div style="font-size:11px;color:var(--ink-dim);margin-top:3px;">Si no la sabes, pon 12:00</div></div>
         <div class="auth-field" style="position:relative;"><label>Ciudad de nacimiento</label>
@@ -5764,6 +5765,7 @@
       const fechaLegible = p.fecha_nacimiento ? new Date(p.fecha_nacimiento + 'T00:00:00').toLocaleDateString('es-MX', { day:'numeric', month:'long', year:'numeric' }) : '—';
       resumen.innerHTML = `
         <div><b>Nombre:</b> ${escaparTextoMes(p.nombre || '—')}</div>
+        <div><b>Nombre completo:</b> ${p.nombre_completo ? escaparTextoMes(iniciales(p.nombre_completo)) + ' <span style="color:var(--ink-dim);font-size:11px;">(oculto)</span>' : '<span style="color:var(--ink-dim);">No agregado</span>'}</div>
         <div><b>Fecha:</b> ${fechaLegible}</div>
         <div><b>Hora:</b> ${(p.hora_nacimiento || '12:00').slice(0,5)}</div>
         <div><b>Ciudad:</b> ${escaparTextoMes(p.ciudad_nacimiento || '—')}${p.latitud ? ' <span style="color:var(--armonia);font-size:11px;">✓ ubicación exacta</span>' : ''}</div>
@@ -5774,9 +5776,15 @@
     }
   }
 
+  // Muestra solo iniciales del nombre completo (ej. "Samantha Jossely Hernandez Rivas" -> "S. J. H. R.")
+  function iniciales(texto) {
+    return String(texto).trim().split(/\s+/).filter(Boolean).map(w => w[0].toUpperCase() + '.').join(' ');
+  }
+
   function activarEdicionDatos() {
     const p = _datosNacimientoActuales || {};
     document.getElementById('editar-nombre').value = p.nombre || '';
+    document.getElementById('editar-nombre-completo').value = p.nombre_completo || '';
     document.getElementById('editar-fecha').value = p.fecha_nacimiento || '';
     document.getElementById('editar-hora').value = (p.hora_nacimiento || '12:00').slice(0, 5);
     document.getElementById('editar-ciudad').value = p.ciudad_nacimiento || '';
@@ -5806,6 +5814,7 @@
       hora_nacimiento: document.getElementById('editar-hora').value || '12:00',
       ciudad_nacimiento: document.getElementById('editar-ciudad').value.trim(),
       pais_codigo: document.getElementById('editar-pais').value.trim().toUpperCase(),
+      nombre_completo: document.getElementById('editar-nombre-completo').value.trim(),
     };
     const latVal = parseFloat(document.getElementById('editar-lat').value);
     const lngVal = parseFloat(document.getElementById('editar-lng').value);
