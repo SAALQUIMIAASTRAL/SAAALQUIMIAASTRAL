@@ -354,16 +354,22 @@ async function traducirBloqueSinCache(lista, intento = 0) {
 // sinastría pueden traer 60+ textos, y un solo bloque gigante es más frágil/lento)
 // Caché persistente (Supabase): para cálculos que no cambian salvo que cambien los datos de la persona
 // (numerología, traducciones de textos fijos). Sobrevive a deploys y reinicios.
+// Formato: datos = { version: 2, valor }. Sin expiración: se borra solo si cambian los datos de la persona (la llave incluye esos datos).
 async function persistenteGet(llave) {
   try {
-    const { data } = await supabase.from('cache_persistente').select('valor').eq('clave', llave).maybeSingle();
-    return data?.valor ?? null;
+    const { data, error } = await supabase.from('cache_persistente').select('datos').eq('clave', llave).maybeSingle();
+    if (error || data?.datos?.version !== 2) return null;
+    return data.datos.valor ?? null;
   } catch (_) { return null; }
 }
 async function persistenteSet(llave, valor) {
   try {
-    await supabase.from('cache_persistente').upsert({ clave: llave, valor, actualizado: new Date().toISOString() });
-  } catch (_) { /* si falla, simplemente se recalcula la próxima vez */ }
+    const { error } = await supabase.from('cache_persistente').upsert(
+      { clave: llave, datos: { version: 2, valor }, updated_at: new Date().toISOString() },
+      { onConflict: 'clave' }
+    );
+    if (error) console.warn('No se pudo guardar caché persistente:', error.code || 'error');
+  } catch (_) { console.warn('No se pudo guardar caché persistente.'); }
 }
 
 async function traducirBloque(lista) {
@@ -1322,14 +1328,6 @@ app.post('/astrocartografia', requireLogin, async (req, res) => {
     const cached = cacheGet(cacheKey);
     if (cached) return res.json(cached);
     
-    // Luego caché persistente en Supabase
-    const { data: cachedPers } = await supabase.from('cache_persistente')
-      .select('valor').eq('clave', cacheKey).maybeSingle();
-    if (cachedPers?.valor) {
-      const parsed = JSON.parse(cachedPers.valor);
-      cacheSet(cacheKey, parsed, 30 * 24 * 60 * 60 * 1000);
-      return res.json(parsed);
-    }
 
     let datosSubject;
     if (otraCartaId) {
@@ -1340,6 +1338,13 @@ app.post('/astrocartografia', requireLogin, async (req, res) => {
       const perfil = await leerPerfil(req);
       if (!perfil) return res.status(400).json({ error: 'Primero guarda tu fecha y lugar de nacimiento en tu perfil.' });
       datosSubject = birthDataDesdePerfil(perfil);
+    }
+
+    const llavePersistente = cacheHash('acg-v2', datosSubject);
+    const persistidoACG = await persistenteGet(llavePersistente);
+    if (persistidoACG) {
+      cacheSet(cacheKey, persistidoACG, TTL.ASTROCARTOGRAFIA);
+      return res.json(persistidoACG);
     }
 
     const [respuesta, analisisLugares] = await Promise.all([
@@ -1372,7 +1377,7 @@ app.post('/astrocartografia', requireLogin, async (req, res) => {
     await traducirInterpretacionesEnObjeto(respuestaACG);
     cacheSet(cacheKey, respuestaACG, TTL.ASTROCARTOGRAFIA);
     // Guardar en Supabase para sobrevivir reinicios de Render
-    supabase.from('cache_persistente').upsert({ clave: cacheKey, valor: JSON.stringify(respuestaACG) }).then(() => {}).catch(() => {});
+    await persistenteSet(llavePersistente, respuestaACG);
     res.json(respuestaACG);
   } catch (err) {
     console.error(err?.response?.data || err.message);
@@ -2264,8 +2269,14 @@ app.post('/relocacion', requireLogin, async (req, res) => {
     const { ciudad, pais_codigo } = req.body;
     if (!ciudad || !pais_codigo) return res.status(400).json({ error: 'Falta la ciudad donde vives ahora.' });
 
+    // Relocación depende de los datos de nacimiento y de la ciudad: se guarda por esa combinación.
+    const datosSubjectReloc = birthDataDesdePerfil(perfil);
+    const llaveReloc = cacheHash('relocacion-v1', datosSubjectReloc, ciudad, pais_codigo);
+    const persistidaReloc = await persistenteGet(llaveReloc);
+    if (persistidaReloc) return res.json(persistidaReloc);
+
     const respuesta = await astrologyApi.post('/analysis/relocation', {
-      subject: birthDataDesdePerfil(perfil),
+      subject: datosSubjectReloc,
       options: {
         target_location: { city: ciudad, country_code: pais_codigo },
       },
@@ -2275,7 +2286,9 @@ app.post('/relocacion', requireLogin, async (req, res) => {
     const { textos: traducidos, debug: traduccionDebug } = await traducirTextosConIA(factores.map(f => f.interpretation || f.factor || ''));
     factores.forEach((f, i) => { if (traducidos[i]) f.interpretation = traducidos[i]; });
 
-    res.json({ relocacion: respuesta.data, traduccion_debug: traduccionDebug });
+    const respuestaReloc = { relocacion: respuesta.data, traduccion_debug: traduccionDebug };
+    if (!traduccionDebug) await persistenteSet(llaveReloc, respuestaReloc);
+    res.json(respuestaReloc);
   } catch (err) {
     console.error(err?.response?.data || err.message);
     res.status(500).json({ error: 'No se pudo calcular la relocación.', detalle_tecnico: err?.response?.data || err.message });
@@ -2359,6 +2372,13 @@ app.post('/estrellas-fijas', requireLogin, async (req, res) => {
       datosSubject = birthDataDesdePerfil(perfil);
     }
 
+    const llavePersistente = cacheHash('estrellas-v1', datosSubject);
+    const persistidoEstrellas = await persistenteGet(llavePersistente);
+    if (persistidoEstrellas) {
+      cacheSet(cacheKey, persistidoEstrellas, TTL.ESTRELLAS);
+      return res.json(persistidoEstrellas);
+    }
+
     const respuesta = await astrologyApi.post('/fixed-stars/report', {
       subject: datosSubject,
       language: 'es',
@@ -2380,6 +2400,7 @@ app.post('/estrellas-fijas', requireLogin, async (req, res) => {
 
     const r = { estrellas: respuesta.data, traduccion_debug: traduccionDebug };
     cacheSet(cacheKey, r, TTL.ESTRELLAS);
+    await persistenteSet(llavePersistente, r);
     res.json(r);
   } catch (err) {
     console.error(err?.response?.data || err.message);
