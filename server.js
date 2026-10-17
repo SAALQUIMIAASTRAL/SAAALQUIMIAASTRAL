@@ -352,14 +352,35 @@ async function traducirBloqueSinCache(lista, intento = 0) {
 
 // Traduce una lista completa dividiéndola en bloques de 25 (respuestas grandes como
 // sinastría pueden traer 60+ textos, y un solo bloque gigante es más frágil/lento)
+// Caché persistente (Supabase): para cálculos que no cambian salvo que cambien los datos de la persona
+// (numerología, traducciones de textos fijos). Sobrevive a deploys y reinicios.
+async function persistenteGet(llave) {
+  try {
+    const { data } = await supabase.from('cache_persistente').select('valor').eq('clave', llave).maybeSingle();
+    return data?.valor ?? null;
+  } catch (_) { return null; }
+}
+async function persistenteSet(llave, valor) {
+  try {
+    await supabase.from('cache_persistente').upsert({ clave: llave, valor, actualizado: new Date().toISOString() });
+  } catch (_) { /* si falla, simplemente se recalcula la próxima vez */ }
+}
+
 async function traducirBloque(lista) {
   const clave = claveAhorro('traduccion-es-MX-v3', lista);
+  const llavePersistente = cacheHash('traduccion-es-MX-v3', lista);
   return consultaUnica(clave, async () => {
     const guardado = cacheGet(clave);
     if (guardado !== null) return { textos:[...guardado] };
+    const persistido = await persistenteGet(llavePersistente);
+    if (Array.isArray(persistido) && persistido.length === lista.length) {
+      cacheSet(clave, persistido, 7 * 24 * 60 * 60 * 1000);
+      return { textos: [...persistido], debug: null };
+    }
     const resultado = await traducirBloqueSinCache(lista);
     if (!resultado.debug && Array.isArray(resultado.textos) && resultado.textos.length === lista.length) {
       cacheSet(clave, resultado.textos, 7 * 24 * 60 * 60 * 1000);
+      await persistenteSet(llavePersistente, resultado.textos);
     }
     return resultado;
   });
@@ -2277,7 +2298,16 @@ app.post('/numerologia', requireLogin, async (req, res) => {
     } else {
       const perfil = await leerPerfil(req);
       if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
-      datosSubject = birthDataDesdePerfil(perfil);
+      // Los números del nombre se calculan con el nombre completo de acta si existe (no con el apodo).
+      datosSubject = birthDataDesdePerfil(perfil, perfil.nombre_completo || perfil.nombre);
+    }
+
+    // La numerología solo depende de nombre y fecha: si no cambian, se reutiliza lo guardado.
+    const llavePersistente = cacheHash('numerologia-v1', datosSubject, otraCartaId ? 'otra' : 'propia');
+    const persistido = await persistenteGet(llavePersistente);
+    if (persistido) {
+      cacheSet(cacheKey, persistido, TTL.NUMEROLOGIA);
+      return res.json(persistido);
     }
 
     const respuesta = await astrologyApi.post('/numerology/core-numbers', {
@@ -2302,6 +2332,7 @@ app.post('/numerologia', requireLogin, async (req, res) => {
     await traducirInterpretacionesEnObjeto(respuesta.data);
     const r = { numerologia: respuesta.data, nombre_completo_guardado: nombreCompletoGuardado };
     cacheSet(cacheKey, r, TTL.NUMEROLOGIA);
+    await persistenteSet(llavePersistente, r);
     res.json(r);
   } catch (err) {
     console.error(err?.response?.data || err.message);
