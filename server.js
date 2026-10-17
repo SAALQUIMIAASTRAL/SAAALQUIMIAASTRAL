@@ -2436,7 +2436,7 @@ app.post('/energia-del-dia', requireLogin, async (req, res) => {
     const persistidaEnergia = await persistenteGet(llaveEnergia);
     if (persistidaEnergia) { cacheSet(cacheKey, persistidaEnergia, TTL.ENERGIA_DIA); return res.json(persistidaEnergia); }
 
-    const [ciclos, luna] = await Promise.all([
+    const [ciclos, luna, transitos] = await Promise.all([
       astrologyApi.post('/numerology/personal-cycles', {
         subject: birthDataDesdePerfil(perfil),
         target_date: { year: hoy.year, month: hoy.month, day: hoy.day },
@@ -2451,9 +2451,31 @@ app.post('/energia-del-dia', requireLogin, async (req, res) => {
         },
         report_options: { language: 'es' },
       }).catch(err => ({ error: err?.response?.data || err.message })),
+      // Tránsitos de HOY sobre la carta natal de esta persona (personalizado por suscriptora)
+      astrologyApi.post('/analysis/natal-transit-report', {
+        subject: birthDataDesdePerfil(perfil),
+        transit_time: {
+          date_range: {
+            start_date: { year: hoy.year, month: hoy.month, day: hoy.day },
+            end_date: { year: hoy.year, month: hoy.month, day: hoy.day },
+          },
+        },
+        orb: 3,
+        options: {
+          active_points: ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Pluto', 'Neptune', 'Uranus'],
+          fixed_stars: { language: 'es' },
+        },
+        report_options: { tradition: 'psychological', language: 'es' },
+      }).catch(err => ({ error: err?.response?.data || err.message })),
     ]);
 
-    const respuestaEnergia = { ciclos: ciclos.data || ciclos, luna: luna.data || luna };
+    const eventosTransitosHoy = (transitos.data?.data?.events || transitos.data?.events || [])
+      .filter(ev => String(ev.date_local || ev.date || ev.exact_date || ev.transit_date || '').slice(0, 10) === diaEnergia);
+    const respuestaEnergia = {
+      ciclos: ciclos.data || ciclos,
+      luna: luna.data || luna,
+      transitos_hoy: eventosTransitosHoy,
+    };
     await traducirInterpretacionesEnObjeto(respuestaEnergia);
     cacheSet(cacheKey, respuestaEnergia, TTL.ENERGIA_DIA);
     await persistenteSet(llaveEnergia, respuestaEnergia);
