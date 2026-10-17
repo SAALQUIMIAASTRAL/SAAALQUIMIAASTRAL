@@ -2027,7 +2027,8 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
         try {
           const r = await astrologyApi.post('/analysis/lunar-analysis', {
             datetime_location: {
-              year: anio, month: mes, day: dia, hour: 12, minute: 0, second: 0,
+              year: anio, month: mes, day: dia,
+              hour: 12, minute: 0, second: 0,
               city: 'Greenwich', country_code: 'GB',
             },
             report_options: { language: 'es' },
@@ -2045,6 +2046,22 @@ app.post('/calendario-lunar', requireLogin, async (req, res) => {
       }));
       // Un mes lunar pasado/futuro no cambia: 7 días en memoria reduce llamadas repetidas.
       cacheSet(cacheLunaMesKey, resultados, 7 * 24 * 60 * 60 * 1000);
+    }
+
+    // Hoy: la Luna real del momento, el mismo dato global que usa el encabezado
+    // (una sola consulta compartida, caché de 30 min). No depende del país del usuario.
+    if (anio === local.year && mes === local.month) {
+      const lunaAhora = await obtenerLunaGlobalActual().catch(() => null);
+      const mAhora = lunaAhora?.luna?.data?.lunar_metrics;
+      if (mAhora) {
+        resultados = resultados.slice();
+        resultados[local.day - 1] = {
+          dia: local.day,
+          signo: mAhora.moon_sign || null,
+          fase: faseLunarCoherente(mAhora.moon_phase || null, typeof mAhora.moon_illumination === 'number' ? mAhora.moon_illumination : null),
+          iluminacion: typeof mAhora.moon_illumination === 'number' ? Math.round(mAhora.moon_illumination) : null,
+        };
+      }
     }
 
     // 2) DATOS PERSONALES DEL MES
