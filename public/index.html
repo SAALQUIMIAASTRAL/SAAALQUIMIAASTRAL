@@ -216,6 +216,9 @@
   body.app-ios .topbar{min-height:48px;padding:0 12px;}
   body.app-ios .topbar .menu,
   body.app-ios .topbar .right{min-width:44px;min-height:44px;}
+  /* Botón de menú más grande y con margen: fácil de tocar en cualquier iPhone */
+  body.app-nativa.app-ios .topbar{min-height:56px;padding:0 16px;}
+  body.app-nativa.app-ios .topbar .menu{flex:0 0 48px;width:48px;height:48px;min-width:48px;min-height:48px;display:flex;align-items:center;justify-content:center;margin-left:-10px;}
   body.app-nativa.app-ios .bottomnav{padding:0;}
   body.app-nativa.app-ios .bottomnav .it{min-height:48px;padding:0 2px;gap:1px;}
   /* Android conserva sus insets del WebView y usa una barra compacta de 56 dp. */
