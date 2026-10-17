@@ -171,6 +171,7 @@ const TTL = {
   LUNA: 30 * 60 * 1000,                  // 30 min
   HOROSCOPO: 2 * 60 * 60 * 1000,         // 2 hrs (cambia poco en el día)
   ENERGIA_DIA: 60 * 60 * 1000,           // 1 hr
+  ENERGIA_DIA_24H: 25 * 60 * 60 * 1000,  // todo el día local (se renueva a medianoche)
   TRANSITOS_PERSONALES: 2 * 60 * 60 * 1000, // 2 hrs
   ECLIPSES: 48 * 60 * 60 * 1000,         // 48 hrs (cambian muy poco)
   CALENDARIO_LUNAR: 12 * 60 * 60 * 1000, // 12 hrs
@@ -2434,7 +2435,7 @@ app.post('/energia-del-dia', requireLogin, async (req, res) => {
     if (cached) return res.json(cached);
     const llaveEnergia = cacheHash('energia-dia-v2', birthDataDesdePerfil(perfil), diaEnergia);
     const persistidaEnergia = await persistenteGet(llaveEnergia);
-    if (persistidaEnergia) { cacheSet(cacheKey, persistidaEnergia, TTL.ENERGIA_DIA); return res.json(persistidaEnergia); }
+    if (persistidaEnergia) { cacheSet(cacheKey, persistidaEnergia, TTL.ENERGIA_DIA_24H); return res.json(persistidaEnergia); }
 
     const [ciclos, luna, transitos] = await Promise.all([
       astrologyApi.post('/numerology/personal-cycles', {
@@ -2477,7 +2478,7 @@ app.post('/energia-del-dia', requireLogin, async (req, res) => {
       transitos_hoy: eventosTransitosHoy,
     };
     await traducirInterpretacionesEnObjeto(respuestaEnergia);
-    cacheSet(cacheKey, respuestaEnergia, TTL.ENERGIA_DIA);
+    cacheSet(cacheKey, respuestaEnergia, TTL.ENERGIA_DIA_24H);
     await persistenteSet(llaveEnergia, respuestaEnergia);
     res.json(respuestaEnergia);
   } catch (err) {
