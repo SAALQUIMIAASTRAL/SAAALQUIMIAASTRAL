@@ -2550,12 +2550,18 @@ app.post('/transitos-personales', requireLogin, async (req, res) => {
     const perfil = await leerPerfil(req);
     if (!perfil) return res.status(400).json({ error: 'Primero guarda tu perfil.' });
 
-    const hoy = new Date();
-    const bloque2h = Math.floor(Date.now() / TTL.TRANSITOS_PERSONALES);
-    const cacheKey = cacheHash(req.userId, 'transitos-v2', bloque2h);
+    // Ventana de 7 días desde el día local de la persona (no UTC).
+    const tzTransitos = zonaHorariaDesdeReq(req);
+    const hoyLocal = diaLocalStr(tzTransitos);
+    const cacheKey = cacheHash(req.userId, 'transitos-v3', hoyLocal);
     const cached = cacheGet(cacheKey);
     if (cached) return res.json(cached);
+    const llaveTransitos = cacheHash('transitos-7dias-v1', birthDataDesdePerfil(perfil), hoyLocal);
+    const persistidosTransitos = await persistenteGet(llaveTransitos);
+    if (persistidosTransitos) { cacheSet(cacheKey, persistidosTransitos, TTL.TRANSITOS_PERSONALES); return res.json(persistidosTransitos); }
 
+    const [anioL, mesL, diaL] = hoyLocal.split('-').map(Number);
+    const hoy = new Date(Date.UTC(anioL, mesL - 1, diaL));
     const desde5dias = new Date(hoy.getTime() - 5 * 24 * 60 * 60 * 1000);
     const en7dias = new Date(hoy.getTime() + 7 * 24 * 60 * 60 * 1000);
 
@@ -2599,6 +2605,7 @@ app.post('/transitos-personales', requireLogin, async (req, res) => {
     const respuestaTransitos = { transitos: datosLimpios };
     await traducirInterpretacionesEnObjeto(respuestaTransitos);
     cacheSet(cacheKey, respuestaTransitos, TTL.TRANSITOS_PERSONALES);
+    await persistenteSet(llaveTransitos, respuestaTransitos);
     res.json(respuestaTransitos);
   } catch (err) {
     console.error(err?.response?.data || err.message);
