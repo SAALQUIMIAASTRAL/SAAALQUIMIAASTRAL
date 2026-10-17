@@ -4428,6 +4428,14 @@
     document.querySelectorAll('#diario-animo-btns button').forEach(b => b.style.background = 'var(--marigold-soft)');
     btn.style.background = 'var(--marigold-mid)';
     document.getElementById('diario-animo-val').value = valor;
+    // Además de guardar el estado, lo escribe en el texto (sin emoji) para que se vea en la entrada.
+    const palabra = valor.replace(/^\S+\s*/, '').trim();
+    const area = document.getElementById('diario-texto');
+    if (area && palabra) {
+      const actual = area.value.trimEnd();
+      area.value = (actual ? actual + ' ' : '') + `Hoy me siento ${palabra.toLowerCase()}.`;
+      area.focus();
+    }
   }
 
   async function guardarDiario() {
@@ -4446,8 +4454,10 @@
       if (!r.ok) { pintarAviso(msg, data.error || 'No se pudo guardar.', 'rojo'); return; }
       document.getElementById('diario-texto').value = '';
       document.getElementById('diario-animo-val').value = '';
-      document.querySelectorAll('#diario-animo-btns button').forEach(b => b.style.background = 'var(--marigold-soft)');
+      document.querySelectorAll('#diario-animo-btns button').forEach(b => { b.style.background = ''; b.blur(); });
       pintarAviso(msg, '✓ Guardado en tu diario.', 'verde');
+      // El aviso de éxito se quita solo después de unos segundos.
+      setTimeout(() => { if (msg) msg.innerHTML = ''; }, 3000);
     } catch (e) { pintarAviso(msg, e.message, 'rojo'); }
   }
 
