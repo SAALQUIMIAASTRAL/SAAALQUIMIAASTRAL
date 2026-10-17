@@ -217,7 +217,7 @@
   body.app-ios .topbar .menu,
   body.app-ios .topbar .right{min-width:44px;min-height:44px;}
   /* Botón de menú más grande y con margen: fácil de tocar en cualquier iPhone */
-  body.app-nativa.app-ios .topbar{min-height:56px;padding:0 16px;}
+  body.app-nativa.app-ios .topbar{min-height:calc(56px + env(safe-area-inset-top,0px));padding:env(safe-area-inset-top,0px) 16px 0;}
   body.app-nativa.app-ios .topbar .menu{flex:0 0 48px;width:48px;height:48px;min-width:48px;min-height:48px;display:flex;align-items:center;justify-content:center;margin-left:-10px;}
   body.app-nativa.app-ios .bottomnav{padding:0;}
   body.app-nativa.app-ios .bottomnav .it{min-height:48px;padding:0 2px;gap:1px;}
